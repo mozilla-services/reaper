@@ -80,7 +80,7 @@ func NewInstance(region string, api *ec2.EC2, instance *ec2.Instance) *Instance 
 	return &i
 }
 
-func (i *Instance) hasTag(tag string) (ok bool) {
+func (i *Instance) Tagged(tag string) (ok bool) {
 	_, ok = i.tags[tag]
 	return
 }
@@ -97,10 +97,10 @@ func (i *Instance) Name() string { return i.tags["Name"] }
 func (i *Instance) Owner() string { return i.tags["Owner"] }
 
 // Owned checks if the instance has an Owner tag
-func (i *Instance) Owned() (ok bool) { return i.hasTag("Owner") }
+func (i *Instance) Owned() (ok bool) { return i.Tagged("Owner") }
 
 // Autoscaled checks if the instance is part of an autoscaling group
-func (i *Instance) AutoScaled() (ok bool) { return i.hasTag("aws:autoscaling:groupName") }
+func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
 // state transitions
 

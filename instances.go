@@ -1,13 +1,20 @@
 package reaper
 
 import (
+	"fmt"
+	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/gen/ec2"
 	"strings"
 	"sync"
 	"time"
 )
 
+var (
+	_ = fmt.Println
+)
+
 type StateEnum int
+type FilterFunc func(*Instance) bool
 
 func (s StateEnum) String() string {
 	switch s {
@@ -15,28 +22,34 @@ func (s StateEnum) String() string {
 		return "notify1"
 	case STATE_NOTIFY2:
 		return "notify2"
-	case STATE_DELAY:
-		return "delay"
+	case STATE_IGNORE:
+		return "ignore"
 	}
 
 	return "start"
 }
 
 const (
+	REAPER_TAG            = "REAPER"
 	STATE_START StateEnum = iota
 	STATE_NOTIFY1
 	STATE_NOTIFY2
-	STATE_DELAY
+	STATE_IGNORE
+
+	S_SEP     = "|"
+	S_TFORMAT = "2006-01-02 3PM MST"
 )
 
 type State struct {
-	State   StateEnum
-	Expires time.Time
+	State StateEnum
+
+	// State must be maintained until this time
+	Until time.Time
 }
 
-func (s *State) Expired() bool { return time.Now().After(s.Expires) }
+func (s *State) Visible() bool { return time.Now().After(s.Until) }
 func (s *State) String() string {
-	return s.State.String() + ":" + s.Expires.Format(time.RFC3339)
+	return s.State.String() + S_SEP + s.Until.Format(S_TFORMAT)
 }
 
 type Instances []*Instance
@@ -62,7 +75,7 @@ func NewInstance(region string, api *ec2.EC2, instance *ec2.Instance) *Instance 
 		i.tags[*tag.Key] = *tag.Value
 	}
 
-	i.state = ParseState(i.tags["Reaper"])
+	i.state = ParseState(i.tags[REAPER_TAG])
 
 	return &i
 }
@@ -89,6 +102,45 @@ func (i *Instance) Owned() (ok bool) { return i.hasTag("Owner") }
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.hasTag("aws:autoscaling:groupName") }
 
+// state transitions
+
+func (i *Instance) SaveState() error {
+
+	req := &ec2.CreateTagsRequest{
+		DryRun:    aws.False(),
+		Resources: []string{i.Id()},
+		Tags: []ec2.Tag{
+			ec2.Tag{
+				Key:   aws.String(REAPER_TAG),
+				Value: aws.String(i.State().String()),
+			},
+		},
+	}
+
+	return i.api.CreateTags(req)
+}
+
+func (i *Instance) Step() error {
+	return nil
+}
+
+func (i *Instance) Notify1() {
+}
+
+func (i *Instance) Notify2() {
+}
+
+func (i *Instance) Delay(until time.Time) error {
+	i.state.State = STATE_IGNORE
+	i.state.Until = until
+
+	return i.SaveState()
+}
+
+func (i *Instance) Terminate() {
+
+}
+
 func ParseState(state string) (defaultState *State) {
 
 	defaultState = &State{STATE_START, time.Time{}}
@@ -97,7 +149,8 @@ func ParseState(state string) (defaultState *State) {
 		return
 	}
 
-	s := strings.Split(state, ":")
+	s := strings.Split(state, S_SEP)
+
 	if len(s) != 2 {
 		return
 	}
@@ -110,13 +163,13 @@ func ParseState(state string) (defaultState *State) {
 		stateEnum = STATE_NOTIFY1
 	case "notify2":
 		stateEnum = STATE_NOTIFY2
-	case "delay":
-		stateEnum = STATE_DELAY
+	case "ignore":
+		stateEnum = STATE_IGNORE
 	default:
 		return
 	}
 
-	t, err := time.Parse(time.RFC3339, s[1])
+	t, err := time.Parse(S_TFORMAT, s[1])
 	if err != nil {
 		return
 	}
@@ -125,7 +178,7 @@ func ParseState(state string) (defaultState *State) {
 }
 
 // Filter creates a new list of Instances that match the filter
-func (i Instances) Filter(f func(*Instance) bool) (newList Instances) {
+func (i Instances) Filter(f FilterFunc) (newList Instances) {
 	for _, i := range i {
 		if f(i) {
 			newList = append(newList, i)

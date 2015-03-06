@@ -17,3 +17,9 @@ func Id(id string) reaper.FilterFunc {
 		return i.Id() == id
 	}
 }
+
+func Tagged(tag string) reaper.FilterFunc {
+	return func(i *reaper.Instance) bool {
+		return i.Tagged(tag)
+	}
+}

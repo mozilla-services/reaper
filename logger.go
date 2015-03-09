@@ -24,12 +24,7 @@ func out(what string, level string, v []interface{}) {
 	_log.Println(x...)
 }
 
-func (l *Logger) Err(v ...interface{}) {
-	out(l.What, "error", v)
-}
-func (l *Logger) Info(v ...interface{}) {
-	out(l.What, "info", v)
-}
-func (l *Logger) Warning(v ...interface{}) {
-	out(l.What, "warn", v)
-}
+func (l *Logger) Err(v ...interface{})     { out(l.What, "error", v) }
+func (l *Logger) Debug(v ...interface{})   { out(l.What, "debug", v) }
+func (l *Logger) Info(v ...interface{})    { out(l.What, "info", v) }
+func (l *Logger) Warning(v ...interface{}) { out(l.What, "warn", v) }

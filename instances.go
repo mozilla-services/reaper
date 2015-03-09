@@ -99,7 +99,13 @@ func (i *Instance) Id() string { return i.id }
 func (i *Instance) Name() string { return i.tags["Name"] }
 
 // Owner extracts the "Owner" tag
-func (i *Instance) Owner() string { return i.tags["Owner"] }
+func (i *Instance) Owner() string {
+	if i.Tagged("Owner") {
+		return i.tags["Owner"]
+	} else {
+		return "-"
+	}
+}
 
 // Owned checks if the instance has an Owner tag
 func (i *Instance) Owned() (ok bool) { return i.Tagged("Owner") }

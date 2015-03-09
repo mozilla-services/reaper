@@ -1,0 +1,27 @@
+[Credentials]
+
+# leave these blank to auto-detect / extra information from either 
+# an IAM role or environment variables
+AccessID     = ""
+AccessSecret = ""
+Token        = ""
+
+[Instances]
+# The time format must be a duration parsable by go's time.ParseDuration 
+# function. See: http://godoc.org/time#ParseDuration
+# 
+# Recommended to do things in hourly increments
+
+# Interval that all instances should be checked for reaping
+Interval = "1h"
+
+# How long the instance is allowed to run before sending the first 
+# notification
+FirstNotification = "12h"
+
+# How long after the first notification before sending the second 
+# notification
+SecondNotification = "24h"
+
+# How long after the second notification before terminating the instance
+Terminate = "24h"

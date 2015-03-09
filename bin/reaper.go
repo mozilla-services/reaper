@@ -1,45 +1,65 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/gen/ec2"
 	"github.com/mostlygeek/reaper"
 	"github.com/mostlygeek/reaper/filter"
+	"os"
 	"time"
 )
 
 var (
-	_ = fmt.Println
+	_    = fmt.Println
+	log  = &reaper.Logger{"EC2"}
+	Conf *reaper.Config
 )
 
+func init() {
+	var configFile string
+
+	flag.StringVar(&configFile, "conf", "", "path to config file")
+	flag.Parse()
+
+	if configFile == "" {
+		log.Err("Config file required", configFile)
+		os.Exit(1)
+	} else {
+	}
+
+	if c, err := reaper.LoadConfig(configFile); err == nil {
+		Conf = c
+		log.Info("Loaded configuration", configFile)
+	} else {
+		log.Err("toml", err)
+		os.Exit(1)
+	}
+
+}
+
 func main() {
-	creds := aws.DetectCreds("", "", "")
+
+	creds := aws.DetectCreds(
+		Conf.Credentials.AccessID,
+		Conf.Credentials.AccessSecret,
+		Conf.Credentials.Token,
+	)
+
 	endpoints := reaper.EndpointMap{"us-west-2": ec2.New(creds, "us-west-2", nil)}
 
-	/*
-		endpoints, err := reaper.AllEndpoints(creds)
-		if err != nil {
-			panic(err)
-		}
-	*/
-
+	log.Debug("Fetching All Instances")
 	all := reaper.AllInstances(endpoints)
-
-	/*
-		filtered := all.
-			Filter(filter.NotOwned).
-			Filter(filter.NotAutoscaled)
-	*/
 
 	filtered := all.
 		Filter(filter.Tagged("REAP_ME")).
 		Filter(filter.Running)
 
-	log = &reaper.Logger{"EC2"}
+	log.Debug("Found ", len(all), "instances, filtered to", len(filtered))
 
 	for _, i := range filtered {
-		log.Info(i.Region(), i.Id(), i.State(), i.Name(), i.Owner(), i.Reaper())
+		log.Info(i.Region(), i.Id(), i.Name(), i.Owner(), i.Reaper())
 
 		if i.Reaper().State != reaper.STATE_IGNORE {
 			log.Info("Setting ignore: ", i.Id())

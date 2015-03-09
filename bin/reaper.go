@@ -32,16 +32,18 @@ func main() {
 			Filter(filter.NotAutoscaled)
 	*/
 
-	filtered := all.Filter(filter.Id("i-25004b29"))
+	filtered := all.
+		Filter(filter.Tagged("REAP_ME")).
+		Filter(filter.Running)
 
 	for _, i := range filtered {
-		fmt.Println(i.Region(), i.Id(), i.Name(), i.Owner(), i.State())
+		reaper.Log.Info(i.Region(), i.Id(), i.State(), i.Name(), i.Owner(), i.Reaper())
 
-		if i.State().State != reaper.STATE_IGNORE {
-			fmt.Println("delaying ", i.Id())
-			err := i.Delay(time.Now().Add(time.Hour * 48))
+		if i.Reaper().State != reaper.STATE_IGNORE {
+			reaper.Log.Info("Setting ignore: ", i.Id())
+			err := i.Ignore(time.Now().Add(time.Hour * 2))
 			if err != nil {
-				fmt.Println("ERROR", err)
+				reaper.Log.Err(err)
 			}
 		}
 

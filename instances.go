@@ -54,28 +54,32 @@ func (s *State) String() string {
 
 type Instances []*Instance
 type Instance struct {
+	id       string
 	api      *ec2.EC2
 	instance *ec2.Instance
 	region   string
+	state    string
 
 	tags map[string]string
 
-	state *State
+	// reaper state
+	reaper *State
 }
 
 func NewInstance(region string, api *ec2.EC2, instance *ec2.Instance) *Instance {
 	i := Instance{
-		region:   region, // passed in cause not possible to extract out of api
-		api:      api,
-		instance: instance,
-		tags:     make(map[string]string),
+		id:     *instance.InstanceID,
+		region: region, // passed in cause not possible to extract out of api
+		api:    api,
+		state:  *instance.State.Name,
+		tags:   make(map[string]string),
 	}
 
 	for _, tag := range instance.Tags {
 		i.tags[*tag.Key] = *tag.Value
 	}
 
-	i.state = ParseState(i.tags[REAPER_TAG])
+	i.reaper = ParseState(i.tags[REAPER_TAG])
 
 	return &i
 }
@@ -86,9 +90,10 @@ func (i *Instance) Tagged(tag string) (ok bool) {
 }
 
 func (i *Instance) Region() string { return i.region }
-func (i *Instance) State() *State  { return i.state }
+func (i *Instance) State() string  { return i.state }
+func (i *Instance) Reaper() *State { return i.reaper }
 
-func (i *Instance) Id() string { return *i.instance.InstanceID }
+func (i *Instance) Id() string { return i.id }
 
 // Name extracts the "Name" tag
 func (i *Instance) Name() string { return i.tags["Name"] }
@@ -104,7 +109,7 @@ func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:gro
 
 // state transitions
 
-func (i *Instance) SaveState() error {
+func (i *Instance) SaveReaperState() error {
 
 	req := &ec2.CreateTagsRequest{
 		DryRun:    aws.False(),
@@ -112,7 +117,7 @@ func (i *Instance) SaveState() error {
 		Tags: []ec2.Tag{
 			ec2.Tag{
 				Key:   aws.String(REAPER_TAG),
-				Value: aws.String(i.State().String()),
+				Value: aws.String(i.Reaper().String()),
 			},
 		},
 	}
@@ -130,11 +135,11 @@ func (i *Instance) Notify1() {
 func (i *Instance) Notify2() {
 }
 
-func (i *Instance) Delay(until time.Time) error {
-	i.state.State = STATE_IGNORE
-	i.state.Until = until
+func (i *Instance) Ignore(until time.Time) error {
+	i.reaper.State = STATE_IGNORE
+	i.reaper.Until = until
 
-	return i.SaveState()
+	return i.SaveReaperState()
 }
 
 func (i *Instance) Terminate() {
@@ -192,7 +197,7 @@ func (i Instances) Filter(f FilterFunc) (newList Instances) {
 func AllInstances(endpoints EndpointMap) Instances {
 
 	var wg sync.WaitGroup
-	in := make(chan *Instance, len(endpoints))
+	in := make(chan *Instance)
 
 	// fetch all info in parallel
 	for region, api := range endpoints {

@@ -23,3 +23,7 @@ func Tagged(tag string) reaper.FilterFunc {
 		return i.Tagged(tag)
 	}
 }
+
+func Running(i *reaper.Instance) bool {
+	return i.State() == "running"
+}

@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/mostlygeek/reaper",
 	"GoVersion": "go1.4.1",
+	"Packages": [
+		"."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",

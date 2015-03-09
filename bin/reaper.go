@@ -7,14 +7,16 @@ import (
 	"github.com/awslabs/aws-sdk-go/gen/ec2"
 	"github.com/mostlygeek/reaper"
 	"github.com/mostlygeek/reaper/filter"
+	. "github.com/tj/go-debug"
 	"os"
 	"time"
 )
 
 var (
-	_    = fmt.Println
-	log  = &reaper.Logger{"EC2"}
-	Conf *reaper.Config
+	_     = fmt.Println
+	log   = &reaper.Logger{"EC2"}
+	Conf  *reaper.Config
+	debug = Debug("reaper:EC2")
 )
 
 func init() {
@@ -49,14 +51,14 @@ func main() {
 
 	endpoints := reaper.EndpointMap{"us-west-2": ec2.New(creds, "us-west-2", nil)}
 
-	log.Debug("Fetching All Instances")
+	debug("Fetching All Instances")
 	all := reaper.AllInstances(endpoints)
 
 	filtered := all.
 		Filter(filter.Tagged("REAP_ME")).
 		Filter(filter.Running)
 
-	log.Debug("Found ", len(all), "instances, filtered to", len(filtered))
+	debug("Found %d instances, filtered to %d", len(all), len(filtered))
 
 	for _, i := range filtered {
 		log.Info(i.Region(), i.Id(), i.Name(), i.Owner(), i.Reaper())

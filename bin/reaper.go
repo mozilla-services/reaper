@@ -36,14 +36,16 @@ func main() {
 		Filter(filter.Tagged("REAP_ME")).
 		Filter(filter.Running)
 
+	log = &reaper.Logger{"EC2"}
+
 	for _, i := range filtered {
-		reaper.Log.Info(i.Region(), i.Id(), i.State(), i.Name(), i.Owner(), i.Reaper())
+		log.Info(i.Region(), i.Id(), i.State(), i.Name(), i.Owner(), i.Reaper())
 
 		if i.Reaper().State != reaper.STATE_IGNORE {
-			reaper.Log.Info("Setting ignore: ", i.Id())
+			log.Info("Setting ignore: ", i.Id())
 			err := i.Ignore(time.Now().Add(time.Hour * 2))
 			if err != nil {
-				reaper.Log.Err(err)
+				log.Err(err)
 			}
 		}
 

@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/gen/ec2"
 	"github.com/mostlygeek/reaper"
 	"github.com/mostlygeek/reaper/filter"
 	. "github.com/tj/go-debug"
-	"os"
-	"time"
 )
 
 var (
@@ -28,12 +29,12 @@ func init() {
 	if configFile == "" {
 		log.Err("Config file required", configFile)
 		os.Exit(1)
-	} else {
 	}
 
 	if c, err := reaper.LoadConfig(configFile); err == nil {
 		Conf = c
-		log.Info("Loaded configuration", configFile)
+		log.Info("Configuration loaded from", configFile)
+		debug("SMTP: %s", Conf.SMTP.String())
 	} else {
 		log.Err("toml", err)
 		os.Exit(1)

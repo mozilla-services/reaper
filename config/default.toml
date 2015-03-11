@@ -6,6 +6,16 @@ AccessID     = ""
 AccessSecret = ""
 Token        = ""
 
+[SMTP]
+Address = "localhost"
+
+# none, md5, plain are valid. see smtp.Auth
+AuthType = "none"
+# Optional port, defaults to 587
+#Port = "587"
+#Username = ""
+#Password = ""
+
 [Instances]
 # The time format must be a duration parsable by go's time.ParseDuration 
 # function. See: http://godoc.org/time#ParseDuration
@@ -25,3 +35,5 @@ SecondNotification = "24h"
 
 # How long after the second notification before terminating the instance
 Terminate = "24h"
+
+

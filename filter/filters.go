@@ -18,6 +18,12 @@ func Id(id string) reaper.FilterFunc {
 	}
 }
 
+func Not(f reaper.FilterFunc) reaper.FilterFunc {
+	return func(i *reaper.Instance) bool {
+		return !f(i)
+	}
+}
+
 func Tagged(tag string) reaper.FilterFunc {
 	return func(i *reaper.Instance) bool {
 		return i.Tagged(tag)

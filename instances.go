@@ -2,11 +2,12 @@ package reaper
 
 import (
 	"fmt"
-	"github.com/awslabs/aws-sdk-go/aws"
-	"github.com/awslabs/aws-sdk-go/gen/ec2"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/gen/ec2"
 )
 
 var (

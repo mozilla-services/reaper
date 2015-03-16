@@ -64,6 +64,7 @@ func (s *SMTPConfig) Addr() string {
 	}
 }
 
+// Auth creates the appropriate smtp.Auth from the configured AuthType
 func (s *SMTPConfig) Auth() smtp.Auth {
 	switch s.AuthType {
 	case "md5":
@@ -80,7 +81,7 @@ func (s *SMTPConfig) CRAMMD5Auth() smtp.Auth {
 }
 
 func (s *SMTPConfig) PlainAuth() smtp.Auth {
-	return smtp.PlainAuth("", s.Username, s.Password, s.Addr())
+	return smtp.PlainAuth("", s.Username, s.Password, s.Address)
 }
 
 type CredConfig struct {

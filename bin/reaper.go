@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 )
 
 var (
-	_     = fmt.Println
 	log   = &reaper.Logger{"EC2"}
 	Conf  *reaper.Config
 	debug = Debug("reaper:EC2")
@@ -34,7 +32,7 @@ func init() {
 	if c, err := reaper.LoadConfig(configFile); err == nil {
 		Conf = c
 		log.Info("Configuration loaded from", configFile)
-		debug("SMTP: %s", Conf.SMTP.String())
+		debug("SMTP Config: %s", Conf.SMTP.String())
 	} else {
 		log.Err("toml", err)
 		os.Exit(1)

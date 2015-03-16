@@ -9,10 +9,11 @@ Token        = ""
 [SMTP]
 Address = "localhost"
 
-# none, md5, plain are valid. see smtp.Auth
+# valid: "none", "md5" or "plain". Use "plain" for SES SMTP
 AuthType = "none"
+
 # Optional port, defaults to 587
-#Port = "587"
+#Port = 587
 #Username = ""
 #Password = ""
 

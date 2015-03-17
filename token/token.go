@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -96,10 +95,8 @@ func Tokenize(key []byte, j *JobToken) (string, error) {
 	}
 
 	hmac := HMAC(key, ciphertext)
-	return fmt.Sprintf("%s%s%s",
-		base64.URLEncoding.EncodeToString(ciphertext),
-		DELIMIT,
-		base64.URLEncoding.EncodeToString(hmac)), nil
+	return (base64.URLEncoding.EncodeToString(ciphertext) +
+		DELIMIT + base64.URLEncoding.EncodeToString(hmac)), nil
 }
 
 func Untokenize(key []byte, t string) (j *JobToken, err error) {

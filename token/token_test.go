@@ -1,35 +1,45 @@
 package token
 
 import (
-	"crypto/hmac"
-	"encoding/base64"
 	"testing"
+	"time"
 )
 
-var (
-	t_secret = []byte("testing secret")
-	t_salt   = []byte("testing salt")
-	t_vars   = map[string]string{"a": "1", "b": "2"}
-)
+func TestTokenizationWorks(t *testing.T) {
 
-func TestCreateToken(t *testing.T) {
+	key := []byte("keys are 16 byte")
+	j := &JobToken{"test", "124", time.Now()}
 
-	t1 := CreateToken(t_secret, t_salt, t_vars)
-	b := base64.URLEncoding.EncodeToString(t1)
-	if b != "kzrkSs9Wroq-kbYg0otFoi4ddQ95PdXJXJ0syA-HPUU=" {
-		t.Error("Unexpected Token", b)
+	token, err := Tokenize(key, j)
+	if err != nil {
+		t.Error(err)
+	}
+
+	j2, err2 := Untokenize(key, token)
+
+	if err2 != nil {
+		t.Error(err2)
+	}
+
+	if !j.Equal(j2) {
+		t.Error("Tokenization integrity failed")
 	}
 }
 
-func TestPayloadKeyValueSorting(t *testing.T) {
+func TestTokenizationFailsHMAC(t *testing.T) {
+	key := []byte("keys are 16 byte")
+	j := &JobToken{"test", "124", time.Now()}
 
-	v := map[string]string{"b": "2", "a": "1"}
+	token, _ := Tokenize(key, j)
 
-	t1 := CreateToken(t_secret, t_salt, t_vars)
-	t2 := CreateToken(t_secret, t_salt, v)
+	_t := []byte(token)
+	_t[2] = _t[2] + 1 // just change a bit somewhere
 
-	if !hmac.Equal(t1, t2) {
-		t.Error("payload creation failed")
+	token = string(_t)
+
+	_, err := Untokenize(key, token)
+
+	if err == nil {
+		t.Error("error expected")
 	}
-
 }

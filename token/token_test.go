@@ -11,7 +11,7 @@ const (
 
 func TestTokenizationWorks(t *testing.T) {
 
-	j := &JobToken{"test", "124", time.Now()}
+	j := NewTerminateJob("1234")
 
 	token, err := Tokenize(t_password, j)
 	if err != nil {
@@ -30,7 +30,7 @@ func TestTokenizationWorks(t *testing.T) {
 }
 
 func TestTokenizationFailsHMAC(t *testing.T) {
-	j := &JobToken{"test", "124", time.Now()}
+	j := NewTerminateJob("1234")
 
 	token, _ := Tokenize(t_password, j)
 
@@ -43,5 +43,16 @@ func TestTokenizationFailsHMAC(t *testing.T) {
 
 	if err == nil {
 		t.Error("error expected")
+	}
+}
+
+func TestJobTokenExpired(t *testing.T) {
+
+	j := &JobToken{
+		ValidUntil: time.Now().Add(time.Duration(-1 * time.Hour)),
+	}
+
+	if !j.Expired() {
+		t.Error("expected expired token")
 	}
 }

@@ -22,12 +22,33 @@ const (
 	SCRYPT_p      = 1
 	SCRYPT_r      = 8
 	SCRYPT_keyLen = 32
+
+	TokenDuration = time.Duration(24 * time.Hour)
 )
 
+// Not very scalable but good enough for our requirements
 type JobToken struct {
-	Action     string
-	InstanceId string
-	ValidUntil time.Time
+	Action      string
+	InstanceId  string
+	IgnoreUntil time.Time
+	ValidUntil  time.Time
+}
+
+func NewDelayJob(instanceId string, until time.Time) *JobToken {
+	return &JobToken{
+		Action:      "delay",
+		InstanceId:  instanceId,
+		IgnoreUntil: until,
+		ValidUntil:  time.Now().Add(TokenDuration),
+	}
+}
+
+func NewTerminateJob(instanceId string) *JobToken {
+	return &JobToken{
+		Action:     "terminate",
+		InstanceId: instanceId,
+		ValidUntil: time.Now().Add(TokenDuration),
+	}
 }
 
 func (j *JobToken) JSON() []byte {
@@ -40,6 +61,10 @@ func (j *JobToken) Equal(j2 *JobToken) bool {
 	return j.Action != j2.Action ||
 		j.InstanceId != j2.InstanceId ||
 		j.ValidUntil.Equal(j2.ValidUntil)
+}
+
+func (j *JobToken) Expired() bool {
+	return j.ValidUntil.Before(time.Now())
 }
 
 func Encrypt(key []byte, j *JobToken) ([]byte, error) {

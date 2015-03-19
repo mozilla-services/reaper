@@ -38,11 +38,12 @@ const (
 type JobToken struct {
 	Action      Type
 	InstanceId  string
+	Region      string
 	IgnoreUntil time.Time
 	ValidUntil  time.Time
 }
 
-func NewDelayJob(instanceId string, until time.Time) *JobToken {
+func NewDelayJob(region, instanceId string, until time.Time) *JobToken {
 	return &JobToken{
 		Action:      J_DELAY,
 		InstanceId:  instanceId,
@@ -51,7 +52,7 @@ func NewDelayJob(instanceId string, until time.Time) *JobToken {
 	}
 }
 
-func NewTerminateJob(instanceId string) *JobToken {
+func NewTerminateJob(region, instanceId string) *JobToken {
 	return &JobToken{
 		Action:     J_TERMINATE,
 		InstanceId: instanceId,

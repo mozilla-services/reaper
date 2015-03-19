@@ -11,7 +11,7 @@ const (
 
 func TestTokenizationWorks(t *testing.T) {
 
-	j := NewTerminateJob("1234")
+	j := NewTerminateJob("us-west-2", "1234")
 
 	token, err := Tokenize(t_password, j)
 	if err != nil {
@@ -30,7 +30,7 @@ func TestTokenizationWorks(t *testing.T) {
 }
 
 func TestTokenizationFailsHMAC(t *testing.T) {
-	j := NewTerminateJob("1234")
+	j := NewTerminateJob("us-west-2", "1234")
 
 	token, _ := Tokenize(t_password, j)
 

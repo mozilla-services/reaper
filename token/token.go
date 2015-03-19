@@ -12,10 +12,16 @@ import (
 	"io"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/scrypt"
 )
 
 const (
-	DELIMIT = "|"
+	DELIMIT       = "|"
+	SCRYPT_N      = 16384
+	SCRYPT_p      = 1
+	SCRYPT_r      = 8
+	SCRYPT_keyLen = 32
 )
 
 type JobToken struct {
@@ -40,16 +46,22 @@ func Encrypt(key []byte, j *JobToken) ([]byte, error) {
 
 	jsonData := j.JSON()
 
-	block, berr := aes.NewCipher(key)
-	if berr != nil {
-		return nil, berr
-	}
-
 	ciphertext := make([]byte, aes.BlockSize+len(jsonData))
 
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return nil, err
+	}
+
+	sKey, serr := scrypt.Key(key, iv, SCRYPT_N, SCRYPT_r, SCRYPT_p, SCRYPT_keyLen)
+
+	if serr != nil {
+		return nil, serr
+	}
+
+	block, berr := aes.NewCipher(sKey)
+	if berr != nil {
+		return nil, berr
 	}
 
 	cfb := cipher.NewCFBEncrypter(block, iv)
@@ -59,11 +71,6 @@ func Encrypt(key []byte, j *JobToken) ([]byte, error) {
 
 func Decrypt(key, ciphertext []byte) ([]byte, error) {
 
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
 	if len(ciphertext) < aes.BlockSize {
@@ -72,6 +79,16 @@ func Decrypt(key, ciphertext []byte) ([]byte, error) {
 
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
+
+	sKey, serr := scrypt.Key(key, iv, SCRYPT_N, SCRYPT_r, SCRYPT_p, SCRYPT_keyLen)
+
+	if serr != nil {
+		return nil, serr
+	}
+	block, err := aes.NewCipher(sKey)
+	if err != nil {
+		return nil, err
+	}
 
 	stream := cipher.NewCFBDecrypter(block, iv)
 
@@ -87,7 +104,8 @@ func HMAC(key, data []byte) []byte {
 	return mac.Sum(nil)
 }
 
-func Tokenize(key []byte, j *JobToken) (string, error) {
+func Tokenize(password string, j *JobToken) (string, error) {
+	key := []byte(password)
 
 	ciphertext, err := Encrypt(key, j)
 	if err != nil {
@@ -99,9 +117,10 @@ func Tokenize(key []byte, j *JobToken) (string, error) {
 		DELIMIT + base64.URLEncoding.EncodeToString(hmac)), nil
 }
 
-func Untokenize(key []byte, t string) (j *JobToken, err error) {
+func Untokenize(password, t string) (j *JobToken, err error) {
 
 	var ciphertext, hmacVerify, jsonData []byte
+	key := []byte(password)
 
 	parts := strings.Split(t, DELIMIT)
 

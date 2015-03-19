@@ -26,9 +26,17 @@ const (
 	TokenDuration = time.Duration(24 * time.Hour)
 )
 
+//go:generate stringer -type=Type
+type Type int
+
+const (
+	J_DELAY Type = iota
+	J_TERMINATE
+)
+
 // Not very scalable but good enough for our requirements
 type JobToken struct {
-	Action      string
+	Action      Type
 	InstanceId  string
 	IgnoreUntil time.Time
 	ValidUntil  time.Time
@@ -36,7 +44,7 @@ type JobToken struct {
 
 func NewDelayJob(instanceId string, until time.Time) *JobToken {
 	return &JobToken{
-		Action:      "delay",
+		Action:      J_DELAY,
 		InstanceId:  instanceId,
 		IgnoreUntil: until,
 		ValidUntil:  time.Now().Add(TokenDuration),
@@ -45,7 +53,7 @@ func NewDelayJob(instanceId string, until time.Time) *JobToken {
 
 func NewTerminateJob(instanceId string) *JobToken {
 	return &JobToken{
-		Action:     "terminate",
+		Action:     J_TERMINATE,
 		InstanceId: instanceId,
 		ValidUntil: time.Now().Add(TokenDuration),
 	}

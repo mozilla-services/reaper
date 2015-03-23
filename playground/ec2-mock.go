@@ -86,9 +86,9 @@ func main() {
 	mRound.Handlers["DescribeInstances"] = returnXML(ec2.DescribeInstancesResult{
 		Reservations: []ec2.Reservation{ec2.Reservation{
 			Instances: []ec2.Instance{
-				ec2.Instance{
-					InstanceID: aws.String("i-instance1"),
-				},
+				ec2.Instance{InstanceID: aws.String("i-inst1")},
+				ec2.Instance{InstanceID: aws.String("i-inst2")},
+				ec2.Instance{InstanceID: aws.String("i-inst3")},
 			},
 		}},
 	})
@@ -102,7 +102,7 @@ func main() {
 	if err != nil {
 		fmt.Println("Error Response:", err)
 	} else {
-		fmt.Println("\n", len(resp.Reservations))
+		fmt.Println(len(resp.Reservations[0].Instances))
 	}
 }
 

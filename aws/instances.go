@@ -1,21 +1,32 @@
-package reaper
+package aws
 
 import (
 	"fmt"
+	"net/mail"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/gen/ec2"
+	. "github.com/tj/go-debug"
 )
 
 var (
-	_ = fmt.Println
+	debug    = Debug("reaper:aws")
+	debugAll = Debug("reaper:aws:AllInstances")
 )
 
-type StateEnum int
 type FilterFunc func(*Instance) bool
+
+type StateEnum int
+
+const (
+	STATE_START StateEnum = iota
+	STATE_NOTIFY1
+	STATE_NOTIFY2
+	STATE_IGNORE
+)
 
 func (s StateEnum) String() string {
 	switch s {
@@ -25,20 +36,15 @@ func (s StateEnum) String() string {
 		return "notify2"
 	case STATE_IGNORE:
 		return "ignore"
+	default:
+		return "start"
 	}
-
-	return "start"
 }
 
 const (
-	REAPER_TAG            = "REAPER"
-	STATE_START StateEnum = iota
-	STATE_NOTIFY1
-	STATE_NOTIFY2
-	STATE_IGNORE
-
-	S_SEP     = "|"
-	S_TFORMAT = "2006-01-02 3PM MST"
+	REAPER_TAG = "REAPER"
+	S_SEP      = "|"
+	S_TFORMAT  = "2006-01-02 03:04PM MST"
 )
 
 type State struct {
@@ -55,11 +61,12 @@ func (s *State) String() string {
 
 type Instances []*Instance
 type Instance struct {
-	id       string
-	api      *ec2.EC2
-	instance *ec2.Instance
-	region   string
-	state    string
+	id         string
+	api        *ec2.EC2
+	instance   *ec2.Instance
+	region     string
+	state      string
+	launchTime time.Time
 
 	tags map[string]string
 
@@ -68,12 +75,28 @@ type Instance struct {
 }
 
 func NewInstance(region string, api *ec2.EC2, instance *ec2.Instance) *Instance {
+
+	// ughhhhhh pointers to strings suck
+	_id := "nil"
+	_state := "nil"
+
+	if instance.InstanceID != nil {
+		_id = *instance.InstanceID
+	}
+
+	if instance.State != nil {
+		if instance.State.Name != nil {
+			_state = *instance.State.Name
+		}
+	}
+
 	i := Instance{
-		id:     *instance.InstanceID,
-		region: region, // passed in cause not possible to extract out of api
-		api:    api,
-		state:  *instance.State.Name,
-		tags:   make(map[string]string),
+		id:         _id,
+		region:     region, // passed in cause not possible to extract out of api
+		api:        api,
+		state:      _state,
+		launchTime: instance.LaunchTime,
+		tags:       make(map[string]string),
 	}
 
 	for _, tag := range instance.Tags {
@@ -90,33 +113,39 @@ func (i *Instance) Tagged(tag string) (ok bool) {
 	return
 }
 
-func (i *Instance) Region() string { return i.region }
-func (i *Instance) State() string  { return i.state }
-func (i *Instance) Reaper() *State { return i.reaper }
-
-func (i *Instance) Id() string { return i.id }
+func (i *Instance) Id() string            { return i.id }
+func (i *Instance) Region() string        { return i.region }
+func (i *Instance) State() string         { return i.state }
+func (i *Instance) LaunchTime() time.Time { return i.launchTime }
+func (i *Instance) Reaper() *State        { return i.reaper }
 
 // Name extracts the "Name" tag
 func (i *Instance) Name() string { return i.tags["Name"] }
 
-// Owner extracts the "Owner" tag
-func (i *Instance) Owner() string {
-	if i.Tagged("Owner") {
-		return i.tags["Owner"]
-	} else {
-		return "-"
-	}
-}
-
 // Owned checks if the instance has an Owner tag
 func (i *Instance) Owned() (ok bool) { return i.Tagged("Owner") }
+
+// Owner extracts useful information out of the Owner tag which should
+// be parsable by mail.ParseAddress
+func (i *Instance) Owner() *mail.Address {
+	if addr, err := mail.ParseAddress(i.Tag("Owner")); err == nil {
+		return addr
+	}
+
+	return nil
+}
+
+// Tag returns the tag's value or an empty string if it does not exist
+func (i *Instance) Tag(t string) string { return i.tags[t] }
 
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
 // state transitions
 
-func (i *Instance) SaveReaperState() error {
+func (i *Instance) UpdateReaperState(newState *State) error {
+
+	i.reaper = newState
 
 	req := &ec2.CreateTagsRequest{
 		DryRun:    aws.False(),
@@ -132,24 +161,26 @@ func (i *Instance) SaveReaperState() error {
 	return i.api.CreateTags(req)
 }
 
-func (i *Instance) Step() error {
+func (i *Instance) Ignore(until time.Time) error {
 	return nil
 }
 
-func (i *Instance) Notify1() {
-}
+func (i *Instance) Terminate() error {
+	req := &ec2.TerminateInstancesRequest{
+		InstanceIDs: []string{i.Id()},
+	}
 
-func (i *Instance) Notify2() {
-}
+	resp, err := i.api.TerminateInstances(req)
 
-func (i *Instance) Ignore(until time.Time) error {
-	i.reaper.State = STATE_IGNORE
-	i.reaper.Until = until
+	if err != nil {
+		return err
+	}
 
-	return i.SaveReaperState()
-}
+	if len(resp.TerminatingInstances) != 1 {
+		return fmt.Errorf("Instance could not be terminated")
+	}
 
-func (i *Instance) Terminate() {
+	return nil
 
 }
 
@@ -208,6 +239,7 @@ func AllInstances(endpoints EndpointMap) Instances {
 
 	// fetch all info in parallel
 	for region, api := range endpoints {
+		debugAll("DescribeInstances in %s", region)
 		wg.Add(1)
 		go func(region string, api *ec2.EC2) {
 			defer wg.Done()
@@ -218,11 +250,15 @@ func AllInstances(endpoints EndpointMap) Instances {
 				return
 			}
 
+			sum := 0
 			for _, r := range resp.Reservations {
 				for _, instance := range r.Instances {
+					sum += 1
 					in <- NewInstance(region, api, &instance)
 				}
 			}
+
+			debugAll("Found %d instances in %s", sum, region)
 
 		}(region, api)
 	}

@@ -1,10 +1,18 @@
-[Credentials]
+[AWS]
 
 # leave these blank to auto-detect / extra information from either 
 # an IAM role or environment variables
 AccessID     = ""
 AccessSecret = ""
 Token        = ""
+
+# what regions the reaper will look for ec2 servers in
+Regions      = [
+    "us-west-1",
+    "us-west-2",
+    "us-east-1",
+    "eu-west-1",
+]
 
 [SMTP]
 Address = "localhost"
@@ -17,7 +25,7 @@ AuthType = "none"
 #Username = ""
 #Password = ""
 
-[Instances]
+[Reaper]
 # The time format must be a duration parsable by go's time.ParseDuration 
 # function. See: http://godoc.org/time#ParseDuration
 # 

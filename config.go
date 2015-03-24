@@ -11,13 +11,25 @@ import (
 func LoadConfig(path string) (*Config, error) {
 
 	conf := Config{
-		Credentials: CredConfig{},
+		AWS: AWSConfig{
+			Regions: []string{
+				"us-west-1",
+				"us-west-2",
+				"us-east-1",
+				"eu-west-1",
+				"eu-central-1",
+				"ap-southeast-1",
+				"ap-southeast-2",
+				"ap-northeast-1",
+				"sa-east-1",
+			},
+		},
 		SMTP: SMTPConfig{
 			Address:  "localhost",
 			Port:     587,
 			AuthType: "none",
 		},
-		Instances: InstanceConfig{
+		Reaper: ReaperConfig{
 			Interval:           duration{time.Duration(6) * time.Hour},
 			FirstNotification:  duration{time.Duration(12) * time.Hour},
 			SecondNotification: duration{time.Duration(12) * time.Hour},
@@ -34,9 +46,9 @@ func LoadConfig(path string) (*Config, error) {
 
 // Global reaper config
 type Config struct {
-	Credentials CredConfig
-	SMTP        SMTPConfig
-	Instances   InstanceConfig
+	AWS    AWSConfig
+	SMTP   SMTPConfig
+	Reaper ReaperConfig
 }
 
 type SMTPConfig struct {
@@ -84,10 +96,11 @@ func (s *SMTPConfig) PlainAuth() smtp.Auth {
 	return smtp.PlainAuth("", s.Username, s.Password, s.Address)
 }
 
-type CredConfig struct {
+type AWSConfig struct {
 	AccessID     string
 	AccessSecret string
 	Token        string
+	Regions      []string
 }
 
 // controls behaviour of the EC2 single instance reaper works
@@ -100,9 +113,9 @@ func (d *duration) UnmarshalText(text []byte) (err error) {
 	return
 }
 
-type InstanceConfig struct {
-	Interval           duration
-	FirstNotification  duration
-	SecondNotification duration
-	Terminate          duration
+type ReaperConfig struct {
+	Interval           duration // like cron, how often to check instances for reaping
+	FirstNotification  duration // how long after start to first notification
+	SecondNotification duration // how long after notify1 to second notification
+	Terminate          duration // how long after notify2 to terminate
 }

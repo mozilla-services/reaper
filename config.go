@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"fmt"
+	"net/mail"
 	"net/smtp"
 	"time"
 
@@ -25,9 +26,10 @@ func LoadConfig(path string) (*Config, error) {
 			},
 		},
 		SMTP: SMTPConfig{
-			Address:  "localhost",
+			Host:     "localhost",
 			Port:     587,
 			AuthType: "none",
+			From:     FromAddress{mail.Address{"reaper", "aws-reaper@mozilla.com"}},
 		},
 		Reaper: ReaperConfig{
 			Interval:           duration{time.Duration(6) * time.Hour},
@@ -51,17 +53,32 @@ type Config struct {
 	Reaper ReaperConfig
 }
 
+type FromAddress struct {
+	mail.Address
+}
+
+func (f *FromAddress) UnmarshalText(text []byte) error {
+	a, err := mail.ParseAddress(string(text))
+	if err != nil {
+		return err
+	}
+
+	f.Address = *a
+	return nil
+}
+
 type SMTPConfig struct {
-	Address  string // must include port
+	Host     string
 	Port     int
 	AuthType string
 	Username string
 	Password string
+	From     FromAddress
 }
 
 func (s *SMTPConfig) String() string {
 	return fmt.Sprintf("%s:%d auth type:%s, creds: %s:%s",
-		s.Address,
+		s.Host,
 		s.Port,
 		s.AuthType,
 		s.Username,
@@ -70,9 +87,9 @@ func (s *SMTPConfig) String() string {
 func (s *SMTPConfig) Addr() string {
 	if s.Port == 0 {
 		// friends don't let friend's smtp over port 25
-		return fmt.Sprintf("%s:%s", s.Address, 587)
+		return fmt.Sprintf("%s:%s", s.Host, 587)
 	} else {
-		return fmt.Sprintf("%s:%d", s.Address, s.Port)
+		return fmt.Sprintf("%s:%d", s.Host, s.Port)
 	}
 }
 
@@ -93,7 +110,7 @@ func (s *SMTPConfig) CRAMMD5Auth() smtp.Auth {
 }
 
 func (s *SMTPConfig) PlainAuth() smtp.Auth {
-	return smtp.PlainAuth("", s.Username, s.Password, s.Address)
+	return smtp.PlainAuth("", s.Username, s.Password, s.Host)
 }
 
 type AWSConfig struct {

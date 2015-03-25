@@ -51,6 +51,11 @@ func init() {
 
 func main() {
 
+	// this should:
+	// create the web server w/ config
+	// create an smtp service for sending email
+	// create the reaper runner w/ config, w/ smtp service
+
 	// make a list of all eligible instances
 	creds := aws.DetectCreds(
 		Conf.AWS.AccessID,
@@ -142,6 +147,7 @@ func SendNotify1(i *raws.Instance) error {
 	return nil
 
 }
+
 func SendNotify2(i *raws.Instance) error {
 	Info("Send Notification #2 %s %s => notify2", i.Id(), i.Reaper().State)
 	if DryRun {

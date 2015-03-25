@@ -15,7 +15,7 @@ Regions      = [
 ]
 
 [SMTP]
-Address = "localhost"
+Host = "localhost"
 
 # valid: "none", "md5" or "plain". Use "plain" for SES SMTP
 AuthType = "none"
@@ -24,6 +24,9 @@ AuthType = "none"
 #Port = 587
 #Username = ""
 #Password = ""
+
+# must be parsable by http://godoc.org/net/mail#ParseAddress
+From = "AWS Reaper <reaper@none.mozilla.com>"
 
 [Reaper]
 # The time format must be a duration parsable by go's time.ParseDuration 

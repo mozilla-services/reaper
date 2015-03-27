@@ -23,7 +23,7 @@ const (
 	SCRYPT_r      = 8
 	SCRYPT_keyLen = 32
 
-	TokenDuration = time.Duration(24 * time.Hour)
+	TokenDuration = time.Duration(8 * 24 * time.Hour)
 )
 
 //go:generate stringer -type=Type

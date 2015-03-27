@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/mostlygeek/reaper/aws"
-	"github.com/mostlygeek/reaper/token"
 	. "github.com/tj/go-debug"
 )
 
 var (
-	debug = Debug("reaper:mailer")
+	debugMailer = Debug("reaper:mailer")
 )
 
 // at some point this should probably be configurable
@@ -33,10 +32,10 @@ const notifyTemplateSource = `
 	<p>
 		You may also choose to:
 		<ul>
-			<li><a href="{{.Host}}/?a=terminate&t={{.TerminateToken | urlquery}}">Terminate it now</a></li>
-			<li><a href="{{.Host}}/?a=delay_1dayd&t={{.Delay1DToken | urlquery}}">Ignore it for 1 more day</a></li>
-			<li><a href="{{.Host}}/?a=delay_3day&t={{.Delay3DToken | urlquery}}">Ignore it for 3 more days</a></li>
-			<li><a href="{{.Host}}/?a=delay_7day&t={{.Delay7DToken | urlquery}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{.terminateLink}}">Terminate it now</a></li>
+			<li><a href="{{.delay1DLink}}">Ignore it for 1 more day</a></li>
+			<li><a href="{{.delay3DLink}}">Ignore it for 3 more days</a></li>
+			<li><a href="{{.delay7DLink}}">Ignore it for 7 more days</a></li>
 		</ul>
 	</p>
 
@@ -76,7 +75,7 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf.WriteString(htmlBody)
 	buf.WriteString("\n")
 
-	debug("Sending email to:%s, from:%s, subject:%s",
+	debugMailer("Sending email to:%s, from:%s, subject:%s",
 		to.String(),
 		m.conf.SMTP.From.Address.String(),
 		subject)
@@ -112,20 +111,24 @@ func (m *Mailer) Notify(notifyNum int, i *aws.Instance) (err error) {
 
 	var term, delay1, delay3, delay7 string
 	// Token strings
-	term, err = token.Tokenize(m.conf.TokenSecret,
-		token.NewTerminateJob(i.Region(), i.Id()))
 
-	delay1, err = token.Tokenize(m.conf.TokenSecret,
-		token.NewDelayJob(i.Region(), i.Id(),
-			time.Now().Add(time.Duration(24*time.Hour))))
+	term, err = MakeTerminateLink(m.conf.TokenSecret,
+		m.conf.HTTPApiURL, i.Region(), i.Id())
 
-	delay3, err = token.Tokenize(m.conf.TokenSecret,
-		token.NewDelayJob(i.Region(), i.Id(),
-			time.Now().Add(time.Duration(3*24*time.Hour))))
+	if err == nil {
+		delay1, err = MakeIgnoreLink(m.conf.TokenSecret,
+			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(24*time.Hour))
+	}
 
-	delay7, err = token.Tokenize(m.conf.TokenSecret,
-		token.NewDelayJob(i.Region(), i.Id(),
-			time.Now().Add(time.Duration(7*24*time.Hour))))
+	if err == nil {
+		delay3, err = MakeIgnoreLink(m.conf.TokenSecret,
+			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(3*24*time.Hour))
+	}
+
+	if err == nil {
+		delay7, err = MakeIgnoreLink(m.conf.TokenSecret,
+			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(7*24*time.Hour))
+	}
 
 	if err != nil {
 		return err
@@ -140,18 +143,18 @@ func (m *Mailer) Notify(notifyNum int, i *aws.Instance) (err error) {
 	dispTime := terminateDate.In(mtvLoc).Truncate(time.Hour).Format(time.RFC1123)
 	buf := bytes.NewBuffer(nil)
 	err = notifyTemplate.Execute(buf, map[string]string{
-		"Id":             i.Id(),
-		"Name":           i.Name(),
-		"Host":           m.conf.HTTPHost,
-		"TerminateDate":  dispTime,
-		"TerminateToken": term,
-		"Delay1DToken":   delay1,
-		"Delay3DToken":   delay3,
-		"Delay7DToken":   delay7,
+		"Id":            i.Id(),
+		"Name":          i.Name(),
+		"Host":          m.conf.HTTPApiURL,
+		"TerminateDate": dispTime,
+		"terminateLink": term,
+		"delay1DLink":   delay1,
+		"delay3DLink":   delay3,
+		"delay7DLink":   delay7,
 	})
 
 	if err != nil {
-		debug("Template generation error %s", err.Error())
+		debugMailer("Template generation error %s", err.Error())
 		return err
 	}
 

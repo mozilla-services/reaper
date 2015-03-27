@@ -57,7 +57,6 @@ func main() {
 
 	// this should:
 	// create the web server w/ config
-	// create an smtp service for sending email
 	// create the reaper runner w/ config, w/ smtp service
 
 	// make a list of all eligible instances

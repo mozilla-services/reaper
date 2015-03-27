@@ -13,7 +13,8 @@ func LoadConfig(path string) (*Config, error) {
 
 	conf := Config{
 		TokenSecret: "Default secrets are not safe",
-		HTTPHost:    "http://localhost",
+		HTTPApiURL:  "http://localhost",
+		HTTPListen:  "localhost:9000",
 		AWS: AWSConfig{
 			Regions: []string{
 				"us-west-1",
@@ -50,7 +51,8 @@ func LoadConfig(path string) (*Config, error) {
 
 // Global reaper config
 type Config struct {
-	HTTPHost    string // used to generate the link
+	HTTPApiURL  string // used to generate the link
+	HTTPListen  string // host:port the web server will attempt to listen on
 	TokenSecret string // used for token generation
 
 	AWS    AWSConfig

@@ -5,7 +5,10 @@ TokenSecret = "set this to secure web requests against spoofing"
 # this is used to generate the link back to the reaper's http
 # service. Do not add a trailing slash, just include 
 # <scheme>://<host:port>
-HTTPHost = "http://localhost"
+HTTPApiURL = "http://localhost:9000"
+
+# this is where the web server will listen for requests
+HTTPListen = "localhost:9000"
 
 [AWS]
 

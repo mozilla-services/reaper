@@ -118,5 +118,4 @@ func makeURL(host, action, token string) string {
 	} else {
 		return host + "/?" + vals.Encode()
 	}
-
 }

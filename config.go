@@ -12,6 +12,8 @@ import (
 func LoadConfig(path string) (*Config, error) {
 
 	conf := Config{
+		TokenSecret: "Default secrets are not safe",
+		HTTPHost:    "http://localhost",
 		AWS: AWSConfig{
 			Regions: []string{
 				"us-west-1",
@@ -48,6 +50,9 @@ func LoadConfig(path string) (*Config, error) {
 
 // Global reaper config
 type Config struct {
+	HTTPHost    string // used to generate the link
+	TokenSecret string // used for token generation
+
 	AWS    AWSConfig
 	SMTP   SMTPConfig
 	Reaper ReaperConfig

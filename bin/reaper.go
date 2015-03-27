@@ -18,6 +18,7 @@ var (
 	Conf   *reaper.Config
 	debug  = Debug("reaper")
 	DryRun = false
+	Mailer *reaper.Mailer
 )
 
 func init() {
@@ -37,11 +38,14 @@ func init() {
 		Conf = c
 		log.Info("Configuration loaded from", configFile)
 		debug("SMTP Config: %s", Conf.SMTP.String())
+		debug("SMTP From: %s", Conf.SMTP.From.Address.String())
 
 	} else {
 		log.Error("toml", err)
 		os.Exit(1)
 	}
+
+	Mailer = reaper.NewMailer(*Conf)
 
 	if DryRun {
 		log.Info("Dry run mode enabled, no changes will be made")
@@ -68,6 +72,7 @@ func main() {
 
 	filtered := instances.
 		Filter(filter.Running).
+		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
 		Filter(filter.ReaperReady(Conf.Reaper.FirstNotification.Duration)).
 		Filter(filter.Tagged("REAP_ME"))
 
@@ -84,9 +89,9 @@ func main() {
 
 		switch i.Reaper().State {
 		case raws.STATE_START, raws.STATE_IGNORE:
-			SendNotify1(i)
+			SendNotify(Mailer, i, 1)
 		case raws.STATE_NOTIFY1:
-			SendNotify2(i)
+			SendNotify(Mailer, i, 2)
 		case raws.STATE_NOTIFY2:
 			Terminate(i)
 		}
@@ -127,47 +132,39 @@ func Terminate(i *raws.Instance) error {
 	return nil
 }
 
-func SendNotify1(i *raws.Instance) error {
-	Info("Send Notification #1 %s %s => notify1", i.Id(), i.Reaper().State)
-	if DryRun {
-		return nil
-	}
-	// send the first notification and update the reaper state
-	until := time.Now().Add(Conf.Reaper.SecondNotification.Duration)
-	err := i.UpdateReaperState(&raws.State{
-		State: raws.STATE_NOTIFY1,
-		Until: until,
-	})
-
-	if err != nil {
-		log.Error(fmt.Sprintf("Send Notification 1 for %s: %s"), i.Id(), err.Error())
-		return err
-	}
-
-	return nil
-
-}
-
-func SendNotify2(i *raws.Instance) error {
-	Info("Send Notification #2 %s %s => notify2", i.Id(), i.Reaper().State)
+func SendNotify(mailer *reaper.Mailer, i *raws.Instance, notifyNum int) error {
+	Info("Send Notification #%d %s", notifyNum, i.Id())
 	if DryRun {
 		return nil
 	}
 
-	// send the first notification and update the reaper state
-	until := time.Now().Add(Conf.Reaper.SecondNotification.Duration)
+	var newState raws.StateEnum
+	var until time.Time
+	switch notifyNum {
+	case 2:
+		newState = raws.STATE_NOTIFY2
+		until = time.Now().Add(Conf.Reaper.Terminate.Duration)
+	default:
+		newState = raws.STATE_NOTIFY1
+		until = time.Now().Add(Conf.Reaper.SecondNotification.Duration)
+	}
+
+	// TODO: Send the notification here..
+	if err := mailer.Notify(notifyNum, i); err != nil {
+		debug("Notify %d for %s error %s", notifyNum, i.Id(), err.Error())
+		return err
+	}
+
 	err := i.UpdateReaperState(&raws.State{
-		State: raws.STATE_NOTIFY2,
+		State: newState,
 		Until: until,
 	})
 
 	if err != nil {
-		log.Error(fmt.Sprintf("Send Notification 2 for %s: %s"), i.Id(), err.Error())
+		log.Error(fmt.Sprintf("Send Notification %d for %s: %s"),
+			notifyNum, i.Id(), err.Error())
 		return err
 	}
 
 	return nil
-}
-
-func SendNotification(email, subject, body string) {
 }

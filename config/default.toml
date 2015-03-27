@@ -1,3 +1,12 @@
+# Set this to secure the tokens in the links back to the 
+# web server. 
+TokenSecret = "set this to secure web requests against spoofing"
+
+# this is used to generate the link back to the reaper's http
+# service. Do not add a trailing slash, just include 
+# <scheme>://<host:port>
+HTTPHost = "http://localhost"
+
 [AWS]
 
 # leave these blank to auto-detect / extra information from either 

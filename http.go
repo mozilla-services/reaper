@@ -26,14 +26,8 @@ type HTTPApi struct {
 // Serve should be run in a goroutine
 func (h *HTTPApi) Serve() error {
 	http.HandleFunc("/", processToken(h))
-	err := http.ListenAndServe(h.conf.HTTPListen, nil)
-	if err != nil {
-		return err
-	} else {
-		debugHTTP("Listening on %s", h.conf.HTTPListen)
-	}
-
-	return nil
+	debugHTTP("Starting HTTP server: %s", h.conf.HTTPListen)
+	return http.ListenAndServe(h.conf.HTTPListen, nil)
 }
 
 func NewHTTPApi(c Config) *HTTPApi {
@@ -50,17 +44,25 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		userToken := req.Form.Get("t")
+		userToken := req.Form.Get(HTTP_TOKEN_VAR)
 		if userToken == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			io.WriteString(w, "Token Missing\n")
 			return
 		}
 
+		if u, err := url.QueryUnescape(userToken); err == nil {
+			userToken = u
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			io.WriteString(w, "Invalid Token, could not decode data\n")
+			return
+		}
+
 		job, err := token.Untokenize(h.conf.TokenSecret, userToken)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Invalid Token\n")
+			io.WriteString(w, "Invalid Token, could not untokenize\n")
 			return
 		}
 
@@ -72,7 +74,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 
 		if job.Action == token.J_DELAY {
 			debugHTTP("Delay %s until %s", job.InstanceId, job.IgnoreUntil.String())
-			// delay the process
+			ec2
 		} else if job.Action == token.J_TERMINATE {
 			debugHTTP("Terminate %s", job.InstanceId)
 			// terminate the process

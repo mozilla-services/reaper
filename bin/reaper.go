@@ -56,7 +56,20 @@ func main() {
 		reapRunner.DryRunOff()
 	}
 
-	reapRunner.Start()
+	stopChan := make(chan struct{})
 
-	<-make(chan bool)
+	//reapRunner.Start()
+
+	// start the http server
+	// eww.. this seems ugly. the reason is because http.ListenAndServe has
+	// no way (unless I write it) to gracefully stop it
+	// this is a TODO
+	go func(httpSvr *reaper.HTTPApi) {
+		err := httpSvr.Serve()
+		debug("HTTP Fail: %s", err.Error())
+		close(stopChan)
+	}(reaper.NewHTTPApi(*Conf))
+
+	// wait in case the http server fails
+	<-stopChan
 }

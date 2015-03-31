@@ -47,6 +47,7 @@ func NewDelayJob(region, instanceId string, until time.Time) *JobToken {
 	return &JobToken{
 		Action:      J_DELAY,
 		InstanceId:  instanceId,
+		Region:      region,
 		IgnoreUntil: until,
 		ValidUntil:  time.Now().Add(TokenDuration),
 	}
@@ -56,6 +57,7 @@ func NewTerminateJob(region, instanceId string) *JobToken {
 	return &JobToken{
 		Action:     J_TERMINATE,
 		InstanceId: instanceId,
+		Region:     region,
 		ValidUntil: time.Now().Add(TokenDuration),
 	}
 }

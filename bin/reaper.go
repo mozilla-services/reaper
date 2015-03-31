@@ -58,7 +58,7 @@ func main() {
 
 	stopChan := make(chan struct{})
 
-	//reapRunner.Start()
+	reapRunner.Once()
 
 	// start the http server
 	// eww.. this seems ugly. the reason is because http.ListenAndServe has

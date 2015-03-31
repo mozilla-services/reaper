@@ -115,6 +115,8 @@ func (m *Mailer) Notify(notifyNum int, i *aws.Instance) (err error) {
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
 		m.conf.HTTPApiURL, i.Region(), i.Id())
 
+	debugMailer("creating links for %s:%s", i.Id(), i.Region())
+
 	if err == nil {
 		delay1, err = MakeIgnoreLink(m.conf.TokenSecret,
 			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(24*time.Hour))

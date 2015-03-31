@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/awslabs/aws-sdk-go/aws"
+	raws "github.com/mostlygeek/reaper/aws"
 	"github.com/mostlygeek/reaper/token"
 	. "github.com/tj/go-debug"
 )
@@ -34,51 +36,73 @@ func NewHTTPApi(c Config) *HTTPApi {
 	return &HTTPApi{conf: c}
 }
 
+func writeResponse(w http.ResponseWriter, code int, body string) {
+	w.WriteHeader(code)
+	io.WriteString(w, body)
+}
+
 func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
-
 	return func(w http.ResponseWriter, req *http.Request) {
-
 		if err := req.ParseForm(); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Bad query string")
+			writeResponse(w, http.StatusBadRequest, "Bady query string")
 			return
 		}
 
 		userToken := req.Form.Get(HTTP_TOKEN_VAR)
 		if userToken == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Token Missing\n")
+			writeResponse(w, http.StatusBadRequest, "Token Missing")
 			return
 		}
 
 		if u, err := url.QueryUnescape(userToken); err == nil {
 			userToken = u
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Invalid Token, could not decode data\n")
+			writeResponse(w,
+				http.StatusBadRequest, "Invalid Token, could not decode data")
 			return
 		}
 
 		job, err := token.Untokenize(h.conf.TokenSecret, userToken)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Invalid Token, could not untokenize\n")
+			writeResponse(w,
+				http.StatusBadRequest, "Invalid Token, Could not untokenize")
 			return
 		}
 
 		if job.Expired() == true {
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Token expired\n")
+			writeResponse(w, http.StatusBadRequest, "Token expired")
 			return
 		}
 
+		creds := aws.DetectCreds(
+			h.conf.AWS.AccessID,
+			h.conf.AWS.AccessSecret,
+			h.conf.AWS.Token,
+		)
+		_ = creds
+
 		if job.Action == token.J_DELAY {
-			debugHTTP("Delay %s until %s", job.InstanceId, job.IgnoreUntil.String())
-			ec2
+			debugHTTP("Delay %s in %s until %s", job.InstanceId, job.Region, job.IgnoreUntil.String())
+			err := raws.UpdateReaperState(creds, job.Region, job.InstanceId, &raws.State{
+				State: raws.STATE_IGNORE,
+				Until: job.IgnoreUntil,
+			})
+
+			if err != nil {
+				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+
 		} else if job.Action == token.J_TERMINATE {
 			debugHTTP("Terminate %s", job.InstanceId)
-			// terminate the process
+			err := raws.Terminate(creds, job.Region, job.InstanceId)
+			if err != nil {
+				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
+
+		writeResponse(w, http.StatusOK, "OK")
 	}
 }
 
@@ -93,7 +117,8 @@ func MakeTerminateLink(tokenSecret, apiUrl, region, id string) (string, error) {
 	return makeURL(apiUrl, "terminate", term), nil
 }
 
-func MakeIgnoreLink(tokenSecret, apiUrl, region, id string, duration time.Duration) (string, error) {
+func MakeIgnoreLink(tokenSecret, apiUrl, region, id string,
+	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
 		token.NewDelayJob(region, id,
 			time.Now().Add(duration)))

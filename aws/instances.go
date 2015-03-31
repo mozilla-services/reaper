@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	debug    = Debug("reaper:aws")
+	debugAWS = Debug("reaper:aws")
 	debugAll = Debug("reaper:aws:AllInstances")
 )
 
@@ -62,8 +62,6 @@ func (s *State) String() string {
 type Instances []*Instance
 type Instance struct {
 	id         string
-	api        *ec2.EC2
-	instance   *ec2.Instance
 	region     string
 	state      string
 	launchTime time.Time
@@ -74,7 +72,7 @@ type Instance struct {
 	reaper *State
 }
 
-func NewInstance(region string, api *ec2.EC2, instance *ec2.Instance) *Instance {
+func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	// ughhhhhh pointers to strings suck
 	_id := "nil"
@@ -93,7 +91,6 @@ func NewInstance(region string, api *ec2.EC2, instance *ec2.Instance) *Instance 
 	i := Instance{
 		id:         _id,
 		region:     region, // passed in cause not possible to extract out of api
-		api:        api,
 		state:      _state,
 		launchTime: instance.LaunchTime,
 		tags:       make(map[string]string),
@@ -141,36 +138,30 @@ func (i *Instance) Tag(t string) string { return i.tags[t] }
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
-// state transitions
-
-func (i *Instance) UpdateReaperState(newState *State) error {
-
-	i.reaper = newState
-
+func UpdateReaperState(creds aws.CredentialsProvider, region, instanceId string, newState *State) error {
+	debugAWS("UpdateReaperState region:%s instance: %s", region, instanceId)
 	req := &ec2.CreateTagsRequest{
 		DryRun:    aws.False(),
-		Resources: []string{i.Id()},
+		Resources: []string{instanceId},
 		Tags: []ec2.Tag{
 			ec2.Tag{
 				Key:   aws.String(REAPER_TAG),
-				Value: aws.String(i.Reaper().String()),
+				Value: aws.String(newState.String()),
 			},
 		},
 	}
 
-	return i.api.CreateTags(req)
+	api := ec2.New(creds, region, nil)
+	return api.CreateTags(req)
 }
 
-func (i *Instance) Ignore(until time.Time) error {
-	return nil
-}
-
-func (i *Instance) Terminate() error {
+func Terminate(creds aws.CredentialsProvider, region, instanceId string) error {
+	api := ec2.New(creds, region, nil)
 	req := &ec2.TerminateInstancesRequest{
-		InstanceIDs: []string{i.Id()},
+		InstanceIDs: []string{instanceId},
 	}
 
-	resp, err := i.api.TerminateInstances(req)
+	resp, err := api.TerminateInstances(req)
 
 	if err != nil {
 		return err
@@ -181,7 +172,6 @@ func (i *Instance) Terminate() error {
 	}
 
 	return nil
-
 }
 
 func ParseState(state string) (defaultState *State) {
@@ -254,7 +244,7 @@ func AllInstances(endpoints EndpointMap) Instances {
 			for _, r := range resp.Reservations {
 				for _, instance := range r.Instances {
 					sum += 1
-					in <- NewInstance(region, api, &instance)
+					in <- NewInstance(region, &instance)
 				}
 			}
 

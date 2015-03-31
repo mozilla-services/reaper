@@ -24,7 +24,10 @@ func TestTokenizationWorks(t *testing.T) {
 		t.Error(err2)
 	}
 
-	if !j.Equal(j2) {
+	j1j := string(j.JSON())
+	j2j := string(j2.JSON())
+
+	if j1j != j2j {
 		t.Error("Tokenization integrity failed")
 	}
 }

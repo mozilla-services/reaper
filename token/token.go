@@ -17,13 +17,13 @@ import (
 )
 
 const (
-	DELIMIT       = "|"
-	SCRYPT_N      = 16384
-	SCRYPT_p      = 1
-	SCRYPT_r      = 8
-	SCRYPT_keyLen = 32
+	tag_delimiter = "|"
+	scrypt_n      = 16384
+	scrypt_p      = 1
+	scrypt_r      = 8
+	scrypt_keyLen = 32
 
-	TokenDuration = time.Duration(8 * 24 * time.Hour)
+	tokenDuration = time.Duration(8 * 24 * time.Hour)
 )
 
 //go:generate stringer -type=Type
@@ -43,25 +43,6 @@ type JobToken struct {
 	ValidUntil  time.Time
 }
 
-func NewDelayJob(region, instanceId string, until time.Time) *JobToken {
-	return &JobToken{
-		Action:      J_DELAY,
-		InstanceId:  instanceId,
-		Region:      region,
-		IgnoreUntil: until,
-		ValidUntil:  time.Now().Add(TokenDuration),
-	}
-}
-
-func NewTerminateJob(region, instanceId string) *JobToken {
-	return &JobToken{
-		Action:     J_TERMINATE,
-		InstanceId: instanceId,
-		Region:     region,
-		ValidUntil: time.Now().Add(TokenDuration),
-	}
-}
-
 func (j *JobToken) JSON() []byte {
 	b, _ := json.Marshal(j)
 	return b
@@ -78,7 +59,26 @@ func (j *JobToken) Expired() bool {
 	return j.ValidUntil.Before(time.Now())
 }
 
-func Encrypt(key []byte, j *JobToken) ([]byte, error) {
+func NewDelayJob(region, instanceId string, until time.Time) *JobToken {
+	return &JobToken{
+		Action:      J_DELAY,
+		InstanceId:  instanceId,
+		Region:      region,
+		IgnoreUntil: until,
+		ValidUntil:  time.Now().Add(tokenDuration),
+	}
+}
+
+func NewTerminateJob(region, instanceId string) *JobToken {
+	return &JobToken{
+		Action:     J_TERMINATE,
+		InstanceId: instanceId,
+		Region:     region,
+		ValidUntil: time.Now().Add(tokenDuration),
+	}
+}
+
+func encryptToken(key []byte, j *JobToken) ([]byte, error) {
 
 	jsonData := j.JSON()
 
@@ -89,7 +89,7 @@ func Encrypt(key []byte, j *JobToken) ([]byte, error) {
 		return nil, err
 	}
 
-	sKey, serr := scrypt.Key(key, iv, SCRYPT_N, SCRYPT_r, SCRYPT_p, SCRYPT_keyLen)
+	sKey, serr := scrypt.Key(key, iv, scrypt_n, scrypt_r, scrypt_p, scrypt_keyLen)
 
 	if serr != nil {
 		return nil, serr
@@ -105,7 +105,7 @@ func Encrypt(key []byte, j *JobToken) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func Decrypt(key, ciphertext []byte) ([]byte, error) {
+func decryptToken(key, ciphertext []byte) ([]byte, error) {
 
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
@@ -116,7 +116,7 @@ func Decrypt(key, ciphertext []byte) ([]byte, error) {
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
 
-	sKey, serr := scrypt.Key(key, iv, SCRYPT_N, SCRYPT_r, SCRYPT_p, SCRYPT_keyLen)
+	sKey, serr := scrypt.Key(key, iv, scrypt_n, scrypt_r, scrypt_p, scrypt_keyLen)
 
 	if serr != nil {
 		return nil, serr
@@ -134,7 +134,7 @@ func Decrypt(key, ciphertext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func HMAC(key, data []byte) []byte {
+func makeHMAC(key, data []byte) []byte {
 	mac := hmac.New(sha256.New, key)
 	mac.Write(data)
 	return mac.Sum(nil)
@@ -143,14 +143,14 @@ func HMAC(key, data []byte) []byte {
 func Tokenize(password string, j *JobToken) (string, error) {
 	key := []byte(password)
 
-	ciphertext, err := Encrypt(key, j)
+	ciphertext, err := encryptToken(key, j)
 	if err != nil {
 		return "", err
 	}
 
-	hmac := HMAC(key, ciphertext)
+	hmac := makeHMAC(key, ciphertext)
 	return (base64.URLEncoding.EncodeToString(ciphertext) +
-		DELIMIT + base64.URLEncoding.EncodeToString(hmac)), nil
+		tag_delimiter + base64.URLEncoding.EncodeToString(hmac)), nil
 }
 
 func Untokenize(password, t string) (j *JobToken, err error) {
@@ -158,7 +158,7 @@ func Untokenize(password, t string) (j *JobToken, err error) {
 	var ciphertext, hmacVerify, jsonData []byte
 	key := []byte(password)
 
-	parts := strings.Split(t, DELIMIT)
+	parts := strings.Split(t, tag_delimiter)
 
 	if len(parts) != 2 {
 		return nil, errors.New("Invalid token")
@@ -176,11 +176,11 @@ func Untokenize(password, t string) (j *JobToken, err error) {
 		return
 	}
 
-	if !hmac.Equal(hmacVerify, HMAC(key, ciphertext)) {
+	if !hmac.Equal(hmacVerify, makeHMAC(key, ciphertext)) {
 		return nil, errors.New("HMAC check failed")
 	}
 
-	jsonData, err = Decrypt(key, ciphertext)
+	jsonData, err = decryptToken(key, ciphertext)
 
 	if err != nil {
 		return

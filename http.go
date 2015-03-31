@@ -77,7 +77,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		creds := aws.DetectCreds(
 			h.conf.AWS.AccessID,
 			h.conf.AWS.AccessSecret,
-			h.conf.AWS.Token,
+			"",
 		)
 		_ = creds
 

@@ -61,7 +61,7 @@ func (r *Reaper) awsCreds() aws.CredentialsProvider {
 	return aws.DetectCreds(
 		r.conf.AWS.AccessID,
 		r.conf.AWS.AccessSecret,
-		r.conf.AWS.Token,
+		"",
 	)
 }
 

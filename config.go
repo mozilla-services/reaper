@@ -123,7 +123,6 @@ func (s *SMTPConfig) PlainAuth() smtp.Auth {
 type AWSConfig struct {
 	AccessID     string
 	AccessSecret string
-	Token        string
 	Regions      []string
 }
 

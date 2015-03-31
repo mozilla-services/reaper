@@ -42,9 +42,9 @@ func (s StateEnum) String() string {
 }
 
 const (
-	REAPER_TAG = "REAPER"
-	S_SEP      = "|"
-	S_TFORMAT  = "2006-01-02 03:04PM MST"
+	reaper_tag = "REAPER"
+	s_sep      = "|"
+	s_tformat  = "2006-01-02 03:04PM MST"
 )
 
 type State struct {
@@ -56,7 +56,7 @@ type State struct {
 
 func (s *State) Visible() bool { return time.Now().After(s.Until) }
 func (s *State) String() string {
-	return s.State.String() + S_SEP + s.Until.Format(S_TFORMAT)
+	return s.State.String() + s_sep + s.Until.Format(s_tformat)
 }
 
 type Instances []*Instance
@@ -100,7 +100,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.tags[*tag.Key] = *tag.Value
 	}
 
-	i.reaper = ParseState(i.tags[REAPER_TAG])
+	i.reaper = ParseState(i.tags[reaper_tag])
 
 	return &i
 }
@@ -145,7 +145,7 @@ func UpdateReaperState(creds aws.CredentialsProvider, region, instanceId string,
 		Resources: []string{instanceId},
 		Tags: []ec2.Tag{
 			ec2.Tag{
-				Key:   aws.String(REAPER_TAG),
+				Key:   aws.String(reaper_tag),
 				Value: aws.String(newState.String()),
 			},
 		},
@@ -182,7 +182,7 @@ func ParseState(state string) (defaultState *State) {
 		return
 	}
 
-	s := strings.Split(state, S_SEP)
+	s := strings.Split(state, s_sep)
 
 	if len(s) != 2 {
 		return
@@ -202,7 +202,7 @@ func ParseState(state string) (defaultState *State) {
 		return
 	}
 
-	t, err := time.Parse(S_TFORMAT, s[1])
+	t, err := time.Parse(s_tformat, s[1])
 	if err != nil {
 		return
 	}

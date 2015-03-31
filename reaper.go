@@ -2,16 +2,18 @@ package reaper
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
-	raws "github.com/mostlygeek/reaper/aws"
+	"github.com/awslabs/aws-sdk-go/gen/ec2"
 	"github.com/mostlygeek/reaper/filter"
 	"github.com/tj/go-debug"
 )
 
 var (
-	debugReaper = debug.Debug("reaper:reaper")
+	debugReaper  = debug.Debug("reaper:reaper")
+	debugAllInst = debug.Debug("reaper:reaper:allInstances")
 )
 
 type Reaper struct {
@@ -69,8 +71,7 @@ func (r *Reaper) Once() {
 	// make a list of all eligible instances
 	creds := r.awsCreds()
 
-	endpoints := raws.NewEndpoints(creds, r.conf.AWS.Regions, nil)
-	instances := raws.AllInstances(endpoints)
+	instances := allInstances(creds, r.conf.AWS.Regions)
 
 	filtered := instances.
 		Filter(filter.Running).
@@ -89,15 +90,14 @@ func (r *Reaper) Once() {
 		}
 
 		switch i.Reaper().State {
-		case raws.STATE_START, raws.STATE_IGNORE:
+		case STATE_START, STATE_IGNORE:
 			r.sendNotification(i, 1)
-		case raws.STATE_NOTIFY1:
+		case STATE_NOTIFY1:
 			r.sendNotification(i, 2)
-		case raws.STATE_NOTIFY2:
+		case STATE_NOTIFY2:
 			r.terminate(i)
 		}
 	}
-
 }
 
 func (r *Reaper) info(format string, values ...interface{}) {
@@ -108,7 +108,7 @@ func (r *Reaper) info(format string, values ...interface{}) {
 	}
 }
 
-func (r *Reaper) terminateUnowned(i *raws.Instance) error {
+func (r *Reaper) terminateUnowned(i *Instance) error {
 	r.info("Terminate UNOWNED instance (%s) %s, owner tag: %s",
 		i.Id(), i.Name(), i.Tag("Owner"))
 
@@ -116,7 +116,7 @@ func (r *Reaper) terminateUnowned(i *raws.Instance) error {
 		return nil
 	}
 
-	if err := raws.Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
+	if err := Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("Terminate %s error: %s", i.Id(), err.Error()))
 		return err
 	}
@@ -125,9 +125,9 @@ func (r *Reaper) terminateUnowned(i *raws.Instance) error {
 
 }
 
-func (r *Reaper) terminate(i *raws.Instance) error {
+func (r *Reaper) terminate(i *Instance) error {
 	r.info("TERMINATE %s notify2 => terminate", i.Id())
-	if err := raws.Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
+	if err := Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("%s failed to terminate error: %s",
 			i.Id()), err.Error())
 		return err
@@ -135,30 +135,29 @@ func (r *Reaper) terminate(i *raws.Instance) error {
 	return nil
 }
 
-func (r *Reaper) sendNotification(i *raws.Instance, notifyNum int) error {
+func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 	r.info("Send Notification #%d %s", notifyNum, i.Id())
 	if r.dryrun {
 		return nil
 	}
 
-	var newState raws.StateEnum
+	var newState StateEnum
 	var until time.Time
 	switch notifyNum {
 	case 2:
-		newState = raws.STATE_NOTIFY2
+		newState = STATE_NOTIFY2
 		until = time.Now().Add(r.conf.Reaper.Terminate.Duration)
 	default:
-		newState = raws.STATE_NOTIFY1
+		newState = STATE_NOTIFY1
 		until = time.Now().Add(r.conf.Reaper.SecondNotification.Duration)
 	}
 
-	// TODO: Send the notification here..
 	if err := r.mailer.Notify(notifyNum, i); err != nil {
 		debugReaper("Notify %d for %s error %s", notifyNum, i.Id(), err.Error())
 		return err
 	}
 
-	err := raws.UpdateReaperState(r.awsCreds(), i.Region(), i.Id(), &raws.State{
+	err := UpdateReaperState(r.awsCreds(), i.Region(), i.Id(), &State{
 		State: newState,
 		Until: until,
 	})
@@ -170,4 +169,63 @@ func (r *Reaper) sendNotification(i *raws.Instance, notifyNum int) error {
 	}
 
 	return nil
+}
+
+// allInstances describes every instance in the requested regions
+func allInstances(creds aws.CredentialsProvider, regions []string) Instances {
+
+	apis := make(map[string]*ec2.EC2)
+
+	for _, region := range regions {
+		apis[region] = ec2.New(creds, region, nil)
+	}
+
+	var wg sync.WaitGroup
+	in := make(chan *Instance)
+
+	// fetch all info in parallel
+	for region, api := range apis {
+		debugAllInst("DescribeInstances in %s", region)
+		wg.Add(1)
+		go func(region string, api *ec2.EC2) {
+			defer wg.Done()
+
+			resp, err := api.DescribeInstances(nil)
+			if err != nil {
+				// probably should do something here...
+				return
+			}
+
+			sum := 0
+			for _, r := range resp.Reservations {
+				for _, instance := range r.Instances {
+					sum += 1
+					in <- NewInstance(region, &instance)
+				}
+			}
+
+			debugAllInst("Found %d instances in %s", sum, region)
+
+		}(region, api)
+	}
+
+	var list Instances
+	done := make(chan struct{})
+
+	// build up the list
+	go func() {
+		for i := range in {
+			list = append(list, i)
+		}
+		done <- struct{}{}
+	}()
+
+	// wait for all the fetches to finish publishing
+	wg.Wait()
+	close(in)
+
+	// wait for appending goroutine to be done
+	<-done
+
+	return list
 }

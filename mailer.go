@@ -8,7 +8,6 @@ import (
 	"net/smtp"
 	"time"
 
-	"github.com/mostlygeek/reaper/aws"
 	. "github.com/tj/go-debug"
 )
 
@@ -87,7 +86,7 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	)
 }
 
-func (m *Mailer) Notify(notifyNum int, i *aws.Instance) (err error) {
+func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 
 	if i.Owner() == nil {
 		return fmt.Errorf("instance %i has no owner to notify", i.Id())

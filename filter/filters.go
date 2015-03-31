@@ -1,49 +1,61 @@
 package filter
 
-import (
-	"time"
+import "time"
 
-	"github.com/mostlygeek/reaper/aws"
-)
+type FilterableInstance interface {
+	Id() string
+	Region() string
+	State() string
+	Owned() bool
+	LaunchTime() time.Time
+	Tagged(string) bool
 
-func Owned(i *aws.Instance) bool    { return i.Owned() }
-func NotOwned(i *aws.Instance) bool { return !Owned(i) }
+	ReaperVisible() bool
+	ReaperStarted() bool
+	ReaperNotified(int) bool
+	ReaperIgnored() bool
+}
 
-func AutoScaled(i *aws.Instance) bool    { return i.AutoScaled() }
-func NotAutoscaled(i *aws.Instance) bool { return !AutoScaled(i) }
+type FilterFunc func(FilterableInstance) bool
 
-//func TimeoutExpired(i *aws.Instance) bool { }
+func Owned(i FilterableInstance) bool    { return i.Owned() }
+func NotOwned(i FilterableInstance) bool { return !i.Owned() }
 
-func Id(id string) aws.FilterFunc {
-	return func(i *aws.Instance) bool {
+func AutoScaled(i FilterableInstance) bool {
+	return i.Tagged("aws:autoscaling:groupName")
+}
+func NotAutoscaled(i FilterableInstance) bool { return !AutoScaled(i) }
+
+func Id(id string) FilterFunc {
+	return func(i FilterableInstance) bool {
 		return i.Id() == id
 	}
 }
 
-func Not(f aws.FilterFunc) aws.FilterFunc {
-	return func(i *aws.Instance) bool {
+func Not(f FilterFunc) FilterFunc {
+	return func(i FilterableInstance) bool {
 		return !f(i)
 	}
 }
 
-func Tagged(tag string) aws.FilterFunc {
-	return func(i *aws.Instance) bool {
+func Tagged(tag string) FilterFunc {
+	return func(i FilterableInstance) bool {
 		return i.Tagged(tag)
 	}
 }
 
-func Running(i *aws.Instance) bool {
+func Running(i FilterableInstance) bool {
 	return i.State() == "running"
 }
 
 // ReaperReady creates a FilterFunc that checks if the instance is qualified
 // additional reaper work
-func ReaperReady(runningTime time.Duration) aws.FilterFunc {
-	return func(i *aws.Instance) bool {
-		if i.Reaper().State == aws.STATE_START {
+func ReaperReady(runningTime time.Duration) FilterFunc {
+	return func(i FilterableInstance) bool {
+		if i.ReaperStarted() {
 			return i.LaunchTime().Add(runningTime).Before(time.Now())
 		} else {
-			return i.Reaper().Until.Before(time.Now())
+			return i.ReaperVisible()
 		}
 	}
 }

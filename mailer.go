@@ -20,9 +20,7 @@ var (
 const notifyTemplateSource = `
 <html>
 <body>
-	<p>Ahoy, </p>
-
-	<p>Your EC2 instance "{{.Name}}" ({{.Id}}) is scheduled to be terminated.</p>
+	<p>Your EC2 instance "{{.Name}}" ({{.Id}}) in {{.Region}} is scheduled to be terminated.</p>
 
 	<p>
 		You may ignore this message and your instance will be automatically
@@ -148,6 +146,7 @@ func (m *Mailer) Notify(notifyNum int, i *aws.Instance) (err error) {
 		"Id":            i.Id(),
 		"Name":          i.Name(),
 		"Host":          m.conf.HTTPApiURL,
+		"Region":        i.Region(),
 		"TerminateDate": dispTime,
 		"terminateLink": term,
 		"delay1DLink":   delay1,

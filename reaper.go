@@ -57,7 +57,7 @@ func (r *Reaper) start() {
 	}
 }
 
-func (r *Reaper) AWSCreds() aws.CredentialsProvider {
+func (r *Reaper) awsCreds() aws.CredentialsProvider {
 	return aws.DetectCreds(
 		r.conf.AWS.AccessID,
 		r.conf.AWS.AccessSecret,
@@ -67,7 +67,7 @@ func (r *Reaper) AWSCreds() aws.CredentialsProvider {
 
 func (r *Reaper) Once() {
 	// make a list of all eligible instances
-	creds := r.AWSCreds()
+	creds := r.awsCreds()
 
 	endpoints := raws.NewEndpoints(creds, r.conf.AWS.Regions, nil)
 	instances := raws.AllInstances(endpoints)
@@ -116,7 +116,7 @@ func (r *Reaper) terminateUnowned(i *raws.Instance) error {
 		return nil
 	}
 
-	if err := raws.Terminate(r.AWSCreds(), i.Region(), i.Id()); err != nil {
+	if err := raws.Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("Terminate %s error: %s", i.Id(), err.Error()))
 		return err
 	}
@@ -127,7 +127,7 @@ func (r *Reaper) terminateUnowned(i *raws.Instance) error {
 
 func (r *Reaper) terminate(i *raws.Instance) error {
 	r.info("TERMINATE %s notify2 => terminate", i.Id())
-	if err := raws.Terminate(r.AWSCreds(), i.Region(), i.Id()); err != nil {
+	if err := raws.Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("%s failed to terminate error: %s",
 			i.Id()), err.Error())
 		return err
@@ -158,7 +158,7 @@ func (r *Reaper) sendNotification(i *raws.Instance, notifyNum int) error {
 		return err
 	}
 
-	err := raws.UpdateReaperState(r.AWSCreds(), i.Region(), i.Id(), &raws.State{
+	err := raws.UpdateReaperState(r.awsCreds(), i.Region(), i.Id(), &raws.State{
 		State: newState,
 		Until: until,
 	})

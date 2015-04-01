@@ -30,7 +30,6 @@ func NewReaper(c Config, m *Mailer, l *Logger) *Reaper {
 		conf:   c,
 		mailer: m,
 		log:    l,
-		stopCh: make(chan struct{}),
 	}
 }
 
@@ -38,11 +37,15 @@ func (r *Reaper) DryRunOn()  { r.dryrun = true }
 func (r *Reaper) DryRunOff() { r.dryrun = false }
 
 func (r *Reaper) Start() {
+	if r.stopCh != nil {
+		return
+	}
+	r.stopCh = make(chan struct{})
 	go r.start()
 }
 
 func (r *Reaper) Stop() {
-	defer close(r.stopCh)
+	close(r.stopCh)
 }
 
 func (r *Reaper) start() {
@@ -53,7 +56,7 @@ func (r *Reaper) start() {
 		select {
 		case <-time.After(r.conf.Reaper.Interval.Duration):
 		case <-r.stopCh: // time to exit!
-			debugReaper("Stopping reaper")
+			debugReaper("Stopping reaper on stop channel message")
 			return
 		}
 	}
@@ -73,6 +76,7 @@ func (r *Reaper) Once() {
 
 	instances := allInstances(creds, r.conf.AWS.Regions)
 
+	// This is where we qualify instances
 	filtered := instances.
 		Filter(filter.Running).
 		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).

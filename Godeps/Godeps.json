@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/mostlygeek/reaper",
 	"GoVersion": "go1.4.1",
-	"Packages": [
-		"."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
@@ -23,8 +20,21 @@
 			"Rev": "295e08b503c4ee9fbcdc9aa1aa06966a16364e5a"
 		},
 		{
+			"ImportPath": "github.com/tj/go-debug",
+			"Comment": "v2.0.0",
+			"Rev": "ff4a55a20a86994118644bbddc6a216da193cc13"
+		},
+		{
 			"ImportPath": "github.com/vaughan0/go-ini",
 			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/pbkdf2",
+			"Rev": "1351f936d976c60a0a48d728281922cf63eafb8d"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/scrypt",
+			"Rev": "1351f936d976c60a0a48d728281922cf63eafb8d"
 		}
 	]
 }

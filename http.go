@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -21,14 +22,31 @@ const (
 )
 
 type HTTPApi struct {
-	conf Config
+	conf   Config
+	server *http.Server
+	ln     net.Listener
 }
 
 // Serve should be run in a goroutine
-func (h *HTTPApi) Serve() error {
-	http.HandleFunc("/", processToken(h))
+func (h *HTTPApi) Serve() (e error) {
+	h.ln, e = net.Listen("tcp", h.conf.HTTPListen)
+
+	if e != nil {
+		return
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", processToken(h))
+	h.server = &http.Server{Handler: mux}
+
 	debugHTTP("Starting HTTP server: %s", h.conf.HTTPListen)
-	return http.ListenAndServe(h.conf.HTTPListen, nil)
+	go h.server.Serve(h.ln)
+	return nil
+}
+
+// Stop will close the listener, it waits for nothing
+func (h *HTTPApi) Stop() (e error) {
+	return h.ln.Close()
 }
 
 func NewHTTPApi(c Config) *HTTPApi {

@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/mostlygeek/reaper"
 	. "github.com/tj/go-debug"
@@ -56,21 +58,22 @@ func main() {
 		reapRunner.DryRunOff()
 	}
 
-	stopChan := make(chan struct{})
-
-	// start the http server
-	// eww.. this seems ugly. the reason is because http.ListenAndServe has
-	// no way (unless I write it) to gracefully stop it
-	// this is a TODO
-	go func(httpSvr *reaper.HTTPApi) {
-		err := httpSvr.Serve()
-		debug("HTTP Fail: %s", err.Error())
-		close(stopChan)
-	}(reaper.NewHTTPApi(*Conf))
-
 	// Run the reaper process
 	reapRunner.Start()
 
-	// wait in case the http server fails
-	<-stopChan
+	// run the HTTP server
+	api := reaper.NewHTTPApi(*Conf)
+	if err := api.Serve(); err != nil {
+		log.Error(err.Error())
+	} else {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, os.Kill)
+
+		sig := <-c
+		log.Info(fmt.Sprintf("Got signal %s, stopping services", sig.String()))
+		log.Info("Stopping HTTP")
+		api.Stop()
+		log.Info("Stopping reaper runner")
+		reapRunner.Stop()
+	}
 }

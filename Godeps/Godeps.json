@@ -9,15 +9,31 @@
 		},
 		{
 			"ImportPath": "github.com/awslabs/aws-sdk-go/aws",
-			"Rev": "295e08b503c4ee9fbcdc9aa1aa06966a16364e5a"
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
 		},
 		{
-			"ImportPath": "github.com/awslabs/aws-sdk-go/gen/ec2",
-			"Rev": "295e08b503c4ee9fbcdc9aa1aa06966a16364e5a"
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/endpoints",
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
 		},
 		{
-			"ImportPath": "github.com/awslabs/aws-sdk-go/gen/endpoints",
-			"Rev": "295e08b503c4ee9fbcdc9aa1aa06966a16364e5a"
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/ec2query",
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/query/queryutil",
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/internal/signer/v4",
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
+		},
+		{
+			"ImportPath": "github.com/awslabs/aws-sdk-go/service/ec2",
+			"Rev": "ca42d7a24bccc74ea13de0f0de66f31e2671026e"
 		},
 		{
 			"ImportPath": "github.com/tj/go-debug",

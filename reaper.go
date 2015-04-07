@@ -177,17 +177,33 @@ func allInstances(regions []string) Instances {
 		go func(region string) {
 			defer wg.Done()
 			api := ec2.New(&aws.Config{Region: region})
-			resp, err := api.DescribeInstances(nil)
-			if err != nil {
-				// probably should do something here...
-				return
-			}
 
+			// repeat until we have everything
+			var nextToken *string
 			sum := 0
-			for _, r := range resp.Reservations {
-				for _, instance := range r.Instances {
-					sum += 1
-					in <- NewInstance(region, instance)
+			for done := false; done != true; {
+				input := &ec2.DescribeInstancesInput{
+					MaxResults: aws.Long(1000),
+					NextToken:  nextToken,
+				}
+				resp, err := api.DescribeInstances(input)
+				if err != nil {
+					// probably should do something here...
+					return
+				}
+
+				for _, r := range resp.Reservations {
+					for _, instance := range r.Instances {
+						sum += 1
+						in <- NewInstance(region, instance)
+					}
+				}
+
+				if resp.NextToken != nil {
+					debugAllInst("More results for DescribeInstances in %s", region)
+					nextToken = resp.NextToken
+				} else {
+					done = true
 				}
 			}
 

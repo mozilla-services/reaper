@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
-	"github.com/awslabs/aws-sdk-go/gen/ec2"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper/filter"
 	. "github.com/tj/go-debug"
 )
@@ -74,6 +74,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	// ughhhhhh pointers to strings suck
 	_id := "nil"
 	_state := "nil"
+	var _launch time.Time
 
 	if instance.InstanceID != nil {
 		_id = *instance.InstanceID
@@ -85,11 +86,17 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		}
 	}
 
+	if instance.LaunchTime != nil {
+		_launch = *instance.LaunchTime
+	} else {
+		_launch = time.Time{}
+	}
+
 	i := Instance{
 		id:         _id,
 		region:     region, // passed in cause not possible to extract out of api
 		state:      _state,
-		launchTime: instance.LaunchTime,
+		launchTime: _launch,
 		tags:       make(map[string]string),
 	}
 
@@ -155,27 +162,28 @@ func (i *Instance) ReaperIgnored() bool {
 	return i.reaper.State == STATE_IGNORE
 }
 
-func UpdateReaperState(creds aws.CredentialsProvider, region, instanceId string, newState *State) error {
+func UpdateReaperState(region, instanceId string, newState *State) error {
 	debugAWS("UpdateReaperState region:%s instance: %s", region, instanceId)
-	req := &ec2.CreateTagsRequest{
-		DryRun:    aws.False(),
-		Resources: []string{instanceId},
-		Tags: []ec2.Tag{
-			ec2.Tag{
+	req := &ec2.CreateTagsInput{
+		DryRun:    aws.Boolean(false),
+		Resources: []*string{aws.String(instanceId)},
+		Tags: []*ec2.Tag{
+			&ec2.Tag{
 				Key:   aws.String(reaper_tag),
 				Value: aws.String(newState.String()),
 			},
 		},
 	}
 
-	api := ec2.New(creds, region, nil)
-	return api.CreateTags(req)
+	api := ec2.New(&aws.Config{Region: region})
+	_, err := api.CreateTags(req)
+	return err
 }
 
-func Terminate(creds aws.CredentialsProvider, region, instanceId string) error {
-	api := ec2.New(creds, region, nil)
-	req := &ec2.TerminateInstancesRequest{
-		InstanceIDs: []string{instanceId},
+func Terminate(region, instanceId string) error {
+	api := ec2.New(&aws.Config{Region: region})
+	req := &ec2.TerminateInstancesInput{
+		InstanceIDs: []*string{aws.String(instanceId)},
 	}
 
 	resp, err := api.TerminateInstances(req)

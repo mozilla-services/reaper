@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
-	"github.com/awslabs/aws-sdk-go/gen/ec2"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper/filter"
 	"github.com/tj/go-debug"
 )
@@ -62,19 +62,8 @@ func (r *Reaper) start() {
 	}
 }
 
-func (r *Reaper) awsCreds() aws.CredentialsProvider {
-	return aws.DetectCreds(
-		r.conf.AWS.AccessID,
-		r.conf.AWS.AccessSecret,
-		"",
-	)
-}
-
 func (r *Reaper) Once() {
-	// make a list of all eligible instances
-	creds := r.awsCreds()
-
-	instances := allInstances(creds, r.conf.AWS.Regions)
+	instances := allInstances(r.conf.AWS.Regions)
 
 	// This is where we qualify instances
 	filtered := instances.
@@ -120,7 +109,7 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 		return nil
 	}
 
-	if err := Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
+	if err := Terminate(i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("Terminate %s error: %s", i.Id(), err.Error()))
 		return err
 	}
@@ -131,7 +120,7 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 
 func (r *Reaper) terminate(i *Instance) error {
 	r.info("TERMINATE %s notify2 => terminate", i.Id())
-	if err := Terminate(r.awsCreds(), i.Region(), i.Id()); err != nil {
+	if err := Terminate(i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("%s failed to terminate error: %s",
 			i.Id()), err.Error())
 		return err
@@ -161,7 +150,7 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 		return err
 	}
 
-	err := UpdateReaperState(r.awsCreds(), i.Region(), i.Id(), &State{
+	err := UpdateReaperState(i.Region(), i.Id(), &State{
 		State: newState,
 		Until: until,
 	})
@@ -176,24 +165,18 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 }
 
 // allInstances describes every instance in the requested regions
-func allInstances(creds aws.CredentialsProvider, regions []string) Instances {
-
-	apis := make(map[string]*ec2.EC2)
-
-	for _, region := range regions {
-		apis[region] = ec2.New(creds, region, nil)
-	}
+func allInstances(regions []string) Instances {
 
 	var wg sync.WaitGroup
 	in := make(chan *Instance)
 
 	// fetch all info in parallel
-	for region, api := range apis {
+	for _, region := range regions {
 		debugAllInst("DescribeInstances in %s", region)
 		wg.Add(1)
-		go func(region string, api *ec2.EC2) {
+		go func(region string) {
 			defer wg.Done()
-
+			api := ec2.New(&aws.Config{Region: region})
 			resp, err := api.DescribeInstances(nil)
 			if err != nil {
 				// probably should do something here...
@@ -204,13 +187,13 @@ func allInstances(creds aws.CredentialsProvider, regions []string) Instances {
 			for _, r := range resp.Reservations {
 				for _, instance := range r.Instances {
 					sum += 1
-					in <- NewInstance(region, &instance)
+					in <- NewInstance(region, instance)
 				}
 			}
 
 			debugAllInst("Found %d instances in %s", sum, region)
 
-		}(region, api)
+		}(region)
 	}
 
 	var list Instances

@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/mostlygeek/reaper/token"
 	. "github.com/tj/go-debug"
 )
@@ -91,16 +90,9 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		creds := aws.DetectCreds(
-			h.conf.AWS.AccessID,
-			h.conf.AWS.AccessSecret,
-			"",
-		)
-		_ = creds
-
 		if job.Action == token.J_DELAY {
 			debugHTTP("Delay %s in %s until %s", job.InstanceId, job.Region, job.IgnoreUntil.String())
-			err := UpdateReaperState(creds, job.Region, job.InstanceId, &State{
+			err := UpdateReaperState(job.Region, job.InstanceId, &State{
 				State: STATE_IGNORE,
 				Until: job.IgnoreUntil,
 			})
@@ -112,7 +104,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 
 		} else if job.Action == token.J_TERMINATE {
 			debugHTTP("Terminate %s", job.InstanceId)
-			err := Terminate(creds, job.Region, job.InstanceId)
+			err := Terminate(job.Region, job.InstanceId)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return

@@ -121,9 +121,7 @@ func (s *SMTPConfig) PlainAuth() smtp.Auth {
 }
 
 type AWSConfig struct {
-	AccessID     string
-	AccessSecret string
-	Regions      []string
+	Regions []string
 }
 
 // controls behaviour of the EC2 single instance reaper works

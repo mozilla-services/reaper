@@ -185,6 +185,12 @@ func allInstances(regions []string) Instances {
 				input := &ec2.DescribeInstancesInput{
 					MaxResults: aws.Long(1000),
 					NextToken:  nextToken,
+					Filters: []*ec2.Filter{
+						&ec2.Filter{
+							Name:   aws.String("instance-state-name"),
+							Values: []*string{aws.String("running")},
+						},
+					},
 				}
 				resp, err := api.DescribeInstances(input)
 				if err != nil {

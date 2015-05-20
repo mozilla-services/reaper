@@ -199,6 +199,25 @@ func Terminate(region, instanceId string) error {
 	return nil
 }
 
+func Stop(region, instanceId string) error {
+	api := ec2.New(&aws.Config{Region: region})
+	req := &ec2.StopInstancesInput{
+		InstanceIDs: []*string{aws.String(instanceId)},
+	}
+
+	resp, err := api.StopInstances(req)
+
+	if err != nil {
+		return err
+	}
+
+	if len(resp.StoppingInstances) != 1 {
+		return fmt.Errorf("Instance could not be stopped")
+	}
+
+	return nil
+}
+
 func ParseState(state string) (defaultState *State) {
 
 	defaultState = &State{STATE_START, time.Time{}}

@@ -65,14 +65,19 @@ func (r *Reaper) start() {
 func (r *Reaper) Once() {
 	instances := allInstances(r.conf.AWS.Regions)
 
+	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
+
 	// This is where we qualify instances
 	filtered := instances.
 		Filter(filter.Running).
 		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
 		Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
-		Filter(filter.Tagged("REAP_ME"))
+		Filter(filter.Tagged("REAP_ME")).
+		// can be used to specify a time cutoff
+		Filter(filter.LaunchTimeBefore(time.Now().Add(-(time.Second))))
 
 	r.log.Info(fmt.Sprintf("Found %d instances", len(filtered)))
+
 	for _, i := range filtered {
 		// determine what to do next based on the last state
 
@@ -122,6 +127,16 @@ func (r *Reaper) terminate(i *Instance) error {
 	r.info("TERMINATE %s notify2 => terminate", i.Id())
 	if err := Terminate(i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("%s failed to terminate error: %s",
+			i.Id()), err.Error())
+		return err
+	}
+	return nil
+}
+
+func (r *Reaper) stop(i *Instance) error {
+	r.info("STOP %s notify2 => stop", i.Id())
+	if err := Stop(i.Region(), i.Id()); err != nil {
+		r.log.Error(fmt.Sprintf("%s failed to stop error: %s",
 			i.Id()), err.Error())
 		return err
 	}

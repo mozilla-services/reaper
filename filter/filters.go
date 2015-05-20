@@ -44,6 +44,24 @@ func Tagged(tag string) FilterFunc {
 	}
 }
 
+func LaunchTimeEqual(time time.Time) FilterFunc {
+	return func(i FilterableInstance) bool {
+		return i.LaunchTime().Equal(time)
+	}
+}
+
+func LaunchTimeAfter(time time.Time) FilterFunc {
+	return func(i FilterableInstance) bool {
+		return i.LaunchTime().After(time)
+	}
+}
+
+func LaunchTimeBefore(time time.Time) FilterFunc {
+	return func(i FilterableInstance) bool {
+		return i.LaunchTime().Before(time)
+	}
+}
+
 func Running(i FilterableInstance) bool {
 	return i.State() == "running"
 }

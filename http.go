@@ -60,7 +60,7 @@ func writeResponse(w http.ResponseWriter, code int, body string) {
 func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if err := req.ParseForm(); err != nil {
-			writeResponse(w, http.StatusBadRequest, "Bady query string")
+			writeResponse(w, http.StatusBadRequest, "Bad query string")
 			return
 		}
 

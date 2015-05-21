@@ -11,10 +11,6 @@ HTTPApiURL = "http://localhost:9000"
 HTTPListen = "localhost:9000"
 
 [AWS]
-# leave these blank to auto-detect / extra information from either 
-# an IAM role or environment variables
-AccessID     = ""
-AccessSecret = ""
 
 # what regions the reaper will look for ec2 servers in
 Regions      = [
@@ -23,6 +19,11 @@ Regions      = [
     "us-east-1",
     "eu-west-1",
 ]
+
+    [AWS.Filters]
+        [AWS.Filters.1]
+            Name = "instance-state-name"
+            Values = ["running"]
 
 [SMTP]
 Host = "localhost"

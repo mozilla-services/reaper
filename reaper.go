@@ -277,7 +277,6 @@ func allInstances(regions []string) Instances {
 				for _, r := range resp.Reservations {
 					for _, instance := range r.Instances {
 						sum += 1
-
 						in <- NewInstance(region, instance)
 					}
 				}

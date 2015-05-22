@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,7 +65,7 @@ func (r *Reaper) start() {
 }
 
 func (r *Reaper) Once() {
-	instances := allInstances(r.conf.AWS.Regions)
+	instances := allInstances(r.conf.AWS)
 
 	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
 
@@ -84,7 +85,6 @@ func (r *Reaper) Once() {
 
 	// This is where we qualify instances
 	filtered := instances.
-		Filter(filter.Running).
 		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
 		Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
 		Filter(filter.Tagged("REAP_ME")).
@@ -241,8 +241,9 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 }
 
 // allInstances describes every instance in the requested regions
-func allInstances(regions []string) Instances {
+func allInstances(conf AWSConfig) Instances {
 
+	regions := conf.Regions
 	var wg sync.WaitGroup
 	in := make(chan *Instance)
 
@@ -250,27 +251,48 @@ func allInstances(regions []string) Instances {
 	for _, region := range regions {
 		debugAllInst("DescribeInstances in %s", region)
 		wg.Add(1)
+
 		go func(region string) {
 			defer wg.Done()
 			api := ec2.New(&aws.Config{Region: region})
 
+			/* //uncomment to enable a whole bunch of debug output
+			api.Config.LogLevel = 1
+			api.AddDebugHandlers()
+			*/
+
 			// repeat until we have everything
 			var nextToken *string
 			sum := 0
+
+			// build the filter list
+			var filters []*ec2.Filter
+			for _, f := range conf.Filters {
+				filter := &ec2.Filter{Name: aws.String(f.Name)}
+				for _, v := range f.Values {
+					filter.Values = append(filter.Values, aws.String(v))
+				}
+				filters = append(filters, filter)
+			}
+
+			for _, f := range filters {
+				vals := make([]string, len(f.Values), len(f.Values))
+				for i, v := range f.Values {
+					vals[i] = *v
+				}
+				debugAllInst(" > filter %s: %s", *f.Name, strings.Join(vals, ", "))
+			}
+			_ = filters
+
 			for done := false; done != true; {
 				input := &ec2.DescribeInstancesInput{
-					MaxResults: aws.Long(1000),
-					NextToken:  nextToken,
-					Filters: []*ec2.Filter{
-						&ec2.Filter{
-							Name:   aws.String("instance-state-name"),
-							Values: []*string{aws.String("running")},
-						},
-					},
+					NextToken: nextToken,
+					Filters:   filters,
 				}
 				resp, err := api.DescribeInstances(input)
 				if err != nil {
 					// probably should do something here...
+					debugAllInst("EC2 error in %s: %s", region, err.Error())
 					return
 				}
 

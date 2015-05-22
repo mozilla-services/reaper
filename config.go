@@ -15,19 +15,7 @@ func LoadConfig(path string) (*Config, error) {
 		TokenSecret: "Default secrets are not safe",
 		HTTPApiURL:  "http://localhost",
 		HTTPListen:  "localhost:9000",
-		AWS: AWSConfig{
-			Regions: []string{
-				"us-west-1",
-				"us-west-2",
-				"us-east-1",
-				"eu-west-1",
-				"eu-central-1",
-				"ap-southeast-1",
-				"ap-southeast-2",
-				"ap-northeast-1",
-				"sa-east-1",
-			},
-		},
+		AWS:         AWSConfig{},
 		SMTP: SMTPConfig{
 			Host:     "localhost",
 			Port:     587,
@@ -120,8 +108,14 @@ func (s *SMTPConfig) PlainAuth() smtp.Auth {
 	return smtp.PlainAuth("", s.Username, s.Password, s.Host)
 }
 
+type Filter struct {
+	Name   string
+	Values []string
+}
+
 type AWSConfig struct {
 	Regions []string
+	Filters map[string]Filter
 }
 
 // controls behaviour of the EC2 single instance reaper works

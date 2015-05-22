@@ -106,7 +106,7 @@ func (r *Reaper) Once() {
 			r.terminateUnowned(i)
 
 			title := "Reaper terminated unowned instance"
-			text := fmt.Sprint("Unowned instance %s was terminated.", i.Id())
+			text := fmt.Sprintf("Unowned instance %s was terminated.", i.Id())
 
 			err = g.Event(title, text, nil, nil)
 
@@ -130,7 +130,7 @@ func (r *Reaper) Once() {
 			r.sendNotification(i, 2)
 
 			title := "Reaper sent notification 2"
-			text := fmt.Sprint("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id())
+			text := fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id())
 
 			err = g.Event(title, text, nil, nil)
 
@@ -142,7 +142,7 @@ func (r *Reaper) Once() {
 			r.terminate(i)
 
 			title := "Reaper terminated instance"
-			text := fmt.Sprint("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id())
+			text := fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id())
 
 			err = g.Event(title, text, nil, nil)
 

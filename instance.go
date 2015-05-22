@@ -129,7 +129,13 @@ func (i *Instance) Owned() (ok bool) { return i.Tagged("Owner") }
 // Owner extracts useful information out of the Owner tag which should
 // be parsable by mail.ParseAddress
 func (i *Instance) Owner() *mail.Address {
+	// properly formatted email
 	if addr, err := mail.ParseAddress(i.Tag("Owner")); err == nil {
+		return addr
+	}
+
+	// username -> mozilla.com email
+	if addr, err := mail.ParseAddress(fmt.Sprintf("%s@mozilla.com", i.Tag("Owner"))); i.Tagged("Owner") && err == nil {
 		return addr
 	}
 

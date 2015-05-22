@@ -86,7 +86,7 @@ func (r *Reaper) Once() {
 	// This is where we qualify instances
 	filtered := instances.
 		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
-		Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
+		// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
 		Filter(filter.Tagged("REAP_ME")).
 		// can be used to specify a time cutoff
 		Filter(filter.LaunchTimeBefore(time.Now().Add(-(time.Second))))
@@ -99,7 +99,9 @@ func (r *Reaper) Once() {
 	}
 
 	for _, i := range filtered {
-		// determine what to do next based on the last state
+		if i.Owned() {
+			r.log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.Id(), i.Owner()))
+		}
 
 		// terminate the instance if we can't determine the owner
 		if i.Owner() == nil {
@@ -110,6 +112,10 @@ func (r *Reaper) Once() {
 
 			err = g.Event(title, text, nil, nil)
 
+			if err != nil {
+				r.log.Error("Godspeed error, Terminated unowned event: ", err)
+			}
+
 			continue
 		}
 
@@ -118,7 +124,7 @@ func (r *Reaper) Once() {
 			r.sendNotification(i, 1)
 
 			title := "Reaper sent notification 1"
-			text := fmt.Sprint("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id())
+			text := fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id())
 
 			err = g.Event(title, text, nil, nil)
 
@@ -186,6 +192,11 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 
 func (r *Reaper) terminate(i *Instance) error {
 	r.info("TERMINATE %s notify2 => terminate", i.Id())
+
+	if r.dryrun {
+		return nil
+	}
+
 	if err := Terminate(i.Region(), i.Id()); err != nil {
 		r.log.Error(fmt.Sprintf("%s failed to terminate error: %s",
 			i.Id()), err.Error())

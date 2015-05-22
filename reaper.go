@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/PagerDuty/godspeed"
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper/filter"
@@ -67,6 +68,20 @@ func (r *Reaper) Once() {
 
 	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
 
+	g, err := godspeed.NewDefault()
+
+	if err != nil {
+		r.log.Error("godspeed", err)
+	}
+
+	defer g.Conn.Close()
+
+	err = g.Gauge("reaper.instances.total", float64(len(instances)), nil)
+
+	if err != nil {
+		r.log.Error("Godspeed error reporting instances.total:", err)
+	}
+
 	// This is where we qualify instances
 	filtered := instances.
 		Filter(filter.Running).
@@ -76,7 +91,12 @@ func (r *Reaper) Once() {
 		// can be used to specify a time cutoff
 		Filter(filter.LaunchTimeBefore(time.Now().Add(-(time.Second))))
 
-	r.log.Info(fmt.Sprintf("Found %d instances", len(filtered)))
+	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
+
+	err = g.Gauge("reaper.instances.reapable", float64(len(filtered)), nil)
+	if err != nil {
+		r.log.Error("Godspeed error reporting instances.reapable:", err)
+	}
 
 	for _, i := range filtered {
 		// determine what to do next based on the last state
@@ -84,16 +104,57 @@ func (r *Reaper) Once() {
 		// terminate the instance if we can't determine the owner
 		if i.Owner() == nil {
 			r.terminateUnowned(i)
+
+			title := "Reaper terminated unowned instance"
+			text := fmt.Sprint("Unowned instance %s was terminated.", i.Id())
+
+			err = g.Event(title, text, nil, nil)
+
 			continue
 		}
 
 		switch i.Reaper().State {
 		case STATE_START, STATE_IGNORE:
 			r.sendNotification(i, 1)
+
+			title := "Reaper sent notification 1"
+			text := fmt.Sprint("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id())
+
+			err = g.Event(title, text, nil, nil)
+
+			if err != nil {
+				r.log.Error("Godspeed error, Notification 1 event: ", err)
+			}
+
 		case STATE_NOTIFY1:
 			r.sendNotification(i, 2)
+
+			title := "Reaper sent notification 2"
+			text := fmt.Sprint("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id())
+
+			err = g.Event(title, text, nil, nil)
+
+			if err != nil {
+				r.log.Error("Godspeed error, Notification 2 event: ", err)
+			}
+
 		case STATE_NOTIFY2:
 			r.terminate(i)
+
+			title := "Reaper terminated instance"
+			text := fmt.Sprint("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id())
+
+			err = g.Event(title, text, nil, nil)
+
+			if err != nil {
+				r.log.Error("Godspeed error, Terminated event: ", err)
+			}
+
+			err = g.Incr("reaper.instances.terminated", nil)
+
+			if err != nil {
+				r.log.Error("Godspeed error, Incr terminated: ", err)
+			}
 		}
 	}
 }
@@ -216,6 +277,7 @@ func allInstances(regions []string) Instances {
 				for _, r := range resp.Reservations {
 					for _, instance := range r.Instances {
 						sum += 1
+
 						in <- NewInstance(region, instance)
 					}
 				}

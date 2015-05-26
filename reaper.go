@@ -65,6 +65,19 @@ func (r *Reaper) start() {
 }
 
 func (r *Reaper) Once() {
+	r.reapInstances()
+	r.reapSecurityGroups()
+}
+
+func (r *Reaper) reapSecurityGroups() {
+	// securitygroups := r.allSecurityGroups(r.conf.AWS)
+}
+
+func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
+	return nil
+}
+
+func (r *Reaper) reapInstances() {
 	instances := allInstances(r.conf.AWS)
 
 	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
@@ -89,7 +102,7 @@ func (r *Reaper) Once() {
 		// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
 		Filter(filter.Tagged("REAP_ME")).
 		// can be used to specify a time cutoff
-		Filter(filter.LaunchTimeBefore(time.Now().Add(-(time.Second))))
+		Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
 
 	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 

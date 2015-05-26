@@ -3,7 +3,6 @@ package reaper
 import (
 	"fmt"
 	"net/mail"
-	"strings"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
@@ -17,56 +16,17 @@ var (
 	debugAll = Debug("reaper:aws:AllInstances")
 )
 
-type StateEnum int
-
-const (
-	STATE_START StateEnum = iota
-	STATE_NOTIFY1
-	STATE_NOTIFY2
-	STATE_IGNORE
-)
-
-func (s StateEnum) String() string {
-	switch s {
-	case STATE_NOTIFY1:
-		return "notify1"
-	case STATE_NOTIFY2:
-		return "notify2"
-	case STATE_IGNORE:
-		return "ignore"
-	default:
-		return "start"
-	}
-}
-
 const (
 	reaper_tag = "REAPER"
 	s_sep      = "|"
 	s_tformat  = "2006-01-02 03:04PM MST"
 )
 
-type State struct {
-	State StateEnum
-
-	// State must be maintained until this time
-	Until time.Time
-}
-
-func (s *State) String() string {
-	return s.State.String() + s_sep + s.Until.Format(s_tformat)
-}
-
 type Instances []*Instance
 type Instance struct {
-	id         string
-	region     string
-	state      string
-	launchTime time.Time
-
-	tags map[string]string
-
-	// reaper state
-	reaper *State
+	AWSResource
+	launchTime     time.Time
+	securityGroups []string
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
@@ -93,11 +53,14 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	}
 
 	i := Instance{
-		id:         _id,
-		region:     region, // passed in cause not possible to extract out of api
-		state:      _state,
+		AWSResource: AWSResource{
+			id:     _id,
+			region: region, // passed in cause not possible to extract out of api
+			state:  _state,
+			tags:   make(map[string]string),
+		},
+
 		launchTime: _launch,
-		tags:       make(map[string]string),
 	}
 
 	for _, tag := range instance.Tags {
@@ -109,16 +72,14 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	return &i
 }
 
+func (i *Instance) LaunchTime() time.Time { return i.launchTime }
+
 func (i *Instance) Tagged(tag string) (ok bool) {
 	_, ok = i.tags[tag]
 	return
 }
 
-func (i *Instance) Id() string            { return i.id }
-func (i *Instance) Region() string        { return i.region }
-func (i *Instance) State() string         { return i.state }
-func (i *Instance) LaunchTime() time.Time { return i.launchTime }
-func (i *Instance) Reaper() *State        { return i.reaper }
+func (i *Instance) Reaper() *State { return i.reaper }
 
 // Name extracts the "Name" tag
 func (i *Instance) Name() string { return i.tags["Name"] }
@@ -222,42 +183,6 @@ func Stop(region, instanceId string) error {
 	}
 
 	return nil
-}
-
-func ParseState(state string) (defaultState *State) {
-
-	defaultState = &State{STATE_START, time.Time{}}
-
-	if state == "" {
-		return
-	}
-
-	s := strings.Split(state, s_sep)
-
-	if len(s) != 2 {
-		return
-	}
-
-	var stateEnum StateEnum
-	switch s[0] {
-	case "start":
-		stateEnum = STATE_START
-	case "notify1":
-		stateEnum = STATE_NOTIFY1
-	case "notify2":
-		stateEnum = STATE_NOTIFY2
-	case "ignore":
-		stateEnum = STATE_IGNORE
-	default:
-		return
-	}
-
-	t, err := time.Parse(s_tformat, s[1])
-	if err != nil {
-		return
-	}
-
-	return &State{stateEnum, t}
 }
 
 // Filter creates a new list of Instances that match the filter

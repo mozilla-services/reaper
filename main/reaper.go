@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	log    = &reaper.Logger{"EC2"}
+	log    = &reaper.Logger{"Reaper"}
 	Conf   *reaper.Config
 	debug  = Debug("reaper:main")
 	Mailer *reaper.Mailer

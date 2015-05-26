@@ -44,21 +44,15 @@ func Tagged(tag string) FilterFunc {
 	}
 }
 
-func LaunchTimeEqual(time time.Time) FilterFunc {
+func LaunchTimeAfterOrEqual(time time.Time) FilterFunc {
 	return func(i FilterableInstance) bool {
-		return i.LaunchTime().Equal(time)
+		return i.LaunchTime().After(time) || i.LaunchTime().Equal(time)
 	}
 }
 
-func LaunchTimeAfter(time time.Time) FilterFunc {
+func LaunchTimeBeforeOrEqual(time time.Time) FilterFunc {
 	return func(i FilterableInstance) bool {
-		return i.LaunchTime().After(time)
-	}
-}
-
-func LaunchTimeBefore(time time.Time) FilterFunc {
-	return func(i FilterableInstance) bool {
-		return i.LaunchTime().Before(time)
+		return i.LaunchTime().Before(time) || i.LaunchTime().Equal(time)
 	}
 }
 

@@ -3,80 +3,9 @@ package reaper
 import (
 	"fmt"
 	"net/mail"
-	"strings"
-	"time"
 )
 
-type StateEnum int
-
-const (
-	STATE_START StateEnum = iota
-	STATE_NOTIFY1
-	STATE_NOTIFY2
-	STATE_IGNORE
-)
-
-func (s StateEnum) String() string {
-	switch s {
-	case STATE_NOTIFY1:
-		return "notify1"
-	case STATE_NOTIFY2:
-		return "notify2"
-	case STATE_IGNORE:
-		return "ignore"
-	default:
-		return "start"
-	}
-}
-
-type State struct {
-	State StateEnum
-
-	// State must be maintained until this time
-	Until time.Time
-}
-
-func (s *State) String() string {
-	return s.State.String() + s_sep + s.Until.Format(s_tformat)
-}
-
-func ParseState(state string) (defaultState *State) {
-
-	defaultState = &State{STATE_START, time.Time{}}
-
-	if state == "" {
-		return
-	}
-
-	s := strings.Split(state, s_sep)
-
-	if len(s) != 2 {
-		return
-	}
-
-	var stateEnum StateEnum
-	switch s[0] {
-	case "start":
-		stateEnum = STATE_START
-	case "notify1":
-		stateEnum = STATE_NOTIFY1
-	case "notify2":
-		stateEnum = STATE_NOTIFY2
-	case "ignore":
-		stateEnum = STATE_IGNORE
-	default:
-		return
-	}
-
-	t, err := time.Parse(s_tformat, s[1])
-	if err != nil {
-		return
-	}
-
-	return &State{stateEnum, t}
-}
-
-type AWSResources []*AWSResource
+type AWSResources []AWSResource
 type AWSResource struct {
 	id          string
 	name        string
@@ -98,6 +27,7 @@ func (a *AWSResource) Tagged(tag string) bool {
 }
 
 func (a *AWSResource) Id() string     { return a.id }
+func (a *AWSResource) Name() string   { return a.name }
 func (a *AWSResource) Region() string { return a.region }
 func (a *AWSResource) State() string  { return a.state }
 func (a *AWSResource) Reaper() *State { return a.reaper }
@@ -121,4 +51,24 @@ func (a *AWSResource) Owner() *mail.Address {
 	}
 
 	return nil
+}
+
+func (as AWSResources) Owned() {
+	var bs AWSResources
+	for i := 0; i < len(as); i++ {
+		if as[i].Owned() {
+			bs = append(bs, as[i])
+		}
+	}
+	as = bs
+}
+
+func (as AWSResources) Tagged(tag string) {
+	var bs AWSResources
+	for i := 0; i < len(as); i++ {
+		if as[i].Tagged(tag) {
+			bs = append(bs, as[i])
+		}
+	}
+	as = bs
 }

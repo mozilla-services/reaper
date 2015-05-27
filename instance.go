@@ -2,7 +2,6 @@ package reaper
 
 import (
 	"fmt"
-	"net/mail"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
@@ -72,44 +71,13 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.tags[*tag.Key] = *tag.Value
 	}
 
+	i.name = i.Tag("Name")
 	i.reaper = ParseState(i.tags[reaper_tag])
 
 	return &i
 }
 
 func (i *Instance) LaunchTime() time.Time { return i.launchTime }
-
-func (i *Instance) Tagged(tag string) (ok bool) {
-	_, ok = i.tags[tag]
-	return
-}
-
-func (i *Instance) Reaper() *State { return i.reaper }
-
-// Name extracts the "Name" tag
-func (i *Instance) Name() string { return i.tags["Name"] }
-
-// Owned checks if the instance has an Owner tag
-func (i *Instance) Owned() (ok bool) { return i.Tagged("Owner") }
-
-// Owner extracts useful information out of the Owner tag which should
-// be parsable by mail.ParseAddress
-func (i *Instance) Owner() *mail.Address {
-	// properly formatted email
-	if addr, err := mail.ParseAddress(i.Tag("Owner")); err == nil {
-		return addr
-	}
-
-	// username -> mozilla.com email
-	if addr, err := mail.ParseAddress(fmt.Sprintf("%s@mozilla.com", i.Tag("Owner"))); i.Tagged("Owner") && err == nil {
-		return addr
-	}
-
-	return nil
-}
-
-// Tag returns the tag's value or an empty string if it does not exist
-func (i *Instance) Tag(t string) string { return i.tags[t] }
 
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
@@ -199,4 +167,24 @@ func (i Instances) Filter(f filter.FilterFunc) (newList Instances) {
 	}
 
 	return
+}
+
+func (as Instances) Owned() Instances {
+	var bs Instances
+	for i := 0; i < len(as); i++ {
+		if as[i].Owned() {
+			bs = append(bs, as[i])
+		}
+	}
+	return bs
+}
+
+func (as Instances) Tagged(tag string) Instances {
+	var bs Instances
+	for i := 0; i < len(as); i++ {
+		if as[i].Tagged(tag) {
+			bs = append(bs, as[i])
+		}
+	}
+	return bs
 }

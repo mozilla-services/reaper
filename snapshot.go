@@ -27,5 +27,9 @@ func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 		start_time:     *s.StartTime,
 	}
 
+	for _, tag := range s.Tags {
+		snap.tags[*tag.Key] = *tag.Value
+	}
+
 	return &snap
 }

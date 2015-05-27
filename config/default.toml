@@ -12,58 +12,57 @@ HTTPListen = "localhost:9000"
 
 [AWS]
 
-# what regions the reaper will look for ec2 servers in
-Regions      = [
-    "us-west-1",
-    "us-west-2",
-    "us-east-1",
-    "eu-west-1",
-]
+	# what regions the reaper will look for ec2 servers in
+	Regions = [
+	    "us-west-1",
+	    "us-west-2",
+	    "us-east-1",
+	    "eu-west-1",
+	]
 
-[AWS.InstanceFilters]
-    [AWS.InstanceFilters.1]
-        Name = "instance-state-name"
-        Values = ["running"]
+	[AWS.InstanceFilters]
+	    [AWS.InstanceFilters.1]
+	        Name = "instance-state-name"
+	        Values = ["running"]
 
-[AWS.SecurityGroupFilters]
+	[AWS.SecurityGroupFilters]
 
-[AWS.VolumeFilters]
+	[AWS.VolumeFilters]
 
-[AWS.SnapshotFilters]
-
+	[AWS.SnapshotFilters]	
 
 [SMTP]
-Host = "localhost"
+	Host = "localhost"
 
-# valid: "none", "md5" or "plain". Use "plain" for SES SMTP
-AuthType = "none"
+	# valid: "none", "md5" or "plain". Use "plain" for SES SMTP
+	AuthType = "none"
 
-# Optional port, defaults to 587
-#Port = 587
-#Username = ""
-#Password = ""
+	# Optional port, defaults to 587
+	#Port = 587
+	#Username = ""
+	#Password = ""
 
-# must be parsable by http://godoc.org/net/mail#ParseAddress
-From = "AWS Reaper <reaper@none.mozilla.com>"
+	# must be parsable by http://godoc.org/net/mail#ParseAddress
+	From = "AWS Reaper <reaper@none.mozilla.com>"
 
 [Reaper]
-# The time format must be a duration parsable by go's time.ParseDuration 
-# function. See: http://godoc.org/time#ParseDuration
-# 
-# Recommended to do things in hourly increments
+	# The time format must be a duration parsable by go's time.ParseDuration 
+	# function. See: http://godoc.org/time#ParseDuration
+	# 
+	# Recommended to do things in hourly increments
 
-# Interval that all instances should be checked for reaping
-Interval = "1h"
+	# Interval that all instances should be checked for reaping
+	Interval = "1h"
 
-# How long the instance is allowed to run before sending the first 
-# notification
-FirstNotification = "12h"
+	# How long the instance is allowed to run before sending the first 
+	# notification
+	FirstNotification = "12h"
 
-# How long after the first notification before sending the second 
-# notification
-SecondNotification = "24h"
+	# How long after the first notification before sending the second 
+	# notification
+	SecondNotification = "24h"
 
-# How long after the second notification before terminating the instance
-Terminate = "24h"
+	# How long after the second notification before terminating the instance
+	Terminate = "24h"
 
 

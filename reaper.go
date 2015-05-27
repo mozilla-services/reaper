@@ -9,7 +9,6 @@ import (
 	"github.com/PagerDuty/godspeed"
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
-	"github.com/mostlygeek/reaper/filter"
 	"github.com/tj/go-debug"
 )
 
@@ -333,13 +332,15 @@ func (r *Reaper) reapInstances() {
 	}
 
 	// This is where we qualify instances
-	filtered := instances.
-		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
-		// TODO: line below must be changed before actually running
-		// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
-		Filter(filter.Tagged("REAP_ME")).
-		// can be used to specify a time cutoff
-		Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
+	// filtered := instances.
+	// 	Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
+	// 	// TODO: line below must be changed before actually running
+	// 	// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
+	// 	Filter(filter.Tagged("REAP_ME")).
+	// 	// can be used to specify a time cutoff
+	// 	Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
+
+	filtered := instances.Owned()
 
 	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 

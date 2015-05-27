@@ -27,6 +27,11 @@ Regions      = [
 
 [AWS.SecurityGroupFilters]
 
+[AWS.VolumeFilters]
+
+[AWS.SnapshotFilters]
+
+
 [SMTP]
 Host = "localhost"
 

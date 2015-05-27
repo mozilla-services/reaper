@@ -8,17 +8,17 @@ import (
 )
 
 // this is an awful test
-func TestNewSecurityGroup(t *testing.T) {
+func TestNewVolume(t *testing.T) {
 	ec2 := ec2.New(&aws.Config{Region: TESTREGION})
-	resp, err := ec2.DescribeSecurityGroups(nil)
+	resp, err := ec2.DescribeVolumes(nil)
 
 	if err != nil {
 		// do something
 	}
 
-	s := reaper.NewSecurityGroup(TESTREGION, resp.SecurityGroups[0])
+	s := reaper.NewVolume(TESTREGION, resp.Volumes[0])
 
 	if s.Id() == "" {
-		t.Error("security group improperly initialized")
+		t.Error("volume improperly initialized")
 	}
 }

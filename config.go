@@ -117,6 +117,8 @@ type AWSConfig struct {
 	Regions              []string
 	SecurityGroupFilters map[string]Filter
 	InstanceFilters      map[string]Filter
+	VolumeFilters        map[string]Filter
+	SnapshotFilters      map[string]Filter
 }
 
 // controls behaviour of the EC2 single instance reaper works

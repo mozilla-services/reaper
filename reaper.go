@@ -67,6 +67,168 @@ func (r *Reaper) start() {
 func (r *Reaper) Once() {
 	r.reapInstances()
 	r.reapSecurityGroups()
+	r.reapVolumes()
+	r.reapSnapshots()
+}
+
+func (r *Reaper) reapSnapshots() {
+	volumes := r.allSnapshots(r.conf.AWS)
+	r.log.Info(fmt.Sprintf("Total snapshots: %d", len(volumes)))
+
+	g, err := godspeed.NewDefault()
+	if err != nil {
+		r.log.Error("godspeed", err)
+	}
+
+	defer g.Conn.Close()
+	err = g.Gauge("reaper.snapshots.total", float64(len(volumes)), nil)
+
+	if err != nil {
+		r.log.Error("Godspeed error reporting snapshots.total:", err)
+	}
+}
+
+func (r *Reaper) allSnapshots(conf AWSConfig) Snapshots {
+	regions := conf.Regions
+
+	// waitgroup for goroutines
+	var wg sync.WaitGroup
+
+	// channel for creating SecurityGroups
+	in := make(chan *Snapshot)
+
+	for _, region := range regions {
+		wg.Add(1)
+
+		sum := 0
+
+		// goroutine per region to fetch all security groups
+		go func(region string) {
+			defer wg.Done()
+			api := ec2.New(&aws.Config{Region: region})
+
+			// build the filter list
+			var filters []*ec2.Filter
+			for _, f := range conf.SnapshotFilters {
+				filter := &ec2.Filter{Name: aws.String(f.Name)}
+				for _, v := range f.Values {
+					filter.Values = append(filter.Values, aws.String(v))
+				}
+				filters = append(filters, filter)
+			}
+
+			// TODO: nextToken paging
+			input := &ec2.DescribeSnapshotsInput{
+				Filters: filters,
+			}
+			resp, err := api.DescribeSnapshots(input)
+			if err != nil {
+				// TODO: wee
+			}
+
+			for _, v := range resp.Snapshots {
+				sum += 1
+				in <- NewSnapshot(region, v)
+			}
+
+			r.log.Info(fmt.Sprintf("Found %d snapshots in %s", sum, region))
+		}(region)
+	}
+	// aggregate
+	var snapshots Snapshots
+	go func() {
+		for s := range in {
+			snapshots = append(snapshots, s)
+		}
+	}()
+
+	// synchronous wait for all goroutines in wg to be done
+	wg.Wait()
+
+	// done with the channel
+	close(in)
+
+	return snapshots
+}
+
+func (r *Reaper) reapVolumes() {
+	volumes := r.allVolumes(r.conf.AWS)
+	r.log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
+
+	g, err := godspeed.NewDefault()
+	if err != nil {
+		r.log.Error("godspeed", err)
+	}
+
+	defer g.Conn.Close()
+	err = g.Gauge("reaper.volumes.total", float64(len(volumes)), nil)
+
+	if err != nil {
+		r.log.Error("Godspeed error reporting volumes.total:", err)
+	}
+}
+
+func (r *Reaper) allVolumes(conf AWSConfig) Volumes {
+	regions := conf.Regions
+
+	// waitgroup for goroutines
+	var wg sync.WaitGroup
+
+	// channel for creating SecurityGroups
+	in := make(chan *Volume)
+
+	for _, region := range regions {
+		wg.Add(1)
+
+		sum := 0
+
+		// goroutine per region to fetch all security groups
+		go func(region string) {
+			defer wg.Done()
+			api := ec2.New(&aws.Config{Region: region})
+
+			// build the filter list
+			var filters []*ec2.Filter
+			for _, f := range conf.VolumeFilters {
+				filter := &ec2.Filter{Name: aws.String(f.Name)}
+				for _, v := range f.Values {
+					filter.Values = append(filter.Values, aws.String(v))
+				}
+				filters = append(filters, filter)
+			}
+
+			// TODO: nextToken paging
+			input := &ec2.DescribeVolumesInput{
+				Filters: filters,
+			}
+			resp, err := api.DescribeVolumes(input)
+			if err != nil {
+				// TODO: wee
+			}
+
+			for _, v := range resp.Volumes {
+				sum += 1
+				in <- NewVolume(region, v)
+			}
+
+			r.log.Info(fmt.Sprintf("Found %d volumes in %s", sum, region))
+		}(region)
+	}
+	// aggregate
+	var volumes Volumes
+	go func() {
+		for v := range in {
+			volumes = append(volumes, v)
+		}
+	}()
+
+	// synchronous wait for all goroutines in wg to be done
+	wg.Wait()
+
+	// done with the channel
+	close(in)
+
+	return volumes
 }
 
 func (r *Reaper) reapSecurityGroups() {
@@ -102,6 +264,7 @@ func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
 
 		sum := 0
 
+		// goroutine per region to fetch all security groups
 		go func(region string) {
 			defer wg.Done()
 			api := ec2.New(&aws.Config{Region: region})
@@ -116,12 +279,13 @@ func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
 				filters = append(filters, filter)
 			}
 
+			// TODO: nextToken paging
 			input := &ec2.DescribeSecurityGroupsInput{
 				Filters: filters,
 			}
 			resp, err := api.DescribeSecurityGroups(input)
 			if err != nil {
-				// wee
+				// TODO: wee
 			}
 
 			for _, sg := range resp.SecurityGroups {
@@ -132,9 +296,8 @@ func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
 			r.log.Info(fmt.Sprintf("Found %d security groups in %s", sum, region))
 		}(region)
 	}
-
+	// aggregate
 	var securityGroups SecurityGroups
-
 	go func() {
 		for sg := range in {
 			securityGroups = append(securityGroups, sg)

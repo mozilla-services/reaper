@@ -1,9 +1,9 @@
-# Set this to secure the tokens in the links back to the 
-# web server. 
+# Set this to secure the tokens in the links back to the
+# web server.
 TokenSecret = "set this to secure web requests against spoofing"
 
 # this is used to generate the link back to the reaper's http
-# service. Do not add a trailing slash, just include 
+# service. Do not add a trailing slash, just include
 # <scheme>://<host:port>
 HTTPApiURL = "http://localhost:9000"
 
@@ -29,7 +29,7 @@ HTTPListen = "localhost:9000"
 
 	[AWS.VolumeFilters]
 
-	[AWS.SnapshotFilters]	
+	[AWS.SnapshotFilters]
 
 [SMTP]
 	Host = "localhost"
@@ -46,19 +46,19 @@ HTTPListen = "localhost:9000"
 	From = "AWS Reaper <reaper@none.mozilla.com>"
 
 [Reaper]
-	# The time format must be a duration parsable by go's time.ParseDuration 
+	# The time format must be a duration parsable by go's time.ParseDuration
 	# function. See: http://godoc.org/time#ParseDuration
-	# 
+	#
 	# Recommended to do things in hourly increments
 
 	# Interval that all instances should be checked for reaping
 	Interval = "1h"
 
-	# How long the instance is allowed to run before sending the first 
+	# How long the instance is allowed to run before sending the first
 	# notification
 	FirstNotification = "12h"
 
-	# How long after the first notification before sending the second 
+	# How long after the first notification before sending the second
 	# notification
 	SecondNotification = "24h"
 

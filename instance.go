@@ -29,38 +29,16 @@ type Instance struct {
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
-
-	// ughhhhhh pointers to strings suck
-	_id := "nil"
-	_state := "nil"
-	var _launch time.Time
-
-	if instance.InstanceID != nil {
-		_id = *instance.InstanceID
-	}
-
-	if instance.State != nil {
-		if instance.State.Name != nil {
-			_state = *instance.State.Name
-		}
-	}
-
-	if instance.LaunchTime != nil {
-		_launch = *instance.LaunchTime
-	} else {
-		_launch = time.Time{}
-	}
-
 	i := Instance{
 		AWSResource: AWSResource{
-			id:     _id,
+			id:     *instance.InstanceID,
 			region: region, // passed in cause not possible to extract out of api
-			state:  _state,
+			state:  *instance.State.Name,
 			tags:   make(map[string]string),
 		},
 
 		securityGroups: make(map[string]string),
-		launchTime:     _launch,
+		launchTime:     *instance.LaunchTime,
 	}
 
 	for _, sg := range instance.SecurityGroups {
@@ -81,44 +59,6 @@ func (i *Instance) LaunchTime() time.Time { return i.launchTime }
 
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
-
-func (i *Instance) ReaperVisible() bool {
-	return time.Now().After(i.reaper.Until)
-}
-func (i *Instance) ReaperStarted() bool {
-	return i.reaper.State == STATE_START
-}
-func (i *Instance) ReaperNotified(notifyNum int) bool {
-	if notifyNum == 1 {
-		return i.reaper.State == STATE_NOTIFY1
-	} else if notifyNum == 2 {
-		return i.reaper.State == STATE_NOTIFY2
-	} else {
-		return false
-	}
-}
-
-func (i *Instance) ReaperIgnored() bool {
-	return i.reaper.State == STATE_IGNORE
-}
-
-func UpdateReaperState(region, instanceId string, newState *State) error {
-	debugAWS("UpdateReaperState region:%s instance: %s", region, instanceId)
-	req := &ec2.CreateTagsInput{
-		DryRun:    aws.Boolean(false),
-		Resources: []*string{aws.String(instanceId)},
-		Tags: []*ec2.Tag{
-			&ec2.Tag{
-				Key:   aws.String(reaper_tag),
-				Value: aws.String(newState.String()),
-			},
-		},
-	}
-
-	api := ec2.New(&aws.Config{Region: region})
-	_, err := api.CreateTags(req)
-	return err
-}
 
 func Terminate(region, instanceId string) error {
 	api := ec2.New(&aws.Config{Region: region})

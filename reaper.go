@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PagerDuty/godspeed"
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/tj/go-debug"
@@ -22,15 +21,17 @@ type Reaper struct {
 	mailer *Mailer
 	log    *Logger
 	dryrun bool
+	events EventReporter
 
 	stopCh chan struct{}
 }
 
-func NewReaper(c Config, m *Mailer, l *Logger) *Reaper {
+func NewReaper(c Config, m *Mailer, l *Logger, e EventReporter) *Reaper {
 	return &Reaper{
 		conf:   c,
 		mailer: m,
 		log:    l,
+		events: e,
 	}
 }
 
@@ -73,18 +74,7 @@ func (r *Reaper) Once() {
 func (r *Reaper) reapSnapshots() {
 	volumes := r.allSnapshots(r.conf.AWS)
 	r.log.Info(fmt.Sprintf("Total snapshots: %d", len(volumes)))
-
-	g, err := godspeed.NewDefault()
-	if err != nil {
-		r.log.Error("godspeed", err)
-	}
-
-	defer g.Conn.Close()
-	err = g.Gauge("reaper.snapshots.total", float64(len(volumes)), nil)
-
-	if err != nil {
-		r.log.Error("Godspeed error reporting snapshots.total:", err)
-	}
+	r.events.NewStatistic("reaper.snapshots.total", float64(len(volumes)), nil)
 }
 
 func (r *Reaper) allSnapshots(conf AWSConfig) Snapshots {
@@ -154,17 +144,7 @@ func (r *Reaper) reapVolumes() {
 	volumes := r.allVolumes(r.conf.AWS)
 	r.log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
 
-	g, err := godspeed.NewDefault()
-	if err != nil {
-		r.log.Error("godspeed", err)
-	}
-
-	defer g.Conn.Close()
-	err = g.Gauge("reaper.volumes.total", float64(len(volumes)), nil)
-
-	if err != nil {
-		r.log.Error("Godspeed error reporting volumes.total:", err)
-	}
+	r.events.NewStatistic("reaper.volumes.total", float64(len(volumes)), nil)
 }
 
 func (r *Reaper) allVolumes(conf AWSConfig) Volumes {
@@ -233,20 +213,7 @@ func (r *Reaper) allVolumes(conf AWSConfig) Volumes {
 func (r *Reaper) reapSecurityGroups() {
 	securitygroups := r.allSecurityGroups(r.conf.AWS)
 	r.log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
-
-	g, err := godspeed.NewDefault()
-
-	if err != nil {
-		r.log.Error("godspeed", err)
-	}
-
-	defer g.Conn.Close()
-
-	err = g.Gauge("reaper.securitygroups.total", float64(len(securitygroups)), nil)
-
-	if err != nil {
-		r.log.Error("Godspeed error reporting securitygroups.total:", err)
-	}
+	r.events.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
 }
 
 func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
@@ -316,20 +283,7 @@ func (r *Reaper) reapInstances() {
 	instances := allInstances(r.conf.AWS)
 
 	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
-
-	g, err := godspeed.NewDefault()
-
-	if err != nil {
-		r.log.Error("godspeed", err)
-	}
-
-	defer g.Conn.Close()
-
-	err = g.Gauge("reaper.instances.total", float64(len(instances)), nil)
-
-	if err != nil {
-		r.log.Error("Godspeed error reporting instances.total:", err)
-	}
+	r.events.NewStatistic("reaper.instances.total", float64(len(instances)), nil)
 
 	// This is where we qualify instances
 	// filtered := instances.
@@ -340,14 +294,10 @@ func (r *Reaper) reapInstances() {
 	// 	// can be used to specify a time cutoff
 	// 	Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
 
-	filtered := instances.Owned()
+	filtered := instances.Owned().Tagged("REAP_ME")
 
 	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
-
-	err = g.Gauge("reaper.instances.reapable", float64(len(filtered)), nil)
-	if err != nil {
-		r.log.Error("Godspeed error reporting instances.reapable:", err)
-	}
+	r.events.NewStatistic("reaper.instances.reapable", float64(len(filtered)), nil)
 
 	for _, i := range filtered {
 		if i.Owned() {
@@ -361,11 +311,7 @@ func (r *Reaper) reapInstances() {
 			title := "Reaper terminated unowned instance"
 			text := fmt.Sprintf("Unowned instance %s was terminated.", i.Id())
 
-			err = g.Event(title, text, nil, nil)
-
-			if err != nil {
-				r.log.Error("Godspeed error, Terminated unowned event: ", err)
-			}
+			r.events.NewEvent(title, text, nil, nil)
 
 			continue
 		}
@@ -373,45 +319,15 @@ func (r *Reaper) reapInstances() {
 		switch i.Reaper().State {
 		case STATE_START, STATE_IGNORE:
 			r.sendNotification(i, 1)
-
-			title := "Reaper sent notification 1"
-			text := fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id())
-
-			err = g.Event(title, text, nil, nil)
-
-			if err != nil {
-				r.log.Error("Godspeed error, Notification 1 event: ", err)
-			}
+			r.events.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
 
 		case STATE_NOTIFY1:
 			r.sendNotification(i, 2)
-
-			title := "Reaper sent notification 2"
-			text := fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id())
-
-			err = g.Event(title, text, nil, nil)
-
-			if err != nil {
-				r.log.Error("Godspeed error, Notification 2 event: ", err)
-			}
+			r.events.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
 
 		case STATE_NOTIFY2:
 			r.terminate(i)
-
-			title := "Reaper terminated instance"
-			text := fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id())
-
-			err = g.Event(title, text, nil, nil)
-
-			if err != nil {
-				r.log.Error("Godspeed error, Terminated event: ", err)
-			}
-
-			err = g.Incr("reaper.instances.terminated", nil)
-
-			if err != nil {
-				r.log.Error("Godspeed error, Incr terminated: ", err)
-			}
+			r.events.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id()), nil, nil)
 		}
 	}
 }

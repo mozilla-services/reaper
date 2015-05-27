@@ -3,6 +3,10 @@ package reaper
 import (
 	"fmt"
 	"net/mail"
+	"time"
+
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/ec2"
 )
 
 type AWSResources []AWSResource
@@ -51,6 +55,44 @@ func (a *AWSResource) Owner() *mail.Address {
 	}
 
 	return nil
+}
+
+func (a *AWSResource) ReaperVisible() bool {
+	return time.Now().After(a.reaper.Until)
+}
+func (a *AWSResource) ReaperStarted() bool {
+	return a.reaper.State == STATE_START
+}
+func (a *AWSResource) ReaperNotified(notifyNum int) bool {
+	if notifyNum == 1 {
+		return a.reaper.State == STATE_NOTIFY1
+	} else if notifyNum == 2 {
+		return a.reaper.State == STATE_NOTIFY2
+	} else {
+		return false
+	}
+}
+
+func (a *AWSResource) ReaperIgnored() bool {
+	return a.reaper.State == STATE_IGNORE
+}
+
+func UpdateReaperState(region, id string, newState *State) error {
+	debugAWS("UpdateReaperState region:%s instance: %s", region, id)
+	req := &ec2.CreateTagsInput{
+		DryRun:    aws.Boolean(false),
+		Resources: []*string{aws.String(id)},
+		Tags: []*ec2.Tag{
+			&ec2.Tag{
+				Key:   aws.String(reaper_tag),
+				Value: aws.String(newState.String()),
+			},
+		},
+	}
+
+	api := ec2.New(&aws.Config{Region: region})
+	_, err := api.CreateTags(req)
+	return err
 }
 
 func (as AWSResources) Owned() {

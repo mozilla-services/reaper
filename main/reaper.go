@@ -11,11 +11,13 @@ import (
 )
 
 var (
-	log    = &reaper.Logger{"Reaper"}
-	Conf   *reaper.Config
-	debug  = Debug("reaper:main")
-	Mailer *reaper.Mailer
-	DryRun = false
+	log           = &reaper.Logger{"Reaper"}
+	Conf          *reaper.Config
+	debug         = Debug("reaper:main")
+	Mailer        *reaper.Mailer
+	DryRun        = false
+	enableDataDog = true
+	events        reaper.EventReporter
 )
 
 func init() {
@@ -23,7 +25,7 @@ func init() {
 
 	flag.StringVar(&configFile, "conf", "", "path to config file")
 	flag.BoolVar(&DryRun, "dryrun", false, "dry run, don't make changes")
-
+	flag.BoolVar(&enableDataDog, "datadog", true, "enable DataDog reporting, requires dd-agent running")
 	flag.Parse()
 
 	if configFile == "" {
@@ -42,6 +44,11 @@ func init() {
 		os.Exit(1)
 	}
 
+	if enableDataDog {
+		log.Info("DataDog enabled.")
+		events = reaper.DataDog{}
+	}
+
 	Mailer = reaper.NewMailer(*Conf)
 
 	if DryRun {
@@ -51,7 +58,7 @@ func init() {
 }
 
 func main() {
-	reapRunner := reaper.NewReaper(*Conf, Mailer, log)
+	reapRunner := reaper.NewReaper(*Conf, Mailer, log, events)
 	if DryRun {
 		reapRunner.DryRunOn()
 	} else {

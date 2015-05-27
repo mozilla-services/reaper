@@ -26,7 +26,7 @@ type Instances []*Instance
 type Instance struct {
 	AWSResource
 	launchTime     time.Time
-	securityGroups []string
+	securityGroups map[string]string
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
@@ -60,7 +60,12 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 			tags:   make(map[string]string),
 		},
 
-		launchTime: _launch,
+		securityGroups: make(map[string]string),
+		launchTime:     _launch,
+	}
+
+	for _, sg := range instance.SecurityGroups {
+		i.securityGroups[*sg.GroupID] = *sg.GroupName
 	}
 
 	for _, tag := range instance.Tags {

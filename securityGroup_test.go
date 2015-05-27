@@ -1,7 +1,6 @@
 package reaper_test
 
 import (
-	"fmt"
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper"
@@ -23,7 +22,7 @@ func TestNewSecurityGroup(t *testing.T) {
 
 	s := reaper.NewSecurityGroup(TESTREGION, resp.SecurityGroups[0])
 
-	if s.Id() == nil {
+	if s.Id() == "" {
 		t.Error("security group improperly initialized")
 	}
 }

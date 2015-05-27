@@ -20,10 +20,12 @@ Regions      = [
     "eu-west-1",
 ]
 
-    [AWS.Filters]
-        [AWS.Filters.1]
-            Name = "instance-state-name"
-            Values = ["running"]
+[AWS.InstanceFilters]
+    [AWS.InstanceFilters.1]
+        Name = "instance-state-name"
+        Values = ["running"]
+
+[AWS.SecurityGroupFilters]
 
 [SMTP]
 Host = "localhost"

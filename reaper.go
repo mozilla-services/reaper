@@ -70,11 +70,84 @@ func (r *Reaper) Once() {
 }
 
 func (r *Reaper) reapSecurityGroups() {
-	// securitygroups := r.allSecurityGroups(r.conf.AWS)
+	securitygroups := r.allSecurityGroups(r.conf.AWS)
+	r.log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
+
+	g, err := godspeed.NewDefault()
+
+	if err != nil {
+		r.log.Error("godspeed", err)
+	}
+
+	defer g.Conn.Close()
+
+	err = g.Gauge("reaper.securitygroups.total", float64(len(securitygroups)), nil)
+
+	if err != nil {
+		r.log.Error("Godspeed error reporting securitygroups.total:", err)
+	}
 }
 
 func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
-	return nil
+	regions := conf.Regions
+
+	// waitgroup for goroutines
+	var wg sync.WaitGroup
+
+	// channel for creating SecurityGroups
+	in := make(chan *SecurityGroup)
+
+	for _, region := range regions {
+		wg.Add(1)
+
+		sum := 0
+
+		go func(region string) {
+			defer wg.Done()
+			api := ec2.New(&aws.Config{Region: region})
+
+			// build the filter list
+			var filters []*ec2.Filter
+			for _, f := range conf.SecurityGroupFilters {
+				filter := &ec2.Filter{Name: aws.String(f.Name)}
+				for _, v := range f.Values {
+					filter.Values = append(filter.Values, aws.String(v))
+				}
+				filters = append(filters, filter)
+			}
+
+			input := &ec2.DescribeSecurityGroupsInput{
+				Filters: filters,
+			}
+			resp, err := api.DescribeSecurityGroups(input)
+			if err != nil {
+				// wee
+			}
+
+			for _, sg := range resp.SecurityGroups {
+				sum += 1
+				in <- NewSecurityGroup(region, sg)
+			}
+
+			r.log.Info(fmt.Sprintf("Found %d security groups in %s", sum, region))
+		}(region)
+	}
+
+	var securityGroups SecurityGroups
+
+	go func() {
+		for sg := range in {
+			securityGroups = append(securityGroups, sg)
+		}
+	}()
+
+	// synchronous wait for all goroutines in wg to be done
+	wg.Wait()
+
+	// done with the channel
+	close(in)
+
+	return securityGroups
 }
 
 func (r *Reaper) reapInstances() {
@@ -99,6 +172,7 @@ func (r *Reaper) reapInstances() {
 	// This is where we qualify instances
 	filtered := instances.
 		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
+		// TODO: line below must be changed before actually running
 		// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
 		Filter(filter.Tagged("REAP_ME")).
 		// can be used to specify a time cutoff
@@ -291,7 +365,7 @@ func allInstances(conf AWSConfig) Instances {
 
 			// build the filter list
 			var filters []*ec2.Filter
-			for _, f := range conf.Filters {
+			for _, f := range conf.InstanceFilters {
 				filter := &ec2.Filter{Name: aws.String(f.Name)}
 				for _, v := range f.Values {
 					filter.Values = append(filter.Values, aws.String(v))
@@ -341,22 +415,17 @@ func allInstances(conf AWSConfig) Instances {
 	}
 
 	var list Instances
-	done := make(chan struct{})
 
 	// build up the list
 	go func() {
 		for i := range in {
 			list = append(list, i)
 		}
-		done <- struct{}{}
 	}()
 
 	// wait for all the fetches to finish publishing
 	wg.Wait()
 	close(in)
-
-	// wait for appending goroutine to be done
-	<-done
 
 	return list
 }

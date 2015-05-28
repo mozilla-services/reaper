@@ -292,7 +292,7 @@ func (r *Reaper) reapInstances() {
 
 	filtered := instances.Tagged("REAP_ME")
 
-	Log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
+	Log.Notice(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 	for _, e := range r.events {
 		e.NewStatistic("reaper.instances.reapable", float64(len(filtered)), nil)
 	}
@@ -499,7 +499,7 @@ func (r *Reaper) allInstances() Instances {
 				}
 			}
 
-			Log.Debug("Found %d instances in %s", sum, region)
+			Log.Info("Found %d instances in %s", sum, region)
 			for _, e := range r.events {
 				e.NewStatistic("reaper.instances.total", float64(sum), []string{region})
 			}

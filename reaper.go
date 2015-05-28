@@ -294,12 +294,14 @@ func (r *Reaper) reapInstances() {
 	// 	// can be used to specify a time cutoff
 	// 	Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
 
-	filtered := instances.Owned().Tagged("REAP_ME")
+	filtered := instances.Tagged("REAP_ME")
 
 	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 	r.events.NewStatistic("reaper.instances.reapable", float64(len(filtered)), nil)
 
 	for _, i := range filtered {
+		r.events.NewReapableInstanceEvent(i)
+
 		if i.Owned() {
 			r.log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.Id(), i.Owner()))
 		}

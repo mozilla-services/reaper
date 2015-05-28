@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
@@ -26,6 +27,7 @@ type Instance struct {
 	AWSResource
 	launchTime     time.Time
 	securityGroups map[string]string
+	awsConsoleURL  *url.URL
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
@@ -53,6 +55,16 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	i.reaper = ParseState(i.tags[reaper_tag])
 
 	return &i
+}
+
+func (i *Instance) AWSConsoleURL() *url.URL {
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
+		i.region, i.region, i.id))
+	if err != nil {
+		fmt.Println("console url messed up")
+		return nil
+	}
+	return url
 }
 
 func (i *Instance) LaunchTime() time.Time { return i.launchTime }

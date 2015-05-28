@@ -17,6 +17,21 @@ type EventReporter interface {
 	NewReapableInstanceEvent(i *Instance)
 }
 
+// implements EventReporter but does nothing
+type NoEventReporter struct {
+}
+
+func (n NoEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) {
+}
+
+func (n NoEventReporter) NewStatistic(name string, value float64, tags []string) {
+}
+
+func (n NoEventReporter) NewReapableInstanceEvent(i *Instance) {
+}
+
+// implements EventReporter, sends events and statistics to DataDog
+// uses godspeed, requires dd-agent running
 type DataDog struct {
 	eventTemplate template.Template
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 )
 
+// basic AWS resource, has properties that most/all resources have
 type AWSResources []AWSResource
 type AWSResource struct {
 	id          string

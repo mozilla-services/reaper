@@ -16,7 +16,7 @@ var (
 	debug         = Debug("reaper:main")
 	Mailer        *reaper.Mailer
 	DryRun        = false
-	enableDataDog = true
+	enableDataDog bool
 	events        reaper.EventReporter
 )
 
@@ -47,6 +47,8 @@ func init() {
 	if enableDataDog {
 		log.Info("DataDog enabled.")
 		events = reaper.DataDog{}
+	} else {
+		events = reaper.NoEventReporter{}
 	}
 
 	Mailer = reaper.NewMailer(*Conf)

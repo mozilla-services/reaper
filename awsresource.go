@@ -79,7 +79,7 @@ func (a *AWSResource) ReaperIgnored() bool {
 }
 
 func UpdateReaperState(region, id string, newState *State) error {
-	debugAWS("UpdateReaperState region:%s instance: %s", region, id)
+	log.Info("UpdateReaperState region:%s instance: %s", region, id)
 	req := &ec2.CreateTagsInput{
 		DryRun:    aws.Boolean(false),
 		Resources: []*string{aws.String(id)},

@@ -30,6 +30,9 @@ func (n NoEventReporter) NewStatistic(name string, value float64, tags []string)
 func (n NoEventReporter) NewReapableInstanceEvent(i *Instance) {
 }
 
+type IRCReporter struct {
+}
+
 // implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {

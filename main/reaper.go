@@ -7,17 +7,16 @@ import (
 	"os/signal"
 
 	"github.com/mostlygeek/reaper"
-	. "github.com/tj/go-debug"
+	"github.com/op/go-logging"
 )
 
 var (
-	log           = &reaper.Logger{"Reaper"}
+	log           = logging.MustGetLogger("Reaper")
 	Conf          *reaper.Config
-	debug         = Debug("reaper:main")
 	Mailer        *reaper.Mailer
 	DryRun        = false
 	enableDataDog bool
-	events        reaper.EventReporter
+	events        []reaper.EventReporter
 )
 
 func init() {
@@ -35,9 +34,9 @@ func init() {
 
 	if c, err := reaper.LoadConfig(configFile); err == nil {
 		Conf = c
-		log.Info("Configuration loaded from", configFile)
-		debug("SMTP Config: %s", Conf.SMTP.String())
-		debug("SMTP From: %s", Conf.SMTP.From.Address.String())
+		log.Info("Configuration loaded from %s", configFile)
+		log.Debug("SMTP Config: %s", Conf.SMTP.String())
+		log.Debug("SMTP From: %s", Conf.SMTP.From.Address.String())
 
 	} else {
 		log.Error("toml", err)
@@ -46,9 +45,9 @@ func init() {
 
 	if enableDataDog {
 		log.Info("DataDog enabled.")
-		events = reaper.DataDog{}
+		events = append(events, reaper.DataDog{})
 	} else {
-		events = reaper.NoEventReporter{}
+		events = append(events, reaper.NoEventReporter{})
 	}
 
 	Mailer = reaper.NewMailer(*Conf)

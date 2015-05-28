@@ -8,6 +8,7 @@ import (
 
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
+	"github.com/op/go-logging"
 	"github.com/tj/go-debug"
 )
 
@@ -19,19 +20,19 @@ var (
 type Reaper struct {
 	conf   Config
 	mailer *Mailer
-	log    *Logger
+	log    *logging.Logger
 	dryrun bool
-	events EventReporter
+	events []EventReporter
 
 	stopCh chan struct{}
 }
 
-func NewReaper(c Config, m *Mailer, l *Logger, e EventReporter) *Reaper {
+func NewReaper(c Config, m *Mailer, l *logging.Logger, es []EventReporter) *Reaper {
 	return &Reaper{
 		conf:   c,
 		mailer: m,
 		log:    l,
-		events: e,
+		events: es,
 	}
 }
 
@@ -72,13 +73,12 @@ func (r *Reaper) Once() {
 }
 
 func (r *Reaper) reapSnapshots() {
-	volumes := r.allSnapshots(r.conf.AWS)
-	r.log.Info(fmt.Sprintf("Total snapshots: %d", len(volumes)))
-	r.events.NewStatistic("reaper.snapshots.total", float64(len(volumes)), nil)
+	snapshots := r.allSnapshots()
+	r.log.Info(fmt.Sprintf("Total snapshots: %d", len(snapshots)))
 }
 
-func (r *Reaper) allSnapshots(conf AWSConfig) Snapshots {
-	regions := conf.Regions
+func (r *Reaper) allSnapshots() Snapshots {
+	regions := r.conf.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -98,7 +98,7 @@ func (r *Reaper) allSnapshots(conf AWSConfig) Snapshots {
 
 			// build the filter list
 			var filters []*ec2.Filter
-			for _, f := range conf.SnapshotFilters {
+			for _, f := range r.conf.AWS.SnapshotFilters {
 				filter := &ec2.Filter{Name: aws.String(f.Name)}
 				for _, v := range f.Values {
 					filter.Values = append(filter.Values, aws.String(v))
@@ -121,6 +121,9 @@ func (r *Reaper) allSnapshots(conf AWSConfig) Snapshots {
 			}
 
 			r.log.Info(fmt.Sprintf("Found %d snapshots in %s", sum, region))
+			for _, e := range r.events {
+				e.NewStatistic("reaper.snapshots.total", float64(len(in)), []string{region})
+			}
 		}(region)
 	}
 	// aggregate
@@ -141,14 +144,15 @@ func (r *Reaper) allSnapshots(conf AWSConfig) Snapshots {
 }
 
 func (r *Reaper) reapVolumes() {
-	volumes := r.allVolumes(r.conf.AWS)
+	volumes := r.allVolumes()
 	r.log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
-
-	r.events.NewStatistic("reaper.volumes.total", float64(len(volumes)), nil)
+	for _, e := range r.events {
+		e.NewStatistic("reaper.volumes.total", float64(len(volumes)), nil)
+	}
 }
 
-func (r *Reaper) allVolumes(conf AWSConfig) Volumes {
-	regions := conf.Regions
+func (r *Reaper) allVolumes() Volumes {
+	regions := r.conf.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -168,7 +172,7 @@ func (r *Reaper) allVolumes(conf AWSConfig) Volumes {
 
 			// build the filter list
 			var filters []*ec2.Filter
-			for _, f := range conf.VolumeFilters {
+			for _, f := range r.conf.AWS.VolumeFilters {
 				filter := &ec2.Filter{Name: aws.String(f.Name)}
 				for _, v := range f.Values {
 					filter.Values = append(filter.Values, aws.String(v))
@@ -211,13 +215,15 @@ func (r *Reaper) allVolumes(conf AWSConfig) Volumes {
 }
 
 func (r *Reaper) reapSecurityGroups() {
-	securitygroups := r.allSecurityGroups(r.conf.AWS)
+	securitygroups := r.allSecurityGroups()
 	r.log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
-	r.events.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
+	for _, e := range r.events {
+		e.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
+	}
 }
 
-func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
-	regions := conf.Regions
+func (r *Reaper) allSecurityGroups() SecurityGroups {
+	regions := r.conf.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -237,7 +243,7 @@ func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
 
 			// build the filter list
 			var filters []*ec2.Filter
-			for _, f := range conf.SecurityGroupFilters {
+			for _, f := range r.conf.AWS.SecurityGroupFilters {
 				filter := &ec2.Filter{Name: aws.String(f.Name)}
 				for _, v := range f.Values {
 					filter.Values = append(filter.Values, aws.String(v))
@@ -280,10 +286,9 @@ func (r *Reaper) allSecurityGroups(conf AWSConfig) SecurityGroups {
 }
 
 func (r *Reaper) reapInstances() {
-	instances := allInstances(r.conf.AWS)
+	instances := r.allInstances()
 
 	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
-	r.events.NewStatistic("reaper.instances.total", float64(len(instances)), nil)
 
 	// This is where we qualify instances
 	// filtered := instances.
@@ -297,10 +302,14 @@ func (r *Reaper) reapInstances() {
 	filtered := instances.Tagged("REAP_ME")
 
 	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
-	r.events.NewStatistic("reaper.instances.reapable", float64(len(filtered)), nil)
+	for _, e := range r.events {
+		e.NewStatistic("reaper.instances.reapable", float64(len(filtered)), nil)
+	}
 
 	for _, i := range filtered {
-		r.events.NewReapableInstanceEvent(i)
+		for _, e := range r.events {
+			e.NewReapableInstanceEvent(i)
+		}
 
 		if i.Owned() {
 			r.log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.Id(), i.Owner()))
@@ -313,7 +322,9 @@ func (r *Reaper) reapInstances() {
 			title := "Reaper terminated unowned instance"
 			text := fmt.Sprintf("Unowned instance %s was terminated.", i.Id())
 
-			r.events.NewEvent(title, text, nil, nil)
+			for _, e := range r.events {
+				e.NewEvent(title, text, nil, nil)
+			}
 
 			continue
 		}
@@ -321,15 +332,21 @@ func (r *Reaper) reapInstances() {
 		switch i.Reaper().State {
 		case STATE_START, STATE_IGNORE:
 			r.sendNotification(i, 1)
-			r.events.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
+			for _, e := range r.events {
+				e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
+			}
 
 		case STATE_NOTIFY1:
 			r.sendNotification(i, 2)
-			r.events.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
+			for _, e := range r.events {
+				e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
+			}
 
 		case STATE_NOTIFY2:
 			r.terminate(i)
-			r.events.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id()), nil, nil)
+			for _, e := range r.events {
+				e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id()), nil, nil)
+			}
 		}
 	}
 }
@@ -421,15 +438,15 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 }
 
 // allInstances describes every instance in the requested regions
-func allInstances(conf AWSConfig) Instances {
+func (r *Reaper) allInstances() Instances {
 
-	regions := conf.Regions
+	regions := r.conf.AWS.Regions
 	var wg sync.WaitGroup
 	in := make(chan *Instance)
 
 	// fetch all info in parallel
 	for _, region := range regions {
-		debugAllInst("DescribeInstances in %s", region)
+		r.log.Debug("DescribeInstances in %s", region)
 		wg.Add(1)
 
 		go func(region string) {
@@ -447,7 +464,7 @@ func allInstances(conf AWSConfig) Instances {
 
 			// build the filter list
 			var filters []*ec2.Filter
-			for _, f := range conf.InstanceFilters {
+			for _, f := range r.conf.AWS.InstanceFilters {
 				filter := &ec2.Filter{Name: aws.String(f.Name)}
 				for _, v := range f.Values {
 					filter.Values = append(filter.Values, aws.String(v))
@@ -460,7 +477,7 @@ func allInstances(conf AWSConfig) Instances {
 				for i, v := range f.Values {
 					vals[i] = *v
 				}
-				debugAllInst(" > filter %s: %s", *f.Name, strings.Join(vals, ", "))
+				r.log.Debug(" > filter %s: %s", *f.Name, strings.Join(vals, ", "))
 			}
 			_ = filters
 
@@ -472,7 +489,7 @@ func allInstances(conf AWSConfig) Instances {
 				resp, err := api.DescribeInstances(input)
 				if err != nil {
 					// probably should do something here...
-					debugAllInst("EC2 error in %s: %s", region, err.Error())
+					r.log.Debug("EC2 error in %s: %s", region, err.Error())
 					return
 				}
 
@@ -484,15 +501,17 @@ func allInstances(conf AWSConfig) Instances {
 				}
 
 				if resp.NextToken != nil {
-					debugAllInst("More results for DescribeInstances in %s", region)
+					r.log.Debug("More results for DescribeInstances in %s", region)
 					nextToken = resp.NextToken
 				} else {
 					done = true
 				}
 			}
 
-			debugAllInst("Found %d instances in %s", sum, region)
-
+			r.log.Debug("Found %d instances in %s", sum, region)
+			for _, e := range r.events {
+				e.NewStatistic("reaper.instances.total", float64(sum), []string{region})
+			}
 		}(region)
 	}
 

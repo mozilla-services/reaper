@@ -8,12 +8,6 @@ import (
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper/filter"
-	. "github.com/tj/go-debug"
-)
-
-var (
-	debugAWS = Debug("reaper:aws")
-	debugAll = Debug("reaper:aws:AllInstances")
 )
 
 const (

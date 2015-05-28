@@ -17,8 +17,9 @@ The reaper terminates forgotten EC2 instances. It works like this:
 ## Building
 
 * checkout repo
-* build binary: `godep go build main/reaper.go`
-* use binary: `DEBUG=* ./reaper -conf config/default.toml`
+* build binary: `godep go build main.go`
+* use binary: `./reaper -conf config/default.toml`
+* for command line options: `./reaper -help`
 
 ## Creating a configuration file
 

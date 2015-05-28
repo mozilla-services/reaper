@@ -1,4 +1,4 @@
-package reaper
+package main
 
 import (
 	"fmt"
@@ -79,7 +79,7 @@ func (a *AWSResource) ReaperIgnored() bool {
 }
 
 func UpdateReaperState(region, id string, newState *State) error {
-	log.Info("UpdateReaperState region:%s instance: %s", region, id)
+	Log.Info("UpdateReaperState region:%s instance: %s", region, id)
 	req := &ec2.CreateTagsInput{
 		DryRun:    aws.Boolean(false),
 		Resources: []*string{aws.String(id)},

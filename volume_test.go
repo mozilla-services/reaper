@@ -1,4 +1,4 @@
-package reaper_test
+package main_test
 
 import (
 	"github.com/awslabs/aws-sdk-go/aws"

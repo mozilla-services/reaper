@@ -1,4 +1,4 @@
-package reaper
+package main
 
 import (
 	"github.com/awslabs/aws-sdk-go/service/ec2"

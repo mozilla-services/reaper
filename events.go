@@ -1,4 +1,4 @@
-package reaper
+package main
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func (n NoEventReporter) NewStatistic(name string, value float64, tags []string)
 func (n NoEventReporter) NewReapableInstanceEvent(i *Instance) {
 }
 
-type IRCReporter struct {
+type OutputLog struct {
 }
 
 // implements EventReporter, sends events and statistics to DataDog

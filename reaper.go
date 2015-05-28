@@ -1,4 +1,4 @@
-package reaper
+package main
 
 import (
 	"fmt"
@@ -8,30 +8,21 @@ import (
 
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
-	"github.com/op/go-logging"
-	"github.com/tj/go-debug"
-)
-
-var (
-	debugReaper  = debug.Debug("reaper:reaper")
-	debugAllInst = debug.Debug("reaper:reaper:allInstances")
 )
 
 type Reaper struct {
 	conf   Config
 	mailer *Mailer
-	log    *logging.Logger
 	dryrun bool
 	events []EventReporter
 
 	stopCh chan struct{}
 }
 
-func NewReaper(c Config, m *Mailer, l *logging.Logger, es []EventReporter) *Reaper {
+func NewReaper(c Config, m *Mailer, es []EventReporter) *Reaper {
 	return &Reaper{
 		conf:   c,
 		mailer: m,
-		log:    l,
 		events: es,
 	}
 }
@@ -55,11 +46,11 @@ func (r *Reaper) start() {
 	// make a list of all eligible instances
 	for {
 		r.Once()
-		debugReaper("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
+		Log.Debug("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
 		select {
 		case <-time.After(r.conf.Reaper.Interval.Duration):
 		case <-r.stopCh: // time to exit!
-			debugReaper("Stopping reaper on stop channel message")
+			Log.Debug("Stopping reaper on stop channel message")
 			return
 		}
 	}
@@ -74,7 +65,7 @@ func (r *Reaper) Once() {
 
 func (r *Reaper) reapSnapshots() {
 	snapshots := r.allSnapshots()
-	r.log.Info(fmt.Sprintf("Total snapshots: %d", len(snapshots)))
+	Log.Info(fmt.Sprintf("Total snapshots: %d", len(snapshots)))
 }
 
 func (r *Reaper) allSnapshots() Snapshots {
@@ -120,7 +111,7 @@ func (r *Reaper) allSnapshots() Snapshots {
 				in <- NewSnapshot(region, v)
 			}
 
-			r.log.Info(fmt.Sprintf("Found %d snapshots in %s", sum, region))
+			Log.Info(fmt.Sprintf("Found %d snapshots in %s", sum, region))
 			for _, e := range r.events {
 				e.NewStatistic("reaper.snapshots.total", float64(len(in)), []string{region})
 			}
@@ -145,7 +136,7 @@ func (r *Reaper) allSnapshots() Snapshots {
 
 func (r *Reaper) reapVolumes() {
 	volumes := r.allVolumes()
-	r.log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
+	Log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
 	for _, e := range r.events {
 		e.NewStatistic("reaper.volumes.total", float64(len(volumes)), nil)
 	}
@@ -194,7 +185,7 @@ func (r *Reaper) allVolumes() Volumes {
 				in <- NewVolume(region, v)
 			}
 
-			r.log.Info(fmt.Sprintf("Found %d volumes in %s", sum, region))
+			Log.Info(fmt.Sprintf("Found %d volumes in %s", sum, region))
 		}(region)
 	}
 	// aggregate
@@ -216,7 +207,7 @@ func (r *Reaper) allVolumes() Volumes {
 
 func (r *Reaper) reapSecurityGroups() {
 	securitygroups := r.allSecurityGroups()
-	r.log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
+	Log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
 	for _, e := range r.events {
 		e.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
 	}
@@ -265,7 +256,7 @@ func (r *Reaper) allSecurityGroups() SecurityGroups {
 				in <- NewSecurityGroup(region, sg)
 			}
 
-			r.log.Info(fmt.Sprintf("Found %d security groups in %s", sum, region))
+			Log.Info(fmt.Sprintf("Found %d security groups in %s", sum, region))
 		}(region)
 	}
 	// aggregate
@@ -288,7 +279,7 @@ func (r *Reaper) allSecurityGroups() SecurityGroups {
 func (r *Reaper) reapInstances() {
 	instances := r.allInstances()
 
-	r.log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
+	Log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
 
 	// This is where we qualify instances
 	// filtered := instances.
@@ -301,7 +292,7 @@ func (r *Reaper) reapInstances() {
 
 	filtered := instances.Tagged("REAP_ME")
 
-	r.log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
+	Log.Info(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 	for _, e := range r.events {
 		e.NewStatistic("reaper.instances.reapable", float64(len(filtered)), nil)
 	}
@@ -312,7 +303,7 @@ func (r *Reaper) reapInstances() {
 		}
 
 		if i.Owned() {
-			r.log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.Id(), i.Owner()))
+			Log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.Id(), i.Owner()))
 		}
 
 		// terminate the instance if we can't determine the owner
@@ -353,9 +344,9 @@ func (r *Reaper) reapInstances() {
 
 func (r *Reaper) info(format string, values ...interface{}) {
 	if r.dryrun {
-		r.log.Info("(DRYRUN) " + fmt.Sprintf(format, values...))
+		Log.Info("(DRYRUN) " + fmt.Sprintf(format, values...))
 	} else {
-		r.log.Info(fmt.Sprintf(format, values...))
+		Log.Info(fmt.Sprintf(format, values...))
 	}
 }
 
@@ -368,7 +359,7 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 	}
 
 	if err := Terminate(i.Region(), i.Id()); err != nil {
-		r.log.Error(fmt.Sprintf("Terminate %s error: %s", i.Id(), err.Error()))
+		Log.Error(fmt.Sprintf("Terminate %s error: %s", i.Id(), err.Error()))
 		return err
 	}
 
@@ -384,7 +375,7 @@ func (r *Reaper) terminate(i *Instance) error {
 	}
 
 	if err := Terminate(i.Region(), i.Id()); err != nil {
-		r.log.Error(fmt.Sprintf("%s failed to terminate error: %s",
+		Log.Error(fmt.Sprintf("%s failed to terminate error: %s",
 			i.Id()), err.Error())
 		return err
 	}
@@ -394,7 +385,7 @@ func (r *Reaper) terminate(i *Instance) error {
 func (r *Reaper) stop(i *Instance) error {
 	r.info("STOP %s notify2 => stop", i.Id())
 	if err := Stop(i.Region(), i.Id()); err != nil {
-		r.log.Error(fmt.Sprintf("%s failed to stop error: %s",
+		Log.Error(fmt.Sprintf("%s failed to stop error: %s",
 			i.Id()), err.Error())
 		return err
 	}
@@ -419,7 +410,7 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 	}
 
 	if err := r.mailer.Notify(notifyNum, i); err != nil {
-		debugReaper("Notify %d for %s error %s", notifyNum, i.Id(), err.Error())
+		Log.Debug("Notify %d for %s error %s", notifyNum, i.Id(), err.Error())
 		return err
 	}
 
@@ -429,7 +420,7 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 	})
 
 	if err != nil {
-		r.log.Error(fmt.Sprintf("Send Notification %d for %s: %s"),
+		Log.Error(fmt.Sprintf("Send Notification %d for %s: %s"),
 			notifyNum, i.Id(), err.Error())
 		return err
 	}
@@ -446,7 +437,7 @@ func (r *Reaper) allInstances() Instances {
 
 	// fetch all info in parallel
 	for _, region := range regions {
-		r.log.Debug("DescribeInstances in %s", region)
+		Log.Debug("DescribeInstances in %s", region)
 		wg.Add(1)
 
 		go func(region string) {
@@ -477,7 +468,7 @@ func (r *Reaper) allInstances() Instances {
 				for i, v := range f.Values {
 					vals[i] = *v
 				}
-				r.log.Debug(" > filter %s: %s", *f.Name, strings.Join(vals, ", "))
+				Log.Debug(" > filter %s: %s", *f.Name, strings.Join(vals, ", "))
 			}
 			_ = filters
 
@@ -489,7 +480,7 @@ func (r *Reaper) allInstances() Instances {
 				resp, err := api.DescribeInstances(input)
 				if err != nil {
 					// probably should do something here...
-					r.log.Debug("EC2 error in %s: %s", region, err.Error())
+					Log.Debug("EC2 error in %s: %s", region, err.Error())
 					return
 				}
 
@@ -501,14 +492,14 @@ func (r *Reaper) allInstances() Instances {
 				}
 
 				if resp.NextToken != nil {
-					r.log.Debug("More results for DescribeInstances in %s", region)
+					Log.Debug("More results for DescribeInstances in %s", region)
 					nextToken = resp.NextToken
 				} else {
 					done = true
 				}
 			}
 
-			r.log.Debug("Found %d instances in %s", sum, region)
+			Log.Debug("Found %d instances in %s", sum, region)
 			for _, e := range r.events {
 				e.NewStatistic("reaper.instances.total", float64(sum), []string{region})
 			}

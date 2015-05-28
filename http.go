@@ -1,4 +1,4 @@
-package reaper
+package main
 
 import (
 	"io"
@@ -8,10 +8,7 @@ import (
 	"time"
 
 	"github.com/mostlygeek/reaper/token"
-	"github.com/op/go-logging"
 )
-
-var log = logging.MustGetLogger("HTTP")
 
 const (
 	HTTP_TOKEN_VAR  = "t"
@@ -36,7 +33,7 @@ func (h *HTTPApi) Serve() (e error) {
 	mux.HandleFunc("/", processToken(h))
 	h.server = &http.Server{Handler: mux}
 
-	log.Debug("Starting HTTP server: %s", h.conf.HTTPListen)
+	Log.Debug("Starting HTTP server: %s", h.conf.HTTPListen)
 	go h.server.Serve(h.ln)
 	return nil
 }
@@ -89,7 +86,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		}
 
 		if job.Action == token.J_DELAY {
-			log.Debug("Delay %s in %s until %s", job.InstanceId, job.Region, job.IgnoreUntil.String())
+			Log.Debug("Delay %s in %s until %s", job.InstanceId, job.Region, job.IgnoreUntil.String())
 			err := UpdateReaperState(job.Region, job.InstanceId, &State{
 				State: STATE_IGNORE,
 				Until: job.IgnoreUntil,
@@ -101,7 +98,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			}
 
 		} else if job.Action == token.J_TERMINATE {
-			log.Debug("Terminate %s", job.InstanceId)
+			Log.Debug("Terminate %s", job.InstanceId)
 			err := Terminate(job.Region, job.InstanceId)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())

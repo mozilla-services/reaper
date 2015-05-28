@@ -1,4 +1,4 @@
-package reaper
+package main
 
 import (
 	"bytes"

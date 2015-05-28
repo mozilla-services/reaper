@@ -7,12 +7,6 @@ import (
 	"net/mail"
 	"net/smtp"
 	"time"
-
-	. "github.com/tj/go-debug"
-)
-
-var (
-	debugMailer = Debug("reaper:mailer")
 )
 
 // at some point this should probably be configurable
@@ -72,7 +66,7 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf.WriteString(htmlBody)
 	buf.WriteString("\n")
 
-	debugMailer("Sending email to:%s, from:%s, subject:%s",
+	Log.Debug("Sending email to:%s, from:%s, subject:%s",
 		to.String(),
 		m.conf.SMTP.From.Address.String(),
 		subject)
@@ -112,7 +106,7 @@ func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
 		m.conf.HTTPApiURL, i.Region(), i.Id())
 
-	debugMailer("creating links for %s:%s", i.Id(), i.Region())
+	Log.Debug("creating links for %s:%s", i.Id(), i.Region())
 
 	if err == nil {
 		delay1, err = MakeIgnoreLink(m.conf.TokenSecret,
@@ -154,7 +148,7 @@ func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 	})
 
 	if err != nil {
-		debugMailer("Template generation error %s", err.Error())
+		Log.Debug("Template generation error %s", err.Error())
 		return err
 	}
 

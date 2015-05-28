@@ -6,10 +6,7 @@ import (
 	"text/template"
 
 	"github.com/PagerDuty/godspeed"
-	. "github.com/tj/go-debug"
 )
-
-var debugEvents = Debug("reaper:events")
 
 type EventReporter interface {
 	NewEvent(title string, text string, fields map[string]string, tags []string)
@@ -44,24 +41,24 @@ type DataDog struct {
 func (d DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) {
 	g, err := godspeed.NewDefault()
 	if err != nil {
-		debugEvents("Error creating Godspeed, ", err)
+		Log.Debug("Error creating Godspeed, ", err)
 	}
 	defer g.Conn.Close()
 	err = g.Event(title, text, fields, tags)
 	if err != nil {
-		debugEvents(fmt.Sprintf("Error reporting Godspeed event %s", title), err)
+		Log.Debug(fmt.Sprintf("Error reporting Godspeed event %s", title), err)
 	}
 }
 
 func (d DataDog) NewStatistic(name string, value float64, tags []string) {
 	g, err := godspeed.NewDefault()
 	if err != nil {
-		debugEvents("Error creating Godspeed, ", err)
+		Log.Debug("Error creating Godspeed, ", err)
 	}
 	defer g.Conn.Close()
 	err = g.Gauge(name, value, tags)
 	if err != nil {
-		debugEvents(fmt.Sprintf("Error reporting Godspeed statistic %s", name), err)
+		Log.Debug(fmt.Sprintf("Error reporting Godspeed statistic %s", name), err)
 	}
 }
 
@@ -71,7 +68,7 @@ func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 
 	err := t.Execute(buf, i)
 	if err != nil {
-		debugEvents("Template generation error", err)
+		Log.Debug("Template generation error", err)
 	}
 
 	d.NewEvent("Reapable Instance Discovered", string(buf.Bytes()), nil, nil)

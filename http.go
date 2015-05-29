@@ -104,6 +104,13 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
+		} else if job.Action == token.J_WHITELIST {
+			Log.Debug("Whitelist %s", job.InstanceId)
+			err := Whitelist(job.Region, job.InstanceId)
+			if err != nil {
+				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 
 		writeResponse(w, http.StatusOK, "OK")
@@ -134,6 +141,17 @@ func MakeIgnoreLink(tokenSecret, apiUrl, region, id string,
 	action := "delay_" + duration.String()
 	return makeURL(apiUrl, action, delay), nil
 
+}
+
+func MakeWhitelistLink(tokenSecret, apiUrl, region, id string) (string, error) {
+	whitelist, err := token.Tokenize(tokenSecret,
+		token.NewWhitelistJob(region, id))
+	if err != nil {
+		Log.Error("Error creating whitelist link: %s", err)
+		return "", err
+	}
+
+	return makeURL(apiUrl, "whitelist", whitelist), nil
 }
 
 func makeURL(host, action, token string) string {

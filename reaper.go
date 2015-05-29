@@ -8,6 +8,7 @@ import (
 
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
+	"github.com/mostlygeek/reaper/filter"
 )
 
 type Reaper struct {
@@ -297,16 +298,16 @@ func (r *Reaper) reapInstances(done chan bool) {
 	Log.Info(fmt.Sprintf("Total instances: %d", len(instances)))
 
 	// This is where we qualify instances
-	// filtered := instances.
-	// 	Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
-	// 	// TODO: line below must be changed before actually running
-	// 	// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
-	// 	Filter(filter.Tagged("REAP_ME")).
-	// 	// can be used to specify a time cutoff
-	// 	Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
+	filtered := instances.
+		Filter(filter.Not(filter.Tagged("REAPER_SPARE_ME"))).
+		// TODO: line below must be changed before actually running
+		// Filter(filter.ReaperReady(r.conf.Reaper.FirstNotification.Duration)).
+		Filter(filter.Tagged("REAP_ME")).
+		// can be used to specify a time cutoff
+		Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
 
 	// post AWS filtering
-	filtered := instances.Tagged("REAP_ME")
+	// filtered := instances.Tagged("REAP_ME")
 	// instances launched >=3 months ago
 	// LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 3))
 

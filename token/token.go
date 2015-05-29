@@ -32,6 +32,7 @@ type Type int
 const (
 	J_DELAY Type = iota
 	J_TERMINATE
+	J_WHITELIST
 )
 
 // Not very scalable but good enough for our requirements
@@ -72,6 +73,15 @@ func NewDelayJob(region, instanceId string, until time.Time) *JobToken {
 func NewTerminateJob(region, instanceId string) *JobToken {
 	return &JobToken{
 		Action:     J_TERMINATE,
+		InstanceId: instanceId,
+		Region:     region,
+		ValidUntil: time.Now().Add(tokenDuration),
+	}
+}
+
+func NewWhitelistJob(region, instanceId string) *JobToken {
+	return &JobToken{
+		Action:     J_WHITELIST,
 		InstanceId: instanceId,
 		Region:     region,
 		ValidUntil: time.Now().Add(tokenDuration),

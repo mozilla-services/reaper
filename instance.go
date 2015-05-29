@@ -65,6 +65,27 @@ func (i *Instance) LaunchTime() time.Time { return i.launchTime }
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
+func Whitelist(region, instanceId string) error {
+	api := ec2.New(&aws.Config{Region: region})
+	req := &ec2.CreateTagsInput{
+		Resources: []*string{aws.String(instanceId)},
+		Tags: []*ec2.Tag{
+			&ec2.Tag{
+				Key:   aws.String("REAPER_SPARE_ME"),
+				Value: aws.String("true"),
+			},
+		},
+	}
+
+	_, err := api.CreateTags(req)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Terminate(region, instanceId string) error {
 	api := ec2.New(&aws.Config{Region: region})
 	req := &ec2.TerminateInstancesInput{

@@ -71,6 +71,7 @@ func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 	var funcMap = template.FuncMap{
 		"MakeTerminateLink": MakeTerminateLink,
 		"MakeIgnoreLink":    MakeIgnoreLink,
+		"MakeWhitelistLink": MakeWhitelistLink,
 	}
 	t := template.Must(template.New("reapable").Funcs(funcMap).Parse(reapableInstanceTemplateDataDog))
 	buf := bytes.NewBuffer(nil)
@@ -90,10 +91,11 @@ func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 }
 
 const reapableInstanceTemplateDataDog = `%%%
-Reaper has discovered a new reapable instance: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}{{.Instance.Id}} in region {{.Instance.Region}}.\n
+Reaper has discovered a new reapable instance: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.Id}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
 State: {{.Instance.State}}.\n
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
+[Whitelist this instance.]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }})
 [Terminate this instance.]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }})
 %%%`

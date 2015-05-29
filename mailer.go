@@ -100,7 +100,7 @@ func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 		return fmt.Errorf("%d not a valid notification num", notifyNum)
 	}
 
-	var term, delay1, delay3, delay7 string
+	var term, delay1, delay3, delay7, whitelist string
 	// Token strings
 
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
@@ -145,6 +145,7 @@ func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 		"delay1DLink":   delay1,
 		"delay3DLink":   delay3,
 		"delay7DLink":   delay7,
+		"whitelist":     whitelist,
 	})
 
 	if err != nil {

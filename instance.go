@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	// "net/url"
+	"net/url"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
@@ -51,14 +51,12 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	return &i
 }
 
-func (i *Instance) AWSConsoleURL() string {
-	// url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-	// 	i.region, i.region, i.id))
-	// if err != nil {
-	// 	Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
-	// }
-	url := fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.region, i.region, i.id)
+func (i *Instance) AWSConsoleURL() *url.URL {
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
+		i.region, i.region, i.id))
+	if err != nil {
+		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+	}
 	return url
 }
 
@@ -130,6 +128,16 @@ func (as Instances) Tagged(tag string) Instances {
 	var bs Instances
 	for i := 0; i < len(as); i++ {
 		if as[i].Tagged(tag) {
+			bs = append(bs, as[i])
+		}
+	}
+	return bs
+}
+
+func (as Instances) LaunchTimeBeforeOrEqual(time time.Time) Instances {
+	var bs Instances
+	for i := 0; i < len(as); i++ {
+		if as[i].LaunchTime().Before(time) || as[i].LaunchTime().Equal(time) {
 			bs = append(bs, as[i])
 		}
 	}

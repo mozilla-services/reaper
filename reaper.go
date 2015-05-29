@@ -305,7 +305,10 @@ func (r *Reaper) reapInstances(done chan bool) {
 	// 	// can be used to specify a time cutoff
 	// 	Filter(filter.LaunchTimeBeforeOrEqual(time.Now().Add(-(time.Second))))
 
+	// post AWS filtering
 	filtered := instances.Tagged("REAP_ME")
+	// instances launched >=3 months ago
+	// LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 3))
 
 	Log.Notice(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 	for _, e := range Events {
@@ -322,7 +325,8 @@ func (r *Reaper) reapInstances(done chan bool) {
 		}
 
 		// terminate the instance if we can't determine the owner
-		if i.Owner() == nil {
+		// only if not dryrun
+		if i.Owner() == nil && !r.dryrun {
 			r.terminateUnowned(i)
 
 			title := "Reaper terminated unowned instance"

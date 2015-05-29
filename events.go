@@ -27,9 +27,6 @@ func (n NoEventReporter) NewStatistic(name string, value float64, tags []string)
 func (n NoEventReporter) NewReapableInstanceEvent(i *Instance) {
 }
 
-type OutputLog struct {
-}
-
 // implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {
@@ -48,6 +45,7 @@ func (d DataDog) NewEvent(title string, text string, fields map[string]string, t
 	if err != nil {
 		Log.Debug(fmt.Sprintf("Error reporting Godspeed event %s", title), err)
 	}
+	Log.Debug(fmt.Sprintf("Event %s posted to DataDog.", title))
 }
 
 func (d DataDog) NewStatistic(name string, value float64, tags []string) {
@@ -60,22 +58,42 @@ func (d DataDog) NewStatistic(name string, value float64, tags []string) {
 	if err != nil {
 		Log.Debug(fmt.Sprintf("Error reporting Godspeed statistic %s", name), err)
 	}
+
+	Log.Debug(fmt.Sprintf("Statistic %s posted to DataDog.", name))
+}
+
+type ReapableInstanceEventData struct {
+	Instance *Instance
+	Config   *Config
 }
 
 func (d DataDog) NewReapableInstanceEvent(i *Instance) {
-	t := template.Must(template.New("reapable").Parse(reapableInstanceTemplate))
+	var funcMap = template.FuncMap{
+		"MakeTerminateLink": MakeTerminateLink,
+		"MakeIgnoreLink":    MakeIgnoreLink,
+	}
+	t := template.Must(template.New("reapable").Funcs(funcMap).Parse(reapableInstanceTemplateDataDog))
 	buf := bytes.NewBuffer(nil)
 
-	err := t.Execute(buf, i)
+	data := ReapableInstanceEventData{
+		Instance: i,
+		Config:   Conf,
+	}
+
+	err := t.Execute(buf, data)
 	if err != nil {
 		Log.Debug("Template generation error", err)
 	}
 
 	d.NewEvent("Reapable Instance Discovered", string(buf.Bytes()), nil, nil)
+	Log.Debug("Reapable Instance Event posted to DataDog.")
 }
 
-const reapableInstanceTemplate = `Reaper has discovered a new reapable instance: {{if .Name}}"{{.Name}}" {{end}}{{.Id}} in region {{.Region}}.
-{{if .Owned}}Owned by {{.Owner}}{{end}}
-State: {{.State}}.
-Check it out [here]({{.AWSConsoleURL}}).
-`
+const reapableInstanceTemplateDataDog = `%%%
+Reaper has discovered a new reapable instance: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}{{.Instance.Id}} in region {{.Instance.Region}}.\n
+{{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
+State: {{.Instance.State}}.\n
+{{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
+[AWS Console URL]({{.Instance.AWSConsoleURL}})\n
+[Terminate this instance.]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }})
+%%%`

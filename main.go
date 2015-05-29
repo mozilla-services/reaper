@@ -9,13 +9,15 @@ import (
 	"github.com/op/go-logging"
 )
 
+// Log, Events, and Conf are all exported global variables
+
 var (
 	Log           *logging.Logger
-	conf          *Config
+	Events        []EventReporter
+	Conf          *Config
 	mailer        *Mailer
 	dryrun        = false
 	enableDataDog bool
-	events        []EventReporter
 )
 
 func init() {
@@ -54,10 +56,10 @@ func init() {
 	}
 
 	if c, err := LoadConfig(configFile); err == nil {
-		conf = c
+		Conf = c
 		Log.Info("Configuration loaded from %s", configFile)
-		Log.Debug("SMTP Config: %s", conf.SMTP.String())
-		Log.Debug("SMTP From: %s", conf.SMTP.From.Address.String())
+		Log.Debug("SMTP Config: %s", Conf.SMTP.String())
+		Log.Debug("SMTP From: %s", Conf.SMTP.From.Address.String())
 
 	} else {
 		Log.Error("toml", err)
@@ -66,12 +68,12 @@ func init() {
 
 	if enableDataDog {
 		Log.Info("DataDog enabled.")
-		events = append(events, DataDog{})
+		Events = append(Events, DataDog{})
 	} else {
-		events = append(events, NoEventReporter{})
+		Events = append(Events, NoEventReporter{})
 	}
 
-	mailer = NewMailer(*conf)
+	mailer = NewMailer(*Conf)
 
 	if dryrun {
 		Log.Notice("Dry run mode enabled, no changes will be made")
@@ -80,7 +82,7 @@ func init() {
 }
 
 func main() {
-	reapRunner := NewReaper(*conf, mailer, events)
+	reapRunner := NewReaper(*Conf, mailer)
 	if dryrun {
 		reapRunner.DryRunOn()
 	} else {
@@ -91,7 +93,7 @@ func main() {
 	reapRunner.Start()
 
 	// run the HTTP server
-	api := NewHTTPApi(*conf)
+	api := NewHTTPApi(*Conf)
 	if err := api.Serve(); err != nil {
 		Log.Error(err.Error())
 	} else {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"net/url"
+	// "net/url"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
@@ -21,7 +21,7 @@ type Instance struct {
 	AWSResource
 	launchTime     time.Time
 	securityGroups map[string]string
-	awsConsoleURL  *url.URL
+	awsConsoleURL  string
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
@@ -51,13 +51,14 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	return &i
 }
 
-func (i *Instance) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.region, i.region, i.id))
-	if err != nil {
-		fmt.Println("console url messed up")
-		return nil
-	}
+func (i *Instance) AWSConsoleURL() string {
+	// url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
+	// 	i.region, i.region, i.id))
+	// if err != nil {
+	// 	Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+	// }
+	url := fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
+		i.region, i.region, i.id)
 	return url
 }
 

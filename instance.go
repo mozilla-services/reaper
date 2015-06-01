@@ -86,24 +86,43 @@ func Whitelist(region, instanceId string) error {
 	return nil
 }
 
-func Terminate(region, instanceId string) error {
-	api := ec2.New(&aws.Config{Region: region})
+func (i *Instance) Terminate() (bool, error) {
+	api := ec2.New(&aws.Config{Region: i.region})
 	req := &ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{aws.String(instanceId)},
+		InstanceIDs: []*string{aws.String(i.id)},
 	}
 
 	resp, err := api.TerminateInstances(req)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return fmt.Errorf("Instance could not be terminated")
+		return false, fmt.Errorf("Instance could not be terminated")
 	}
 
-	return nil
+	return true, nil
 }
+
+// func Terminate(region, instanceId string) error {
+// 	api := ec2.New(&aws.Config{Region: region})
+// 	req := &ec2.TerminateInstancesInput{
+// 		InstanceIDs: []*string{aws.String(instanceId)},
+// 	}
+
+// 	resp, err := api.TerminateInstances(req)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if len(resp.TerminatingInstances) != 1 {
+// 		return fmt.Errorf("Instance could not be terminated")
+// 	}
+
+// 	return nil
+// }
 
 func Stop(region, instanceId string) error {
 	api := ec2.New(&aws.Config{Region: region})

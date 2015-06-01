@@ -12,11 +12,29 @@ import (
 	"github.com/mostlygeek/reaper/filter"
 )
 
+//                      ______
+//                    <((((((\\\
+//                    /      . }\
+//                    ;--..--._|}
+// (\                 '--/\--'  )
+//  \\                | '-'  :'|
+//   \\               . -==- .-|
+//    \\               \.__.'   \--._
+//    [\\          __.--|       //  _/'--.
+//    \ \\       .'-._ ('-----'/ __/      \
+//     \ \\     /   __>|      | '--.       |
+//      \ \\   |   \   |     /    /       /
+//       \ '\ /     \  |     |  _/       /
+//        \  \       \ |     | /        /
+//         \  \      \        /
+type Terminater interface {
+	Terminater() (bool, error)
+}
+
 type Reaper struct {
 	conf   Config
 	mailer *Mailer
 	dryrun bool
-	events []EventReporter
 
 	stopCh chan struct{}
 }
@@ -89,7 +107,13 @@ func (r *Reaper) reapAutoScalingGroups(done chan bool) {
 	Log.Info(fmt.Sprintf("Total instances in ASGs: %d", len(instanceIds)))
 
 	// ASGs created >=3 months ago
-	// filtered := asgs.LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 3))
+	filtered := asgs.LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 3))
+
+	for _, a := range filtered {
+		for _, e := range Events {
+			e.NewReapableASGEvent(a)
+		}
+	}
 
 	done <- true
 }

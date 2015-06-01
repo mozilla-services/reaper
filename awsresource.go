@@ -13,15 +13,16 @@ type FilterableResource interface {
 	Id() string
 	Region() string
 	State() string
-	Tag(t string) bool
+	Tag(t string) string
 	Owned() bool
 }
 
-type LaunchTimer interface {
+type LaunchTimerResource interface {
+	FilterableResource
 	LaunchTime() time.Time
 }
 
-func LaunchTimeBeforeOrEqual(lt LaunchTimer, t time.Time) bool {
+func LaunchTimeBeforeOrEqual(lt LaunchTimerResource, t time.Time) bool {
 	return lt.LaunchTime().Before(t) || lt.LaunchTime().Equal(t)
 }
 

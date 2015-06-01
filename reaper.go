@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/service/autoscaling"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper/filter"
 )
@@ -62,6 +63,7 @@ func (r *Reaper) Once() {
 		r.reapSecurityGroups,
 		r.reapVolumes,
 		r.reapSnapshots,
+		r.reapAutoScalingGroups,
 	}
 
 	done := make(chan bool, 1)
@@ -70,10 +72,94 @@ func (r *Reaper) Once() {
 	}
 
 	// TODO: I have no idea how concurrency works
-	<-done
+	// TODO update: I have some idea of how concurrency works
+	for i := 0; i < len(reapFuncs); i++ {
+		<-done
+	}
 
 	// this prints before all the reaps are done
 	Log.Notice("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
+}
+
+func (r *Reaper) reapAutoScalingGroups(done chan bool) {
+	asgs := allAutoScalingGroups()
+	Log.Info(fmt.Sprintf("Total ASGs: %d", len(asgs)))
+
+	instanceIds := allASGInstanceIds(asgs)
+	Log.Info(fmt.Sprintf("Total instances in ASGs: %d", len(instanceIds)))
+
+	// ASGs created >=3 months ago
+	// filtered := asgs.LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 3))
+
+	done <- true
+}
+
+func allASGInstanceIds(as AutoScalingGroups) map[string]bool {
+	inASG := make(map[string]bool)
+	// for each ASG
+	for i := 0; i < len(as); i++ {
+		// for each instance in that ASG
+		for j := 0; j < len(as[i].instances); j++ {
+			// add it to the map of instanceIds in ASGs
+			inASG[as[i].instances[j]] = true
+		}
+	}
+	return inASG
+}
+
+func allAutoScalingGroups() AutoScalingGroups {
+	regions := Conf.AWS.Regions
+
+	// waitgroup for goroutines
+	var wg sync.WaitGroup
+
+	// channel for creating SecurityGroups
+	in := make(chan *AutoScalingGroup)
+
+	for _, region := range regions {
+		wg.Add(1)
+
+		sum := 0
+
+		// goroutine per region to fetch all security groups
+		go func(region string) {
+			defer wg.Done()
+			api := autoscaling.New(&aws.Config{Region: region})
+
+			// TODO: nextToken paging
+			input := &autoscaling.DescribeAutoScalingGroupsInput{}
+			resp, err := api.DescribeAutoScalingGroups(input)
+			if err != nil {
+				// TODO: wee
+				Log.Error(err.Error())
+			}
+
+			for _, a := range resp.AutoScalingGroups {
+				sum += 1
+				in <- NewAutoScalingGroup(region, a)
+			}
+
+			Log.Info(fmt.Sprintf("Found %d AutoScalingGroups in %s", sum, region))
+			for _, e := range Events {
+				e.NewStatistic("reaper.asgs.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
+			}
+		}(region)
+	}
+	// aggregate
+	var autoScalingGroups AutoScalingGroups
+	go func() {
+		for a := range in {
+			autoScalingGroups = append(autoScalingGroups, a)
+		}
+	}()
+
+	// synchronous wait for all goroutines in wg to be done
+	wg.Wait()
+
+	// done with the channel
+	close(in)
+
+	return autoScalingGroups
 }
 
 func (r *Reaper) reapSnapshots(done chan bool) {
@@ -327,7 +413,7 @@ func (r *Reaper) reapInstances(done chan bool) {
 
 		// terminate the instance if we can't determine the owner
 		// only if not dryrun
-		if i.Owner() == nil && !r.dryrun {
+		if !i.Owned() && !r.dryrun {
 			r.terminateUnowned(i)
 
 			title := "Reaper terminated unowned instance"
@@ -340,23 +426,27 @@ func (r *Reaper) reapInstances(done chan bool) {
 			continue
 		}
 
-		switch i.Reaper().State {
-		case STATE_START, STATE_IGNORE:
-			r.sendNotification(i, 1)
-			for _, e := range Events {
-				e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
-			}
+		// if the instance is owned, email the owner
+		// sends different notification based on reaper state
+		if i.Owned() {
+			switch i.Reaper().State {
+			case STATE_START, STATE_IGNORE:
+				r.sendNotification(i, 1)
+				for _, e := range Events {
+					e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
+				}
 
-		case STATE_NOTIFY1:
-			r.sendNotification(i, 2)
-			for _, e := range Events {
-				e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
-			}
+			case STATE_NOTIFY1:
+				r.sendNotification(i, 2)
+				for _, e := range Events {
+					e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id()), nil, nil)
+				}
 
-		case STATE_NOTIFY2:
-			r.terminate(i)
-			for _, e := range Events {
-				e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id()), nil, nil)
+			case STATE_NOTIFY2:
+				r.terminate(i)
+				for _, e := range Events {
+					e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id()), nil, nil)
+				}
 			}
 		}
 	}

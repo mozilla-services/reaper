@@ -9,6 +9,22 @@ import (
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 )
 
+type FilterableResource interface {
+	Id() string
+	Region() string
+	State() string
+	Tag(t string) bool
+	Owned() bool
+}
+
+type LaunchTimer interface {
+	LaunchTime() time.Time
+}
+
+func LaunchTimeBeforeOrEqual(lt LaunchTimer, t time.Time) bool {
+	return lt.LaunchTime().Before(t) || lt.LaunchTime().Equal(t)
+}
+
 // basic AWS resource, has properties that most/all resources have
 type AWSResources []AWSResource
 type AWSResource struct {

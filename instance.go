@@ -158,7 +158,7 @@ func (as Instances) Tagged(tag string) Instances {
 func (as Instances) LaunchTimeBeforeOrEqual(time time.Time) Instances {
 	var bs Instances
 	for i := 0; i < len(as); i++ {
-		if as[i].LaunchTime().Before(time) || as[i].LaunchTime().Equal(time) {
+		if LaunchTimeBeforeOrEqual(as[i], time) {
 			bs = append(bs, as[i])
 		}
 	}

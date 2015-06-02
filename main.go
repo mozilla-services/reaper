@@ -9,11 +9,12 @@ import (
 	"github.com/op/go-logging"
 )
 
-// Log, Events, and Conf are all exported global variables
+// Log, Events, Reapables, and Conf are all exported global variables
 
 var (
 	Log           *logging.Logger
 	Events        []EventReporter
+	Reapables     map[string]map[string]Reapable
 	Conf          *Config
 	mailer        *Mailer
 	dryrun        = false
@@ -77,6 +78,14 @@ func init() {
 
 	if dryrun {
 		Log.Notice("Dry run mode enabled, no changes will be made")
+	}
+
+	// initialize reapables map
+	// must initialize submaps or else -> nil map crashes
+	Reapables = make(map[string]map[string]Reapable)
+	regions := Conf.AWS.Regions
+	for _, region := range regions {
+		Reapables[region] = make(map[string]Reapable)
 	}
 
 }

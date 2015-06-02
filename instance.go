@@ -99,7 +99,7 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return false, fmt.Errorf("Instance could not be terminated")
+		return false, fmt.Errorf("Instance could %s not be terminated.", i.id)
 	}
 
 	return true, nil
@@ -124,24 +124,43 @@ func (i *Instance) Terminate() (bool, error) {
 // 	return nil
 // }
 
-func Stop(region, instanceId string) error {
-	api := ec2.New(&aws.Config{Region: region})
+func (i *Instance) Stop() (bool, error) {
+	api := ec2.New(&aws.Config{Region: i.region})
 	req := &ec2.StopInstancesInput{
-		InstanceIDs: []*string{aws.String(instanceId)},
+		InstanceIDs: []*string{aws.String(i.id)},
 	}
 
 	resp, err := api.StopInstances(req)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if len(resp.StoppingInstances) != 1 {
-		return fmt.Errorf("Instance could not be stopped")
+		return false, fmt.Errorf("Instance %s could not be stopped.", i.id)
 	}
 
-	return nil
+	return true, nil
 }
+
+// func Stop(region, instanceId string) error {
+// 	api := ec2.New(&aws.Config{Region: region})
+// 	req := &ec2.StopInstancesInput{
+// 		InstanceIDs: []*string{aws.String(instanceId)},
+// 	}
+
+// 	resp, err := api.StopInstances(req)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if len(resp.StoppingInstances) != 1 {
+// 		return fmt.Errorf("Instance could not be stopped")
+// 	}
+
+// 	return nil
+// }
 
 // Filter creates a new list of Instances that match the filter
 func (i Instances) Filter(f filter.FilterFunc) (newList Instances) {
@@ -154,32 +173,42 @@ func (i Instances) Filter(f filter.FilterFunc) (newList Instances) {
 	return
 }
 
-func (as Instances) Owned() Instances {
-	var bs Instances
-	for i := 0; i < len(as); i++ {
-		if as[i].Owned() {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
+// func (as Instances) Owned() Instances {
+// 	var bs Instances
+// 	for i := 0; i < len(as); i++ {
+// 		if as[i].Owned() {
+// 			bs = append(bs, as[i])
+// 		}
+// 	}
+// 	return bs
+// }
 
-func (as Instances) Tagged(tag string) Instances {
-	var bs Instances
-	for i := 0; i < len(as); i++ {
-		if as[i].Tagged(tag) {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
+// func (as Instances) Tagged(tag string) Instances {
+// 	var bs Instances
+// 	for i := 0; i < len(as); i++ {
+// 		if as[i].Tagged(tag) {
+// 			bs = append(bs, as[i])
+// 		}
+// 	}
+// 	return bs
+// }
 
-func (as Instances) LaunchTimeBeforeOrEqual(time time.Time) Instances {
-	var bs Instances
-	for i := 0; i < len(as); i++ {
-		if LaunchTimeBeforeOrEqual(as[i], time) {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
+// func (as Instances) NotTagged(tag string) Instances {
+// 	var bs Instances
+// 	for i := 0; i < len(as); i++ {
+// 		if !as[i].Tagged(tag) {
+// 			bs = append(bs, as[i])
+// 		}
+// 	}
+// 	return bs
+// }
+
+// func (as Instances) LaunchTimeBeforeOrEqual(time time.Time) Instances {
+// 	var bs Instances
+// 	for i := 0; i < len(as); i++ {
+// 		if LaunchTimeBeforeOrEqual(as[i], time) {
+// 			bs = append(bs, as[i])
+// 		}
+// 	}
+// 	return bs
+// }

@@ -47,12 +47,32 @@ func NewAutoScalingGroup(region string, asg *autoscaling.AutoScalingGroup) *Auto
 	return &a
 }
 
-func (a AutoScalingGroup) LaunchTime() time.Time { return a.createdTime }
+// TODO
+func (a *AutoScalingGroup) Terminate() (bool, error) {
+	return false, nil
+}
 
+// TODO
+func (a *AutoScalingGroup) Stop() (bool, error) {
+	return false, nil
+}
+
+func (a *AutoScalingGroup) LaunchTime() time.Time { return a.createdTime }
 func (as AutoScalingGroups) LaunchTimeBeforeOrEqual(time time.Time) AutoScalingGroups {
 	var bs AutoScalingGroups
 	for i := 0; i < len(as); i++ {
 		if LaunchTimeBeforeOrEqual(as[i], time) {
+			bs = append(bs, as[i])
+		}
+	}
+	return bs
+}
+
+func (a *AutoScalingGroup) Size() int64 { return a.size }
+func (as AutoScalingGroups) SizeGreaterOrEqual(s int64) AutoScalingGroups {
+	var bs AutoScalingGroups
+	for i := 0; i < len(as); i++ {
+		if SizeGreaterOrEqual(as[i], s) {
 			bs = append(bs, as[i])
 		}
 	}

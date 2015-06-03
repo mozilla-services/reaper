@@ -31,6 +31,20 @@ HTTPListen = "localhost:9000"
 
 	[AWS.SnapshotFilters]
 
+[Filters]
+	[Filters.ASG]
+		[Filters.ASG.1]
+			function = "SizeGreaterThan"
+			value = "3"
+		[Filters.ASG.2]
+			function = "TimeSinceLaunchGreaterThan"
+			value = "24"
+
+	[Filters.Instance]
+		[Filters.Instance.1]
+			function = "TimeSinceLaunch"
+			value = "24h"
+
 [SMTP]
 	Host = "localhost"
 

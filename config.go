@@ -28,6 +28,7 @@ func LoadConfig(path string) (*Config, error) {
 			SecondNotification: duration{time.Duration(12) * time.Hour},
 			Terminate:          duration{time.Duration(24) * time.Hour},
 		},
+		Filters: Filters{},
 	}
 
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
@@ -46,6 +47,17 @@ type Config struct {
 	AWS    AWSConfig
 	SMTP   SMTPConfig
 	Reaper ReaperConfig
+
+	Filters Filters
+}
+
+type Filters struct {
+	ASG map[string]Filterx
+}
+
+type Filterx struct {
+	Function string
+	Value    string
 }
 
 type FromAddress struct {

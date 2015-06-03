@@ -105,6 +105,10 @@ func (i *Instance) Terminate() (bool, error) {
 	return true, nil
 }
 
+func (i *Instance) Filter(f func() bool) bool {
+	return f()
+}
+
 // func Terminate(region, instanceId string) error {
 // 	api := ec2.New(&aws.Config{Region: region})
 // 	req := &ec2.TerminateInstancesInput{

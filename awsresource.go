@@ -9,71 +9,8 @@ import (
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 )
 
-type FilterableResource interface {
-	Id() string
-	Region() string
-	State() string
-	Tag(t string) string
-	Tagged(t string) bool
-	Owned() bool
-}
-
-func Owned(as []FilterableResource) []FilterableResource {
-	var bs []FilterableResource
-	for i := 0; i < len(as); i++ {
-		if as[i].Owned() {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
-
-func Tagged(as []FilterableResource, tag string) []FilterableResource {
-	var bs []FilterableResource
-	for i := 0; i < len(as); i++ {
-		if as[i].Tagged(tag) {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
-
-func NotTagged(as []FilterableResource, tag string) []FilterableResource {
-	var bs []FilterableResource
-	for i := 0; i < len(as); i++ {
-		if !as[i].Tagged(tag) {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
-
-func LaunchTimesBeforeOrEqual(as []LaunchTimerResource, time time.Time) []LaunchTimerResource {
-	var bs []LaunchTimerResource
-	for i := 0; i < len(as); i++ {
-		if LaunchTimeBeforeOrEqual(as[i], time) {
-			bs = append(bs, as[i])
-		}
-	}
-	return bs
-}
-
-type LaunchTimerResource interface {
-	FilterableResource
-	LaunchTime() time.Time
-}
-
-type SizeableResource interface {
-	FilterableResource
-	Size() int64
-}
-
-func SizeGreaterOrEqual(s SizeableResource, sz int64) bool {
-	return s.Size() >= sz
-}
-
-func LaunchTimeBeforeOrEqual(lt LaunchTimerResource, t time.Time) bool {
-	return lt.LaunchTime().Before(t) || lt.LaunchTime().Equal(t)
+type Filterable interface {
+	Filter(func() bool) bool
 }
 
 // basic AWS resource, has properties that most/all resources have

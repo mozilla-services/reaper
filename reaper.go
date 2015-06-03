@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -90,11 +91,12 @@ func (r *Reaper) start() {
 func (r *Reaper) Once() {
 	// run these as goroutines
 	var reapFuncs = []func(chan bool){
-		r.reapInstances,
-		r.reapSecurityGroups,
-		r.reapVolumes,
-		r.reapSnapshots,
-		r.reapAutoScalingGroups,
+		// r.reapInstances,
+		// r.reapSecurityGroups,
+		// r.reapVolumes,
+		// r.reapSnapshots,
+		// r.reapAutoScalingGroups,
+		r.reap,
 	}
 
 	done := make(chan bool, 1)
@@ -116,26 +118,23 @@ func (r *Reaper) reapAutoScalingGroups(done chan bool) {
 	asgs := allAutoScalingGroups()
 	Log.Info(fmt.Sprintf("Total ASGs: %d", len(asgs)))
 
-	instanceIds := allASGInstanceIds(asgs)
-	Log.Info(fmt.Sprintf("Total instances in ASGs: %d", len(instanceIds)))
-
 	// ASGs created >=3 months ago
-	filtered := asgs.
-		LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 6))
+	// filtered := asgs.
+	// LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 6))
 
-	for _, a := range filtered {
-		// append filtered ASGs to Reapables
-		Reapables[a.region][a.id] = a
+	// for _, a := range filtered {
+	// 	// append filtered ASGs to Reapables
+	// 	Reapables[a.region][a.id] = a
 
-		for _, e := range Events {
-			e.NewReapableASGEvent(a)
-		}
-	}
+	// 	for _, e := range Events {
+	// 		e.NewReapableASGEvent(a)
+	// 	}
+	// }
 
 	done <- true
 }
 
-func allASGInstanceIds(as AutoScalingGroups) map[string]bool {
+func allASGInstanceIds(as []AutoScalingGroup) map[string]bool {
 	inASG := make(map[string]bool)
 	// for each ASG
 	for i := 0; i < len(as); i++ {
@@ -148,7 +147,7 @@ func allASGInstanceIds(as AutoScalingGroups) map[string]bool {
 	return inASG
 }
 
-func allAutoScalingGroups() AutoScalingGroups {
+func allAutoScalingGroups() []Filterable {
 	regions := Conf.AWS.Regions
 
 	// waitgroup for goroutines
@@ -187,7 +186,7 @@ func allAutoScalingGroups() AutoScalingGroups {
 		}(region)
 	}
 	// aggregate
-	var autoScalingGroups AutoScalingGroups
+	var autoScalingGroups []Filterable
 	go func() {
 		for a := range in {
 			autoScalingGroups = append(autoScalingGroups, a)
@@ -423,17 +422,54 @@ func (r *Reaper) reap(done chan bool) {
 	instances := allInstances()
 	asgs := allAutoScalingGroups()
 
-	// filter instances -> filteredResources
-	var filteredResources []FilterableResource = Tagged(NotTagged(instances, "REAPER_SPARE_ME"), "REAP_ME")
-	// filteredResources = append(filteredResources,
-	// 	LaunchTimesBeforeOrEqual(asgs, time.Now().Add(-time.Hour*24*7*4*6)),
-	// )
+	// instanceIds := allASGInstanceIds(asgs)
+	// Log.Info(fmt.Sprintf("Total instances in ASGs: %d", len(instanceIds)))
 
-	for i := 0; i < len(filteredResources); i++ {
-		switch t := filteredResources[i].(type) {
-		case Instance:
+	var filteredResources []Filterable
+	filteredResources = append(filteredResources, instances...)
+	filteredResources = append(filteredResources, asgs...)
+
+	for _, f := range filteredResources {
+		switch t := f.(type) {
+		case *Instance:
+		case *AutoScalingGroup:
+			reapAutoScalingGroup(t)
 		default:
 		}
+	}
+}
+
+func reapAutoScalingGroup(a *AutoScalingGroup) {
+	filters := Conf.Filters.ASG
+
+	for _, filter := range filters {
+		var matched bool
+
+		// map function names to function calls
+		switch filter.Function {
+		case "SizeGreaterThan":
+			i, err := strconv.ParseInt(filter.Value, 10, 64)
+			if err != nil {
+				Log.Error("could not parse %s as int64", filter.Value)
+			}
+			if SizeGreaterThan(a, i) {
+				matched = true
+			}
+		default:
+			Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+		}
+
+		// print matches
+		if matched {
+			Log.Debug(fmt.Sprintf("ASG %s qualified as %t for %s(%s).",
+				a.name,
+				matched,
+				filter.Function, filter.Value))
+		}
+	}
+
+	for _, e := range Events {
+		e.NewReapableASGEvent(a)
 	}
 }
 
@@ -457,9 +493,7 @@ func (r *Reaper) reapInstances(done chan bool) {
 	// 	// instances launched >=3 months ago
 	// 	LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 3))
 
-	filtered := NotTagged(
-		Tagged(instances, "REAP_ME"),
-		"REAPER_SPARE_ME")
+	filtered := []Filterable{}
 
 	Log.Notice(fmt.Sprintf("Found %d reapable instances", len(filtered)))
 	for _, e := range Events {
@@ -629,7 +663,7 @@ func (r *Reaper) sendNotification(i *Instance, notifyNum int) error {
 }
 
 // allInstances describes every instance in the requested regions
-func allInstances() []LaunchTimerResource {
+func allInstances() []Filterable {
 
 	regions := Conf.AWS.Regions
 	var wg sync.WaitGroup
@@ -706,7 +740,7 @@ func allInstances() []LaunchTimerResource {
 		}(region)
 	}
 
-	var list []LaunchTimerResource
+	var list []Filterable
 
 	// build up the list
 	go func() {

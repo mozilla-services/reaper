@@ -5,15 +5,26 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/awslabs/aws-sdk-go/aws"
-	"github.com/awslabs/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+)
+
+type ResourceState int
+
+const (
+	PENDING ResourceState = iota
+	RUNNING
+	SHUTTINGDOWN
+	TERMINATED
+	STOPPING
+	STOPPED
 )
 
 type Filterable interface {
-	Filter(Filterx) bool
+	Filter(Filter) bool
 }
 
-func PrintFilterx(f Filterx) string {
+func PrintFilter(f Filter) string {
 	return fmt.Sprintf("%s(%s)", f.Function, f.Value)
 }
 
@@ -22,7 +33,7 @@ type AWSResource struct {
 	id          string
 	name        string
 	region      string
-	state       string
+	state       ResourceState
 	description string
 	vpc_id      string
 	owner_id    string
@@ -38,11 +49,19 @@ func (a *AWSResource) Tagged(tag string) bool {
 	return ok
 }
 
-func (a *AWSResource) Id() string     { return a.id }
-func (a *AWSResource) Name() string   { return a.name }
-func (a *AWSResource) Region() string { return a.region }
-func (a *AWSResource) State() string  { return a.state }
-func (a *AWSResource) Reaper() *State { return a.reaper }
+func (a *AWSResource) Id() string           { return a.id }
+func (a *AWSResource) Name() string         { return a.name }
+func (a *AWSResource) Region() string       { return a.region }
+func (a *AWSResource) State() ResourceState { return a.state }
+func (a *AWSResource) Reaper() *State       { return a.reaper }
+
+// filter funcs for ResourceState
+func (a *AWSResource) Pending() bool      { return a.state == PENDING }
+func (a *AWSResource) Running() bool      { return a.state == RUNNING }
+func (a *AWSResource) ShuttingDown() bool { return a.state == SHUTTINGDOWN }
+func (a *AWSResource) Terminated() bool   { return a.state == TERMINATED }
+func (a *AWSResource) Stopping() bool     { return a.state == STOPPING }
+func (a *AWSResource) Stopped() bool      { return a.state == STOPPED }
 
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.tags[t] }
@@ -65,6 +84,9 @@ func (a *AWSResource) Owner() *mail.Address {
 	return nil
 }
 
+func (a *AWSResource) UpdateReaperState(s *State) {
+	a.reaper = s
+}
 func (a *AWSResource) ReaperVisible() bool {
 	return time.Now().After(a.reaper.Until)
 }

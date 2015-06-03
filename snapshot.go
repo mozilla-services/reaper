@@ -1,11 +1,10 @@
 package main
 
 import (
-	"github.com/awslabs/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"time"
 )
 
-type Snapshots []*Snapshot
 type Snapshot struct {
 	AWSResource
 	size_gb        int64
@@ -32,4 +31,14 @@ func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	}
 
 	return &snap
+}
+
+func (s *Snapshot) Filter(filter Filter) bool {
+	matched := false
+	// map function names to function calls
+	switch filter.Function {
+	default:
+		Log.Error("No function %s could be found for filtering Snapshots.", filter.Function)
+	}
+	return matched
 }

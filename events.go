@@ -128,7 +128,6 @@ State: {{.Instance.State}}.\n
 const reapableASGTemplateDataDog = `%%%
 Reaper has discovered an ASG qualified as reapable: {{if .ASG.Name}}"{{.ASG.Name}}" {{end}}[{{.ASG.Id}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
 {{if .ASG.Owned}}Owned by {{.ASG.Owner}}.\n{{end}}
-State: {{.ASG.State}}.\n
 {{ if .ASG.AWSConsoleURL}}{{.ASG.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.ASG.AWSConsoleURL}})\n
 [Whitelist this ASG.]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }})

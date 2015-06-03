@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/awslabs/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"time"
 )
 
@@ -18,7 +18,6 @@ func NewVolume(region string, v *ec2.Volume) *Volume {
 	vol := Volume{
 		AWSResource: AWSResource{
 			id:     *v.VolumeID,
-			state:  *v.State,
 			region: region,
 			tags:   make(map[string]string),
 		},
@@ -31,6 +30,9 @@ func NewVolume(region string, v *ec2.Volume) *Volume {
 	for _, tag := range v.Tags {
 		vol.tags[*tag.Key] = *tag.Value
 	}
+
+	// TODO: state
+	Log.Info("Volume state: %s", *v.State)
 
 	return &vol
 }

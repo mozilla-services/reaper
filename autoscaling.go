@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/awslabs/aws-sdk-go/service/autoscaling"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 )
 
 type AutoScalingGroup struct {
@@ -21,7 +21,7 @@ type AutoScalingGroup struct {
 	launchConfigurationName string
 }
 
-func NewAutoScalingGroup(region string, asg *autoscaling.AutoScalingGroup) *AutoScalingGroup {
+func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
 			name:   *asg.AutoScalingGroupName,
@@ -51,7 +51,7 @@ func SizeGreaterThan(a *AutoScalingGroup, size int64) bool {
 	return a.size >= size
 }
 
-func (a *AutoScalingGroup) Filter(filter Filterx) bool {
+func (a *AutoScalingGroup) Filter(filter Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {

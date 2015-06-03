@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
-	"github.com/awslabs/aws-sdk-go/aws"
-	"github.com/awslabs/aws-sdk-go/service/ec2"
-	"github.com/mostlygeek/reaper/filter"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 const (
@@ -16,7 +16,6 @@ const (
 	s_tformat  = "2006-01-02 03:04PM MST"
 )
 
-type Instances []*Instance
 type Instance struct {
 	AWSResource
 	launchTime     time.Time
@@ -29,7 +28,6 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		AWSResource: AWSResource{
 			id:     *instance.InstanceID,
 			region: region, // passed in cause not possible to extract out of api
-			state:  *instance.State.Name,
 			tags:   make(map[string]string),
 		},
 
@@ -43,6 +41,21 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	for _, tag := range instance.Tags {
 		i.tags[*tag.Key] = *tag.Value
+	}
+
+	switch *instance.State.Code {
+	case 0:
+		i.state = PENDING
+	case 16:
+		i.state = RUNNING
+	case 32:
+		i.state = SHUTTINGDOWN
+	case 48:
+		i.state = TERMINATED
+	case 64:
+		i.state = STOPPING
+	case 80:
+		i.state = STOPPED
 	}
 
 	i.name = i.Tag("Name")
@@ -64,6 +77,28 @@ func (i *Instance) LaunchTime() time.Time { return i.launchTime }
 
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
+
+func (i *Instance) Filter(filter Filter) bool {
+	matched := false
+	// map function names to function calls
+	switch filter.Function {
+	case "Running":
+		b, err := strconv.ParseBool(filter.Value)
+		if err != nil {
+			Log.Error("could not parse %s as bool", filter.Value)
+		}
+		if i.Running() == b {
+			matched = true
+		}
+	case "Tagged":
+		if i.Tagged(filter.Value) {
+			matched = true
+		}
+	default:
+		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+	}
+	return matched
+}
 
 func Whitelist(region, instanceId string) error {
 	api := ec2.New(&aws.Config{Region: region})
@@ -105,30 +140,6 @@ func (i *Instance) Terminate() (bool, error) {
 	return true, nil
 }
 
-func (i *Instance) Filter(f Filterx) bool {
-	matched := false
-	return matched
-}
-
-// func Terminate(region, instanceId string) error {
-// 	api := ec2.New(&aws.Config{Region: region})
-// 	req := &ec2.TerminateInstancesInput{
-// 		InstanceIDs: []*string{aws.String(instanceId)},
-// 	}
-
-// 	resp, err := api.TerminateInstances(req)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if len(resp.TerminatingInstances) != 1 {
-// 		return fmt.Errorf("Instance could not be terminated")
-// 	}
-
-// 	return nil
-// }
-
 func (i *Instance) Stop() (bool, error) {
 	api := ec2.New(&aws.Config{Region: i.region})
 	req := &ec2.StopInstancesInput{
@@ -147,73 +158,3 @@ func (i *Instance) Stop() (bool, error) {
 
 	return true, nil
 }
-
-// func Stop(region, instanceId string) error {
-// 	api := ec2.New(&aws.Config{Region: region})
-// 	req := &ec2.StopInstancesInput{
-// 		InstanceIDs: []*string{aws.String(instanceId)},
-// 	}
-
-// 	resp, err := api.StopInstances(req)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if len(resp.StoppingInstances) != 1 {
-// 		return fmt.Errorf("Instance could not be stopped")
-// 	}
-
-// 	return nil
-// }
-
-// Filter creates a new list of Instances that match the filter
-func (i Instances) Filter(f filter.FilterFunc) (newList Instances) {
-	for _, i := range i {
-		if f(i) {
-			newList = append(newList, i)
-		}
-	}
-
-	return
-}
-
-// func (as Instances) Owned() Instances {
-// 	var bs Instances
-// 	for i := 0; i < len(as); i++ {
-// 		if as[i].Owned() {
-// 			bs = append(bs, as[i])
-// 		}
-// 	}
-// 	return bs
-// }
-
-// func (as Instances) Tagged(tag string) Instances {
-// 	var bs Instances
-// 	for i := 0; i < len(as); i++ {
-// 		if as[i].Tagged(tag) {
-// 			bs = append(bs, as[i])
-// 		}
-// 	}
-// 	return bs
-// }
-
-// func (as Instances) NotTagged(tag string) Instances {
-// 	var bs Instances
-// 	for i := 0; i < len(as); i++ {
-// 		if !as[i].Tagged(tag) {
-// 			bs = append(bs, as[i])
-// 		}
-// 	}
-// 	return bs
-// }
-
-// func (as Instances) LaunchTimeBeforeOrEqual(time time.Time) Instances {
-// 	var bs Instances
-// 	for i := 0; i < len(as); i++ {
-// 		if LaunchTimeBeforeOrEqual(as[i], time) {
-// 			bs = append(bs, as[i])
-// 		}
-// 	}
-// 	return bs
-// }

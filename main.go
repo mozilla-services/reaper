@@ -12,21 +12,16 @@ import (
 // Log, Events, Reapables, and Conf are all exported global variables
 
 var (
-	Log           *logging.Logger
-	Events        []EventReporter
-	Reapables     map[string]map[string]Reapable
-	Conf          *Config
-	mailer        *Mailer
-	dryrun        = false
-	enableDataDog bool
+	Log       *logging.Logger
+	Events    []EventReporter
+	Reapables map[string]map[string]Reapable
+	Conf      *Config
+	mailer    *Mailer
 )
 
 func init() {
-	var configFile string
-
-	flag.StringVar(&configFile, "conf", "", "path to config file")
-	flag.BoolVar(&dryrun, "dryrun", false, "dry run, don't make changes")
-	flag.BoolVar(&enableDataDog, "datadog", true, "enable DataDog reporting, requires dd-agent running")
+	configFile := flag.String("config", "", "path to config file")
+	dryRun := flag.Bool("dryrun", false, "dry run, don't make changes")
 	flag.Parse()
 
 	// set up logging
@@ -36,12 +31,12 @@ func init() {
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backendFormatter)
 
-	if configFile == "" {
+	if *configFile == "" {
 		Log.Error("Config file is a required Argument. Specify with -conf='filename'")
 		os.Exit(1)
 	}
 
-	if c, err := LoadConfig(configFile); err == nil {
+	if c, err := LoadConfig(*configFile); err == nil {
 		Conf = c
 		Log.Info("Configuration loaded from %s", configFile)
 		Log.Debug("SMTP Config: %s", Conf.SMTP.String())
@@ -67,16 +62,18 @@ func init() {
 		}
 	}
 
-	if enableDataDog {
-		Log.Info("DataDog enabled.")
+	if Conf.Events.DataDog {
+		Log.Info("DataDog EventReporter enabled.")
 		Events = append(Events, DataDog{})
-	} else {
-		Events = append(Events, NoEventReporter{})
 	}
 
-	mailer = NewMailer(*Conf)
+	if Conf.Events.Email {
+		Log.Info("Email EventReporter enabled.")
+		Events = append(Events, NewMailer(*Conf))
+	}
 
-	if dryrun {
+	Conf.DryRun = *dryRun
+	if *dryRun {
 		Log.Notice("Dry run mode enabled, no changes will be made")
 	}
 
@@ -91,12 +88,7 @@ func init() {
 }
 
 func main() {
-	reapRunner := NewReaper(*Conf, mailer)
-	if dryrun {
-		reapRunner.DryRunOn()
-	} else {
-		reapRunner.DryRunOff()
-	}
+	reapRunner := NewReaper(*Conf)
 
 	// Run the reaper process
 	reapRunner.Start()

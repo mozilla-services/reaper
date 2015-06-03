@@ -22,16 +22,14 @@ HTTPListen = "localhost:9000"
 	    "eu-west-1",
 	]
 
-	[AWS.InstanceFilters]
-	    [AWS.InstanceFilters.1]
-	        Name = "instance-state-name"
-	        Values = ["running"]
+[Enabled]
+	instances = true
+	asgs = true
+	snapshots = false
 
-	[AWS.SecurityGroupFilters]
-
-	[AWS.VolumeFilters]
-
-	[AWS.SnapshotFilters]
+[Events]
+	datadog = false
+	email = true
 
 [Filters]
 	[Filters.ASG]
@@ -46,6 +44,9 @@ HTTPListen = "localhost:9000"
 		[Filters.Instance.1]
 			function = "TimeSinceLaunch"
 			value = "24h"
+		[Filters.Instance.2]
+			function = "Running"
+			value = "true"
 
 [SMTP]
 	Host = "localhost"

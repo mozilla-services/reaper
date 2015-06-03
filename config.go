@@ -28,8 +28,11 @@ func LoadConfig(path string) (*Config, error) {
 			SecondNotification: duration{time.Duration(12) * time.Hour},
 			Terminate:          duration{time.Duration(24) * time.Hour},
 		},
-		Filters: Filters{},
+		Enabled: ResourceTypes{},
+		Events:  EventTypes{},
+		Filters: FilterTypes{},
 		LogFile: "",
+		DryRun:  true,
 	}
 
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
@@ -49,17 +52,34 @@ type Config struct {
 	SMTP   SMTPConfig
 	Reaper ReaperConfig
 
-	Filters Filters
-
+	Events  EventTypes
+	Enabled ResourceTypes
+	Filters FilterTypes
 	LogFile string
+
+	DryRun bool
 }
 
-type Filters struct {
-	ASG      map[string]Filterx
-	Instance map[string]Filterx
+type EventTypes struct {
+	DataDog bool
+	Email   bool
 }
 
-type Filterx struct {
+type ResourceTypes struct {
+	AutoScalingGroups bool
+	Instances         bool
+	Snapshots         bool
+	Volumes           bool
+	SecurityGroups    bool
+}
+
+type FilterTypes struct {
+	ASG      map[string]Filter
+	Instance map[string]Filter
+	Snapshot map[string]Filter
+}
+
+type Filter struct {
 	Function string
 	Value    string
 }

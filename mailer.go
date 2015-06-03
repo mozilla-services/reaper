@@ -13,7 +13,7 @@ import (
 const notifyTemplateSource = `
 <html>
 <body>
-	<p>Your EC2 instance "{{.Name}}" ({{.Id}}) in {{.Region}} is scheduled to be terminated.</p>
+	<p>Your EC2 instance {{ if .Name }}"{{.Name}}" {{ end }}{{.Id}} in {{.Region}} is scheduled to be terminated.</p>
 
 	<p>
 		You may ignore this message and your instance will be automatically
@@ -54,6 +54,18 @@ func NewMailer(conf Config) *Mailer {
 	return &Mailer{conf}
 }
 
+// methods to conform to EventReporter interface
+func (m *Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) {}
+func (m *Mailer) NewStatistic(name string, value float64, tags []string)                      {}
+
+func (m *Mailer) NewReapableInstanceEvent(i *Instance) {
+	if err := m.Notify(&i.AWSResource); err != nil {
+		Log.Error(err.Error())
+	}
+}
+
+func (m *Mailer) NewReapableASGEvent(a *AutoScalingGroup) {}
+
 // Send an HTML email
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
@@ -80,47 +92,44 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	)
 }
 
-func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
-
-	if i.Owner() == nil {
-		return fmt.Errorf("instance %i has no owner to notify", i.Id())
+func (m *Mailer) Notify(a *AWSResource) (err error) {
+	if a.Owner() == nil {
+		return fmt.Errorf("instance %s has no owner to notify", a.Id())
 	}
 
 	terminateDate := time.Now()
 
-	switch notifyNum {
-	case 1:
+	switch a.Reaper().State {
+	case STATE_START, STATE_IGNORE:
 		terminateDate.
-			Add(m.conf.Reaper.SecondNotification.Duration).
-			Add(m.conf.Reaper.Terminate.Duration)
-	case 2:
+			Add(Conf.Reaper.SecondNotification.Duration).
+			Add(Conf.Reaper.Terminate.Duration)
+	case STATE_NOTIFY2:
 		terminateDate.
-			Add(m.conf.Reaper.Terminate.Duration)
+			Add(Conf.Reaper.Terminate.Duration)
 	default:
-		return fmt.Errorf("%d not a valid notification num", notifyNum)
+		return fmt.Errorf("invalid Reaper state sent to Mailer")
 	}
 
 	var term, delay1, delay3, delay7, whitelist string
 	// Token strings
 
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
-		m.conf.HTTPApiURL, i.Region(), i.Id())
-
-	Log.Debug("creating links for %s:%s", i.Id(), i.Region())
+		m.conf.HTTPApiURL, a.Region(), a.Id())
 
 	if err == nil {
 		delay1, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(24*time.Hour))
+			m.conf.HTTPApiURL, a.Region(), a.Id(), time.Duration(24*time.Hour))
 	}
 
 	if err == nil {
 		delay3, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(3*24*time.Hour))
+			m.conf.HTTPApiURL, a.Region(), a.Id(), time.Duration(3*24*time.Hour))
 	}
 
 	if err == nil {
 		delay7, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, i.Region(), i.Id(), time.Duration(7*24*time.Hour))
+			m.conf.HTTPApiURL, a.Region(), a.Id(), time.Duration(7*24*time.Hour))
 	}
 
 	if err != nil {
@@ -136,10 +145,10 @@ func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 	dispTime := terminateDate.In(mtvLoc).Truncate(time.Hour).Format(time.RFC1123)
 	buf := bytes.NewBuffer(nil)
 	err = notifyTemplate.Execute(buf, map[string]string{
-		"Id":            i.Id(),
-		"Name":          i.Name(),
+		"Id":            a.Id(),
+		"Name":          a.Name(),
 		"Host":          m.conf.HTTPApiURL,
-		"Region":        i.Region(),
+		"Region":        a.Region(),
 		"TerminateDate": dispTime,
 		"terminateLink": term,
 		"delay1DLink":   delay1,
@@ -153,11 +162,11 @@ func (m *Mailer) Notify(notifyNum int, i *Instance) (err error) {
 		return err
 	}
 
-	iName := i.Name()
+	iName := a.Name()
 	if iName == "" {
 		iName = "*unnamed*"
 	}
 
-	subject := fmt.Sprintf("Your instance %s (%s) will be terminated soon", iName, i.Id())
-	return m.Send(*i.Owner(), subject, string(buf.Bytes()))
+	subject := fmt.Sprintf("Your instance %s (%s) will be terminated soon", iName, a.Id())
+	return m.Send(*a.Owner(), subject, string(buf.Bytes()))
 }

@@ -10,7 +10,11 @@ import (
 )
 
 type Filterable interface {
-	Filter(func() bool) bool
+	Filter(Filterx) bool
+}
+
+func PrintFilterx(f Filterx) string {
+	return fmt.Sprintf("%s(%s)", f.Function, f.Value)
 }
 
 // basic AWS resource, has properties that most/all resources have

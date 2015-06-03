@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -28,7 +26,7 @@ import (
 //       \ '\ /     \  |     |  _/       /
 //        \  \       \ |     | /        /
 //         \  \       \       /
-type Terminatable interface {
+type Terminable interface {
 	Terminate() (bool, error)
 }
 
@@ -37,7 +35,7 @@ type Stoppable interface {
 }
 
 type Reapable interface {
-	Terminatable
+	Terminable
 	Stoppable
 }
 
@@ -112,26 +110,6 @@ func (r *Reaper) Once() {
 
 	// this prints before all the reaps are done
 	Log.Notice("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
-}
-
-func (r *Reaper) reapAutoScalingGroups(done chan bool) {
-	asgs := allAutoScalingGroups()
-	Log.Info(fmt.Sprintf("Total ASGs: %d", len(asgs)))
-
-	// ASGs created >=3 months ago
-	// filtered := asgs.
-	// LaunchTimeBeforeOrEqual(time.Now().Add(-time.Hour * 24 * 7 * 4 * 6))
-
-	// for _, a := range filtered {
-	// 	// append filtered ASGs to Reapables
-	// 	Reapables[a.region][a.id] = a
-
-	// 	for _, e := range Events {
-	// 		e.NewReapableASGEvent(a)
-	// 	}
-	// }
-
-	done <- true
 }
 
 func allASGInstanceIds(as []AutoScalingGroup) map[string]bool {
@@ -227,20 +205,8 @@ func allSnapshots() Snapshots {
 			defer wg.Done()
 			api := ec2.New(&aws.Config{Region: region})
 
-			// build the filter list
-			var filters []*ec2.Filter
-			for _, f := range Conf.AWS.SnapshotFilters {
-				filter := &ec2.Filter{Name: aws.String(f.Name)}
-				for _, v := range f.Values {
-					filter.Values = append(filter.Values, aws.String(v))
-				}
-				filters = append(filters, filter)
-			}
-
 			// TODO: nextToken paging
-			input := &ec2.DescribeSnapshotsInput{
-				Filters: filters,
-			}
+			input := &ec2.DescribeSnapshotsInput{}
 			resp, err := api.DescribeSnapshots(input)
 			if err != nil {
 				// TODO: wee
@@ -302,20 +268,8 @@ func allVolumes() Volumes {
 			defer wg.Done()
 			api := ec2.New(&aws.Config{Region: region})
 
-			// build the filter list
-			var filters []*ec2.Filter
-			for _, f := range Conf.AWS.VolumeFilters {
-				filter := &ec2.Filter{Name: aws.String(f.Name)}
-				for _, v := range f.Values {
-					filter.Values = append(filter.Values, aws.String(v))
-				}
-				filters = append(filters, filter)
-			}
-
 			// TODO: nextToken paging
-			input := &ec2.DescribeVolumesInput{
-				Filters: filters,
-			}
+			input := &ec2.DescribeVolumesInput{}
 			resp, err := api.DescribeVolumes(input)
 			if err != nil {
 				// TODO: wee
@@ -374,20 +328,8 @@ func allSecurityGroups() SecurityGroups {
 			defer wg.Done()
 			api := ec2.New(&aws.Config{Region: region})
 
-			// build the filter list
-			var filters []*ec2.Filter
-			for _, f := range Conf.AWS.SecurityGroupFilters {
-				filter := &ec2.Filter{Name: aws.String(f.Name)}
-				for _, v := range f.Values {
-					filter.Values = append(filter.Values, aws.String(v))
-				}
-				filters = append(filters, filter)
-			}
-
 			// TODO: nextToken paging
-			input := &ec2.DescribeSecurityGroupsInput{
-				Filters: filters,
-			}
+			input := &ec2.DescribeSecurityGroupsInput{}
 			resp, err := api.DescribeSecurityGroups(input)
 			if err != nil {
 				// TODO: wee
@@ -419,57 +361,71 @@ func allSecurityGroups() SecurityGroups {
 }
 
 func (r *Reaper) reap(done chan bool) {
-	instances := allInstances()
-	asgs := allAutoScalingGroups()
-
-	// instanceIds := allASGInstanceIds(asgs)
-	// Log.Info(fmt.Sprintf("Total instances in ASGs: %d", len(instanceIds)))
-
-	var filteredResources []Filterable
-	filteredResources = append(filteredResources, instances...)
-	filteredResources = append(filteredResources, asgs...)
+	filterables := allFilterables()
 
 	for _, f := range filteredResources {
 		switch t := f.(type) {
 		case *Instance:
+			reapInstance(t)
 		case *AutoScalingGroup:
 			reapAutoScalingGroup(t)
 		default:
+			Log.Error("Reap default case.")
+		}
+	}
+}
+
+func allFilterables() {
+	var filterables []Filterable
+	filterables = append(filterables, allInstances()...)
+	filterables = append(filterables, allAutoScalingGroups()...)
+}
+
+func applyFilterxs(f Filterable, filters map[string]Filterx) bool {
+	// defaults to a match
+	matched := true
+
+	// if any of the filters return false -> not a match
+	for _, filter := range filters {
+		if !f.Filter(filter) {
+			matched = false
+		}
+	}
+	return matched
+}
+
+func reapInstance(i *Instance) {
+	filters := Conf.Filters.Instance
+	if applyFilterxs(i, filters) {
+		// build log text
+		var filterText []string
+		for _, filter := range filters {
+			filterText = append(filterText, PrintFilterx(filter))
+		}
+		Log.Debug(fmt.Sprintf("Instance %s matched %s.",
+			i.name,
+			filterText))
+		for _, e := range Events {
+			e.NewReapableInstanceEvent(i)
 		}
 	}
 }
 
 func reapAutoScalingGroup(a *AutoScalingGroup) {
 	filters := Conf.Filters.ASG
-
-	for _, filter := range filters {
-		var matched bool
-
-		// map function names to function calls
-		switch filter.Function {
-		case "SizeGreaterThan":
-			i, err := strconv.ParseInt(filter.Value, 10, 64)
-			if err != nil {
-				Log.Error("could not parse %s as int64", filter.Value)
-			}
-			if SizeGreaterThan(a, i) {
-				matched = true
-			}
-		default:
-			Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+	if applyFilterxs(a, filters) {
+		// build log text
+		var filterText []string
+		for _, filter := range filters {
+			filterText = append(filterText, PrintFilterx(filter))
 		}
+		Log.Debug(fmt.Sprintf("ASG %s matched %s.",
+			a.name,
+			filterText))
 
-		// print matches
-		if matched {
-			Log.Debug(fmt.Sprintf("ASG %s qualified as %t for %s(%s).",
-				a.name,
-				matched,
-				filter.Function, filter.Value))
+		for _, e := range Events {
+			e.NewReapableASGEvent(a)
 		}
-	}
-
-	for _, e := range Events {
-		e.NewReapableASGEvent(a)
 	}
 }
 
@@ -687,29 +643,9 @@ func allInstances() []Filterable {
 			var nextToken *string
 			sum := 0
 
-			// build the filter list
-			var filters []*ec2.Filter
-			for _, f := range Conf.AWS.InstanceFilters {
-				filter := &ec2.Filter{Name: aws.String(f.Name)}
-				for _, v := range f.Values {
-					filter.Values = append(filter.Values, aws.String(v))
-				}
-				filters = append(filters, filter)
-			}
-
-			for _, f := range filters {
-				vals := make([]string, len(f.Values), len(f.Values))
-				for i, v := range f.Values {
-					vals[i] = *v
-				}
-				Log.Debug(" > filter %s: %s", *f.Name, strings.Join(vals, ", "))
-			}
-			_ = filters
-
 			for done := false; done != true; {
 				input := &ec2.DescribeInstancesInput{
 					NextToken: nextToken,
-					Filters:   filters,
 				}
 				resp, err := api.DescribeInstances(input)
 				if err != nil {

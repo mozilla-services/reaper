@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/awslabs/aws-sdk-go/service/autoscaling"
@@ -50,8 +51,22 @@ func SizeGreaterThan(a *AutoScalingGroup, size int64) bool {
 	return a.size >= size
 }
 
-func (a *AutoScalingGroup) Filter(f func() bool) bool {
-	return f()
+func (a *AutoScalingGroup) Filter(filter Filterx) bool {
+	matched := false
+	// map function names to function calls
+	switch filter.Function {
+	case "SizeGreaterThan":
+		i, err := strconv.ParseInt(filter.Value, 10, 64)
+		if err != nil {
+			Log.Error("could not parse %s as int64", filter.Value)
+		}
+		if SizeGreaterThan(a, i) {
+			matched = true
+		}
+	default:
+		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+	}
+	return matched
 }
 
 // TODO

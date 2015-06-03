@@ -105,8 +105,9 @@ func (i *Instance) Terminate() (bool, error) {
 	return true, nil
 }
 
-func (i *Instance) Filter(f func() bool) bool {
-	return f()
+func (i *Instance) Filter(f Filterx) bool {
+	matched := false
+	return matched
 }
 
 // func Terminate(region, instanceId string) error {

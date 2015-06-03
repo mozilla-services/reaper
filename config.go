@@ -29,6 +29,7 @@ func LoadConfig(path string) (*Config, error) {
 			Terminate:          duration{time.Duration(24) * time.Hour},
 		},
 		Filters: Filters{},
+		LogFile: "",
 	}
 
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
@@ -49,10 +50,13 @@ type Config struct {
 	Reaper ReaperConfig
 
 	Filters Filters
+
+	LogFile string
 }
 
 type Filters struct {
-	ASG map[string]Filterx
+	ASG      map[string]Filterx
+	Instance map[string]Filterx
 }
 
 type Filterx struct {
@@ -120,17 +124,8 @@ func (s *SMTPConfig) PlainAuth() smtp.Auth {
 	return smtp.PlainAuth("", s.Username, s.Password, s.Host)
 }
 
-type Filter struct {
-	Name   string
-	Values []string
-}
-
 type AWSConfig struct {
-	Regions              []string
-	SecurityGroupFilters map[string]Filter
-	InstanceFilters      map[string]Filter
-	VolumeFilters        map[string]Filter
-	SnapshotFilters      map[string]Filter
+	Regions []string
 }
 
 // controls behaviour of the EC2 single instance reaper works

@@ -33,12 +33,14 @@ const (
 	J_DELAY Type = iota
 	J_TERMINATE
 	J_WHITELIST
+	J_STOP
+	J_FORCESTOP
 )
 
 // Not very scalable but good enough for our requirements
 type JobToken struct {
 	Action      Type
-	InstanceId  string
+	Id          string
 	Region      string
 	IgnoreUntil time.Time
 	ValidUntil  time.Time
@@ -52,7 +54,7 @@ func (j *JobToken) JSON() []byte {
 func (j *JobToken) Equal(j2 *JobToken) bool {
 
 	return j.Action != j2.Action ||
-		j.InstanceId != j2.InstanceId ||
+		j.Id != j2.Id ||
 		j.ValidUntil.Equal(j2.ValidUntil)
 }
 
@@ -60,29 +62,47 @@ func (j *JobToken) Expired() bool {
 	return j.ValidUntil.Before(time.Now())
 }
 
-func NewDelayJob(region, instanceId string, until time.Time) *JobToken {
+func NewDelayJob(region, id string, until time.Time) *JobToken {
 	return &JobToken{
 		Action:      J_DELAY,
-		InstanceId:  instanceId,
+		Id:          id,
 		Region:      region,
 		IgnoreUntil: until,
 		ValidUntil:  time.Now().Add(tokenDuration),
 	}
 }
 
-func NewTerminateJob(region, instanceId string) *JobToken {
+func NewTerminateJob(region, id string) *JobToken {
 	return &JobToken{
 		Action:     J_TERMINATE,
-		InstanceId: instanceId,
+		Id:         id,
 		Region:     region,
 		ValidUntil: time.Now().Add(tokenDuration),
 	}
 }
 
-func NewWhitelistJob(region, instanceId string) *JobToken {
+func NewWhitelistJob(region, id string) *JobToken {
 	return &JobToken{
 		Action:     J_WHITELIST,
-		InstanceId: instanceId,
+		Id:         id,
+		Region:     region,
+		ValidUntil: time.Now().Add(tokenDuration),
+	}
+}
+
+func NewStopJob(region, id string) *JobToken {
+	return &JobToken{
+		Action:     J_STOP,
+		Id:         id,
+		Region:     region,
+		ValidUntil: time.Now().Add(tokenDuration),
+	}
+}
+
+func NewForceStopJob(region, id string) *JobToken {
+	return &JobToken{
+		Action:     J_FORCESTOP,
+		Id:         id,
 		Region:     region,
 		ValidUntil: time.Now().Add(tokenDuration),
 	}

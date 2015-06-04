@@ -21,7 +21,7 @@ var (
 
 func init() {
 	configFile := flag.String("config", "", "path to config file")
-	dryRun := flag.Bool("dryrun", false, "dry run, don't make changes")
+	dryRun := flag.Bool("dryrun", true, "dry run, don't make changes")
 	flag.Parse()
 
 	// set up logging
@@ -38,7 +38,7 @@ func init() {
 
 	if c, err := LoadConfig(*configFile); err == nil {
 		Conf = c
-		Log.Info("Configuration loaded from %s", configFile)
+		Log.Info("Configuration loaded from %s", *configFile)
 		Log.Debug("SMTP Config: %s", Conf.SMTP.String())
 		Log.Debug("SMTP From: %s", Conf.SMTP.From.Address.String())
 

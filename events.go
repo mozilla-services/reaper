@@ -69,12 +69,15 @@ type ASGEventData struct {
 	ASG    *AutoScalingGroup
 }
 
+var funcMap = template.FuncMap{
+	"MakeTerminateLink": MakeTerminateLink,
+	"MakeIgnoreLink":    MakeIgnoreLink,
+	"MakeWhitelistLink": MakeWhitelistLink,
+	"MakeStopLink":      MakeStopLink,
+	"MakeForceStopLink": MakeForceStopLink,
+}
+
 func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
-	var funcMap = template.FuncMap{
-		"MakeTerminateLink": MakeTerminateLink,
-		"MakeIgnoreLink":    MakeIgnoreLink,
-		"MakeWhitelistLink": MakeWhitelistLink,
-	}
 	t := template.Must(template.New("reapable").Funcs(funcMap).Parse(reapableASGTemplateDataDog))
 	buf := bytes.NewBuffer(nil)
 
@@ -93,11 +96,6 @@ func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
 }
 
 func (d DataDog) NewReapableInstanceEvent(i *Instance) {
-	var funcMap = template.FuncMap{
-		"MakeTerminateLink": MakeTerminateLink,
-		"MakeIgnoreLink":    MakeIgnoreLink,
-		"MakeWhitelistLink": MakeWhitelistLink,
-	}
 	t := template.Must(template.New("reapable").Funcs(funcMap).Parse(reapableInstanceTemplateDataDog))
 	buf := bytes.NewBuffer(nil)
 
@@ -122,14 +120,17 @@ State: {{.Instance.State}}.\n
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
 [Whitelist this instance.]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }})
+[Stop this instance.]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }})
 [Terminate this instance.]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }})
 %%%`
 
 const reapableASGTemplateDataDog = `%%%
-Reaper has discovered an ASG qualified as reapable: {{if .ASG.Name}}"{{.ASG.Name}}" {{end}}[{{.ASG.Id}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
+Reaper has discovered an ASG qualified as reapable: [{{.ASG.Id}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
 {{if .ASG.Owned}}Owned by {{.ASG.Owner}}.\n{{end}}
 {{ if .ASG.AWSConsoleURL}}{{.ASG.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.ASG.AWSConsoleURL}})\n
 [Whitelist this ASG.]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }})
-[Terminate this ASG.]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }})
+[Terminate this ASG.]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }})\n
+[Scale this ASG to 0 instances]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }})
+[Force scale this ASG to 0 instances (changes minimum)]({{ MakeForceStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }})
 %%%`

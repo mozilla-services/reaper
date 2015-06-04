@@ -57,14 +57,27 @@ func NewMailer(conf Config) *Mailer {
 // methods to conform to EventReporter interface
 func (m *Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) {}
 func (m *Mailer) NewStatistic(name string, value float64, tags []string)                      {}
-
 func (m *Mailer) NewReapableInstanceEvent(i *Instance) {
+	// don't send emails if we're on a dry run
+	if Conf.DryRun {
+		return
+	}
+
 	if err := m.Notify(&i.AWSResource); err != nil {
 		Log.Error(err.Error())
 	}
 }
 
-func (m *Mailer) NewReapableASGEvent(a *AutoScalingGroup) {}
+func (m *Mailer) NewReapableASGEvent(a *AutoScalingGroup) {
+	// don't send emails if we're on a dry run
+	if Conf.DryRun {
+		return
+	}
+
+	if err := m.Notify(&a.AWSResource); err != nil {
+		Log.Error(err.Error())
+	}
+}
 
 // Send an HTML email
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
@@ -78,7 +91,7 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf.WriteString(htmlBody)
 	buf.WriteString("\n")
 
-	Log.Debug("Sending email to:%s, from:%s, subject:%s",
+	Log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
 		to.String(),
 		m.conf.SMTP.From.Address.String(),
 		subject)
@@ -94,7 +107,8 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 func (m *Mailer) Notify(a *AWSResource) (err error) {
 	if a.Owner() == nil {
-		return fmt.Errorf("instance %s has no owner to notify", a.Id())
+		Log.Debug("Resource %s has no owner to notify.", a.id)
+		return nil
 	}
 
 	terminateDate := time.Now()
@@ -136,10 +150,10 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 		return err
 	}
 
-	mtvLoc, errt := time.LoadLocation("PST8PDT")
+	mtvLoc, err := time.LoadLocation("PST8PDT")
 
-	if errt != nil {
-		return errt
+	if err != nil {
+		return err
 	}
 
 	dispTime := terminateDate.In(mtvLoc).Truncate(time.Hour).Format(time.RFC1123)

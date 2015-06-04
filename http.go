@@ -85,9 +85,10 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		if job.Action == token.J_DELAY {
-			Log.Debug("Delay %s in %s until %s", job.InstanceId, job.Region, job.IgnoreUntil.String())
-			err := UpdateReaperState(job.Region, job.InstanceId, &State{
+		switch job.Action {
+		case token.J_DELAY:
+			Log.Debug("Delay request received for %s in region %s until %s", job.Id, job.Region, job.IgnoreUntil.String())
+			err := UpdateReaperState(job.Region, job.Id, &State{
 				State: STATE_IGNORE,
 				Until: job.IgnoreUntil,
 			})
@@ -97,22 +98,39 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 
-		} else if job.Action == token.J_TERMINATE {
-			Log.Debug("Terminate %s", job.InstanceId)
-			err := Terminate(job.Region, job.InstanceId)
+		case token.J_TERMINATE:
+			Log.Debug("Terminate request received for %s in region %s.", job.Id, job.Region)
+			err := Terminate(job.Region, job.Id)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-		} else if job.Action == token.J_WHITELIST {
-			Log.Debug("Whitelist %s", job.InstanceId)
-			err := Whitelist(job.Region, job.InstanceId)
+		case token.J_WHITELIST:
+			Log.Debug("Whitelist request received for %s in region %s", job.Id, job.Region)
+			err := Whitelist(job.Region, job.Id)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
+		case token.J_STOP:
+			Log.Debug("Stop request received for %s in region %s", job.Id, job.Region)
+			err := Stop(job.Region, job.Id)
+			if err != nil {
+				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+		case token.J_FORCESTOP:
+			Log.Debug("Force Stop request received for %s in region %s", job.Id, job.Region)
+			err := ForceStop(job.Region, job.Id)
+			if err != nil {
+				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+		default:
+			Log.Error("Unrecognized job token received.")
+			writeResponse(w, http.StatusInternalServerError, "Unrecognized job token.")
+			return
 		}
-
 		writeResponse(w, http.StatusOK, "OK")
 	}
 }
@@ -152,6 +170,28 @@ func MakeWhitelistLink(tokenSecret, apiUrl, region, id string) (string, error) {
 	}
 
 	return makeURL(apiUrl, "whitelist", whitelist), nil
+}
+
+func MakeStopLink(tokenSecret, apiUrl, region, id string) (string, error) {
+	stop, err := token.Tokenize(tokenSecret,
+		token.NewStopJob(region, id))
+	if err != nil {
+		Log.Error("Error creating ScaleToZero link: %s", err)
+		return "", err
+	}
+
+	return makeURL(apiUrl, "stop", stop), nil
+}
+
+func MakeForceStopLink(tokenSecret, apiUrl, region, id string) (string, error) {
+	stop, err := token.Tokenize(tokenSecret,
+		token.NewForceStopJob(region, id))
+	if err != nil {
+		Log.Error("Error creating ScaleToZero link: %s", err)
+		return "", err
+	}
+
+	return makeURL(apiUrl, "stop", stop), nil
 }
 
 func makeURL(host, action, token string) string {

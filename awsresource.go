@@ -3,11 +3,44 @@ package main
 import (
 	"fmt"
 	"net/mail"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
+
+type Terminable interface {
+	Terminate() (bool, error)
+}
+
+type Stoppable interface {
+	Stop() (bool, error)
+	ForceStop() (bool, error)
+}
+
+//                ,____
+//                |---.\
+//        ___     |    `
+//       / .-\  ./=)
+//      |  | |_/\/|
+//      ;  |-;| /_|
+//     / \_| |/ \ |
+//    /      \/\( |
+//    |   /  |` ) |
+//    /   \ _/    |
+//   /--._/  \    |
+//   `/|)    |    /
+//     /     |   |
+//   .'      |   |
+//  /         \  |
+// (_.-.__.__./  /
+// credit: jgs, http://www.chris.com/ascii/index.php?art=creatures/grim%20reapers
+
+type Reapable interface {
+	Terminable
+	Stoppable
+}
 
 type ResourceState int
 
@@ -24,8 +57,12 @@ type Filterable interface {
 	Filter(Filter) bool
 }
 
-func PrintFilter(f Filter) string {
-	return fmt.Sprintf("%s(%s)", f.Function, f.Value)
+func PrintFilters(filters map[string]Filter) string {
+	var filterText []string
+	for _, filter := range filters {
+		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, filter.Value))
+	}
+	return strings.Join(filterText, ", ")
 }
 
 // basic AWS resource, has properties that most/all resources have

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/mail"
 	"net/smtp"
+	"strconv"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -28,11 +29,12 @@ func LoadConfig(path string) (*Config, error) {
 			SecondNotification: duration{time.Duration(12) * time.Hour},
 			Terminate:          duration{time.Duration(24) * time.Hour},
 		},
-		Enabled: ResourceTypes{},
-		Events:  EventTypes{},
-		Filters: FilterTypes{},
-		LogFile: "",
-		DryRun:  true,
+		Enabled:       ResourceTypes{},
+		Events:        EventTypes{},
+		Notifications: NotificationTypes{},
+		Filters:       FilterTypes{},
+		LogFile:       "",
+		DryRun:        true,
 	}
 
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
@@ -52,12 +54,17 @@ type Config struct {
 	SMTP   SMTPConfig
 	Reaper ReaperConfig
 
-	Events  EventTypes
-	Enabled ResourceTypes
-	Filters FilterTypes
-	LogFile string
+	Events        EventTypes
+	Notifications NotificationTypes
+	Enabled       ResourceTypes
+	Filters       FilterTypes
+	LogFile       string
 
 	DryRun bool
+}
+
+type NotificationTypes struct {
+	Extras bool
 }
 
 type EventTypes struct {
@@ -82,6 +89,16 @@ type FilterTypes struct {
 type Filter struct {
 	Function string
 	Value    string
+}
+
+func (f *Filter) Int64Value() (int64, error) {
+	// parseint -> base 10, 64 bit int
+	i, err := strconv.ParseInt(f.Value, 10, 64)
+	if err != nil {
+		Log.Error("could not parse %s as int64", f.Value)
+		return 0, err
+	}
+	return i, nil
 }
 
 type FromAddress struct {

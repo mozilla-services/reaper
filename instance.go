@@ -20,7 +20,6 @@ type Instance struct {
 	AWSResource
 	launchTime     time.Time
 	securityGroups map[string]string
-	awsConsoleURL  string
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
@@ -138,6 +137,10 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (i *Instance) ForceStop() (bool, error) {
+	return i.Stop()
 }
 
 func (i *Instance) Stop() (bool, error) {

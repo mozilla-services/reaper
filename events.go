@@ -144,7 +144,7 @@ Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
 State: {{ StateString .Instance.State}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
-{{ if .Instance.PublicIPAddress != nil}}{{[This instance's public IP](.Instance.PublicIPAddress)\n}}{{end}}
+{{ if .Instance.PublicIPAddress.String() != ""}}{{[This instance's public IP](.Instance.PublicIPAddress)\n}}{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
 [Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }}) this instance.

@@ -69,7 +69,7 @@ type NotificationTypes struct {
 
 type EventTypes struct {
 	DataDog bool
-	Email   bool
+	Email   *SMTPConfig
 }
 
 type ResourceTypes struct {
@@ -125,6 +125,7 @@ func (f *FromAddress) UnmarshalText(text []byte) error {
 }
 
 type SMTPConfig struct {
+	Enabled  bool
 	Host     string
 	Port     int
 	AuthType string

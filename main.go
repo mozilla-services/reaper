@@ -39,8 +39,8 @@ func init() {
 	if c, err := LoadConfig(*configFile); err == nil {
 		Conf = c
 		Log.Info("Configuration loaded from %s", *configFile)
-		Log.Debug("SMTP Config: %s", Conf.SMTP.String())
-		Log.Debug("SMTP From: %s", Conf.SMTP.From.Address.String())
+		Log.Debug("SMTP Config: %s", Conf.Events.Email)
+		Log.Debug("SMTP From: %s", Conf.Events.Email)
 
 	} else {
 		Log.Error("toml", err)
@@ -67,9 +67,9 @@ func init() {
 		Events = append(Events, &DataDog{})
 	}
 
-	if Conf.Events.Email {
+	if Conf.Events.Email.Enabled {
 		Log.Info("Email EventReporter enabled.")
-		Events = append(Events, NewMailer(*Conf))
+		Events = append(Events, NewMailer(Conf))
 	}
 
 	Conf.DryRun = *dryRun

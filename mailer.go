@@ -47,10 +47,10 @@ func init() {
 }
 
 type Mailer struct {
-	conf Config
+	conf *Config
 }
 
-func NewMailer(conf Config) *Mailer {
+func NewMailer(conf *Config) *Mailer {
 	return &Mailer{conf}
 }
 

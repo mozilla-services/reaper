@@ -333,11 +333,11 @@ func (r *Reaper) reap(done chan bool) {
 	for _, f := range filterables {
 		switch t := f.(type) {
 		case *Instance:
-			reapInstance(t)
+			go reapInstance(t)
 		case *AutoScalingGroup:
-			reapAutoScalingGroup(t)
+			go reapAutoScalingGroup(t)
 		case *Snapshot:
-			reapSnapshot(t)
+			go reapSnapshot(t)
 		default:
 			Log.Error("Reap default case.")
 		}
@@ -361,6 +361,13 @@ func allFilterables() []Filterable {
 }
 
 func applyFilters(f Filterable, filters map[string]Filter) bool {
+	// recover from potential panics caused by malformed filters
+	defer func() {
+		if r := recover(); r != nil {
+			Log.Error(fmt.Sprintf("Recovered in applyFilters with panic: %s", r))
+		}
+	}()
+
 	// defaults to a match
 	matched := true
 

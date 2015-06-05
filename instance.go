@@ -88,46 +88,58 @@ func (i *Instance) Filter(filter Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	case "Pending":
-		if b, err := filter.BoolValue(); err == nil && i.Pending() == b {
+		if b, err := filter.BoolValue(0); err == nil && i.Pending() == b {
 			matched = true
 		}
 	case "Running":
-		if b, err := filter.BoolValue(); err == nil && i.Running() == b {
+		if b, err := filter.BoolValue(0); err == nil && i.Running() == b {
 			matched = true
 		}
 	case "ShuttingDown":
-		if b, err := filter.BoolValue(); err == nil && i.ShuttingDown() == b {
+		if b, err := filter.BoolValue(0); err == nil && i.ShuttingDown() == b {
 			matched = true
 		}
 	case "Terminated":
-		if b, err := filter.BoolValue(); err == nil && i.Terminated() == b {
+		if b, err := filter.BoolValue(0); err == nil && i.Terminated() == b {
 			matched = true
 		}
 	case "Stopping":
-		if b, err := filter.BoolValue(); err == nil && i.Stopping() == b {
+		if b, err := filter.BoolValue(0); err == nil && i.Stopping() == b {
 			matched = true
 		}
 	case "Stopped":
-		if b, err := filter.BoolValue(); err == nil && i.Stopped() == b {
+		if b, err := filter.BoolValue(0); err == nil && i.Stopped() == b {
 			matched = true
 		}
 	case "InstanceType":
-		if i.InstanceType == filter.Value {
+		if i.InstanceType == filter.Arguments[0] {
 			matched = true
 		}
 	case "Tagged":
-		if i.Tagged(filter.Value) {
+		if i.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
+	case "Tag":
+		if i.Tag(filter.Arguments[0]) == filter.Arguments[1] {
+			matched = true
+		}
+	case "HasPublicIPAddress":
+		if i.PublicIPAddress != nil {
+			matched = true
+		}
+	case "PublicIPAddress":
+		if i.PublicIPAddress.String() == filter.Arguments[0] {
 			matched = true
 		}
 	// uses RFC3339 format
 	// https://www.ietf.org/rfc/rfc3339.txt
 	case "LaunchTimeBefore":
-		t, err := time.Parse(time.RFC3339, filter.Value)
+		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
 		if err == nil && t.After(i.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeAfter":
-		t, err := time.Parse(time.RFC3339, filter.Value)
+		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
 		if err == nil && t.Before(i.LaunchTime) {
 			matched = true
 		}

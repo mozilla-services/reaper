@@ -80,7 +80,7 @@ type Filterable interface {
 func PrintFilters(filters map[string]Filter) string {
 	var filterText []string
 	for _, filter := range filters {
-		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, filter.Value))
+		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, strings.Join(filter.Arguments, ", ")))
 	}
 	// alphabetize and join filters
 	sort.Strings(filterText)

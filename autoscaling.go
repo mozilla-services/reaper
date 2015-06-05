@@ -76,27 +76,27 @@ func (a *AutoScalingGroup) Filter(filter Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	case "SizeGreaterThan":
-		if i, err := filter.Int64Value(); err == nil && a.SizeGreaterThan(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.SizeGreaterThan(i) {
 			matched = true
 		}
 	case "SizeLessThan":
-		if i, err := filter.Int64Value(); err == nil && a.SizeLessThan(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.SizeLessThan(i) {
 			matched = true
 		}
 	case "SizeEqualTo":
-		if i, err := filter.Int64Value(); err == nil && a.SizeEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.SizeEqualTo(i) {
 			matched = true
 		}
 	case "SizeLessThanOrEqualTo":
-		if i, err := filter.Int64Value(); err == nil && a.SizeLessThanOrEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.SizeLessThanOrEqualTo(i) {
 			matched = true
 		}
 	case "SizeGreaterThanOrEqualTo":
-		if i, err := filter.Int64Value(); err == nil && a.SizeGreaterThanOrEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.SizeGreaterThanOrEqualTo(i) {
 			matched = true
 		}
 	case "Tagged":
-		if a.Tagged(filter.Value) {
+		if a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
 	default:

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,8 +18,10 @@ const (
 
 type Instance struct {
 	AWSResource
-	launchTime     time.Time
-	securityGroups map[string]string
+	LaunchTime      time.Time
+	SecurityGroups  map[string]string
+	InstanceType    string
+	PublicIPAddress net.IP
 }
 
 func NewInstance(region string, instance *ec2.Instance) *Instance {
@@ -30,12 +32,13 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 			tags:   make(map[string]string),
 		},
 
-		securityGroups: make(map[string]string),
-		launchTime:     *instance.LaunchTime,
+		SecurityGroups: make(map[string]string),
+		LaunchTime:     *instance.LaunchTime,
+		InstanceType:   *instance.InstanceType,
 	}
 
 	for _, sg := range instance.SecurityGroups {
-		i.securityGroups[*sg.GroupID] = *sg.GroupName
+		i.SecurityGroups[*sg.GroupID] = *sg.GroupName
 	}
 
 	for _, tag := range instance.Tags {
@@ -57,6 +60,11 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.state = STOPPED
 	}
 
+	// TODO: untested
+	if instance.PublicIPAddress != nil {
+		i.PublicIPAddress = net.ParseIP(*instance.PublicIPAddress)
+	}
+
 	i.name = i.Tag("Name")
 	i.reaper = ParseState(i.tags[reaper_tag])
 
@@ -72,8 +80,6 @@ func (i *Instance) AWSConsoleURL() *url.URL {
 	return url
 }
 
-func (i *Instance) LaunchTime() time.Time { return i.launchTime }
-
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
@@ -81,16 +87,48 @@ func (i *Instance) Filter(filter Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
-	case "Running":
-		b, err := strconv.ParseBool(filter.Value)
-		if err != nil {
-			Log.Error("could not parse %s as bool", filter.Value)
+	case "Pending":
+		if b, err := filter.BoolValue(); err == nil && i.Pending() == b {
+			matched = true
 		}
-		if i.Running() == b {
+	case "Running":
+		if b, err := filter.BoolValue(); err == nil && i.Running() == b {
+			matched = true
+		}
+	case "ShuttingDown":
+		if b, err := filter.BoolValue(); err == nil && i.ShuttingDown() == b {
+			matched = true
+		}
+	case "Terminated":
+		if b, err := filter.BoolValue(); err == nil && i.Terminated() == b {
+			matched = true
+		}
+	case "Stopping":
+		if b, err := filter.BoolValue(); err == nil && i.Stopping() == b {
+			matched = true
+		}
+	case "Stopped":
+		if b, err := filter.BoolValue(); err == nil && i.Stopped() == b {
+			matched = true
+		}
+	case "InstanceType":
+		if i.InstanceType == filter.Value {
 			matched = true
 		}
 	case "Tagged":
 		if i.Tagged(filter.Value) {
+			matched = true
+		}
+	// uses RFC3339 format
+	// https://www.ietf.org/rfc/rfc3339.txt
+	case "LaunchTimeBefore":
+		t, err := time.Parse(time.RFC3339, filter.Value)
+		if err == nil && t.After(i.LaunchTime) {
+			matched = true
+		}
+	case "LaunchTimeAfter":
+		t, err := time.Parse(time.RFC3339, filter.Value)
+		if err == nil && t.Before(i.LaunchTime) {
 			matched = true
 		}
 	default:

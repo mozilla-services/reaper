@@ -91,14 +91,23 @@ type Filter struct {
 	Value    string
 }
 
-func (f *Filter) Int64Value() (int64, error) {
+func (filter *Filter) Int64Value() (int64, error) {
 	// parseint -> base 10, 64 bit int
-	i, err := strconv.ParseInt(f.Value, 10, 64)
+	i, err := strconv.ParseInt(filter.Value, 10, 64)
 	if err != nil {
-		Log.Error("could not parse %s as int64", f.Value)
+		Log.Error("could not parse %s as int64", filter.Value)
 		return 0, err
 	}
 	return i, nil
+}
+
+func (filter *Filter) BoolValue() (bool, error) {
+	b, err := strconv.ParseBool(filter.Value)
+	if err != nil {
+		Log.Error("could not parse %s as bool", filter.Value)
+		return false, err
+	}
+	return b, nil
 }
 
 type FromAddress struct {

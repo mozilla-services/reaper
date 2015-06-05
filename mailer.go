@@ -57,6 +57,7 @@ func NewMailer(conf Config) *Mailer {
 // methods to conform to EventReporter interface
 func (m *Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) {}
 func (m *Mailer) NewStatistic(name string, value float64, tags []string)                      {}
+func (m *Mailer) NewCountStatistic(name string, tags []string)                                {}
 func (m *Mailer) NewReapableInstanceEvent(i *Instance) {
 	// don't send emails if we're on a dry run
 	if Conf.DryRun {

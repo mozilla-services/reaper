@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/mail"
+	"sort"
 	"strings"
 	"time"
 
@@ -53,6 +54,25 @@ const (
 	STOPPED
 )
 
+func StateString(i ResourceState) string {
+	switch i {
+	case PENDING:
+		return "pending"
+	case RUNNING:
+		return "running"
+	case SHUTTINGDOWN:
+		return "shuttingdown"
+	case TERMINATED:
+		return "terminated"
+	case STOPPING:
+		return "stopping"
+	case STOPPED:
+		return "stopped"
+	default:
+		return "unknown"
+	}
+}
+
 type Filterable interface {
 	Filter(Filter) bool
 }
@@ -62,6 +82,8 @@ func PrintFilters(filters map[string]Filter) string {
 	for _, filter := range filters {
 		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, filter.Value))
 	}
+	// alphabetize and join filters
+	sort.Strings(filterText)
 	return strings.Join(filterText, ", ")
 }
 

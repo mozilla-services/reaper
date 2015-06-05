@@ -16,10 +16,10 @@ type AutoScalingGroup struct {
 	instances []string
 
 	autoScalingGroupARN     string
-	createdTime             time.Time
-	maxSize                 int64
-	minSize                 int64
-	size                    int64
+	CreatedTime             time.Time
+	MaxSize                 int64
+	MinSize                 int64
+	DesiredCapacity         int64
 	launchConfigurationName string
 }
 
@@ -32,11 +32,11 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			tags:   make(map[string]string),
 			reaper: ParseState(""),
 		},
-		autoScalingGroupARN: *asg.AutoScalingGroupARN,
-		createdTime:         *asg.CreatedTime,
-		maxSize:             *asg.MaxSize,
-		minSize:             *asg.MinSize,
-		size:                *asg.DesiredCapacity,
+		autoScalingGroupARN:     *asg.AutoScalingGroupARN,
+		CreatedTime:             *asg.CreatedTime,
+		MaxSize:                 *asg.MaxSize,
+		MinSize:                 *asg.MinSize,
+		DesiredCapacity:         *asg.DesiredCapacity,
 		launchConfigurationName: *asg.LaunchConfigurationName,
 	}
 
@@ -52,23 +52,23 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 }
 
 func (a *AutoScalingGroup) SizeGreaterThanOrEqualTo(size int64) bool {
-	return a.size >= size
+	return a.DesiredCapacity >= size
 }
 
 func (a *AutoScalingGroup) SizeLessThanOrEqualTo(size int64) bool {
-	return a.size <= size
+	return a.DesiredCapacity <= size
 }
 
 func (a *AutoScalingGroup) SizeEqualTo(size int64) bool {
-	return a.size == size
+	return a.DesiredCapacity == size
 }
 
 func (a *AutoScalingGroup) SizeLessThan(size int64) bool {
-	return a.size < size
+	return a.DesiredCapacity < size
 }
 
 func (a *AutoScalingGroup) SizeGreaterThan(size int64) bool {
-	return a.size <= size
+	return a.DesiredCapacity <= size
 }
 
 func (a *AutoScalingGroup) Filter(filter Filter) bool {

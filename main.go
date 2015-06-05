@@ -64,7 +64,7 @@ func init() {
 
 	if Conf.Events.DataDog {
 		Log.Info("DataDog EventReporter enabled.")
-		Events = append(Events, DataDog{})
+		Events = append(Events, &DataDog{})
 	}
 
 	if Conf.Events.Email {

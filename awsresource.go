@@ -89,41 +89,35 @@ func PrintFilters(filters map[string]Filter) string {
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	id          string
-	name        string
-	region      string
-	state       ResourceState
-	description string
-	vpc_id      string
-	owner_id    string
+	Id          string
+	Name        string
+	Region      string
+	State       ResourceState
+	Description string
+	VPCId       string
+	OwnerId     string
 
-	tags map[string]string
+	Tags map[string]string
 
 	// reaper state
-	reaper *State
+	ReaperState *State
 }
 
 func (a *AWSResource) Tagged(tag string) bool {
-	_, ok := a.tags[tag]
+	_, ok := a.Tags[tag]
 	return ok
 }
 
-func (a *AWSResource) Id() string           { return a.id }
-func (a *AWSResource) Name() string         { return a.name }
-func (a *AWSResource) Region() string       { return a.region }
-func (a *AWSResource) State() ResourceState { return a.state }
-func (a *AWSResource) Reaper() *State       { return a.reaper }
-
 // filter funcs for ResourceState
-func (a *AWSResource) Pending() bool      { return a.state == PENDING }
-func (a *AWSResource) Running() bool      { return a.state == RUNNING }
-func (a *AWSResource) ShuttingDown() bool { return a.state == SHUTTINGDOWN }
-func (a *AWSResource) Terminated() bool   { return a.state == TERMINATED }
-func (a *AWSResource) Stopping() bool     { return a.state == STOPPING }
-func (a *AWSResource) Stopped() bool      { return a.state == STOPPED }
+func (a *AWSResource) Pending() bool      { return a.State == PENDING }
+func (a *AWSResource) Running() bool      { return a.State == RUNNING }
+func (a *AWSResource) ShuttingDown() bool { return a.State == SHUTTINGDOWN }
+func (a *AWSResource) Terminated() bool   { return a.State == TERMINATED }
+func (a *AWSResource) Stopping() bool     { return a.State == STOPPING }
+func (a *AWSResource) Stopped() bool      { return a.State == STOPPED }
 
 // Tag returns the tag's value or an empty string if it does not exist
-func (a *AWSResource) Tag(t string) string { return a.tags[t] }
+func (a *AWSResource) Tag(t string) string { return a.Tags[t] }
 
 func (a *AWSResource) Owned() bool { return a.Tagged("Owner") }
 
@@ -143,27 +137,24 @@ func (a *AWSResource) Owner() *mail.Address {
 	return nil
 }
 
-func (a *AWSResource) UpdateReaperState(s *State) {
-	a.reaper = s
-}
 func (a *AWSResource) ReaperVisible() bool {
-	return time.Now().After(a.reaper.Until)
+	return time.Now().After(a.ReaperState.Until)
 }
 func (a *AWSResource) ReaperStarted() bool {
-	return a.reaper.State == STATE_START
+	return a.ReaperState.State == STATE_START
 }
 func (a *AWSResource) ReaperNotified(notifyNum int) bool {
 	if notifyNum == 1 {
-		return a.reaper.State == STATE_NOTIFY1
+		return a.ReaperState.State == STATE_NOTIFY1
 	} else if notifyNum == 2 {
-		return a.reaper.State == STATE_NOTIFY2
+		return a.ReaperState.State == STATE_NOTIFY2
 	} else {
 		return false
 	}
 }
 
 func (a *AWSResource) ReaperIgnored() bool {
-	return a.reaper.State == STATE_IGNORE
+	return a.ReaperState.State == STATE_IGNORE
 }
 
 func UpdateReaperState(region, id string, newState *State) error {

@@ -118,7 +118,7 @@ func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
 	}
 
 	d.NewEvent("Reapable ASG Discovered", string(buf.Bytes()), nil, nil)
-	Log.Debug(fmt.Sprintf("Event Reapable ASG (%s) posted to DataDog.", a.Id()))
+	Log.Debug(fmt.Sprintf("Event Reapable ASG (%s) posted to DataDog.", a.Id))
 }
 
 func (d DataDog) NewReapableInstanceEvent(i *Instance) {
@@ -135,8 +135,8 @@ func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 		Log.Debug("Template generation error", err)
 	}
 
-	d.NewEvent(fmt.Sprintf("Reapable Instance %s Discovered", i.Id()), string(buf.Bytes()), nil, nil)
-	Log.Debug(fmt.Sprintf("Event Reapable Instance (%s) posted to DataDog.", i.Id()))
+	d.NewEvent(fmt.Sprintf("Reapable Instance %s Discovered", i.Id), string(buf.Bytes()), nil, nil)
+	Log.Debug(fmt.Sprintf("Event Reapable Instance (%s) posted to DataDog.", i.Id))
 }
 
 const reapableInstanceTemplateDataDog = `%%%

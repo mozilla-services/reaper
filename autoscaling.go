@@ -13,39 +13,39 @@ type AutoScalingGroup struct {
 	AWSResource
 
 	// autoscaling.Instance exposes minimal info
-	instances []string
+	Instances []string
 
-	autoScalingGroupARN     string
+	AutoScalingGroupARN     string
 	CreatedTime             time.Time
 	MaxSize                 int64
 	MinSize                 int64
 	DesiredCapacity         int64
-	launchConfigurationName string
+	LaunchConfigurationName string
 }
 
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
-			id:     *asg.AutoScalingGroupName,
-			name:   *asg.AutoScalingGroupName,
-			region: region,
-			tags:   make(map[string]string),
-			reaper: ParseState(""),
+			Id:          *asg.AutoScalingGroupName,
+			Name:        *asg.AutoScalingGroupName,
+			Region:      region,
+			Tags:        make(map[string]string),
+			ReaperState: ParseState(""),
 		},
-		autoScalingGroupARN:     *asg.AutoScalingGroupARN,
+		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,
 		MaxSize:                 *asg.MaxSize,
 		MinSize:                 *asg.MinSize,
 		DesiredCapacity:         *asg.DesiredCapacity,
-		launchConfigurationName: *asg.LaunchConfigurationName,
+		LaunchConfigurationName: *asg.LaunchConfigurationName,
 	}
 
 	for i := 0; i < len(asg.Instances); i++ {
-		a.instances = append(a.instances, *asg.Instances[i].InstanceID)
+		a.Instances = append(a.Instances, *asg.Instances[i].InstanceID)
 	}
 
 	for i := 0; i < len(asg.Tags); i++ {
-		a.tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
+		a.Tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
 	}
 
 	return &a
@@ -107,7 +107,7 @@ func (a *AutoScalingGroup) Filter(filter Filter) bool {
 
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s",
-		a.Region(), a.Region(), a.Id()))
+		a.Region, a.Region, a.Id))
 	if err != nil {
 		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
@@ -116,25 +116,25 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 
 // TODO
 func (a *AutoScalingGroup) Terminate() (bool, error) {
-	Log.Debug("Terminating ASG %s in region %s.", a.id, a.region)
+	Log.Debug("Terminating ASG %s in region %s.", a.Id, a.Region)
 	return false, nil
 }
 
 // stopping an ASG == scaling it to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
-	Log.Debug("Stopping ASG %s in region %s", a.Id(), a.Region())
-	as := autoscaling.New(&aws.Config{Region: a.Region()})
+	Log.Debug("Stopping ASG %s in region %s", a.Id, a.Region)
+	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	// TODO: fix this nonsense
 	zero := int64(0)
 
 	input := &autoscaling.SetDesiredCapacityInput{
-		AutoScalingGroupName: &a.id,
+		AutoScalingGroupName: &a.Id,
 		DesiredCapacity:      &zero,
 	}
 	_, err := as.SetDesiredCapacity(input)
 	if err != nil {
-		Log.Error("could not set desired capacity to 0 for ASG %s in region %s", a.Id(), a.Region())
+		Log.Error("could not set desired capacity to 0 for ASG %s in region %s", a.Id, a.Region)
 		return false, err
 	}
 	return true, nil
@@ -142,20 +142,20 @@ func (a *AutoScalingGroup) Stop() (bool, error) {
 
 // stopping an ASG == scaling it to 0
 func (a *AutoScalingGroup) ForceStop() (bool, error) {
-	Log.Debug("Force Stopping ASG %s in region %s", a.Id(), a.Region())
-	as := autoscaling.New(&aws.Config{Region: a.Region()})
+	Log.Debug("Force Stopping ASG %s in region %s", a.Id, a.Region)
+	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	// TODO: fix this nonsense
 	zero := int64(0)
 
 	input := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: &a.id,
+		AutoScalingGroupName: &a.Id,
 		DesiredCapacity:      &zero,
 		MinSize:              &zero,
 	}
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		Log.Error("could not set DesiredCapacity, MinSize to 0 for ASG %s in region %s", a.Id(), a.Region())
+		Log.Error("could not set DesiredCapacity, MinSize to 0 for ASG %s in region %s", a.Id, a.Region)
 		return false, err
 	}
 	return true, nil

@@ -12,21 +12,21 @@ type SecurityGroup struct {
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
 		AWSResource{
-			id:          *sg.GroupID,
-			name:        *sg.GroupName,
-			region:      region,
-			description: *sg.Description,
-			vpc_id:      *sg.VPCID,
-			owner_id:    *sg.OwnerID,
-			tags:        make(map[string]string),
+			Id:          *sg.GroupID,
+			Name:        *sg.GroupName,
+			Region:      region,
+			Description: *sg.Description,
+			VPCId:       *sg.VPCID,
+			OwnerId:     *sg.OwnerID,
+			Tags:        make(map[string]string),
 		},
 	}
 
 	for _, tag := range sg.Tags {
-		s.tags[*tag.Key] = *tag.Value
+		s.Tags[*tag.Key] = *tag.Value
 	}
 
-	s.reaper = ParseState(s.tags[reaper_tag])
+	s.ReaperState = ParseState(s.Tags[reaper_tag])
 
 	return &s
 }

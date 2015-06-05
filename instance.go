@@ -27,9 +27,9 @@ type Instance struct {
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	i := Instance{
 		AWSResource: AWSResource{
-			id:     *instance.InstanceID,
-			region: region, // passed in cause not possible to extract out of api
-			tags:   make(map[string]string),
+			Id:     *instance.InstanceID,
+			Region: region, // passed in cause not possible to extract out of api
+			Tags:   make(map[string]string),
 		},
 
 		SecurityGroups: make(map[string]string),
@@ -42,22 +42,22 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	}
 
 	for _, tag := range instance.Tags {
-		i.tags[*tag.Key] = *tag.Value
+		i.Tags[*tag.Key] = *tag.Value
 	}
 
 	switch *instance.State.Code {
 	case 0:
-		i.state = PENDING
+		i.State = PENDING
 	case 16:
-		i.state = RUNNING
+		i.State = RUNNING
 	case 32:
-		i.state = SHUTTINGDOWN
+		i.State = SHUTTINGDOWN
 	case 48:
-		i.state = TERMINATED
+		i.State = TERMINATED
 	case 64:
-		i.state = STOPPING
+		i.State = STOPPING
 	case 80:
-		i.state = STOPPED
+		i.State = STOPPED
 	}
 
 	// TODO: untested
@@ -65,15 +65,15 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.PublicIPAddress = net.ParseIP(*instance.PublicIPAddress)
 	}
 
-	i.name = i.Tag("Name")
-	i.reaper = ParseState(i.tags[reaper_tag])
+	i.Name = i.Tag("Name")
+	i.ReaperState = ParseState(i.Tags[reaper_tag])
 
 	return &i
 }
 
 func (i *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.region, i.region, i.id))
+		i.Region, i.Region, i.Id))
 	if err != nil {
 		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
@@ -171,9 +171,9 @@ func Whitelist(region, instanceId string) error {
 }
 
 func (i *Instance) Terminate() (bool, error) {
-	api := ec2.New(&aws.Config{Region: i.region})
+	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{aws.String(i.id)},
+		InstanceIDs: []*string{aws.String(i.Id)},
 	}
 
 	resp, err := api.TerminateInstances(req)
@@ -183,7 +183,7 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return false, fmt.Errorf("Instance could %s not be terminated.", i.id)
+		return false, fmt.Errorf("Instance could %s not be terminated.", i.Id)
 	}
 
 	return true, nil
@@ -194,9 +194,9 @@ func (i *Instance) ForceStop() (bool, error) {
 }
 
 func (i *Instance) Stop() (bool, error) {
-	api := ec2.New(&aws.Config{Region: i.region})
+	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.StopInstancesInput{
-		InstanceIDs: []*string{aws.String(i.id)},
+		InstanceIDs: []*string{aws.String(i.Id)},
 	}
 
 	resp, err := api.StopInstances(req)
@@ -206,7 +206,7 @@ func (i *Instance) Stop() (bool, error) {
 	}
 
 	if len(resp.StoppingInstances) != 1 {
-		return false, fmt.Errorf("Instance %s could not be stopped.", i.id)
+		return false, fmt.Errorf("Instance %s could not be stopped.", i.Id)
 	}
 
 	return true, nil

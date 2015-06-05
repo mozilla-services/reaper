@@ -8,27 +8,27 @@ import (
 type Volumes []*Volume
 type Volume struct {
 	AWSResource
-	size_gb     int64
-	volume_type string
-	snapshot_id string
-	create_time time.Time
+	SizeGB     int64
+	VolumeType string
+	SnapShotId string
+	LaunchTime time.Time
 }
 
 func NewVolume(region string, v *ec2.Volume) *Volume {
 	vol := Volume{
 		AWSResource: AWSResource{
-			id:     *v.VolumeID,
-			region: region,
-			tags:   make(map[string]string),
+			Id:     *v.VolumeID,
+			Region: region,
+			Tags:   make(map[string]string),
 		},
-		size_gb:     *v.Size,
-		volume_type: *v.VolumeType,
-		snapshot_id: *v.SnapshotID,
-		create_time: *v.CreateTime,
+		SizeGB:     *v.Size,
+		VolumeType: *v.VolumeType,
+		SnapShotId: *v.SnapshotID,
+		LaunchTime: *v.CreateTime,
 	}
 
 	for _, tag := range v.Tags {
-		vol.tags[*tag.Key] = *tag.Value
+		vol.Tags[*tag.Key] = *tag.Value
 	}
 
 	// TODO: state
@@ -36,7 +36,3 @@ func NewVolume(region string, v *ec2.Volume) *Volume {
 
 	return &vol
 }
-
-func (v *Volume) LaunchTime() time.Time { return v.create_time }
-func (v *Volume) Size() int64           { return v.size_gb }
-func (v *Volume) VolumeType() string    { return v.volume_type }

@@ -108,13 +108,13 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 func (m *Mailer) Notify(a *AWSResource) (err error) {
 	if a.Owner() == nil {
-		Log.Debug("Resource %s has no owner to notify.", a.id)
+		Log.Debug("Resource %s has no owner to notify.", a.Id)
 		return nil
 	}
 
 	terminateDate := time.Now()
 
-	switch a.Reaper().State {
+	switch a.ReaperState.State {
 	case STATE_START, STATE_IGNORE:
 		terminateDate.
 			Add(Conf.Reaper.SecondNotification.Duration).
@@ -130,21 +130,21 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 	// Token strings
 
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
-		m.conf.HTTPApiURL, a.Region(), a.Id())
+		m.conf.HTTPApiURL, a.Region, a.Id)
 
 	if err == nil {
 		delay1, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, a.Region(), a.Id(), time.Duration(24*time.Hour))
+			m.conf.HTTPApiURL, a.Region, a.Id, time.Duration(24*time.Hour))
 	}
 
 	if err == nil {
 		delay3, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, a.Region(), a.Id(), time.Duration(3*24*time.Hour))
+			m.conf.HTTPApiURL, a.Region, a.Id, time.Duration(3*24*time.Hour))
 	}
 
 	if err == nil {
 		delay7, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, a.Region(), a.Id(), time.Duration(7*24*time.Hour))
+			m.conf.HTTPApiURL, a.Region, a.Id, time.Duration(7*24*time.Hour))
 	}
 
 	if err != nil {
@@ -160,10 +160,10 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 	dispTime := terminateDate.In(mtvLoc).Truncate(time.Hour).Format(time.RFC1123)
 	buf := bytes.NewBuffer(nil)
 	err = notifyTemplate.Execute(buf, map[string]string{
-		"Id":            a.Id(),
-		"Name":          a.Name(),
+		"Id":            a.Id,
+		"Name":          a.Name,
 		"Host":          m.conf.HTTPApiURL,
-		"Region":        a.Region(),
+		"Region":        a.Region,
 		"TerminateDate": dispTime,
 		"terminateLink": term,
 		"delay1DLink":   delay1,
@@ -177,11 +177,11 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 		return err
 	}
 
-	iName := a.Name()
+	iName := a.Name
 	if iName == "" {
 		iName = "*unnamed*"
 	}
 
-	subject := fmt.Sprintf("Your instance %s (%s) will be terminated soon", iName, a.Id())
+	subject := fmt.Sprintf("Your instance %s (%s) will be terminated soon", iName, a.Id)
 	return m.Send(*a.Owner(), subject, string(buf.Bytes()))
 }

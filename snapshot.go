@@ -7,27 +7,27 @@ import (
 
 type Snapshot struct {
 	AWSResource
-	size_gb        int64
-	snapshot_state string
-	volume_id      string
-	start_time     time.Time
+	SizeGB        int64
+	SnapshotState string
+	VolumeId      string
+	LaunchTime    time.Time
 }
 
 func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	snap := Snapshot{
 		AWSResource: AWSResource{
-			id:     *s.SnapshotID,
-			region: region,
-			tags:   make(map[string]string),
+			Id:     *s.SnapshotID,
+			Region: region,
+			Tags:   make(map[string]string),
 		},
-		size_gb:        *s.VolumeSize,
-		snapshot_state: *s.State,
-		volume_id:      *s.VolumeID,
-		start_time:     *s.StartTime,
+		SizeGB:        *s.VolumeSize,
+		SnapshotState: *s.State,
+		VolumeId:      *s.VolumeID,
+		LaunchTime:    *s.StartTime,
 	}
 
 	for _, tag := range s.Tags {
-		snap.tags[*tag.Key] = *tag.Value
+		snap.Tags[*tag.Key] = *tag.Value
 	}
 
 	return &snap

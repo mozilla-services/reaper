@@ -4,9 +4,9 @@ package main
 
 import "fmt"
 
-const _StateEnum_name = "STATE_STARTSTATE_NOTIFY1STATE_NOTIFY2STATE_IGNORESTATE_WHITELIST"
+const _StateEnum_name = "STATE_STARTSTATE_NOTIFY1STATE_NOTIFY2STATE_REAPABLESTATE_IGNORESTATE_WHITELIST"
 
-var _StateEnum_index = [...]uint8{0, 11, 24, 37, 49, 64}
+var _StateEnum_index = [...]uint8{0, 11, 24, 37, 51, 63, 78}
 
 func (i StateEnum) String() string {
 	if i < 0 || i >= StateEnum(len(_StateEnum_index)-1) {

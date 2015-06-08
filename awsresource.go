@@ -155,15 +155,25 @@ func (a *AWSResource) incrementState() bool {
 	case STATE_NOTIFY1:
 		updated = true
 		newState = STATE_NOTIFY2
-		until = time.Now().Add(Conf.Reaper.Terminate.Duration)
+		until = time.Now().Add(Conf.Reaper.SecondNotification.Duration)
+
 	case STATE_WHITELIST:
+		// keep same state
 		newState = STATE_WHITELIST
+	case STATE_NOTIFY2:
+		updated = true
+		newState = STATE_REAPABLE
+		until = time.Now().Add(Conf.Reaper.Terminate.Duration)
+	case STATE_REAPABLE:
+		// keep same state
+		newState = STATE_REAPABLE
 	default:
 		newState = STATE_NOTIFY1
-		if newState != a.ReaperState.State {
-			updated = true
-		}
-		until = time.Now().Add(Conf.Reaper.SecondNotification.Duration)
+		until = time.Now().Add(Conf.Reaper.FirstNotification.Duration)
+	}
+
+	if newState != a.ReaperState.State {
+		updated = true
 	}
 
 	a.ReaperState = &State{
@@ -175,22 +185,24 @@ func (a *AWSResource) incrementState() bool {
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {
-	err := whitelist(a.Region, a.ID)
-	return err == nil, err
+	return whitelist(a.Region, a.ID)
 }
 
 func (a *AWSResource) UpdateReaperState(state *State) (bool, error) {
-	err := updateReaperState(a.Region, a.ID, state)
-	return err == nil, err
+	return updateReaperState(a.Region, a.ID, state)
 }
 
-func whitelist(region, id string) error {
+func whitelist(region, id string) (bool, error) {
+	// TODO: fix hardcoded
+	whitelist_tag := "REAPER_SPARE_ME"
+
 	api := ec2.New(&aws.Config{Region: region})
 	req := &ec2.CreateTagsInput{
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
-				Key:   aws.String("REAPER_SPARE_ME"),
+				// TODO: not hardcoded
+				Key:   aws.String(whitelist_tag),
 				Value: aws.String("true"),
 			},
 		},
@@ -198,15 +210,32 @@ func whitelist(region, id string) error {
 
 	_, err := api.CreateTags(req)
 
-	if err != nil {
-		return err
+	describereq := &ec2.DescribeTagsInput{
+		DryRun: aws.Boolean(false),
+		Filters: []*ec2.Filter{
+			&ec2.Filter{
+				Name:   aws.String("resource-id"),
+				Values: []*string{aws.String(id)},
+			},
+			&ec2.Filter{
+				Name:   aws.String("key"),
+				Values: []*string{aws.String(whitelist_tag)},
+			},
+		},
 	}
 
-	return nil
+	output, err := api.DescribeTags(describereq)
+
+	if *output.Tags[0].Value == whitelist_tag {
+		return true, err
+	}
+
+	return false, err
 }
 
-func updateReaperState(region, id string, newState *State) error {
-	req := &ec2.CreateTagsInput{
+func updateReaperState(region, id string, newState *State) (bool, error) {
+	api := ec2.New(&aws.Config{Region: region})
+	createreq := &ec2.CreateTagsInput{
 		DryRun:    aws.Boolean(false),
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
@@ -217,7 +246,30 @@ func updateReaperState(region, id string, newState *State) error {
 		},
 	}
 
-	api := ec2.New(&aws.Config{Region: region})
-	_, err := api.CreateTags(req)
-	return err
+	_, err := api.CreateTags(createreq)
+	if err != nil {
+		return false, err
+	}
+
+	describereq := &ec2.DescribeTagsInput{
+		DryRun: aws.Boolean(false),
+		Filters: []*ec2.Filter{
+			&ec2.Filter{
+				Name:   aws.String("resource-id"),
+				Values: []*string{aws.String(id)},
+			},
+			&ec2.Filter{
+				Name:   aws.String("key"),
+				Values: []*string{aws.String(reaper_tag)},
+			},
+		},
+	}
+
+	output, err := api.DescribeTags(describereq)
+
+	if *output.Tags[0].Value == newState.String() {
+		return true, err
+	}
+
+	return false, err
 }

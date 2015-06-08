@@ -9,6 +9,7 @@ const (
 	STATE_START StateEnum = iota
 	STATE_NOTIFY1
 	STATE_NOTIFY2
+	STATE_REAPABLE
 	STATE_IGNORE
 	STATE_WHITELIST
 )
@@ -54,6 +55,8 @@ func ParseState(state string) (defaultState *State) {
 		stateEnum = STATE_IGNORE
 	case "STATE_WHITELIST":
 		stateEnum = STATE_WHITELIST
+	case "STATE_REAPABLE":
+		stateEnum = STATE_REAPABLE
 	default:
 		return
 	}

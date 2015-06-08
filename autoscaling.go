@@ -141,13 +141,13 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 	return true, nil
 }
 
-// stopping an ASG == scaling it to 0
+// Stop scales ASGs to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
 	// force -> false
 	return a.scaleToSize(false, 0)
 }
 
-// stopping an ASG == scaling it to 0
+// ForceStop force scales ASGs to 0
 func (a *AutoScalingGroup) ForceStop() (bool, error) {
 	// force -> true
 	return a.scaleToSize(true, 0)

@@ -74,8 +74,9 @@ type NotificationTypes struct {
 
 type EventTypes struct {
 	DataDog bool
-	Email   *SMTPConfig
-	Tagger  *TaggerConfig
+	Email   SMTPConfig
+	Tagger  TaggerConfig
+	Reaper  ReaperEventConfig
 }
 
 type ResourceTypes struct {

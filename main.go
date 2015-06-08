@@ -37,10 +37,19 @@ func init() {
 	}
 
 	if c, err := LoadConfig(*configFile); err == nil {
+		defer func() {
+			if r := recover(); r != nil {
+				Log.Error("Invalid config, %s", r)
+				os.Exit(1)
+			}
+		}()
+
 		Conf = c
 		Log.Info("Configuration loaded from %s", *configFile)
-		Log.Debug("SMTP Config: %s", Conf.Events.Email)
-		Log.Debug("SMTP From: %s", Conf.Events.Email)
+
+		// these methods have pointer receivers
+		Log.Debug("SMTP Config: %s", &Conf.Events.Email)
+		Log.Debug("SMTP From: %s", &Conf.Events.Email.From)
 
 	} else {
 		Log.Error("toml", err)
@@ -75,7 +84,14 @@ func init() {
 	if Conf.Events.Tagger.Enabled {
 		Log.Info("Tagger EventReporter enabled.")
 		Events = append(Events, &Tagger{
-			Config: &TaggerConfig{},
+			Config: &Conf.Events.Tagger,
+		})
+	}
+
+	if Conf.Events.Reaper.Enabled {
+		Log.Info("Reaper EventReporter enabled.")
+		Events = append(Events, &ReaperEvent{
+			Config: &Conf.Events.Reaper,
 		})
 	}
 

@@ -24,7 +24,7 @@ func NewVolume(region string, v *ec2.Volume) *Volume {
 		},
 		SizeGB:     *v.Size,
 		VolumeType: *v.VolumeType,
-		SnapShotId: *v.SnapshotID,
+		SnapShotID: *v.SnapshotID,
 		LaunchTime: *v.CreateTime,
 	}
 

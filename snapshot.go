@@ -23,7 +23,7 @@ func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 		},
 		SizeGB:        *s.VolumeSize,
 		SnapshotState: *s.State,
-		VolumeId:      *s.VolumeID,
+		VolumeID:      *s.VolumeID,
 		LaunchTime:    *s.StartTime,
 	}
 

@@ -21,7 +21,12 @@ func LoadConfig(path string) (*Config, error) {
 			Host:     "localhost",
 			Port:     587,
 			AuthType: "none",
-			From:     FromAddress{mail.Address{"reaper", "aws-reaper@mozilla.com"}},
+			From: FromAddress{
+				mail.Address{
+					Name:    "reaper",
+					Address: "aws-reaper@mozilla.com",
+				},
+			},
 		},
 		Reaper: ReaperConfig{
 			Interval:           duration{time.Duration(6) * time.Hour},
@@ -70,6 +75,7 @@ type NotificationTypes struct {
 type EventTypes struct {
 	DataDog bool
 	Email   *SMTPConfig
+	Tagger  *TaggerConfig
 }
 
 type ResourceTypes struct {
@@ -145,7 +151,7 @@ func (s *SMTPConfig) String() string {
 func (s *SMTPConfig) Addr() string {
 	if s.Port == 0 {
 		// friends don't let friend's smtp over port 25
-		return fmt.Sprintf("%s:%s", s.Host, 587)
+		return fmt.Sprintf("%s:%d", s.Host, 587)
 	} else {
 		return fmt.Sprintf("%s:%d", s.Host, s.Port)
 	}

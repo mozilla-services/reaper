@@ -430,7 +430,6 @@ func reapInstance(i *Instance) {
 					go e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id), nil, nil)
 				}
 			}
-			incrementState(i)
 		}
 	}
 }
@@ -610,28 +609,6 @@ func Stop(region, id string) error {
 	}
 
 	return nil
-}
-
-func incrementState(i *Instance) {
-	if Conf.DryRun {
-		return
-	}
-
-	var newState StateEnum
-	var until time.Time
-	switch i.ReaperState.State {
-	case STATE_NOTIFY1:
-		newState = STATE_NOTIFY1
-		until = time.Now().Add(Conf.Reaper.SecondNotification.Duration)
-	case STATE_NOTIFY2:
-		newState = STATE_NOTIFY2
-		until = time.Now().Add(Conf.Reaper.Terminate.Duration)
-	}
-
-	i.ReaperState = &State{
-		State: newState,
-		Until: until,
-	}
 }
 
 // allInstances describes every instance in the requested regions

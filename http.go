@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -85,14 +86,22 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
+		// find reapable associated with the job
+		r, ok := Reapables[job.Region][job.Id]
+
+		// reapable not found
+		if !ok {
+			writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Reapable %s in region %s not found.", job.Id, job.Region))
+			return
+		}
+
 		switch job.Action {
 		case token.J_DELAY:
 			Log.Debug("Delay request received for %s in region %s until %s", job.Id, job.Region, job.IgnoreUntil.String())
-			err := UpdateReaperState(job.Region, job.Id, &State{
+			_, err := r.UpdateReaperState(&State{
 				State: STATE_IGNORE,
 				Until: job.IgnoreUntil,
 			})
-
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
@@ -100,28 +109,29 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 
 		case token.J_TERMINATE:
 			Log.Debug("Terminate request received for %s in region %s.", job.Id, job.Region)
-			err := Terminate(job.Region, job.Id)
+			_, err := r.Terminate()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
+
 		case token.J_WHITELIST:
 			Log.Debug("Whitelist request received for %s in region %s", job.Id, job.Region)
-			err := Whitelist(job.Region, job.Id)
+			_, err := r.Whitelist()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 		case token.J_STOP:
 			Log.Debug("Stop request received for %s in region %s", job.Id, job.Region)
-			err := Stop(job.Region, job.Id)
+			_, err := r.Stop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 		case token.J_FORCESTOP:
 			Log.Debug("Force Stop request received for %s in region %s", job.Id, job.Region)
-			err := ForceStop(job.Region, job.Id)
+			_, err := r.ForceStop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return

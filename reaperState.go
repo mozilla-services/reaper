@@ -10,22 +10,12 @@ const (
 	STATE_NOTIFY1
 	STATE_NOTIFY2
 	STATE_IGNORE
+	STATE_WHITELIST
 )
 
 type StateEnum int
 
-func (s StateEnum) String() string {
-	switch s {
-	case STATE_NOTIFY1:
-		return "notify1"
-	case STATE_NOTIFY2:
-		return "notify2"
-	case STATE_IGNORE:
-		return "ignore"
-	default:
-		return "start"
-	}
-}
+// StateEnum.String() in stateenum_string.go
 
 type State struct {
 	State StateEnum
@@ -54,14 +44,16 @@ func ParseState(state string) (defaultState *State) {
 
 	var stateEnum StateEnum
 	switch s[0] {
-	case "start":
+	case "STATE_START":
 		stateEnum = STATE_START
-	case "notify1":
+	case "STATE_NOTIFY1":
 		stateEnum = STATE_NOTIFY1
-	case "notify2":
+	case "STATE_NOTIFY2":
 		stateEnum = STATE_NOTIFY2
-	case "ignore":
+	case "STATE_IGNORE":
 		stateEnum = STATE_IGNORE
+	case "STATE_WHITELIST":
+		stateEnum = STATE_WHITELIST
 	default:
 		return
 	}

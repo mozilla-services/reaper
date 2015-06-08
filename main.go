@@ -72,6 +72,13 @@ func init() {
 		Events = append(Events, NewMailer(Conf))
 	}
 
+	if Conf.Events.Tagger.Enabled {
+		Log.Info("Tagger EventReporter enabled.")
+		Events = append(Events, &Tagger{
+			Config: &TaggerConfig{},
+		})
+	}
+
 	Conf.DryRun = *dryRun
 	if *dryRun {
 		Log.Notice("Dry run mode enabled, no changes will be made")

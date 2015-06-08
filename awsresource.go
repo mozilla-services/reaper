@@ -20,6 +20,10 @@ type Stoppable interface {
 	ForceStop() (bool, error)
 }
 
+type Whitelistable interface {
+	Whitelist() (bool, error)
+}
+
 //                ,____
 //                |---.\
 //        ___     |    `
@@ -41,6 +45,8 @@ type Stoppable interface {
 type Reapable interface {
 	Terminable
 	Stoppable
+	Whitelistable
+	UpdateReaperState(*State) (bool, error)
 }
 
 type ResourceState int
@@ -54,8 +60,8 @@ const (
 	STOPPED
 )
 
-func StateString(i ResourceState) string {
-	switch i {
+func (s *ResourceState) String() string {
+	switch *s {
 	case PENDING:
 		return "pending"
 	case RUNNING:
@@ -157,8 +163,68 @@ func (a *AWSResource) ReaperIgnored() bool {
 	return a.ReaperState.State == STATE_IGNORE
 }
 
-func UpdateReaperState(region, id string, newState *State) error {
-	Log.Info("UpdateReaperState region:%s instance: %s", region, id)
+func (a *AWSResource) incrementState() bool {
+	var newState StateEnum
+	var until time.Time
+
+	// did we update state?
+	updated := false
+
+	switch a.ReaperState.State {
+	case STATE_NOTIFY1:
+		updated = true
+		newState = STATE_NOTIFY2
+		until = time.Now().Add(Conf.Reaper.Terminate.Duration)
+	case STATE_WHITELIST:
+		newState = STATE_WHITELIST
+	default:
+		newState = STATE_NOTIFY1
+		if newState != a.ReaperState.State {
+			updated = true
+		}
+		until = time.Now().Add(Conf.Reaper.SecondNotification.Duration)
+	}
+
+	a.ReaperState = &State{
+		State: newState,
+		Until: until,
+	}
+
+	return updated
+}
+
+func (a *AWSResource) Whitelist() (bool, error) {
+	err := whitelist(a.Region, a.Id)
+	return err == nil, err
+}
+
+func (a *AWSResource) UpdateReaperState(state *State) (bool, error) {
+	err := updateReaperState(a.Region, a.Id, state)
+	return err == nil, err
+}
+
+func whitelist(region, id string) error {
+	api := ec2.New(&aws.Config{Region: region})
+	req := &ec2.CreateTagsInput{
+		Resources: []*string{aws.String(id)},
+		Tags: []*ec2.Tag{
+			&ec2.Tag{
+				Key:   aws.String("REAPER_SPARE_ME"),
+				Value: aws.String("true"),
+			},
+		},
+	}
+
+	_, err := api.CreateTags(req)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateReaperState(region, id string, newState *State) error {
 	req := &ec2.CreateTagsInput{
 		DryRun:    aws.Boolean(false),
 		Resources: []*string{aws.String(id)},

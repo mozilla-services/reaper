@@ -143,31 +143,19 @@ func (i *Instance) Filter(filter Filter) bool {
 		if err == nil && t.Before(i.LaunchTime) {
 			matched = true
 		}
+	case "ReaperState":
+		// one of:
+		// notify1
+		// notify2
+		// ignore
+		// start
+		if i.ReaperState.State.String() == filter.Arguments[0] {
+			matched = true
+		}
 	default:
 		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
 	}
 	return matched
-}
-
-func Whitelist(region, instanceId string) error {
-	api := ec2.New(&aws.Config{Region: region})
-	req := &ec2.CreateTagsInput{
-		Resources: []*string{aws.String(instanceId)},
-		Tags: []*ec2.Tag{
-			&ec2.Tag{
-				Key:   aws.String("REAPER_SPARE_ME"),
-				Value: aws.String("true"),
-			},
-		},
-	}
-
-	_, err := api.CreateTags(req)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (i *Instance) Terminate() (bool, error) {

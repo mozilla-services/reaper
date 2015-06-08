@@ -26,6 +26,39 @@ func (n *NoEventReporter) NewCountStatistic(name string, tags []string)         
 func (n *NoEventReporter) NewReapableInstanceEvent(i *Instance)                   {}
 func (n *NoEventReporter) NewReapableASGEvent(a *AutoScalingGroup)                {}
 
+type TaggerConfig struct {
+	Enabled bool
+}
+
+type Tagger struct {
+	Config *TaggerConfig
+}
+
+func (t *Tagger) NewEvent(title string, text string, fields map[string]string, tags []string) {}
+func (t *Tagger) NewStatistic(name string, value float64, tags []string)                      {}
+func (t *Tagger) NewCountStatistic(name string, tags []string)                                {}
+func (t *Tagger) NewReapableInstanceEvent(i *Instance) {
+	// TODO: decide whether or not we update tags on a dry run
+	// if !Conf.DryRun {
+	updated := i.incrementState()
+	if updated {
+		Log.Info("Updating tag on %s in region %s. New tag: %s.", i.Id, i.Region, i.ReaperState.String())
+	}
+	// TODO: error handling
+	i.UpdateReaperState(i.ReaperState)
+	// }
+}
+func (t *Tagger) NewReapableASGEvent(a *AutoScalingGroup) {
+	// TODO: decide whether or not we update tags on a dry run
+	// if !Conf.DryRun {
+	updated := a.incrementState()
+	if updated {
+		Log.Info("Updating tag on %s in region %s. New tag: %s.", a.Id, a.Region, a.ReaperState.String())
+	}
+	a.UpdateReaperState(a.ReaperState)
+	// }
+}
+
 // implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {
@@ -100,7 +133,6 @@ var funcMap = template.FuncMap{
 	"MakeWhitelistLink": MakeWhitelistLink,
 	"MakeStopLink":      MakeStopLink,
 	"MakeForceStopLink": MakeForceStopLink,
-	"StateString":       StateString,
 }
 
 func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
@@ -142,9 +174,9 @@ func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 const reapableInstanceTemplateDataDog = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.Id}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
-State: {{ StateString .Instance.State}}.\n
+State: {{ .Instance.State.String}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
-{{ if .Instance.PublicIPAddress.String() != ""}}{{[This instance's public IP](.Instance.PublicIPAddress)\n}}{{end}}
+{{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
 [Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }}) this instance.

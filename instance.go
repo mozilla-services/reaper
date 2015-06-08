@@ -47,17 +47,17 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	switch *instance.State.Code {
 	case 0:
-		i.State = PENDING
+		i.State = pending
 	case 16:
-		i.State = RUNNING
+		i.State = running
 	case 32:
-		i.State = SHUTTINGDOWN
+		i.State = shuttingDown
 	case 48:
-		i.State = TERMINATED
+		i.State = terminated
 	case 64:
-		i.State = STOPPING
+		i.State = stopping
 	case 80:
-		i.State = STOPPED
+		i.State = stopped
 	}
 
 	// TODO: untested

@@ -52,32 +52,13 @@ type Reapable interface {
 type ResourceState int
 
 const (
-	PENDING ResourceState = iota
-	RUNNING
-	SHUTTINGDOWN
-	TERMINATED
-	STOPPING
-	STOPPED
+	pending ResourceState = iota
+	running
+	shuttingDown
+	terminated
+	stopping
+	stopped
 )
-
-func (s *ResourceState) String() string {
-	switch *s {
-	case PENDING:
-		return "pending"
-	case RUNNING:
-		return "running"
-	case SHUTTINGDOWN:
-		return "shuttingdown"
-	case TERMINATED:
-		return "terminated"
-	case STOPPING:
-		return "stopping"
-	case STOPPED:
-		return "stopped"
-	default:
-		return "unknown"
-	}
-}
 
 type Filterable interface {
 	Filter(Filter) bool
@@ -115,12 +96,12 @@ func (a *AWSResource) Tagged(tag string) bool {
 }
 
 // filter funcs for ResourceState
-func (a *AWSResource) Pending() bool      { return a.State == PENDING }
-func (a *AWSResource) Running() bool      { return a.State == RUNNING }
-func (a *AWSResource) ShuttingDown() bool { return a.State == SHUTTINGDOWN }
-func (a *AWSResource) Terminated() bool   { return a.State == TERMINATED }
-func (a *AWSResource) Stopping() bool     { return a.State == STOPPING }
-func (a *AWSResource) Stopped() bool      { return a.State == STOPPED }
+func (a *AWSResource) Pending() bool      { return a.State == pending }
+func (a *AWSResource) Running() bool      { return a.State == running }
+func (a *AWSResource) ShuttingDown() bool { return a.State == shuttingDown }
+func (a *AWSResource) Terminated() bool   { return a.State == terminated }
+func (a *AWSResource) Stopping() bool     { return a.State == stopping }
+func (a *AWSResource) Stopped() bool      { return a.State == stopped }
 
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.Tags[t] }

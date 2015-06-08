@@ -95,13 +95,13 @@ func PrintFilters(filters map[string]Filter) string {
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	Id          string
+	ID          string
 	Name        string
 	Region      string
 	State       ResourceState
 	Description string
-	VPCId       string
-	OwnerId     string
+	VPCID       string
+	OwnerID     string
 
 	Tags map[string]string
 
@@ -194,12 +194,12 @@ func (a *AWSResource) incrementState() bool {
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {
-	err := whitelist(a.Region, a.Id)
+	err := whitelist(a.Region, a.ID)
 	return err == nil, err
 }
 
 func (a *AWSResource) UpdateReaperState(state *State) (bool, error) {
-	err := updateReaperState(a.Region, a.Id, state)
+	err := updateReaperState(a.Region, a.ID, state)
 	return err == nil, err
 }
 

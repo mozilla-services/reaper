@@ -26,7 +26,7 @@ type AutoScalingGroup struct {
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
-			Id:          *asg.AutoScalingGroupName,
+			ID:          *asg.AutoScalingGroupName,
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
@@ -106,8 +106,8 @@ func (a *AutoScalingGroup) Filter(filter Filter) bool {
 }
 
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s",
-		a.Region, a.Region, a.Id))
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:ID=%s",
+		a.Region, a.Region, a.ID))
 	if err != nil {
 		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
@@ -116,25 +116,25 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 
 // TODO
 func (a *AutoScalingGroup) Terminate() (bool, error) {
-	Log.Debug("Terminating ASG %s in region %s.", a.Id, a.Region)
+	Log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
 	return false, nil
 }
 
 // stopping an ASG == scaling it to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
-	Log.Debug("Stopping ASG %s in region %s", a.Id, a.Region)
+	Log.Debug("Stopping ASG %s in region %s", a.ID, a.Region)
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	// TODO: fix this nonsense
 	zero := int64(0)
 
 	input := &autoscaling.SetDesiredCapacityInput{
-		AutoScalingGroupName: &a.Id,
+		AutoScalingGroupName: &a.ID,
 		DesiredCapacity:      &zero,
 	}
 	_, err := as.SetDesiredCapacity(input)
 	if err != nil {
-		Log.Error("could not set desired capacity to 0 for ASG %s in region %s", a.Id, a.Region)
+		Log.Error("could not set desired capacity to 0 for ASG %s in region %s", a.ID, a.Region)
 		return false, err
 	}
 	return true, nil
@@ -142,20 +142,20 @@ func (a *AutoScalingGroup) Stop() (bool, error) {
 
 // stopping an ASG == scaling it to 0
 func (a *AutoScalingGroup) ForceStop() (bool, error) {
-	Log.Debug("Force Stopping ASG %s in region %s", a.Id, a.Region)
+	Log.Debug("Force Stopping ASG %s in region %s", a.ID, a.Region)
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	// TODO: fix this nonsense
 	zero := int64(0)
 
 	input := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: &a.Id,
+		AutoScalingGroupName: &a.ID,
 		DesiredCapacity:      &zero,
 		MinSize:              &zero,
 	}
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		Log.Error("could not set DesiredCapacity, MinSize to 0 for ASG %s in region %s", a.Id, a.Region)
+		Log.Error("could not set DesiredCapacity, MinSize to 0 for ASG %s in region %s", a.ID, a.Region)
 		return false, err
 	}
 	return true, nil

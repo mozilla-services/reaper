@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	HTTP_TOKEN_VAR  = "t"
-	HTTP_ACTION_VAR = "a"
+	httpToken  = "t"
+	httpAction = "a"
 )
 
 type HTTPApi struct {
@@ -60,7 +60,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		userToken := req.Form.Get(HTTP_TOKEN_VAR)
+		userToken := req.Form.Get(httpToken)
 		if userToken == "" {
 			writeResponse(w, http.StatusBadRequest, "Token Missing")
 			return
@@ -87,17 +87,17 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// find reapable associated with the job
-		r, ok := Reapables[job.Region][job.Id]
+		r, ok := Reapables[job.Region][job.ID]
 
 		// reapable not found
 		if !ok {
-			writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Reapable %s in region %s not found.", job.Id, job.Region))
+			writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Reapable %s in region %s not found.", job.ID, job.Region))
 			return
 		}
 
 		switch job.Action {
 		case token.J_DELAY:
-			Log.Debug("Delay request received for %s in region %s until %s", job.Id, job.Region, job.IgnoreUntil.String())
+			Log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
 			_, err := r.UpdateReaperState(&State{
 				State: STATE_IGNORE,
 				Until: job.IgnoreUntil,
@@ -108,7 +108,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			}
 
 		case token.J_TERMINATE:
-			Log.Debug("Terminate request received for %s in region %s.", job.Id, job.Region)
+			Log.Debug("Terminate request received for %s in region %s.", job.ID, job.Region)
 			_, err := r.Terminate()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
@@ -116,21 +116,21 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			}
 
 		case token.J_WHITELIST:
-			Log.Debug("Whitelist request received for %s in region %s", job.Id, job.Region)
+			Log.Debug("Whitelist request received for %s in region %s", job.ID, job.Region)
 			_, err := r.Whitelist()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 		case token.J_STOP:
-			Log.Debug("Stop request received for %s in region %s", job.Id, job.Region)
+			Log.Debug("Stop request received for %s in region %s", job.ID, job.Region)
 			_, err := r.Stop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 		case token.J_FORCESTOP:
-			Log.Debug("Force Stop request received for %s in region %s", job.Id, job.Region)
+			Log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
 			_, err := r.ForceStop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
@@ -145,7 +145,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func MakeTerminateLink(tokenSecret, apiUrl, region, id string) (string, error) {
+func MakeTerminateLink(tokenSecret, apiURL, region, id string) (string, error) {
 	term, err := token.Tokenize(tokenSecret,
 		token.NewTerminateJob(region, id))
 
@@ -153,10 +153,10 @@ func MakeTerminateLink(tokenSecret, apiUrl, region, id string) (string, error) {
 		return "", err
 	}
 
-	return makeURL(apiUrl, "terminate", term), nil
+	return makeURL(apiURL, "terminate", term), nil
 }
 
-func MakeIgnoreLink(tokenSecret, apiUrl, region, id string,
+func MakeIgnoreLink(tokenSecret, apiURL, region, id string,
 	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
 		token.NewDelayJob(region, id,
@@ -167,11 +167,11 @@ func MakeIgnoreLink(tokenSecret, apiUrl, region, id string,
 	}
 
 	action := "delay_" + duration.String()
-	return makeURL(apiUrl, action, delay), nil
+	return makeURL(apiURL, action, delay), nil
 
 }
 
-func MakeWhitelistLink(tokenSecret, apiUrl, region, id string) (string, error) {
+func MakeWhitelistLink(tokenSecret, apiURL, region, id string) (string, error) {
 	whitelist, err := token.Tokenize(tokenSecret,
 		token.NewWhitelistJob(region, id))
 	if err != nil {
@@ -179,10 +179,10 @@ func MakeWhitelistLink(tokenSecret, apiUrl, region, id string) (string, error) {
 		return "", err
 	}
 
-	return makeURL(apiUrl, "whitelist", whitelist), nil
+	return makeURL(apiURL, "whitelist", whitelist), nil
 }
 
-func MakeStopLink(tokenSecret, apiUrl, region, id string) (string, error) {
+func MakeStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewStopJob(region, id))
 	if err != nil {
@@ -190,10 +190,10 @@ func MakeStopLink(tokenSecret, apiUrl, region, id string) (string, error) {
 		return "", err
 	}
 
-	return makeURL(apiUrl, "stop", stop), nil
+	return makeURL(apiURL, "stop", stop), nil
 }
 
-func MakeForceStopLink(tokenSecret, apiUrl, region, id string) (string, error) {
+func MakeForceStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewForceStopJob(region, id))
 	if err != nil {
@@ -201,7 +201,7 @@ func MakeForceStopLink(tokenSecret, apiUrl, region, id string) (string, error) {
 		return "", err
 	}
 
-	return makeURL(apiUrl, "stop", stop), nil
+	return makeURL(apiURL, "stop", stop), nil
 }
 
 func makeURL(host, action, token string) string {
@@ -209,8 +209,8 @@ func makeURL(host, action, token string) string {
 	token = url.QueryEscape(token)
 
 	vals := url.Values{}
-	vals.Add(HTTP_ACTION_VAR, action)
-	vals.Add(HTTP_TOKEN_VAR, token)
+	vals.Add(httpAction, action)
+	vals.Add(httpToken, token)
 
 	if host[len(host)-1:] == "/" {
 		return host + "?" + vals.Encode()

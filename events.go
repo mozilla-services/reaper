@@ -42,7 +42,7 @@ func (t *Tagger) NewReapableInstanceEvent(i *Instance) {
 	// if !Conf.DryRun {
 	updated := i.incrementState()
 	if updated {
-		Log.Info("Updating tag on %s in region %s. New tag: %s.", i.Id, i.Region, i.ReaperState.String())
+		Log.Info("Updating tag on %s in region %s. New tag: %s.", i.ID, i.Region, i.ReaperState.String())
 	}
 	// TODO: error handling
 	i.UpdateReaperState(i.ReaperState)
@@ -53,7 +53,7 @@ func (t *Tagger) NewReapableASGEvent(a *AutoScalingGroup) {
 	// if !Conf.DryRun {
 	updated := a.incrementState()
 	if updated {
-		Log.Info("Updating tag on %s in region %s. New tag: %s.", a.Id, a.Region, a.ReaperState.String())
+		Log.Info("Updating tag on %s in region %s. New tag: %s.", a.ID, a.Region, a.ReaperState.String())
 	}
 	a.UpdateReaperState(a.ReaperState)
 	// }
@@ -150,7 +150,7 @@ func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
 	}
 
 	d.NewEvent("Reapable ASG Discovered", string(buf.Bytes()), nil, nil)
-	Log.Debug(fmt.Sprintf("Event Reapable ASG (%s) posted to DataDog.", a.Id))
+	Log.Debug(fmt.Sprintf("Event Reapable ASG (%s) posted to DataDog.", a.ID))
 }
 
 func (d DataDog) NewReapableInstanceEvent(i *Instance) {
@@ -167,30 +167,30 @@ func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 		Log.Debug("Template generation error", err)
 	}
 
-	d.NewEvent(fmt.Sprintf("Reapable Instance %s Discovered", i.Id), string(buf.Bytes()), nil, nil)
-	Log.Debug(fmt.Sprintf("Event Reapable Instance (%s) posted to DataDog.", i.Id))
+	d.NewEvent(fmt.Sprintf("Reapable Instance %s Discovered", i.ID), string(buf.Bytes()), nil, nil)
+	Log.Debug(fmt.Sprintf("Event Reapable Instance (%s) posted to DataDog.", i.ID))
 }
 
 const reapableInstanceTemplateDataDog = `%%%
-Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.Id}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
+Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
 State: {{ .Instance.State.String}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
-[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }}) this instance.
-[Stop]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }}) this instance.
-[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.Id }}) this instance.
+[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Stop]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
 %%%`
 
 const reapableASGTemplateDataDog = `%%%
-Reaper has discovered an ASG qualified as reapable: [{{.ASG.Id}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
+Reaper has discovered an ASG qualified as reapable: [{{.ASG.ID}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
 {{if .ASG.Owned}}Owned by {{.ASG.Owner}}.\n{{end}}
 {{ if .ASG.AWSConsoleURL}}{{.ASG.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.ASG.AWSConsoleURL}})\n
-[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }}) this ASG.
-[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }}) this ASG.\n
-[Scale]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }}) this ASG to 0 instances
-[Force Scale]({{ MakeForceStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.Id }}) this ASG to 0 instances (changes minimum)
+[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG.
+[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG.\n
+[Scale]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG to 0 instances
+[Force Scale]({{ MakeForceStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG to 0 instances (changes minimum)
 %%%`

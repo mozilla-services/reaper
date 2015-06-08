@@ -13,7 +13,7 @@ import (
 const notifyTemplateSource = `
 <html>
 <body>
-	<p>Your EC2 instance {{ if .Name }}"{{.Name}}" {{ end }}{{.Id}} in {{.Region}} is scheduled to be terminated.</p>
+	<p>Your EC2 instance {{ if .Name }}"{{.Name}}" {{ end }}{{.ID}} in {{.Region}} is scheduled to be terminated.</p>
 
 	<p>
 		You may ignore this message and your instance will be automatically
@@ -108,7 +108,7 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 func (m *Mailer) Notify(a *AWSResource) (err error) {
 	if a.Owner() == nil {
-		Log.Debug("Resource %s has no owner to notify.", a.Id)
+		Log.Debug("Resource %s has no owner to notify.", a.ID)
 		return nil
 	}
 
@@ -130,21 +130,21 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 	// Token strings
 
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
-		m.conf.HTTPApiURL, a.Region, a.Id)
+		m.conf.HTTPApiURL, a.Region, a.ID)
 
 	if err == nil {
 		delay1, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, a.Region, a.Id, time.Duration(24*time.Hour))
+			m.conf.HTTPApiURL, a.Region, a.ID, time.Duration(24*time.Hour))
 	}
 
 	if err == nil {
 		delay3, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, a.Region, a.Id, time.Duration(3*24*time.Hour))
+			m.conf.HTTPApiURL, a.Region, a.ID, time.Duration(3*24*time.Hour))
 	}
 
 	if err == nil {
 		delay7, err = MakeIgnoreLink(m.conf.TokenSecret,
-			m.conf.HTTPApiURL, a.Region, a.Id, time.Duration(7*24*time.Hour))
+			m.conf.HTTPApiURL, a.Region, a.ID, time.Duration(7*24*time.Hour))
 	}
 
 	if err != nil {
@@ -160,7 +160,7 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 	dispTime := terminateDate.In(mtvLoc).Truncate(time.Hour).Format(time.RFC1123)
 	buf := bytes.NewBuffer(nil)
 	err = notifyTemplate.Execute(buf, map[string]string{
-		"Id":            a.Id,
+		"Id":            a.ID,
 		"Name":          a.Name,
 		"Host":          m.conf.HTTPApiURL,
 		"Region":        a.Region,
@@ -182,6 +182,6 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 		iName = "*unnamed*"
 	}
 
-	subject := fmt.Sprintf("Your instance %s (%s) will be terminated soon", iName, a.Id)
+	subject := fmt.Sprintf("Your instance %s (%s) will be terminated soon", iName, a.ID)
 	return m.Send(*a.Owner(), subject, string(buf.Bytes()))
 }

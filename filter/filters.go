@@ -28,7 +28,7 @@ func NotAutoscaled(i FilterableInstance) bool { return !AutoScaled(i) }
 
 func Id(id string) FilterFunc {
 	return func(i FilterableInstance) bool {
-		return i.Id() == id
+		return i.ID() == id
 	}
 }
 

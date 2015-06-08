@@ -12,12 +12,12 @@ type SecurityGroup struct {
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
 		AWSResource{
-			Id:          *sg.GroupID,
+			ID:          *sg.GroupID,
 			Name:        *sg.GroupName,
 			Region:      region,
 			Description: *sg.Description,
-			VPCId:       *sg.VPCID,
-			OwnerId:     *sg.OwnerID,
+			VPCID:       *sg.VPCID,
+			OwnerID:     *sg.OwnerID,
 			Tags:        make(map[string]string),
 		},
 	}

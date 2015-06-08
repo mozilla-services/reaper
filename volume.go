@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"time"
+
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 type Volumes []*Volume
@@ -17,7 +18,7 @@ type Volume struct {
 func NewVolume(region string, v *ec2.Volume) *Volume {
 	vol := Volume{
 		AWSResource: AWSResource{
-			Id:     *v.VolumeID,
+			ID:     *v.VolumeID,
 			Region: region,
 			Tags:   make(map[string]string),
 		},

@@ -40,10 +40,10 @@ const (
 // Not very scalable but good enough for our requirements
 type JobToken struct {
 	Action      Type
-	Id          string
+	ID          string
 	Region      string
 	IgnoreUntil time.Time
-	ValidUntil  time.Time
+	ValIDUntil  time.Time
 }
 
 func (j *JobToken) JSON() []byte {
@@ -54,57 +54,57 @@ func (j *JobToken) JSON() []byte {
 func (j *JobToken) Equal(j2 *JobToken) bool {
 
 	return j.Action != j2.Action ||
-		j.Id != j2.Id ||
-		j.ValidUntil.Equal(j2.ValidUntil)
+		j.ID != j2.ID ||
+		j.ValIDUntil.Equal(j2.ValIDUntil)
 }
 
 func (j *JobToken) Expired() bool {
-	return j.ValidUntil.Before(time.Now())
+	return j.ValIDUntil.Before(time.Now())
 }
 
-func NewDelayJob(region, id string, until time.Time) *JobToken {
+func NewDelayJob(region, ID string, until time.Time) *JobToken {
 	return &JobToken{
 		Action:      J_DELAY,
-		Id:          id,
+		ID:          ID,
 		Region:      region,
 		IgnoreUntil: until,
-		ValidUntil:  time.Now().Add(tokenDuration),
+		ValIDUntil:  time.Now().Add(tokenDuration),
 	}
 }
 
-func NewTerminateJob(region, id string) *JobToken {
+func NewTerminateJob(region, ID string) *JobToken {
 	return &JobToken{
 		Action:     J_TERMINATE,
-		Id:         id,
+		ID:         ID,
 		Region:     region,
-		ValidUntil: time.Now().Add(tokenDuration),
+		ValIDUntil: time.Now().Add(tokenDuration),
 	}
 }
 
-func NewWhitelistJob(region, id string) *JobToken {
+func NewWhitelistJob(region, ID string) *JobToken {
 	return &JobToken{
 		Action:     J_WHITELIST,
-		Id:         id,
+		ID:         ID,
 		Region:     region,
-		ValidUntil: time.Now().Add(tokenDuration),
+		ValIDUntil: time.Now().Add(tokenDuration),
 	}
 }
 
-func NewStopJob(region, id string) *JobToken {
+func NewStopJob(region, ID string) *JobToken {
 	return &JobToken{
 		Action:     J_STOP,
-		Id:         id,
+		ID:         ID,
 		Region:     region,
-		ValidUntil: time.Now().Add(tokenDuration),
+		ValIDUntil: time.Now().Add(tokenDuration),
 	}
 }
 
-func NewForceStopJob(region, id string) *JobToken {
+func NewForceStopJob(region, ID string) *JobToken {
 	return &JobToken{
 		Action:     J_FORCESTOP,
-		Id:         id,
+		ID:         ID,
 		Region:     region,
-		ValidUntil: time.Now().Add(tokenDuration),
+		ValIDUntil: time.Now().Add(tokenDuration),
 	}
 }
 
@@ -191,7 +191,7 @@ func Untokenize(password, t string) (j *JobToken, err error) {
 	parts := strings.Split(t, tag_delimiter)
 
 	if len(parts) != 2 {
-		return nil, errors.New("Invalid token")
+		return nil, errors.New("InvalID token")
 	}
 
 	ciphertext, err = base64.URLEncoding.DecodeString(parts[0])

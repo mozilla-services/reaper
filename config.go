@@ -152,9 +152,9 @@ func (s *SMTPConfig) Addr() string {
 	if s.Port == 0 {
 		// friends don't let friend's smtp over port 25
 		return fmt.Sprintf("%s:%d", s.Host, 587)
-	} else {
-		return fmt.Sprintf("%s:%d", s.Host, s.Port)
 	}
+	// default
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
 // Auth creates the appropriate smtp.Auth from the configured AuthType

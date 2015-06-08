@@ -27,7 +27,7 @@ type Instance struct {
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	i := Instance{
 		AWSResource: AWSResource{
-			Id:     *instance.InstanceID,
+			ID:     *instance.InstanceID,
 			Region: region, // passed in cause not possible to extract out of api
 			Tags:   make(map[string]string),
 		},
@@ -73,7 +73,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 func (i *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.Region, i.Region, i.Id))
+		i.Region, i.Region, i.ID))
 	if err != nil {
 		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
@@ -161,7 +161,7 @@ func (i *Instance) Filter(filter Filter) bool {
 func (i *Instance) Terminate() (bool, error) {
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{aws.String(i.Id)},
+		InstanceIDs: []*string{aws.String(i.ID)},
 	}
 
 	resp, err := api.TerminateInstances(req)
@@ -171,7 +171,7 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return false, fmt.Errorf("Instance could %s not be terminated.", i.Id)
+		return false, fmt.Errorf("Instance could %s not be terminated.", i.ID)
 	}
 
 	return true, nil
@@ -184,7 +184,7 @@ func (i *Instance) ForceStop() (bool, error) {
 func (i *Instance) Stop() (bool, error) {
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.StopInstancesInput{
-		InstanceIDs: []*string{aws.String(i.Id)},
+		InstanceIDs: []*string{aws.String(i.ID)},
 	}
 
 	resp, err := api.StopInstances(req)
@@ -194,7 +194,7 @@ func (i *Instance) Stop() (bool, error) {
 	}
 
 	if len(resp.StoppingInstances) != 1 {
-		return false, fmt.Errorf("Instance %s could not be stopped.", i.Id)
+		return false, fmt.Errorf("Instance %s could not be stopped.", i.ID)
 	}
 
 	return true, nil

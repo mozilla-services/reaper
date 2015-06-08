@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"time"
+
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 type Snapshot struct {
@@ -16,7 +17,7 @@ type Snapshot struct {
 func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	snap := Snapshot{
 		AWSResource: AWSResource{
-			Id:     *s.SnapshotID,
+			ID:     *s.SnapshotID,
 			Region: region,
 			Tags:   make(map[string]string),
 		},

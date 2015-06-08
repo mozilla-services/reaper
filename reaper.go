@@ -127,7 +127,7 @@ func allAutoScalingGroups() []Filterable {
 	var autoScalingGroups []Filterable
 	go func() {
 		for a := range in {
-			Reapables[a.Region][a.Id] = a
+			Reapables[a.Region][a.ID] = a
 			autoScalingGroups = append(autoScalingGroups, a)
 		}
 	}()
@@ -189,7 +189,7 @@ func allSnapshots() []Filterable {
 	var snapshots []Filterable
 	go func() {
 		for s := range in {
-			// Reapables[s.Region][s.Id] = s
+			// Reapables[s.Region][s.ID] = s
 			snapshots = append(snapshots, s)
 		}
 	}()
@@ -251,7 +251,7 @@ func allVolumes() Volumes {
 	var volumes Volumes
 	go func() {
 		for v := range in {
-			// Reapables[v.Region][v.Id] = v
+			// Reapables[v.Region][v.ID] = v
 			volumes = append(volumes, v)
 		}
 	}()
@@ -313,7 +313,7 @@ func allSecurityGroups() SecurityGroups {
 	var securityGroups SecurityGroups
 	go func() {
 		for sg := range in {
-			// Reapables[sg.Region][sg.Id] = sg
+			// Reapables[sg.Region][sg.ID] = sg
 			securityGroups = append(securityGroups, sg)
 		}
 	}()
@@ -384,7 +384,7 @@ func reapSnapshot(s *Snapshot) {
 	filters := Conf.Filters.Snapshot
 	if applyFilters(s, filters) {
 		Log.Debug(fmt.Sprintf("Snapshot %s matched %s.",
-			s.Id,
+			s.ID,
 			PrintFilters(filters)))
 		// TODO
 		// for _, e := range Events {
@@ -401,14 +401,14 @@ func reapInstance(i *Instance) {
 			ownerString = fmt.Sprintf("%s ", owner)
 		}
 		Log.Debug(fmt.Sprintf("Instance %s %sin region %s matched %s.",
-			i.Id,
+			i.ID,
 			ownerString,
 			i.Region,
 			PrintFilters(filters)))
 
 		for _, e := range Events {
 			go e.NewReapableInstanceEvent(i)
-			go e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.Id)})
+			go e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)})
 		}
 
 		// if the instance is owned, email the owner
@@ -417,17 +417,17 @@ func reapInstance(i *Instance) {
 			switch i.ReaperState.State {
 			case STATE_START, STATE_IGNORE:
 				for _, e := range Events {
-					go e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id), nil, nil)
+					go e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
 				}
 
 			case STATE_NOTIFY1:
 				for _, e := range Events {
-					go e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id), nil, nil)
+					go e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
 				}
 
 			case STATE_NOTIFY2:
 				for _, e := range Events {
-					go e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id), nil, nil)
+					go e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.ID), nil, nil)
 				}
 			}
 		}
@@ -438,7 +438,7 @@ func reapAutoScalingGroup(a *AutoScalingGroup) {
 	filters := Conf.Filters.ASG
 	if applyFilters(a, filters) {
 		Log.Debug(fmt.Sprintf("ASG %s matched %s.",
-			a.Id,
+			a.ID,
 			PrintFilters(filters)))
 
 		for _, e := range Events {
@@ -477,14 +477,14 @@ func reapAutoScalingGroup(a *AutoScalingGroup) {
 // 	for _, i := range filtered {
 // 		switch i := i.(type) {
 // 		case *Instance:
-// 			Reapables[i.region][i.id] = i
+// 			Reapables[i.region][i.ID] = i
 
 // 			for _, e := range Events {
 // 				e.NewReapableInstanceEvent(i)
 // 			}
 
 // 			if i.Owned() {
-// 				Log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.Id, i.Owner()))
+// 				Log.Info(fmt.Sprintf("Reapable: instance %s owned by %s", i.ID, i.Owner()))
 // 			}
 
 // 			// terminate the instance if we can't determine the owner
@@ -493,7 +493,7 @@ func reapAutoScalingGroup(a *AutoScalingGroup) {
 // 				r.terminateUnowned(i)
 
 // 				title := "Reaper terminated unowned instance"
-// 				text := fmt.Sprintf("Unowned instance %s was terminated.", i.Id)
+// 				text := fmt.Sprintf("Unowned instance %s was terminated.", i.ID)
 
 // 				for _, e := range Events {
 // 					e.NewEvent(title, text, nil, nil)
@@ -509,19 +509,19 @@ func reapAutoScalingGroup(a *AutoScalingGroup) {
 // 				case STATE_START, STATE_IGNORE:
 // 					sendNotification(i, 1)
 // 					for _, e := range Events {
-// 						e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.Id), nil, nil)
+// 						e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
 // 					}
 
 // 				case STATE_NOTIFY1:
 // 					sendNotification(i, 2)
 // 					for _, e := range Events {
-// 						e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.Id), nil, nil)
+// 						e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
 // 					}
 
 // 				case STATE_NOTIFY2:
 // 					r.terminate(i)
 // 					for _, e := range Events {
-// 						e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.Id), nil, nil)
+// 						e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.ID), nil, nil)
 // 					}
 // 				}
 // 			}
@@ -540,7 +540,7 @@ func (r *Reaper) info(format string, values ...interface{}) {
 
 func (r *Reaper) terminateUnowned(i *Instance) error {
 	r.info("Terminate UNOWNED instance (%s) %s, owner tag: %s",
-		i.Id, i.Name, i.Tag("Owner"))
+		i.ID, i.Name, i.Tag("Owner"))
 
 	if Conf.DryRun {
 		return nil
@@ -548,7 +548,7 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 
 	// TODO: use success here
 	if _, err := i.Terminate(); err != nil {
-		Log.Error(fmt.Sprintf("Terminate %s error: %s", i.Id, err.Error()))
+		Log.Error(fmt.Sprintf("Terminate %s error: %s", i.ID, err.Error()))
 		return err
 	}
 
@@ -674,7 +674,7 @@ func allInstances() []Filterable {
 	// build up the list
 	go func() {
 		for i := range in {
-			Reapables[i.Region][i.Id] = i
+			Reapables[i.Region][i.ID] = i
 			list = append(list, i)
 		}
 	}()

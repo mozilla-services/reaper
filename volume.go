@@ -11,7 +11,7 @@ type Volume struct {
 	AWSResource
 	SizeGB     int64
 	VolumeType string
-	SnapShotId string
+	SnapShotID string
 	LaunchTime time.Time
 }
 

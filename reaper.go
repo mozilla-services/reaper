@@ -84,15 +84,16 @@ func (r *Reaper) Once() {
 }
 
 // convenience function that returns a map of instances in ASGs
-// TODO: should probably have a region component...
-func allASGInstanceIds(as []AutoScalingGroup) map[string]bool {
-	inASG := make(map[string]bool)
-	// for each ASG
-	for i := 0; i < len(as); i++ {
-		// for each instance in that ASG
-		for j := 0; j < len(as[i].Instances); j++ {
-			// add it to the map of instanceIds in ASGs
-			inASG[as[i].Instances[j]] = true
+func allASGInstanceIds(as []AutoScalingGroup) map[string]map[string]bool {
+	// maps region to id to bool
+	inASG := make(map[string]map[string]bool)
+	for _, region := range Conf.AWS.Regions {
+		inASG[region] = make(map[string]bool)
+	}
+	for _, a := range as {
+		for _, instance := range a.Instances {
+			// add the instance to the map
+			inASG[a.Region][instance] = true
 		}
 	}
 	return inASG
@@ -344,17 +345,29 @@ func allSecurityGroups() SecurityGroups {
 
 func (r *Reaper) reap(done chan bool) {
 	filterables := allFilterables()
+	// TODO: consider slice of pointers
+	var asgs []AutoScalingGroup
 	for _, f := range filterables {
 		switch t := f.(type) {
 		case *Instance:
 			go reapInstance(t)
-
 		case *AutoScalingGroup:
 			go reapAutoScalingGroup(t)
+			asgs = append(asgs, *t)
 		case *Snapshot:
 			go reapSnapshot(t)
 		default:
 			Log.Error("Reap default case.")
+		}
+	}
+
+	// TODO: this totally doesn't work because it happens too late
+	// basically this doesn't do anything
+	// identify instances in an ASG and delete them from Reapables
+	instanceIDsInASGs := allASGInstanceIds(asgs)
+	for region := range instanceIDsInASGs {
+		for instanceID := range instanceIDsInASGs[region] {
+			delete(Reapables[region], instanceID)
 		}
 	}
 

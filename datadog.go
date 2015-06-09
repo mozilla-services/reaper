@@ -8,9 +8,14 @@ import (
 	"github.com/PagerDuty/godspeed"
 )
 
+type DataDogConfig struct {
+	Enabled bool
+}
+
 // implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {
+	Config        *DataDogConfig
 	eventTemplate template.Template
 	godspeed      *godspeed.Godspeed
 }

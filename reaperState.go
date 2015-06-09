@@ -30,8 +30,8 @@ func (s *State) String() string {
 }
 
 func ParseState(state string) (defaultState *State) {
-
 	defaultState = &State{STATE_START, time.Time{}}
+	defaultState = &State{STATE_START, time.Now().Add(Conf.Reaper.FirstNotification.Duration)}
 
 	if state == "" {
 		return

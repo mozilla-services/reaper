@@ -22,6 +22,7 @@ var (
 func init() {
 	configFile := flag.String("config", "", "path to config file")
 	dryRun := flag.Bool("dryrun", true, "dry run, don't make changes")
+	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
 	flag.Parse()
 
 	// set up logging
@@ -71,9 +72,11 @@ func init() {
 		}
 	}
 
-	if Conf.Events.DataDog {
+	if Conf.Events.DataDog.Enabled {
 		Log.Info("DataDog EventReporter enabled.")
-		Events = append(Events, &DataDog{})
+		Events = append(Events, &DataDog{
+			Config: &Conf.Events.DataDog,
+		})
 	}
 
 	if Conf.Events.Email.Enabled {
@@ -88,7 +91,12 @@ func init() {
 		})
 	}
 
-	if Conf.Events.Reaper.Enabled {
+	// interactive mode and automatic reaping mode are mutually exclusive
+	Conf.Interactive = *interactive
+	if *interactive {
+		Log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
+		Events = append(Events, &InteractiveEvent{})
+	} else if Conf.Events.Reaper.Enabled {
 		Log.Info("Reaper EventReporter enabled.")
 		Events = append(Events, &ReaperEvent{
 			Config: &Conf.Events.Reaper,

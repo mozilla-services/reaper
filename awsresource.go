@@ -46,7 +46,7 @@ type Reapable interface {
 	Terminable
 	Stoppable
 	Whitelistable
-	UpdateReaperState(*State) (bool, error)
+	TagReaperState(*State) (bool, error)
 }
 
 type ResourceState int
@@ -146,7 +146,7 @@ func (a *AWSResource) ReaperIgnored() bool {
 
 func (a *AWSResource) incrementState() bool {
 	var newState StateEnum
-	var until time.Time
+	until := time.Now()
 
 	// did we update state?
 	updated := false
@@ -155,21 +155,23 @@ func (a *AWSResource) incrementState() bool {
 	case STATE_NOTIFY1:
 		updated = true
 		newState = STATE_NOTIFY2
-		until = time.Now().Add(Conf.Reaper.SecondNotification.Duration)
+		until = until.Add(Conf.Reaper.SecondNotification.Duration)
 
 	case STATE_WHITELIST:
 		// keep same state
 		newState = STATE_WHITELIST
 	case STATE_NOTIFY2:
-		updated = true
 		newState = STATE_REAPABLE
-		until = time.Now().Add(Conf.Reaper.Terminate.Duration)
+		until = until.Add(Conf.Reaper.Terminate.Duration)
 	case STATE_REAPABLE:
 		// keep same state
 		newState = STATE_REAPABLE
-	default:
+	case STATE_START:
 		newState = STATE_NOTIFY1
-		until = time.Now().Add(Conf.Reaper.FirstNotification.Duration)
+		until = until.Add(Conf.Reaper.FirstNotification.Duration)
+	default:
+		Log.Notice("Unrecognized state %s ", a.ReaperState.State)
+		newState = a.ReaperState.State
 	}
 
 	if newState != a.ReaperState.State {
@@ -188,7 +190,7 @@ func (a *AWSResource) Whitelist() (bool, error) {
 	return whitelist(a.Region, a.ID)
 }
 
-func (a *AWSResource) UpdateReaperState(state *State) (bool, error) {
+func (a *AWSResource) TagReaperState(state *State) (bool, error) {
 	return updateReaperState(a.Region, a.ID, state)
 }
 
@@ -231,6 +233,24 @@ func whitelist(region, id string) (bool, error) {
 	}
 
 	return false, err
+}
+
+func (i *Instance) UntagReaperState() (bool, error) {
+	api := ec2.New(&aws.Config{Region: i.Region})
+	delreq := &ec2.DeleteTagsInput{
+		DryRun:    aws.Boolean(false),
+		Resources: []*string{aws.String(i.ID)},
+		Tags: []*ec2.Tag{
+			&ec2.Tag{
+				Key: aws.String(reaper_tag),
+			},
+		},
+	}
+	_, err := api.DeleteTags(delreq)
+	if err != nil {
+		return false, err
+	}
+	return true, err
 }
 
 func updateReaperState(region, id string, newState *State) (bool, error) {

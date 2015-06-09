@@ -84,7 +84,7 @@ func (m *Mailer) NewReapableASGEvent(a *AutoScalingGroup) {
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString("From: " + m.conf.SMTP.From.Address.String() + "\n")
+	buf.WriteString("From: " + m.conf.Events.Email.From.Address.String() + "\n")
 	buf.WriteString("To: " + to.String() + "\n")
 	buf.WriteString("Subject: " + subject + "\n")
 	buf.WriteString("MIME-Version: 1.0\n")
@@ -94,13 +94,13 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 	Log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
 		to.String(),
-		m.conf.SMTP.From.Address.String(),
+		m.conf.Events.Email.From.Address.String(),
 		subject)
 
 	return smtp.SendMail(
-		m.conf.SMTP.Addr(),
-		m.conf.SMTP.Auth(),
-		m.conf.SMTP.From.Address.Address,
+		m.conf.Events.Email.Addr(),
+		m.conf.Events.Email.Auth(),
+		m.conf.Events.Email.From.Address.Address,
 		[]string{to.Address},
 		buf.Bytes(),
 	)
@@ -112,19 +112,7 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 		return nil
 	}
 
-	terminateDate := time.Now()
-
-	switch a.ReaperState.State {
-	case STATE_START, STATE_IGNORE:
-		terminateDate.
-			Add(Conf.Reaper.SecondNotification.Duration).
-			Add(Conf.Reaper.Terminate.Duration)
-	case STATE_NOTIFY2:
-		terminateDate.
-			Add(Conf.Reaper.Terminate.Duration)
-	default:
-		return fmt.Errorf("invalid Reaper state sent to Mailer")
-	}
+	terminateDate := a.ReaperState.Until
 
 	var term, delay1, delay3, delay7, whitelist string
 	// Token strings

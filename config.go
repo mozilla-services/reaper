@@ -11,7 +11,6 @@ import (
 )
 
 func LoadConfig(path string) (*Config, error) {
-
 	conf := Config{
 		TokenSecret: "Default secrets are not safe",
 		HTTPApiURL:  "http://localhost",
@@ -65,7 +64,8 @@ type Config struct {
 	Filters       FilterTypes
 	LogFile       string
 
-	DryRun bool
+	DryRun      bool
+	Interactive bool
 }
 
 type NotificationTypes struct {
@@ -73,7 +73,7 @@ type NotificationTypes struct {
 }
 
 type EventTypes struct {
-	DataDog bool
+	DataDog DataDogConfig
 	Email   SMTPConfig
 	Tagger  TaggerConfig
 	Reaper  ReaperEventConfig

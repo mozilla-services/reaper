@@ -50,14 +50,81 @@ type Mailer struct {
 	conf *Config
 }
 
+type SMTPConfig struct {
+	Enabled  bool
+	Host     string
+	Port     int
+	AuthType string
+	Username string
+	Password string
+	From     FromAddress
+}
+
+func (s *SMTPConfig) String() string {
+	return fmt.Sprintf("%s:%d auth type:%s, creds: %s:%s",
+		s.Host,
+		s.Port,
+		s.AuthType,
+		s.Username,
+		s.Password)
+}
+func (s *SMTPConfig) Addr() string {
+	if s.Port == 0 {
+		// friends don't let friend's smtp over port 25
+		return fmt.Sprintf("%s:%d", s.Host, 587)
+	}
+	// default
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+}
+
+// Auth creates the appropriate smtp.Auth from the configured AuthType
+func (s *SMTPConfig) Auth() smtp.Auth {
+	switch s.AuthType {
+	case "md5":
+		return s.CRAMMD5Auth()
+	case "plain":
+		return s.PlainAuth()
+	default:
+		return nil
+	}
+}
+
+func (s *SMTPConfig) CRAMMD5Auth() smtp.Auth {
+	return smtp.CRAMMD5Auth(s.Username, s.Password)
+}
+
+func (s *SMTPConfig) PlainAuth() smtp.Auth {
+	return smtp.PlainAuth("", s.Username, s.Password, s.Host)
+}
+
+type FromAddress struct {
+	mail.Address
+}
+
+func (f *FromAddress) UnmarshalText(text []byte) error {
+	a, err := mail.ParseAddress(string(text))
+	if err != nil {
+		return err
+	}
+
+	f.Address = *a
+	return nil
+}
+
 func NewMailer(conf *Config) *Mailer {
 	return &Mailer{conf}
 }
 
 // methods to conform to EventReporter interface
-func (m *Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) {}
-func (m *Mailer) NewStatistic(name string, value float64, tags []string)                      {}
-func (m *Mailer) NewCountStatistic(name string, tags []string)                                {}
+func (m *Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+	return nil
+}
+func (m *Mailer) NewStatistic(name string, value float64, tags []string) error {
+	return nil
+}
+func (m *Mailer) NewCountStatistic(name string, tags []string) error {
+	return nil
+}
 func (m *Mailer) NewReapableInstanceEvent(i *Instance) {
 	// don't send emails if we're on a dry run
 	if Conf.DryRun {
@@ -112,7 +179,7 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 		return nil
 	}
 
-	terminateDate := a.ReaperState.Until
+	terminateDate := a.reaperState.Until
 
 	var term, delay1, delay3, delay7, whitelist string
 	// Token strings

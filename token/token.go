@@ -42,7 +42,7 @@ type JobToken struct {
 	Action      Type
 	ID          string
 	Region      string
-	IgnoreUntil time.Time
+	IgnoreUntil time.Duration
 	ValIDUntil  time.Time
 }
 
@@ -62,7 +62,7 @@ func (j *JobToken) Expired() bool {
 	return j.ValIDUntil.Before(time.Now())
 }
 
-func NewDelayJob(region, ID string, until time.Time) *JobToken {
+func NewDelayJob(region, ID string, until time.Duration) *JobToken {
 	return &JobToken{
 		Action:      J_DELAY,
 		ID:          ID,

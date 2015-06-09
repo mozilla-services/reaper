@@ -98,9 +98,10 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		switch job.Action {
 		case token.J_DELAY:
 			Log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
+			state := r.ReaperState()
 			_, err := r.Save(&State{
-				State: STATE_IGNORE,
-				Until: job.IgnoreUntil,
+				State: state.State,
+				Until: state.Until.Add(job.IgnoreUntil),
 			})
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
@@ -141,7 +142,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			writeResponse(w, http.StatusInternalServerError, "Unrecognized job token.")
 			return
 		}
-		writeResponse(w, http.StatusOK, "OK")
+		writeResponse(w, http.StatusOK, fmt.Sprintf("Resource state: %s", r.ReaperState().String()))
 	}
 }
 
@@ -160,7 +161,7 @@ func MakeIgnoreLink(tokenSecret, apiURL, region, id string,
 	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
 		token.NewDelayJob(region, id,
-			time.Now().Add(duration)))
+			duration))
 
 	if err != nil {
 		return "", err

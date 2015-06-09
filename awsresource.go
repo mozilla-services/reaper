@@ -5,6 +5,7 @@ import (
 	"net/mail"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -26,6 +27,7 @@ type Whitelistable interface {
 
 type Saveable interface {
 	Save(state *State) (bool, error)
+	ReaperState() *State
 }
 
 //                ,____
@@ -51,6 +53,15 @@ type Reapable interface {
 	Stoppable
 	Whitelistable
 	Saveable
+}
+
+// ReapableEventFuncMap maps strings to functions for templates
+var ReapableEventFuncMap = template.FuncMap{
+	"MakeTerminateLink": MakeTerminateLink,
+	"MakeIgnoreLink":    MakeIgnoreLink,
+	"MakeWhitelistLink": MakeWhitelistLink,
+	"MakeStopLink":      MakeStopLink,
+	"MakeForceStopLink": MakeForceStopLink,
 }
 
 type ResourceState int
@@ -80,18 +91,18 @@ func PrintFilters(filters map[string]Filter) string {
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	ID          string
-	Name        string
-	Region      string
-	State       ResourceState
-	Description string
-	VPCID       string
-	OwnerID     string
+	ID            string
+	Name          string
+	Region        string
+	resourceState ResourceState
+	Description   string
+	VPCID         string
+	OwnerID       string
 
 	Tags map[string]string
 
 	// reaper state
-	ReaperState *State
+	reaperState *State
 }
 
 func (a *AWSResource) Tagged(tag string) bool {
@@ -100,17 +111,21 @@ func (a *AWSResource) Tagged(tag string) bool {
 }
 
 // filter funcs for ResourceState
-func (a *AWSResource) Pending() bool      { return a.State == pending }
-func (a *AWSResource) Running() bool      { return a.State == running }
-func (a *AWSResource) ShuttingDown() bool { return a.State == shuttingDown }
-func (a *AWSResource) Terminated() bool   { return a.State == terminated }
-func (a *AWSResource) Stopping() bool     { return a.State == stopping }
-func (a *AWSResource) Stopped() bool      { return a.State == stopped }
+func (a *AWSResource) Pending() bool      { return a.resourceState == pending }
+func (a *AWSResource) Running() bool      { return a.resourceState == running }
+func (a *AWSResource) ShuttingDown() bool { return a.resourceState == shuttingDown }
+func (a *AWSResource) Terminated() bool   { return a.resourceState == terminated }
+func (a *AWSResource) Stopping() bool     { return a.resourceState == stopping }
+func (a *AWSResource) Stopped() bool      { return a.resourceState == stopped }
 
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.Tags[t] }
 
 func (a *AWSResource) Owned() bool { return a.Tagged("Owner") }
+
+func (a *AWSResource) ReaperState() *State {
+	return a.reaperState
+}
 
 // Owner extracts useful information out of the Owner tag which should
 // be parsable by mail.ParseAddress
@@ -129,23 +144,19 @@ func (a *AWSResource) Owner() *mail.Address {
 }
 
 func (a *AWSResource) ReaperVisible() bool {
-	return time.Now().After(a.ReaperState.Until)
+	return time.Now().After(a.reaperState.Until)
 }
 func (a *AWSResource) ReaperStarted() bool {
-	return a.ReaperState.State == STATE_START
+	return a.reaperState.State == STATE_START
 }
 func (a *AWSResource) ReaperNotified(notifyNum int) bool {
 	if notifyNum == 1 {
-		return a.ReaperState.State == STATE_NOTIFY1
+		return a.reaperState.State == STATE_NOTIFY1
 	} else if notifyNum == 2 {
-		return a.ReaperState.State == STATE_NOTIFY2
+		return a.reaperState.State == STATE_NOTIFY2
 	} else {
 		return false
 	}
-}
-
-func (a *AWSResource) ReaperIgnored() bool {
-	return a.ReaperState.State == STATE_IGNORE
 }
 
 func (a *AWSResource) incrementState() bool {
@@ -155,7 +166,7 @@ func (a *AWSResource) incrementState() bool {
 	// did we update state?
 	updated := false
 
-	switch a.ReaperState.State {
+	switch a.reaperState.State {
 	case STATE_NOTIFY1:
 		updated = true
 		newState = STATE_NOTIFY2
@@ -174,15 +185,15 @@ func (a *AWSResource) incrementState() bool {
 		newState = STATE_NOTIFY1
 		until = until.Add(Conf.Reaper.FirstNotification.Duration)
 	default:
-		Log.Notice("Unrecognized state %s ", a.ReaperState.State)
-		newState = a.ReaperState.State
+		Log.Notice("Unrecognized state %s ", a.reaperState.State)
+		newState = a.reaperState.State
 	}
 
-	if newState != a.ReaperState.State {
+	if newState != a.reaperState.State {
 		updated = true
 	}
 
-	a.ReaperState = &State{
+	a.reaperState = &State{
 		State: newState,
 		Until: until,
 	}
@@ -199,8 +210,7 @@ func (a *AWSResource) TagReaperState(state *State) (bool, error) {
 }
 
 func whitelist(region, id string) (bool, error) {
-	// TODO: fix hardcoded
-	whitelist_tag := "REAPER_SPARE_ME"
+	whitelist_tag := Conf.WhitelistTag
 
 	api := ec2.New(&aws.Config{Region: region})
 	req := &ec2.CreateTagsInput{

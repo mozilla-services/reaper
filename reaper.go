@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -79,8 +80,28 @@ func (r *Reaper) Once() {
 		<-done
 	}
 
-	// this prints before all the reaps are done
+	if Conf.StateFile != "" {
+		r.SaveState(Conf.StateFile)
+	}
+
 	Log.Notice("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
+}
+
+func (r *Reaper) SaveState(stateFile string) {
+	// open file RW, create it if it doesn't exist
+	s, err := os.OpenFile(Conf.StateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
+	defer func() { s.Close() }()
+	if err != nil {
+		Log.Error("Unable to create StateFile '%s'", Conf.StateFile)
+	} else {
+		Log.Info("States will be saved to %s", Conf.StateFile)
+	}
+	// save state to state file
+	for region := range Reapables {
+		for id := range Reapables[region] {
+			s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", region, id, Reapables[region][id].ReaperState().String())))
+		}
+	}
 }
 
 // convenience function that returns a map of instances in ASGs
@@ -142,7 +163,6 @@ func allAutoScalingGroups() []Filterable {
 	var autoScalingGroups []Filterable
 	go func() {
 		for a := range in {
-			Reapables[a.Region][a.ID] = a
 			autoScalingGroups = append(autoScalingGroups, a)
 		}
 	}()
@@ -350,12 +370,12 @@ func (r *Reaper) reap(done chan bool) {
 	for _, f := range filterables {
 		switch t := f.(type) {
 		case *Instance:
-			go reapInstance(t)
+			reapInstance(t)
 		case *AutoScalingGroup:
-			go reapAutoScalingGroup(t)
+			reapAutoScalingGroup(t)
 			asgs = append(asgs, *t)
 		case *Snapshot:
-			go reapSnapshot(t)
+			reapSnapshot(t)
 		default:
 			Log.Error("Reap default case.")
 		}
@@ -409,6 +429,14 @@ func applyFilters(f Filterable, filters map[string]Filter) bool {
 			matched = false
 		}
 	}
+
+	// whitelist filter
+	if f.Filter(Filter{"Tagged", []string{Conf.WhitelistTag}}) {
+		// if the filterable matches this filter, then
+		// it should be whitelisted, aka not matched
+		matched = false
+	}
+
 	return matched
 }
 
@@ -439,16 +467,19 @@ func reapInstance(i *Instance) {
 			PrintFilters(filters)))
 
 		for _, e := range Events {
-			go e.NewReapableInstanceEvent(i)
+			go e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil)
 			go e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)})
 		}
+
+		// add to Reapables
+		Reapables[i.Region][i.ID] = i
 
 		// if the instance is owned, email the owner
 		// sends different notification based on reaper state
 		// currently there is a conifg option to enable these: Conf.Notifications.Extras
 		if i.Owned() && Conf.Notifications.Extras {
-			switch i.ReaperState.State {
-			case STATE_START, STATE_IGNORE:
+			switch i.reaperState.State {
+			case STATE_START:
 				for _, e := range Events {
 					go e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
 				}
@@ -475,9 +506,12 @@ func reapAutoScalingGroup(a *AutoScalingGroup) {
 			PrintFilters(filters)))
 
 		for _, e := range Events {
-			go e.NewReapableASGEvent(a)
+			go e.NewEvent("Reapable ASG discovered", string(a.ReapableEventText().Bytes()), nil, nil)
 		}
 	}
+
+	// add to Reapables
+	Reapables[a.Region][a.ID] = a
 }
 
 func (r *Reaper) terminateUnowned(i *Instance) error {
@@ -623,7 +657,6 @@ func allInstances() []Filterable {
 	// build up the list
 	go func() {
 		for i := range in {
-			Reapables[i.Region][i.ID] = i
 			list = append(list, i)
 		}
 	}()

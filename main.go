@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/mostlygeek/reaper/events"
 	"github.com/op/go-logging"
 )
 
@@ -15,12 +16,11 @@ var (
 	// Log -> exported global logger
 	Log *logging.Logger
 	// Events -> exported global events array
-	Events []EventReporter
+	Events []events.EventReporter
 	// Reapables -> exported global array of reapables
 	Reapables map[string]map[string]Reapable
 	// Conf -> exported global config
-	Conf   *Config
-	mailer *Mailer
+	Conf *Config
 )
 
 func init() {
@@ -86,7 +86,7 @@ func init() {
 
 	if Conf.Events.DataDog.Enabled {
 		Log.Info("DataDog EventReporter enabled.")
-		Events = append(Events, &DataDog{
+		Events = append(Events, &events.DataDog{
 			Config: &Conf.Events.DataDog,
 		})
 	}
@@ -113,6 +113,13 @@ func init() {
 		Events = append(Events, &ReaperEvent{
 			Config: &Conf.Events.Reaper,
 		})
+	}
+
+	if Conf.WhitelistTag == "" {
+		Log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
+		Conf.WhitelistTag = "REAPER_SPARE_ME"
+	} else {
+		Log.Info("Using WhitelistTag '%s'", Conf.WhitelistTag)
 	}
 
 	Conf.DryRun = *dryRun

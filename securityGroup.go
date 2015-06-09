@@ -26,7 +26,7 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 		s.Tags[*tag.Key] = *tag.Value
 	}
 
-	s.ReaperState = ParseState(s.Tags[reaperTag])
+	s.reaperState = ParseState(s.Tags[reaperTag])
 
 	return &s
 }

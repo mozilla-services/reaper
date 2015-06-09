@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
+	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,7 +32,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
-			ReaperState: ParseState(""),
+			reaperState: ParseState(""),
 		},
 		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,
@@ -50,6 +52,37 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 
 	return &a
 }
+
+type ASGEventData struct {
+	Config           *Config
+	AutoScalingGroup *AutoScalingGroup
+}
+
+func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
+	t := template.Must(template.New("reapable-asg").Funcs(ReapableEventFuncMap).Parse(reapableASGEventText))
+	buf := bytes.NewBuffer(nil)
+
+	data := ASGEventData{
+		AutoScalingGroup: a,
+		Config:           Conf,
+	}
+	err := t.Execute(buf, data)
+	if err != nil {
+		Log.Debug("Template generation error", err)
+	}
+	return buf
+}
+
+const reapableASGEventText = `%%%
+Reaper has discovered an ASG qualified as reapable: [{{.ASG.ID}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
+{{if .ASG.Owned}}Owned by {{.ASG.Owner}}.\n{{end}}
+{{ if .ASG.AWSConsoleURL}}{{.ASG.AWSConsoleURL}}\n{{end}}
+[AWS Console URL]({{.ASG.AWSConsoleURL}})\n
+[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG.
+[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG.\n
+[Scale]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG to 0 instances
+[Force Scale]({{ MakeForceStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG to 0 instances (changes minimum)
+%%%`
 
 func (a *AutoScalingGroup) SizeGreaterThanOrEqualTo(size int64) bool {
 	return a.DesiredCapacity >= size
@@ -99,6 +132,10 @@ func (a *AutoScalingGroup) Filter(filter Filter) bool {
 		if a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
+	case "NotTagged":
+		if !a.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
 	default:
 		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
 	}
@@ -136,7 +173,6 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 }
 
 // methods for reapable interface:
-
 func (a *AutoScalingGroup) Save(state *State) (bool, error) {
 	return a.TagReaperState(state)
 }

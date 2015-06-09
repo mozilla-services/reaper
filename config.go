@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"net/mail"
-	"net/smtp"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/mostlygeek/reaper/events"
 )
 
 func LoadConfig(path string) (*Config, error) {
@@ -35,9 +36,14 @@ func LoadConfig(path string) (*Config, error) {
 		},
 		DryRun: true,
 	}
-
-	if _, err := toml.DecodeFile(path, &conf); err != nil {
+	md, err := toml.DecodeFile(path, &conf)
+	if err != nil {
 		return nil, err
+	}
+
+	if len(md.Undecoded()) > 0 {
+		Log.Error("Undecoded configuration keys: %q\nExiting!", md.Undecoded())
+		os.Exit(1)
 	}
 
 	return &conf, nil
@@ -59,6 +65,7 @@ type Config struct {
 	Filters       FilterTypes
 	LogFile       string
 	StateFile     string
+	WhitelistTag  string
 
 	DryRun      bool
 	Interactive bool
@@ -69,7 +76,7 @@ type NotificationTypes struct {
 }
 
 type EventTypes struct {
-	DataDog DataDogConfig
+	DataDog events.DataDogConfig
 	Email   SMTPConfig
 	Tagger  TaggerConfig
 	Reaper  ReaperEventConfig
@@ -111,67 +118,6 @@ func (filter *Filter) BoolValue(v int) (bool, error) {
 		return false, err
 	}
 	return b, nil
-}
-
-type FromAddress struct {
-	mail.Address
-}
-
-func (f *FromAddress) UnmarshalText(text []byte) error {
-	a, err := mail.ParseAddress(string(text))
-	if err != nil {
-		return err
-	}
-
-	f.Address = *a
-	return nil
-}
-
-type SMTPConfig struct {
-	Enabled  bool
-	Host     string
-	Port     int
-	AuthType string
-	Username string
-	Password string
-	From     FromAddress
-}
-
-func (s *SMTPConfig) String() string {
-	return fmt.Sprintf("%s:%d auth type:%s, creds: %s:%s",
-		s.Host,
-		s.Port,
-		s.AuthType,
-		s.Username,
-		s.Password)
-}
-func (s *SMTPConfig) Addr() string {
-	if s.Port == 0 {
-		// friends don't let friend's smtp over port 25
-		return fmt.Sprintf("%s:%d", s.Host, 587)
-	}
-	// default
-	return fmt.Sprintf("%s:%d", s.Host, s.Port)
-}
-
-// Auth creates the appropriate smtp.Auth from the configured AuthType
-func (s *SMTPConfig) Auth() smtp.Auth {
-	switch s.AuthType {
-	case "md5":
-		return s.CRAMMD5Auth()
-	case "plain":
-		return s.PlainAuth()
-	default:
-		return nil
-	}
-}
-
-func (s *SMTPConfig) CRAMMD5Auth() smtp.Auth {
-	return smtp.CRAMMD5Auth(s.Username, s.Password)
-}
-
-func (s *SMTPConfig) PlainAuth() smtp.Auth {
-	return smtp.PlainAuth("", s.Username, s.Password, s.Host)
 }
 
 type AWSConfig struct {

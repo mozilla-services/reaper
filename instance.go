@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"net/url"
+	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -49,17 +51,17 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	switch *instance.State.Code {
 	case 0:
-		i.State = pending
+		i.resourceState = pending
 	case 16:
-		i.State = running
+		i.resourceState = running
 	case 32:
-		i.State = shuttingDown
+		i.resourceState = shuttingDown
 	case 48:
-		i.State = terminated
+		i.resourceState = terminated
 	case 64:
-		i.State = stopping
+		i.resourceState = stopping
 	case 80:
-		i.State = stopped
+		i.resourceState = stopped
 	}
 
 	// TODO: untested
@@ -68,10 +70,43 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	}
 
 	i.Name = i.Tag("Name")
-	i.ReaperState = ParseState(i.Tags[reaperTag])
+	i.reaperState = ParseState(i.Tags[reaperTag])
 
 	return &i
 }
+
+type InstanceEventData struct {
+	Config   *Config
+	Instance *Instance
+}
+
+func (i *Instance) ReapableEventText() *bytes.Buffer {
+	t := template.Must(template.New("reapable-instance").Funcs(ReapableEventFuncMap).Parse(reapableInstanceEventText))
+	buf := bytes.NewBuffer(nil)
+
+	data := InstanceEventData{
+		Instance: i,
+		Config:   Conf,
+	}
+	err := t.Execute(buf, data)
+	if err != nil {
+		Log.Debug("Template generation error", err)
+	}
+	return buf
+}
+
+const reapableInstanceEventText = `%%%
+Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
+{{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
+State: {{ .Instance.State.String}}.\n
+Instance Type: {{ .Instance.InstanceType}}.\n
+{{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
+{{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
+[AWS Console URL]({{.Instance.AWSConsoleURL}})\n
+[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Stop]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+%%%`
 
 func (i *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
@@ -121,6 +156,10 @@ func (i *Instance) Filter(filter Filter) bool {
 		if i.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
+	case "NotTagged":
+		if !i.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
 	case "Tag":
 		if i.Tag(filter.Arguments[0]) == filter.Arguments[1] {
 			matched = true
@@ -151,7 +190,7 @@ func (i *Instance) Filter(filter Filter) bool {
 		// notify2
 		// ignore
 		// start
-		if i.ReaperState.State.String() == filter.Arguments[0] {
+		if i.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
 	default:

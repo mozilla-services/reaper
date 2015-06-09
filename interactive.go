@@ -33,5 +33,23 @@ func (n *InteractiveEvent) NewReapableInstanceEvent(i *Instance) {
 	}
 }
 func (n *InteractiveEvent) NewReapableASGEvent(a *AutoScalingGroup) {
+	Log.Notice("Press T to terminate, S to stop, W to whitelist %s in region %s. All other keys are ignored.", a.ID, a.Region)
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		Log.Error("%s", err.Error())
+	}
 
+	inputChar := input[0]
+
+	if inputChar == 'T' {
+		Log.Debug("Terminating %s in region %s", a.ID, a.Region)
+		a.Terminate()
+	} else if inputChar == 'S' {
+		Log.Debug("Stopping %s in region %s", a.ID, a.Region)
+		a.Stop()
+	} else if inputChar == 'W' {
+		Log.Debug("Whitelisting %s in region %s", a.ID, a.Region)
+		a.Whitelist()
+	}
 }

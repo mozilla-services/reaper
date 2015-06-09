@@ -10,17 +10,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+// Reaper finds resources and deals with them
 type Reaper struct {
 	conf   Config
 	stopCh chan struct{}
 }
 
+// NewReaper is a Reaper constructor shorthand
 func NewReaper(c Config) *Reaper {
 	return &Reaper{
 		conf: c,
 	}
 }
 
+// Start begins Reaper execution in a new goroutine
 func (r *Reaper) Start() {
 	if r.stopCh != nil {
 		return
@@ -29,10 +32,13 @@ func (r *Reaper) Start() {
 	go r.start()
 }
 
+// Stop closes a Reaper's stop channel
 func (r *Reaper) Stop() {
 	close(r.stopCh)
 }
 
+// unexported start is continuous loop that reaps every
+// time interval
 func (r *Reaper) start() {
 	// make a list of all eligible instances
 	for {
@@ -46,6 +52,8 @@ func (r *Reaper) start() {
 	}
 }
 
+// Once is run once every time interval by start
+// it is intended to handle all reaping logic
 func (r *Reaper) Once() {
 	// run these as goroutines
 	var reapFuncs = []func(chan bool){
@@ -57,6 +65,9 @@ func (r *Reaper) Once() {
 		r.reap,
 	}
 
+	// we block execution waiting for done to fill
+	// so that the "sleeping for X" message shows
+	// after all reaping is completed
 	done := make(chan bool, 1)
 	for _, f := range reapFuncs {
 		go f(done)
@@ -72,6 +83,8 @@ func (r *Reaper) Once() {
 	Log.Notice("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
 }
 
+// convenience function that returns a map of instances in ASGs
+// TODO: should probably have a region component...
 func allASGInstanceIds(as []AutoScalingGroup) map[string]bool {
 	inASG := make(map[string]bool)
 	// for each ASG
@@ -85,6 +98,7 @@ func allASGInstanceIds(as []AutoScalingGroup) map[string]bool {
 	return inASG
 }
 
+// returns ASGs as filterables
 func allAutoScalingGroups() []Filterable {
 	regions := Conf.AWS.Regions
 
@@ -334,6 +348,7 @@ func (r *Reaper) reap(done chan bool) {
 		switch t := f.(type) {
 		case *Instance:
 			go reapInstance(t)
+
 		case *AutoScalingGroup:
 			go reapAutoScalingGroup(t)
 		case *Snapshot:
@@ -346,6 +361,8 @@ func (r *Reaper) reap(done chan bool) {
 	done <- true
 }
 
+// makes a slice of all filterables by appending
+// output of each filterable types aggregator function
 func allFilterables() []Filterable {
 	var filterables []Filterable
 	if Conf.Enabled.Instances {
@@ -360,6 +377,8 @@ func allFilterables() []Filterable {
 	return filterables
 }
 
+// applies N functions to a filterable F
+// returns true if all filters returned true, else returns false
 func applyFilters(f Filterable, filters map[string]Filter) bool {
 	// recover from potential panics caused by malformed filters
 	defer func() {
@@ -413,6 +432,7 @@ func reapInstance(i *Instance) {
 
 		// if the instance is owned, email the owner
 		// sends different notification based on reaper state
+		// currently there is a conifg option to enable these: Conf.Notifications.Extras
 		if i.Owned() && Conf.Notifications.Extras {
 			switch i.ReaperState.State {
 			case STATE_START, STATE_IGNORE:
@@ -447,16 +467,8 @@ func reapAutoScalingGroup(a *AutoScalingGroup) {
 	}
 }
 
-func (r *Reaper) info(format string, values ...interface{}) {
-	if Conf.DryRun {
-		Log.Info("(DRYRUN) " + fmt.Sprintf(format, values...))
-	} else {
-		Log.Info(fmt.Sprintf(format, values...))
-	}
-}
-
 func (r *Reaper) terminateUnowned(i *Instance) error {
-	r.info("Terminate UNOWNED instance (%s) %s, owner tag: %s",
+	Log.Info("Terminate UNOWNED instance (%s) %s, owner tag: %s",
 		i.ID, i.Name, i.Tag("Owner"))
 
 	if Conf.DryRun {
@@ -473,6 +485,8 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 
 }
 
+// fetches a reapable matching region, id from
+// the global slice of reapables
 func getReapable(region, id string) (Reapable, error) {
 	reapable, ok := Reapables[region][id]
 	if !ok {
@@ -483,6 +497,7 @@ func getReapable(region, id string) (Reapable, error) {
 	return reapable, nil
 }
 
+// Terminate by region, id, calls a Reapable's own Terminate method
 func Terminate(region, id string) error {
 	reapable, err := getReapable(region, id)
 	if err != nil {
@@ -498,6 +513,7 @@ func Terminate(region, id string) error {
 	return nil
 }
 
+// ForceStop by region, id, calls a Reapable's own ForceStop method
 func ForceStop(region, id string) error {
 	reapable, err := getReapable(region, id)
 	if err != nil {
@@ -513,6 +529,7 @@ func ForceStop(region, id string) error {
 	return nil
 }
 
+// Stop by region, id, calls a Reapable's own Stop method
 func Stop(region, id string) error {
 	reapable, err := getReapable(region, id)
 	if err != nil {
@@ -529,6 +546,8 @@ func Stop(region, id string) error {
 }
 
 // allInstances describes every instance in the requested regions
+// instances of Instance are created for each *ec2.Instance
+// returned as Filterables
 func allInstances() []Filterable {
 
 	regions := Conf.AWS.Regions

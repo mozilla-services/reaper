@@ -98,7 +98,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		switch job.Action {
 		case token.J_DELAY:
 			Log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
-			_, err := r.TagReaperState(&State{
+			_, err := r.Save(&State{
 				State: STATE_IGNORE,
 				Until: job.IgnoreUntil,
 			})

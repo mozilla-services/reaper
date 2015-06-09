@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	reaper_tag = "REAPER"
-	s_sep      = "|"
-	s_tformat  = "2006-01-02 03:04PM MST"
+	reaperTag           = "REAPER"
+	reaperTagSeparator  = "|"
+	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
 )
 
+// Instance stores data from an *ec2.Instance
 type Instance struct {
 	AWSResource
 	LaunchTime      time.Time
@@ -24,6 +25,7 @@ type Instance struct {
 	PublicIPAddress net.IP
 }
 
+// NewInstance is a constructor for Instances
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	i := Instance{
 		AWSResource: AWSResource{
@@ -66,7 +68,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	}
 
 	i.Name = i.Tag("Name")
-	i.ReaperState = ParseState(i.Tags[reaper_tag])
+	i.ReaperState = ParseState(i.Tags[reaperTag])
 
 	return &i
 }
@@ -156,6 +158,11 @@ func (i *Instance) Filter(filter Filter) bool {
 		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
 	}
 	return matched
+}
+
+// methods for reapable interface:
+func (i *Instance) Save(state *State) (bool, error) {
+	return i.TagReaperState(state)
 }
 
 func (i *Instance) Terminate() (bool, error) {

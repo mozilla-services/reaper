@@ -33,12 +33,7 @@ func LoadConfig(path string) (*Config, error) {
 			SecondNotification: duration{time.Duration(12) * time.Hour},
 			Terminate:          duration{time.Duration(24) * time.Hour},
 		},
-		Enabled:       ResourceTypes{},
-		Events:        EventTypes{},
-		Notifications: NotificationTypes{},
-		Filters:       FilterTypes{},
-		LogFile:       "",
-		DryRun:        true,
+		DryRun: true,
 	}
 
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
@@ -63,6 +58,7 @@ type Config struct {
 	Enabled       ResourceTypes
 	Filters       FilterTypes
 	LogFile       string
+	StateFile     string
 
 	DryRun      bool
 	Interactive bool

@@ -26,7 +26,7 @@ type State struct {
 }
 
 func (s *State) String() string {
-	return s.State.String() + s_sep + s.Until.Format(s_tformat)
+	return s.State.String() + reaperTagSeparator + s.Until.Format(reaperTagTimeFormat)
 }
 
 func ParseState(state string) (defaultState *State) {
@@ -37,7 +37,7 @@ func ParseState(state string) (defaultState *State) {
 		return
 	}
 
-	s := strings.Split(state, s_sep)
+	s := strings.Split(state, reaperTagSeparator)
 
 	if len(s) != 2 {
 		return
@@ -61,7 +61,7 @@ func ParseState(state string) (defaultState *State) {
 		return
 	}
 
-	t, err := time.Parse(s_tformat, s[1])
+	t, err := time.Parse(reaperTagTimeFormat, s[1])
 	if err != nil {
 		return
 	}

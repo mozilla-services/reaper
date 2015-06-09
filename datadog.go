@@ -8,6 +8,7 @@ import (
 	"github.com/PagerDuty/godspeed"
 )
 
+// DataDogConfig is the configuration for a DataDog
 type DataDogConfig struct {
 	Enabled bool
 }
@@ -21,7 +22,7 @@ type DataDog struct {
 }
 
 // TODO: make this async?
-// TODO: not recreate godspeed
+// TODO: don't recreate godspeed
 func (d *DataDog) Godspeed() *godspeed.Godspeed {
 	if d.godspeed == nil {
 		g, err := godspeed.NewDefault()
@@ -34,6 +35,7 @@ func (d *DataDog) Godspeed() *godspeed.Godspeed {
 	return d.godspeed
 }
 
+// NewEvent reports an event to DataDog
 func (d *DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) {
 	g := d.Godspeed()
 	// TODO: fix?
@@ -45,6 +47,7 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 	Log.Debug(fmt.Sprintf("Event %s posted to DataDog.", title))
 }
 
+// NewStatistic reports a gauge to DataDog
 func (d *DataDog) NewStatistic(name string, value float64, tags []string) {
 	g := d.Godspeed()
 
@@ -58,6 +61,7 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) {
 	Log.Debug(fmt.Sprintf("Statistic %s posted to DataDog.", name))
 }
 
+// NewCountStatistic reports an Incr to DataDog
 func (d *DataDog) NewCountStatistic(name string, tags []string) {
 	g := d.Godspeed()
 
@@ -71,6 +75,7 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) {
 	Log.Debug(fmt.Sprintf("Statistic %s posted to DataDog.", name))
 }
 
+// funcMap maps strings to functions for templates
 var funcMap = template.FuncMap{
 	"MakeTerminateLink": MakeTerminateLink,
 	"MakeIgnoreLink":    MakeIgnoreLink,
@@ -79,6 +84,8 @@ var funcMap = template.FuncMap{
 	"MakeForceStopLink": MakeForceStopLink,
 }
 
+// NewReapableASGEvent reports an event to DataDog about a specific
+// reapable ASG
 func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
 	t := template.Must(template.New("reapable").Funcs(funcMap).Parse(reapableASGTemplateDataDog))
 	buf := bytes.NewBuffer(nil)
@@ -97,6 +104,8 @@ func (d DataDog) NewReapableASGEvent(a *AutoScalingGroup) {
 	Log.Debug(fmt.Sprintf("Event Reapable ASG (%s) posted to DataDog.", a.ID))
 }
 
+// NewReapableInstanceEvent reports an event to DataDog about a specific
+// reapable Instance
 func (d DataDog) NewReapableInstanceEvent(i *Instance) {
 	t := template.Must(template.New("reapable").Funcs(funcMap).Parse(reapableInstanceTemplateDataDog))
 	buf := bytes.NewBuffer(nil)

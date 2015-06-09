@@ -24,6 +24,10 @@ type Whitelistable interface {
 	Whitelist() (bool, error)
 }
 
+type Saveable interface {
+	Save(state *State) (bool, error)
+}
+
 //                ,____
 //                |---.\
 //        ___     |    `
@@ -46,7 +50,7 @@ type Reapable interface {
 	Terminable
 	Stoppable
 	Whitelistable
-	TagReaperState(*State) (bool, error)
+	Saveable
 }
 
 type ResourceState int
@@ -242,7 +246,7 @@ func (i *Instance) UntagReaperState() (bool, error) {
 		Resources: []*string{aws.String(i.ID)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
-				Key: aws.String(reaper_tag),
+				Key: aws.String(reaperTag),
 			},
 		},
 	}
@@ -260,7 +264,7 @@ func updateReaperState(region, id string, newState *State) (bool, error) {
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
-				Key:   aws.String(reaper_tag),
+				Key:   aws.String(reaperTag),
 				Value: aws.String(newState.String()),
 			},
 		},
@@ -280,7 +284,7 @@ func updateReaperState(region, id string, newState *State) (bool, error) {
 			},
 			&ec2.Filter{
 				Name:   aws.String("key"),
-				Values: []*string{aws.String(reaper_tag)},
+				Values: []*string{aws.String(reaperTag)},
 			},
 		},
 	}

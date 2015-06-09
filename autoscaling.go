@@ -114,12 +114,6 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	return url
 }
 
-// TODO
-func (a *AutoScalingGroup) Terminate() (bool, error) {
-	Log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
-	return false, nil
-}
-
 func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 	Log.Debug("Stopping ASG %s in region %s", a.ID, a.Region)
 	as := autoscaling.New(&aws.Config{Region: a.Region})
@@ -139,6 +133,18 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// methods for reapable interface:
+
+func (a *AutoScalingGroup) Save(state *State) (bool, error) {
+	return a.TagReaperState(state)
+}
+
+// TODO
+func (a *AutoScalingGroup) Terminate() (bool, error) {
+	Log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
+	return false, nil
 }
 
 // Stop scales ASGs to 0

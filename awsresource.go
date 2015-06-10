@@ -94,7 +94,7 @@ type AWSResource struct {
 	ID            string
 	Name          string
 	Region        string
-	resourceState ResourceState
+	ResourceState ResourceState
 	Description   string
 	VPCID         string
 	OwnerID       string
@@ -111,12 +111,12 @@ func (a *AWSResource) Tagged(tag string) bool {
 }
 
 // filter funcs for ResourceState
-func (a *AWSResource) Pending() bool      { return a.resourceState == pending }
-func (a *AWSResource) Running() bool      { return a.resourceState == running }
-func (a *AWSResource) ShuttingDown() bool { return a.resourceState == shuttingDown }
-func (a *AWSResource) Terminated() bool   { return a.resourceState == terminated }
-func (a *AWSResource) Stopping() bool     { return a.resourceState == stopping }
-func (a *AWSResource) Stopped() bool      { return a.resourceState == stopped }
+func (a *AWSResource) Pending() bool      { return a.ResourceState == pending }
+func (a *AWSResource) Running() bool      { return a.ResourceState == running }
+func (a *AWSResource) ShuttingDown() bool { return a.ResourceState == shuttingDown }
+func (a *AWSResource) Terminated() bool   { return a.ResourceState == terminated }
+func (a *AWSResource) Stopping() bool     { return a.ResourceState == stopping }
+func (a *AWSResource) Stopped() bool      { return a.ResourceState == stopped }
 
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.Tags[t] }

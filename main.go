@@ -91,6 +91,8 @@ func init() {
 		})
 	}
 
+	// Events = append(Events, &events.ErrorEventReporter{})
+
 	if Conf.Events.Email.Enabled {
 		Log.Info("Email EventReporter enabled.")
 		Events = append(Events, NewMailer(Conf))

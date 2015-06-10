@@ -51,17 +51,17 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	switch *instance.State.Code {
 	case 0:
-		i.resourceState = pending
+		i.ResourceState = pending
 	case 16:
-		i.resourceState = running
+		i.ResourceState = running
 	case 32:
-		i.resourceState = shuttingDown
+		i.ResourceState = shuttingDown
 	case 48:
-		i.resourceState = terminated
+		i.ResourceState = terminated
 	case 64:
-		i.resourceState = stopping
+		i.ResourceState = stopping
 	case 80:
-		i.resourceState = stopped
+		i.ResourceState = stopped
 	}
 
 	// TODO: untested
@@ -75,16 +75,15 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	return &i
 }
 
-type InstanceEventData struct {
-	Config   *Config
-	Instance *Instance
-}
-
 func (i *Instance) ReapableEventText() *bytes.Buffer {
 	t := template.Must(template.New("reapable-instance").Funcs(ReapableEventFuncMap).Parse(reapableInstanceEventText))
 	buf := bytes.NewBuffer(nil)
 
-	data := InstanceEventData{
+	// anonymous struct
+	data := struct {
+		Config   *Config
+		Instance *Instance
+	}{
 		Instance: i,
 		Config:   Conf,
 	}
@@ -98,7 +97,7 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 const reapableInstanceEventText = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
-State: {{ .Instance.State.String}}.\n
+State: {{ .Instance.ResourceState.String}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}

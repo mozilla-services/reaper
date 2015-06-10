@@ -154,8 +154,15 @@ func allAutoScalingGroups() []Filterable {
 			}
 
 			Log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
+			errChan := make(chan error)
 			for _, e := range Events {
-				go e.NewStatistic("reaper.asgs.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
+				go func(c chan error) {
+					c <- e.NewStatistic("reaper.asgs.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
+				}(errChan)
+			}
+			<-errChan
+			for err := range errChan {
+				Log.Error("%s", err.Error())
 			}
 		}(region)
 	}

@@ -53,16 +53,14 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	return &a
 }
 
-type ASGEventData struct {
-	Config           *Config
-	AutoScalingGroup *AutoScalingGroup
-}
-
 func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
 	t := template.Must(template.New("reapable-asg").Funcs(ReapableEventFuncMap).Parse(reapableASGEventText))
 	buf := bytes.NewBuffer(nil)
 
-	data := ASGEventData{
+	data := struct {
+		Config           *Config
+		AutoScalingGroup *AutoScalingGroup
+	}{
 		AutoScalingGroup: a,
 		Config:           Conf,
 	}

@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/mostlygeek/reaper/events"
+	"github.com/mostlygeek/reaper/reapable"
 	"github.com/op/go-logging"
 )
 
@@ -18,7 +19,7 @@ var (
 	// Events -> exported global events array
 	Events []events.EventReporter
 	// Reapables -> exported global array of reapables
-	Reapables map[string]map[string]Reapable
+	Reapables map[string]map[string]reapable.Reapable
 	// Conf -> exported global config
 	Conf *Config
 )
@@ -131,10 +132,10 @@ func init() {
 
 	// initialize reapables map
 	// must initialize submaps or else -> nil map crashes
-	Reapables = make(map[string]map[string]Reapable)
+	Reapables = make(map[string]map[string]reapable.Reapable)
 	regions := Conf.AWS.Regions
 	for _, region := range regions {
-		Reapables[region] = make(map[string]Reapable)
+		Reapables[region] = make(map[string]reapable.Reapable)
 	}
 
 }

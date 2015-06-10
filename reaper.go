@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/mostlygeek/reaper/reapable"
 )
 
 // Reaper finds resources and deals with them
@@ -480,28 +481,6 @@ func reapInstance(i *Instance) {
 
 		// add to Reapables
 		Reapables[i.Region][i.ID] = i
-
-		// if the instance is owned, email the owner
-		// sends different notification based on reaper state
-		// currently there is a conifg option to enable these: Conf.Notifications.Extras
-		if i.Owned() && Conf.Notifications.Extras {
-			switch i.reaperState.State {
-			case STATE_START:
-				for _, e := range Events {
-					go e.NewEvent("Reaper sent notification 1", fmt.Sprintf("Notification 1 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
-				}
-
-			case STATE_NOTIFY1:
-				for _, e := range Events {
-					go e.NewEvent("Reaper sent notification 2", fmt.Sprintf("Notification 2 sent to %s for instance %s.", i.Owner(), i.ID), nil, nil)
-				}
-
-			case STATE_NOTIFY2:
-				for _, e := range Events {
-					go e.NewEvent("Reaper terminated instance", fmt.Sprintf("Instance owned by %s with id: %s was terminated.", i.Owner(), i.ID), nil, nil)
-				}
-			}
-		}
 	}
 }
 
@@ -541,7 +520,7 @@ func (r *Reaper) terminateUnowned(i *Instance) error {
 
 // fetches a reapable matching region, id from
 // the global slice of reapables
-func getReapable(region, id string) (Reapable, error) {
+func getReapable(region, id string) (reapable.Reapable, error) {
 	reapable, ok := Reapables[region][id]
 	if !ok {
 		Log.Error("Could not terminate resource with region: %s and id: %s.",

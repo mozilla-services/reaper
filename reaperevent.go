@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"time"
+
+	"github.com/mostlygeek/reaper/state"
+)
 
 type ReaperEventConfig struct {
 	Enabled bool
@@ -25,7 +29,7 @@ func (r *ReaperEvent) NewReapableInstanceEvent(i *Instance) {
 	// later than the Until time
 	if !Conf.DryRun && r.Config.Enabled &&
 		time.Now().After(i.reaperState.Until) &&
-		i.reaperState.State == STATE_REAPABLE {
+		i.reaperState.State == state.STATE_REAPABLE {
 		Log.Notice("ReaperEvent is stopping %s in region %s.", i.ID, i.Region)
 		_, err := i.Stop()
 		if err != nil {
@@ -40,7 +44,7 @@ func (r *ReaperEvent) NewReapableASGEvent(a *AutoScalingGroup) {
 	// later than the Until time
 	if !Conf.DryRun && r.Config.Enabled &&
 		time.Now().After(a.reaperState.Until) &&
-		a.reaperState.State == STATE_REAPABLE {
+		a.reaperState.State == state.STATE_REAPABLE {
 		_, err := a.Stop()
 		if err != nil {
 			Log.Error("%s", err.Error())

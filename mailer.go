@@ -13,7 +13,7 @@ import (
 const notifyTemplateSource = `
 <html>
 <body>
-	<p>Your EC2 instance {{ if .Name }}"{{.Name}}" {{ end }}{{.ID}} in {{.Region}} is scheduled to be terminated.</p>
+	<p>Your AWS Resource {{ if .Name }}"{{.Name}}" {{ end }}{{.ID}} in {{.Region}} is scheduled to be terminated.</p>
 
 	<p>
 		You may ignore this message and your instance will be automatically
@@ -24,6 +24,8 @@ const notifyTemplateSource = `
 		You may also choose to:
 		<ul>
 			<li><a href="{{.terminateLink}}">Terminate it now</a></li>
+			<li><a href="{{.stopLink}}">Stop it</a></li>
+			<li><a href="{{.whitelistLink}}">Whitelist it</a></li>
 			<li><a href="{{.delay1DLink}}">Ignore it for 1 more day</a></li>
 			<li><a href="{{.delay3DLink}}">Ignore it for 3 more days</a></li>
 			<li><a href="{{.delay7DLink}}">Ignore it for 7 more days</a></li>
@@ -181,7 +183,7 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 
 	terminateDate := a.reaperState.Until
 
-	var term, delay1, delay3, delay7, whitelist string
+	var term, delay1, delay3, delay7, stop, whitelist string
 	// Token strings
 
 	term, err = MakeTerminateLink(m.conf.TokenSecret,
@@ -200,6 +202,16 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 	if err == nil {
 		delay7, err = MakeIgnoreLink(m.conf.TokenSecret,
 			m.conf.HTTPApiURL, a.Region, a.ID, time.Duration(7*24*time.Hour))
+	}
+
+	if err == nil {
+		whitelist, err = MakeWhitelistLink(m.conf.TokenSecret,
+			m.conf.HTTPApiURL, a.Region, a.ID)
+	}
+
+	if err == nil {
+		stop, err = MakeStopLink(m.conf.TokenSecret,
+			m.conf.HTTPApiURL, a.Region, a.ID)
 	}
 
 	if err != nil {
@@ -224,7 +236,8 @@ func (m *Mailer) Notify(a *AWSResource) (err error) {
 		"delay1DLink":   delay1,
 		"delay3DLink":   delay3,
 		"delay7DLink":   delay7,
-		"whitelist":     whitelist,
+		"whitelistLink": whitelist,
+		"stopLink":      stop,
 	})
 
 	if err != nil {

@@ -2,7 +2,7 @@ package events
 
 import (
 	"bytes"
-	"fmt"  
+	"fmt"
 	"net/mail"
 	"os"
 
@@ -25,7 +25,7 @@ type Reapable interface {
 	reapable.Reapable
 	ReapableEventText() *bytes.Buffer
 	//ReapableEventHTML() *bytes.Buffer
-	ReapableEventEmail() (mail.Address, string, string)
+	ReapableEventEmail() (mail.Address, string, string, error)
 }
 
 type EventReporter interface {

@@ -118,7 +118,7 @@ func (a *AWSResource) ReaperNotified(notifyNum int) bool {
 	}
 }
 
-func (a *AWSResource) incrementState() bool {
+func (a *AWSResource) IncrementState() bool {
 	var newState state.StateEnum
 	until := time.Now()
 
@@ -150,6 +150,7 @@ func (a *AWSResource) incrementState() bool {
 
 	if newState != a.reaperState.State {
 		updated = true
+		Log.Debug("Updating state on %s in region %s. New state: %s.", a.ID, a.Region, newState.String())
 	}
 
 	a.reaperState = state.NewStateWithUntilAndState(until, newState)
@@ -157,15 +158,19 @@ func (a *AWSResource) incrementState() bool {
 	return updated
 }
 
+func (a *AWSResource) ReapableDescription() string {
+	return fmt.Sprintf("resource %s in %s with state %s", a.ID, a.Region, a.ReaperState())
+}
+
 func (a *AWSResource) Whitelist() (bool, error) {
-	return whitelist(a.Region, a.ID)
+	return Whitelist(a.Region, a.ID)
 }
 
 func (a *AWSResource) TagReaperState(state *state.State) (bool, error) {
 	return updateReaperState(a.Region, a.ID, state)
 }
 
-func whitelist(region, id string) (bool, error) {
+func Whitelist(region, id string) (bool, error) {
 	whitelist_tag := Conf.WhitelistTag
 
 	api := ec2.New(&aws.Config{Region: region})
@@ -199,17 +204,18 @@ func whitelist(region, id string) (bool, error) {
 	output, err := api.DescribeTags(describereq)
 
 	if *output.Tags[0].Value == whitelist_tag {
+		Log.Info("Whitelist successful.")
 		return true, err
 	}
 
 	return false, err
 }
 
-func (i *Instance) UntagReaperState() (bool, error) {
-	api := ec2.New(&aws.Config{Region: i.Region})
+func (a *AWSResource) UntagReaperState() (bool, error) {
+	api := ec2.New(&aws.Config{Region: a.Region})
 	delreq := &ec2.DeleteTagsInput{
 		DryRun:    aws.Boolean(false),
-		Resources: []*string{aws.String(i.ID)},
+		Resources: []*string{aws.String(a.ID)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
 				Key: aws.String(reaperTag),

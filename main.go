@@ -56,11 +56,6 @@ func init() {
 		// TODO: extraneous assignment?
 		Conf = c
 		Log.Info("Configuration loaded from %s", *configFile)
-
-		// these methods have pointer receivers
-		Log.Debug("SMTP Config: %s", &Conf.Events.Email)
-		Log.Debug("SMTP From: %s", &Conf.Events.Email.From)
-
 	} else {
 		// config not successfully loaded -> exit with error
 		Log.Error("toml", err)
@@ -96,21 +91,22 @@ func init() {
 
 	if Conf.Events.Email.Enabled {
 		Log.Info("Email EventReporter enabled.")
-		Events = append(Events, events.NewMailer(&Conf.SMTP))
+		Events = append(Events, events.NewMailer(&Conf.Events.Email))
+		// these methods have pointer receivers
+		Log.Debug("SMTP Config: %s", &Conf.Events.Email)
+		Log.Debug("SMTP From: %s", &Conf.Events.Email.From)
 	}
 
 	if Conf.Events.Tagger.Enabled {
 		Log.Info("Tagger EventReporter enabled.")
-		Events = append(Events, &Tagger{
-			Config: &Conf.Events.Tagger,
-		})
+		Events = append(Events, events.NewTagger(&Conf.Events.Tagger))
 	}
 
 	// interactive mode and automatic reaping mode are mutually exclusive
 	Conf.Interactive = *interactive
 	if *interactive {
 		Log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
-		Events = append(Events, &InteractiveEvent{})
+		Events = append(Events, events.NewInteractiveEvent(&events.InteractiveEventConfig{Enabled: true}))
 	} else if Conf.Events.Reaper.Enabled {
 		Log.Info("Reaper EventReporter enabled.")
 		Events = append(Events, events.NewReaperEvent(&Conf.Events.Reaper))

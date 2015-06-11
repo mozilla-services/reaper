@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/mail"
 	"net/smtp"
+
+	"github.com/mostlygeek/reaper/reapable"
 )
 
 type Mailer struct {
@@ -95,7 +97,18 @@ func (m *Mailer) NewCountStatistic(name string, tags []string) error {
 }
 
 func (m *Mailer) NewReapableEvent(r Reapable) error {
-	return m.Send(r.ReapableEventEmail())
+	addr, subject, body, err := r.ReapableEventEmail()
+	if err != nil {
+		// if this is an unowned error we don't pass it up
+		switch t := err.(type) {
+		case reapable.UnownedError:
+			Log.Error(t.Error())
+			return nil
+		default:
+		}
+		return err
+	}
+	return m.Send(addr, subject, body)
 }
 
 // Send an HTML email

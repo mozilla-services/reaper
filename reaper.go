@@ -476,12 +476,18 @@ func reapInstance(i *Instance) {
 			PrintFilters(filters)))
 
 		for _, e := range Events {
-			go e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil)
-			go e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)})
-            go e.NewReapableEvent(i)
+			if err := e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil); err != nil {
+				Log.Error(err.Error())
+			}
+			if err := e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)}); err != nil {
+				Log.Error(err.Error())
+			}
+			if err := e.NewReapableEvent(i); err != nil {
+				Log.Error(err.Error())
+			}
 		}
 
-		// add to Reapables
+		// add to Reapables if filters matched
 		Reapables[i.Region][i.ID] = i
 	}
 }
@@ -544,6 +550,7 @@ func Terminate(region, id string) error {
 			region, id, err.Error())
 		return err
 	}
+	Log.Debug("Terminate %s", reapable.ReapableDescription())
 
 	return nil
 }
@@ -560,6 +567,7 @@ func ForceStop(region, id string) error {
 			region, id, err.Error())
 		return err
 	}
+	Log.Debug("ForceStop %s", reapable.ReapableDescription())
 
 	return nil
 }
@@ -576,6 +584,7 @@ func Stop(region, id string) error {
 			region, id, err.Error())
 		return err
 	}
+	Log.Debug("Stop %s", reapable.ReapableDescription())
 
 	return nil
 }

@@ -18,6 +18,7 @@ type Whitelistable interface {
 type Saveable interface {
 	Save(state *state.State) (bool, error)
 	ReaperState() *state.State
+	IncrementState() bool
 }
 
 //                ,____
@@ -43,4 +44,14 @@ type Reapable interface {
 	Stoppable
 	Whitelistable
 	Saveable
+	ReapableDescription() string
+}
+
+// used to identify unowned resources
+type UnownedError struct {
+	ErrorText string
+}
+
+func (u UnownedError) Error() string {
+	return u.ErrorText
 }

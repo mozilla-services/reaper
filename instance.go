@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
+	"github.com/mostlygeek/reaper/reapable"
 	"github.com/mostlygeek/reaper/state"
 )
 
@@ -74,7 +75,16 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	}
 
 	i.Name = i.Tag("Name")
-	i.reaperState = state.NewStateWithTag(i.Tags[reaperTag])
+
+	if i.Tagged(reaperTag) {
+		// restore previously tagged state
+		i.reaperState = state.NewStateWithTag(i.Tags[reaperTag])
+	} else {
+		// initial state
+		i.reaperState = state.NewStateWithUntilAndState(
+			time.Now().Add(Conf.Reaper.FirstNotification.Duration),
+			state.STATE_START)
+	}
 
 	return &i
 }
@@ -98,12 +108,14 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 	return buf
 }
 
-func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string) {
-	var err error
-	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Funcs(htmlTemplate.FuncMap(ReapableEventFuncMap)).Parse(reapableInstanceEventHTML))
-	if err != nil {
-		// ugh...
+func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+	// if unowned, return unowned error
+	if !i.Owned() {
+		err = reapable.UnownedError{fmt.Sprintf("%s in region %s does not have an owner tag", i.ID, i.Region)}
+		return
 	}
+
+	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Funcs(htmlTemplate.FuncMap(ReapableEventFuncMap)).Parse(reapableInstanceEventHTML))
 	buf := bytes.NewBuffer(nil)
 
 	// anonymous struct
@@ -122,7 +134,7 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 	}
 	err = t.Execute(buf, data)
 	if err != nil {
-		Log.Debug("Template generation error", err)
+		return
 	}
 	subject = fmt.Sprintf("An AWS Resource (%s in region %s) you own is going to be Reaped!", i.ID, i.Region)
 	owner = *i.Owner()
@@ -266,6 +278,10 @@ func (i *Instance) Filter(filter Filter) bool {
 
 // methods for reapable interface:
 func (i *Instance) Save(s *state.State) (bool, error) {
+	// if !i.Tagged(reaperTag) {
+	// 	Log.Info("Set Reaper start state on %s in region %s. New tag: %s.", i.ID, i.Region, i.reaperState.String())
+	// 	return i.TagReaperState(i.reaperState)
+	// }
 	return i.TagReaperState(s)
 }
 

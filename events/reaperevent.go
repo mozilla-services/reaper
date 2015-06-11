@@ -30,8 +30,8 @@ func (e *ReaperEvent) NewCountStatistic(name string, tags []string) error {
 }
 func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	// this only gets called if ReaperEvent is added, so we check
-	// for dryrun, that we have passed NOTIFY2, and that current time is
-	// later than the Until time
+	// for dryrun, that the reapable is in STATE_REAPABLE,
+	// and that current time is later than its Until time
 	if !e.Config.DryRun && e.Config.Enabled &&
 		time.Now().After(r.ReaperState().Until) &&
 		r.ReaperState().State == state.STATE_REAPABLE {

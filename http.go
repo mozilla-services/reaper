@@ -6,16 +6,10 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/mostlygeek/reaper/events"
 	"github.com/mostlygeek/reaper/state"
 	"github.com/mostlygeek/reaper/token"
-)
-
-const (
-	httpToken  = "t"
-	httpAction = "a"
 )
 
 type HTTPApi struct {
@@ -62,7 +56,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		userToken := req.Form.Get(httpToken)
+		userToken := req.Form.Get(h.conf.HTTPToken)
 		if userToken == "" {
 			writeResponse(w, http.StatusBadRequest, "Token Missing")
 			return
@@ -143,79 +137,5 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		writeResponse(w, http.StatusOK, fmt.Sprintf("Resource state: %s", r.ReaperState().String()))
-	}
-}
-
-func MakeTerminateLink(tokenSecret, apiURL, region, id string) (string, error) {
-	term, err := token.Tokenize(tokenSecret,
-		token.NewTerminateJob(region, id))
-
-	if err != nil {
-		return "", err
-	}
-
-	return makeURL(apiURL, "terminate", term), nil
-}
-
-func MakeIgnoreLink(tokenSecret, apiURL, region, id string,
-	duration time.Duration) (string, error) {
-	delay, err := token.Tokenize(tokenSecret,
-		token.NewDelayJob(region, id,
-			duration))
-
-	if err != nil {
-		return "", err
-	}
-
-	action := "delay_" + duration.String()
-	return makeURL(apiURL, action, delay), nil
-
-}
-
-func MakeWhitelistLink(tokenSecret, apiURL, region, id string) (string, error) {
-	whitelist, err := token.Tokenize(tokenSecret,
-		token.NewWhitelistJob(region, id))
-	if err != nil {
-		Log.Error("Error creating whitelist link: %s", err)
-		return "", err
-	}
-
-	return makeURL(apiURL, "whitelist", whitelist), nil
-}
-
-func MakeStopLink(tokenSecret, apiURL, region, id string) (string, error) {
-	stop, err := token.Tokenize(tokenSecret,
-		token.NewStopJob(region, id))
-	if err != nil {
-		Log.Error("Error creating ScaleToZero link: %s", err)
-		return "", err
-	}
-
-	return makeURL(apiURL, "stop", stop), nil
-}
-
-func MakeForceStopLink(tokenSecret, apiURL, region, id string) (string, error) {
-	stop, err := token.Tokenize(tokenSecret,
-		token.NewForceStopJob(region, id))
-	if err != nil {
-		Log.Error("Error creating ScaleToZero link: %s", err)
-		return "", err
-	}
-
-	return makeURL(apiURL, "stop", stop), nil
-}
-
-func makeURL(host, action, token string) string {
-	action = url.QueryEscape(action)
-	token = url.QueryEscape(token)
-
-	vals := url.Values{}
-	vals.Add(httpAction, action)
-	vals.Add(httpToken, token)
-
-	if host[len(host)-1:] == "/" {
-		return host + "?" + vals.Encode()
-	} else {
-		return host + "/?" + vals.Encode()
 	}
 }

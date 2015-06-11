@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/mail"
 	"os"
+	"time"
 
 	"github.com/mostlygeek/reaper/reapable"
 	"github.com/op/go-logging"
@@ -19,6 +20,23 @@ func init() {
 	format := logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} ▶%{color:reset} %{message}")
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backendFormatter)
+}
+
+type Duration struct {
+	time.Duration
+}
+
+func (d *Duration) UnmarshalText(text []byte) (err error) {
+	d.Duration, err = time.ParseDuration(string(text))
+	return
+}
+
+type NotificationsConfig struct {
+	Extras             bool
+	Interval           Duration // like cron, how often to check instances for reaping
+	FirstNotification  Duration // how long after start to first notification
+	SecondNotification Duration // how long after notify1 to second notification
+	Terminate          Duration // how long after notify2 to terminate
 }
 
 type Reapable interface {

@@ -1,4 +1,4 @@
-package main
+package aws
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
+	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/state"
 )
 
@@ -35,10 +36,10 @@ const (
 )
 
 type Filterable interface {
-	Filter(Filter) bool
+	Filter(filters.Filter) bool
 }
 
-func PrintFilters(filters map[string]Filter) string {
+func PrintFilters(filters map[string]filters.Filter) string {
 	var filterText []string
 	for _, filter := range filters {
 		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, strings.Join(filter.Arguments, ", ")))
@@ -129,20 +130,20 @@ func (a *AWSResource) IncrementState() bool {
 	case state.STATE_NOTIFY1:
 		updated = true
 		newState = state.STATE_NOTIFY2
-		until = until.Add(Conf.Notifications.SecondNotification.Duration)
+		until = until.Add(Config.Notifications.SecondNotification.Duration)
 
 	case state.STATE_WHITELIST:
 		// keep same state
 		newState = state.STATE_WHITELIST
 	case state.STATE_NOTIFY2:
 		newState = state.STATE_REAPABLE
-		until = until.Add(Conf.Notifications.Terminate.Duration)
+		until = until.Add(Config.Notifications.Terminate.Duration)
 	case state.STATE_REAPABLE:
 		// keep same state
 		newState = state.STATE_REAPABLE
 	case state.STATE_START:
 		newState = state.STATE_NOTIFY1
-		until = until.Add(Conf.Notifications.FirstNotification.Duration)
+		until = until.Add(Config.Notifications.FirstNotification.Duration)
 	default:
 		Log.Notice("Unrecognized state %s ", a.reaperState.State)
 		newState = a.reaperState.State
@@ -171,7 +172,7 @@ func (a *AWSResource) TagReaperState(state *state.State) (bool, error) {
 }
 
 func Whitelist(region, id string) (bool, error) {
-	whitelist_tag := Conf.WhitelistTag
+	whitelist_tag := Config.WhitelistTag
 
 	api := ec2.New(&aws.Config{Region: region})
 	req := &ec2.CreateTagsInput{

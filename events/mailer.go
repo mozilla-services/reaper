@@ -17,6 +17,8 @@ type HTTPConfig struct {
 	TokenSecret string
 	HTTPApiURL  string
 	HTTPListen  string
+	HTTPToken   string
+	HTTPAction  string
 }
 
 type SMTPConfig struct {

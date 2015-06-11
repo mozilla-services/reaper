@@ -1,4 +1,4 @@
-package main
+package aws
 
 import (
 	"bytes"
@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
+	"github.com/mostlygeek/reaper/events"
+	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/reapable"
 	"github.com/mostlygeek/reaper/state"
 )
@@ -82,7 +84,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	} else {
 		// initial state
 		i.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(Conf.Notifications.FirstNotification.Duration),
+			time.Now().Add(Config.Notifications.FirstNotification.Duration),
 			state.STATE_START)
 	}
 
@@ -95,11 +97,11 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 
 	// anonymous struct
 	data := struct {
-		Config   *Config
+		Config   *events.HTTPConfig
 		Instance *Instance
 	}{
 		Instance: i,
-		Config:   Conf,
+		Config:   &Config.HTTP,
 	}
 	err := t.Execute(buf, data)
 	if err != nil {
@@ -120,14 +122,14 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 
 	// anonymous struct
 	data := struct {
-		Config   *Config
+		Config   *events.HTTPConfig
 		Instance *Instance
 		Delay1   time.Duration
 		Delay3   time.Duration
 		Delay7   time.Duration
 	}{
 		Instance: i,
-		Config:   Conf,
+		Config:   &Config.HTTP,
 		Delay1:   time.Duration(24 * time.Hour),
 		Delay3:   time.Duration(3 * 24 * time.Hour),
 		Delay7:   time.Duration(7 * 24 * time.Hour),
@@ -197,7 +199,7 @@ func (i *Instance) AWSConsoleURL() *url.URL {
 // Autoscaled checks if the instance is part of an autoscaling group
 func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
-func (i *Instance) Filter(filter Filter) bool {
+func (i *Instance) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {

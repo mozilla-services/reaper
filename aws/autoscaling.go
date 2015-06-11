@@ -1,4 +1,4 @@
-package main
+package aws
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/mostlygeek/reaper/events"
+	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/state"
 )
 
@@ -33,7 +35,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
-			reaperState: state.NewStateWithUntil(time.Now().Add(Conf.Notifications.FirstNotification.Duration)),
+			reaperState: state.NewStateWithUntil(time.Now().Add(Config.Notifications.FirstNotification.Duration)),
 		},
 		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,
@@ -59,11 +61,11 @@ func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
 	buf := bytes.NewBuffer(nil)
 
 	data := struct {
-		Config           *Config
+		Config           *events.HTTPConfig
 		AutoScalingGroup *AutoScalingGroup
 	}{
 		AutoScalingGroup: a,
-		Config:           Conf,
+		Config:           &Config.HTTP,
 	}
 	err := t.Execute(buf, data)
 	if err != nil {
@@ -103,7 +105,7 @@ func (a *AutoScalingGroup) SizeGreaterThan(size int64) bool {
 	return a.DesiredCapacity <= size
 }
 
-func (a *AutoScalingGroup) Filter(filter Filter) bool {
+func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {

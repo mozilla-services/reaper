@@ -1,9 +1,10 @@
-package main
+package aws
 
 import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/mostlygeek/reaper/filters"
 )
 
 type Snapshot struct {
@@ -34,7 +35,7 @@ func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	return &snap
 }
 
-func (s *Snapshot) Filter(filter Filter) bool {
+func (s *Snapshot) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {

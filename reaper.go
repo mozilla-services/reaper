@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
+
 	"github.com/mostlygeek/reaper/reapable"
 )
 
@@ -477,6 +478,7 @@ func reapInstance(i *Instance) {
 		for _, e := range Events {
 			go e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil)
 			go e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)})
+            go e.NewReapableEvent(i)
 		}
 
 		// add to Reapables

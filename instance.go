@@ -153,7 +153,7 @@ const reapableInstanceEventHTML = `
 	</p>
 
 	<p>
-		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}">here</a>.
+		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ MakeWhitelistLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}">here</a>.
 	</p>
 </body>
 </html>

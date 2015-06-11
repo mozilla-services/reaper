@@ -2,7 +2,7 @@ package events
 
 import (
 	"bytes"
-	"fmt"
+	"fmt"  
 	"net/mail"
 	"os"
 
@@ -24,7 +24,7 @@ func init() {
 type Reapable interface {
 	reapable.Reapable
 	ReapableEventText() *bytes.Buffer
-	ReapableEventHTML() *bytes.Buffer
+	//ReapableEventHTML() *bytes.Buffer
 	ReapableEventEmail() (mail.Address, string, string)
 }
 

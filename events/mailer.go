@@ -95,7 +95,6 @@ func (m *Mailer) NewCountStatistic(name string, tags []string) error {
 }
 
 func (m *Mailer) NewReapableEvent(r Reapable) error {
-	Log.Notice("Sending email")
 	return m.Send(r.ReapableEventEmail())
 }
 

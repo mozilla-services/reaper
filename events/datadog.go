@@ -78,3 +78,7 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 	}
 	return nil
 }
+
+func (d *DataDog) NewReapableEvent(r Reapable) error {
+	return nil
+}

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/mostlygeek/reaper/events"
 	"github.com/mostlygeek/reaper/token"
 )
 
@@ -17,7 +18,7 @@ const (
 )
 
 type HTTPApi struct {
-	conf   Config
+	conf   events.HTTPConfig
 	server *http.Server
 	ln     net.Listener
 }
@@ -44,7 +45,7 @@ func (h *HTTPApi) Stop() (e error) {
 	return h.ln.Close()
 }
 
-func NewHTTPApi(c Config) *HTTPApi {
+func NewHTTPApi(c events.HTTPConfig) *HTTPApi {
 	return &HTTPApi{conf: c}
 }
 

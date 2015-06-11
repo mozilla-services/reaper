@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"time"
+
+	"github.com/mostlygeek/reaper/events"
+)
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {
@@ -20,6 +24,9 @@ func (t *Tagger) NewStatistic(name string, value float64, tags []string) error {
 	return nil
 }
 func (t *Tagger) NewCountStatistic(name string, tags []string) error {
+	return nil
+}
+func (t *Tagger) NewReapableEvent(r events.Reapable) error {
 	return nil
 }
 

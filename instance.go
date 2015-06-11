@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
+	htmlTemplate "html/template"
 	"net"
+	"net/mail"
 	"net/url"
-	"text/template"
+	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -76,7 +78,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 }
 
 func (i *Instance) ReapableEventText() *bytes.Buffer {
-	t := template.Must(template.New("reapable-instance").Funcs(ReapableEventFuncMap).Parse(reapableInstanceEventText))
+	t := textTemplate.Must(textTemplate.New("reapable-instance").Funcs(ReapableEventFuncMap).Parse(reapableInstanceEventText))
 	buf := bytes.NewBuffer(nil)
 
 	// anonymous struct
@@ -94,6 +96,68 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 	return buf
 }
 
+func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string) {
+	var err error
+	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Funcs(htmlTemplate.FuncMap(ReapableEventFuncMap)).Parse(reapableInstanceEventHTML))
+	if err != nil {
+		// ugh...
+	}
+	buf := bytes.NewBuffer(nil)
+
+	// anonymous struct
+	data := struct {
+		Config   *Config
+		Instance *Instance
+		Delay1   time.Duration
+		Delay3   time.Duration
+		Delay7   time.Duration
+	}{
+		Instance: i,
+		Config:   Conf,
+		Delay1:   time.Duration(24 * time.Hour),
+		Delay3:   time.Duration(3 * 24 * time.Hour),
+		Delay7:   time.Duration(7 * 24 * time.Hour),
+	}
+	err = t.Execute(buf, data)
+	if err != nil {
+		Log.Debug("Template generation error", err)
+	}
+	subject = fmt.Sprintf("An AWS Resource (%s in region %s) you own is going to be Reaped!", i.ID, i.Region)
+	owner = *i.Owner()
+	body = buf.String()
+	return
+}
+
+// TODO: pass values instead of functions -_-
+const reapableInstanceEventHTML = `
+<html>
+<body>
+	<p>Your AWS Resource {{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}} is scheduled to be terminated.</p>
+
+	<p>
+		You can ignore this message and your instance will be automatically
+		terminated after <strong>{{.Instance.ReaperState.Until}}</strong>.
+	</p>
+
+	<p>
+		You may also choose to:
+		<ul>
+			<li><a href="{{ MakeTerminateLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}">Terminate it now</a></li>
+			<li><a href="{{ MakeStopLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}">Stop it</a></li>
+			<li><a href="{{ MakeIgnoreLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID .Delay1 }}">Ignore it for 1 more day</a></li>
+			<li><a href="{{ MakeIgnoreLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID .Delay3 }}">Ignore it for 3 more days</a></li>
+			<li><a href="{{ MakeIgnoreLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID .Delay7}}">Ignore it for 7 more days</a></li>
+		</ul>
+	</p>
+
+	<p>
+		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}">here</a>.
+	</p>
+</body>
+</html>
+`
+
+// TODO: pass values instead of functions -_-
 const reapableInstanceEventText = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
@@ -102,9 +166,9 @@ Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
-[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
-[Stop]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
-[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Whitelist]({{ MakeWhitelistLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Stop]({{ MakeStopLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Terminate]({{ MakeTerminateLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
 %%%`
 
 func (i *Instance) AWSConsoleURL() *url.URL {

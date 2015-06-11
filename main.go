@@ -95,7 +95,7 @@ func init() {
 
 	if Conf.Events.Email.Enabled {
 		Log.Info("Email EventReporter enabled.")
-		Events = append(Events, NewMailer(Conf))
+		Events = append(Events, events.NewMailer(&Conf.SMTP))
 	}
 
 	if Conf.Events.Tagger.Enabled {
@@ -112,9 +112,7 @@ func init() {
 		Events = append(Events, &InteractiveEvent{})
 	} else if Conf.Events.Reaper.Enabled {
 		Log.Info("Reaper EventReporter enabled.")
-		Events = append(Events, &ReaperEvent{
-			Config: &Conf.Events.Reaper,
-		})
+		Events = append(Events, events.NewReaperEvent(&Conf.Events.Reaper))
 	}
 
 	if Conf.WhitelistTag == "" {
@@ -147,7 +145,7 @@ func main() {
 	reapRunner.Start()
 
 	// run the HTTP server
-	api := NewHTTPApi(*Conf)
+	api := NewHTTPApi(Conf.HTTP)
 	if err := api.Serve(); err != nil {
 		Log.Error(err.Error())
 	} else {

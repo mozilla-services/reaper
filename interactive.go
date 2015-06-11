@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"os"
+
+	"github.com/mostlygeek/reaper/events"
 )
 
 type InteractiveEvent struct{}
@@ -16,6 +18,10 @@ func (n *InteractiveEvent) NewStatistic(name string, value float64, tags []strin
 func (n *InteractiveEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
+func (n *InteractiveEvent) NewReapableEvent(r events.Reapable) error {
+	return nil
+}
+
 func (n *InteractiveEvent) NewReapableInstanceEvent(i *Instance) {
 	Log.Notice("Press T to terminate, S to stop, W to whitelist %s in region %s. All other keys are ignored.", i.ID, i.Region)
 	reader := bufio.NewReader(os.Stdin)

@@ -13,20 +13,22 @@ import (
 
 func LoadConfig(path string) (*Config, error) {
 	conf := Config{
-		TokenSecret: "Default secrets are not safe",
-		HTTPApiURL:  "http://localhost",
-		HTTPListen:  "localhost:9000",
-		AWS:         AWSConfig{},
-		SMTP: SMTPConfig{
+		AWS: AWSConfig{},
+		SMTP: events.SMTPConfig{
 			Host:     "localhost",
 			Port:     587,
 			AuthType: "none",
-			From: FromAddress{
+			From: events.FromAddress{
 				mail.Address{
 					Name:    "reaper",
 					Address: "aws-reaper@mozilla.com",
 				},
 			},
+		},
+		HTTP: events.HTTPConfig{
+			TokenSecret: "Default secrets are not safe",
+			HTTPApiURL:  "http://localhost",
+			HTTPListen:  "localhost:9000",
 		},
 		Reaper: ReaperConfig{
 			Interval:           duration{time.Duration(6) * time.Hour},
@@ -51,12 +53,10 @@ func LoadConfig(path string) (*Config, error) {
 
 // Global reaper config
 type Config struct {
-	HTTPApiURL  string // used to generate the link
-	HTTPListen  string // host:port the web server will attempt to listen on
-	TokenSecret string // used for token generation
+	HTTP events.HTTPConfig
 
 	AWS    AWSConfig
-	SMTP   SMTPConfig
+	SMTP   events.SMTPConfig
 	Reaper ReaperConfig
 
 	Events        EventTypes
@@ -77,9 +77,9 @@ type NotificationTypes struct {
 
 type EventTypes struct {
 	DataDog events.DataDogConfig
-	Email   SMTPConfig
+	Email   events.SMTPConfig
 	Tagger  TaggerConfig
-	Reaper  ReaperEventConfig
+	Reaper  events.ReaperEventConfig
 }
 
 type ResourceTypes struct {

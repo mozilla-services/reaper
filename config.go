@@ -30,7 +30,8 @@ func LoadConfig(path string) (*Config, error) {
 			HTTPApiURL:  "http://localhost",
 			HTTPListen:  "localhost:9000",
 		},
-		Reaper: ReaperConfig{
+		Notifications: NotificationsConfig{
+			Extras:             false,
 			Interval:           duration{time.Duration(6) * time.Hour},
 			FirstNotification:  duration{time.Duration(12) * time.Hour},
 			SecondNotification: duration{time.Duration(12) * time.Hour},
@@ -55,24 +56,19 @@ func LoadConfig(path string) (*Config, error) {
 type Config struct {
 	HTTP events.HTTPConfig
 
-	AWS    AWSConfig
-	SMTP   events.SMTPConfig
-	Reaper ReaperConfig
+	AWS           AWSConfig
+	SMTP          events.SMTPConfig
+	Notifications NotificationsConfig
 
-	Events        EventTypes
-	Notifications NotificationTypes
-	Enabled       ResourceTypes
-	Filters       FilterTypes
-	LogFile       string
-	StateFile     string
-	WhitelistTag  string
+	Events       EventTypes
+	Enabled      ResourceTypes
+	Filters      FilterTypes
+	LogFile      string
+	StateFile    string
+	WhitelistTag string
 
 	DryRun      bool
 	Interactive bool
-}
-
-type NotificationTypes struct {
-	Extras bool
 }
 
 type EventTypes struct {
@@ -134,7 +130,8 @@ func (d *duration) UnmarshalText(text []byte) (err error) {
 	return
 }
 
-type ReaperConfig struct {
+type NotificationsConfig struct {
+	Extras             bool
 	Interval           duration // like cron, how often to check instances for reaping
 	FirstNotification  duration // how long after start to first notification
 	SecondNotification duration // how long after notify1 to second notification

@@ -82,7 +82,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	} else {
 		// initial state
 		i.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(Conf.Reaper.FirstNotification.Duration),
+			time.Now().Add(Conf.Notifications.FirstNotification.Duration),
 			state.STATE_START)
 	}
 

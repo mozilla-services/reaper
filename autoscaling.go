@@ -33,7 +33,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
-			reaperState: state.NewStateWithUntil(time.Now().Add(Conf.Reaper.FirstNotification.Duration)),
+			reaperState: state.NewStateWithUntil(time.Now().Add(Conf.Notifications.FirstNotification.Duration)),
 		},
 		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,

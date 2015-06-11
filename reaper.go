@@ -47,7 +47,7 @@ func (r *Reaper) start() {
 	for {
 		r.Once()
 		select {
-		case <-time.After(r.conf.Reaper.Interval.Duration):
+		case <-time.After(r.conf.Notifications.Interval.Duration):
 		case <-r.stopCh: // time to exit!
 			Log.Debug("Stopping reaper on stop channel message")
 			return
@@ -86,7 +86,7 @@ func (r *Reaper) Once() {
 		r.SaveState(Conf.StateFile)
 	}
 
-	Log.Notice("Sleeping for %s", r.conf.Reaper.Interval.Duration.String())
+	Log.Notice("Sleeping for %s", r.conf.Notifications.Interval.Duration.String())
 }
 
 func (r *Reaper) SaveState(stateFile string) {

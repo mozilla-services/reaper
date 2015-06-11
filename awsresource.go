@@ -129,20 +129,20 @@ func (a *AWSResource) IncrementState() bool {
 	case state.STATE_NOTIFY1:
 		updated = true
 		newState = state.STATE_NOTIFY2
-		until = until.Add(Conf.Reaper.SecondNotification.Duration)
+		until = until.Add(Conf.Notifications.SecondNotification.Duration)
 
 	case state.STATE_WHITELIST:
 		// keep same state
 		newState = state.STATE_WHITELIST
 	case state.STATE_NOTIFY2:
 		newState = state.STATE_REAPABLE
-		until = until.Add(Conf.Reaper.Terminate.Duration)
+		until = until.Add(Conf.Notifications.Terminate.Duration)
 	case state.STATE_REAPABLE:
 		// keep same state
 		newState = state.STATE_REAPABLE
 	case state.STATE_START:
 		newState = state.STATE_NOTIFY1
-		until = until.Add(Conf.Reaper.FirstNotification.Duration)
+		until = until.Add(Conf.Notifications.FirstNotification.Duration)
 	default:
 		Log.Notice("Unrecognized state %s ", a.reaperState.State)
 		newState = a.reaperState.State

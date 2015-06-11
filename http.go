@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mostlygeek/reaper/events"
+	"github.com/mostlygeek/reaper/state"
 	"github.com/mostlygeek/reaper/token"
 )
 
@@ -99,11 +100,9 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		switch job.Action {
 		case token.J_DELAY:
 			Log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
-			state := r.ReaperState()
-			_, err := r.Save(&State{
-				State: state.State,
-				Until: state.Until.Add(job.IgnoreUntil),
-			})
+			s := r.ReaperState()
+			_, err := r.Save(
+				state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return

@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/mostlygeek/reaper/state"
 )
 
 type AutoScalingGroup struct {
@@ -32,7 +33,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
-			reaperState: ParseState(""),
+			reaperState: state.NewStateWithUntil(time.Now().Add(Conf.Reaper.FirstNotification.Duration)),
 		},
 		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,
@@ -171,7 +172,7 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 }
 
 // methods for reapable interface:
-func (a *AutoScalingGroup) Save(state *State) (bool, error) {
+func (a *AutoScalingGroup) Save(state *state.State) (bool, error) {
 	return a.TagReaperState(state)
 }
 

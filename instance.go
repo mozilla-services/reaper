@@ -12,6 +12,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+
+	"github.com/mostlygeek/reaper/state"
 )
 
 const (
@@ -72,7 +74,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	}
 
 	i.Name = i.Tag("Name")
-	i.reaperState = ParseState(i.Tags[reaperTag])
+	i.reaperState = state.NewStateWithTag(i.Tags[reaperTag])
 
 	return &i
 }
@@ -263,8 +265,8 @@ func (i *Instance) Filter(filter Filter) bool {
 }
 
 // methods for reapable interface:
-func (i *Instance) Save(state *State) (bool, error) {
-	return i.TagReaperState(state)
+func (i *Instance) Save(s *state.State) (bool, error) {
+	return i.TagReaperState(s)
 }
 
 func (i *Instance) Terminate() (bool, error) {

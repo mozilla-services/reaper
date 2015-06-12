@@ -37,7 +37,7 @@ func MakeWhitelistLink(tokenSecret, apiURL, region, id string) (string, error) {
 	whitelist, err := token.Tokenize(tokenSecret,
 		token.NewWhitelistJob(region, id))
 	if err != nil {
-		Log.Error("Error creating whitelist link: %s", err)
+		log.Error("Error creating whitelist link: %s", err)
 		return "", err
 	}
 
@@ -48,7 +48,7 @@ func MakeStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewStopJob(region, id))
 	if err != nil {
-		Log.Error("Error creating ScaleToZero link: %s", err)
+		log.Error("Error creating ScaleToZero link: %s", err)
 		return "", err
 	}
 
@@ -59,7 +59,7 @@ func MakeForceStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewForceStopJob(region, id))
 	if err != nil {
-		Log.Error("Error creating ScaleToZero link: %s", err)
+		log.Error("Error creating ScaleToZero link: %s", err)
 		return "", err
 	}
 
@@ -67,12 +67,16 @@ func MakeForceStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 }
 
 func makeURL(host, action, token string) string {
+	if host == "" {
+		log.Critical("makeURL: host is empty")
+	}
+
 	action = url.QueryEscape(action)
 	token = url.QueryEscape(token)
 
 	vals := url.Values{}
-	vals.Add(Config.HTTP.HTTPAction, action)
-	vals.Add(Config.HTTP.HTTPToken, token)
+	vals.Add(config.HTTP.Action, action)
+	vals.Add(config.HTTP.Token, token)
 
 	if host[len(host)-1:] == "/" {
 		return host + "?" + vals.Encode()

@@ -17,6 +17,7 @@ type Whitelistable interface {
 
 type Saveable interface {
 	Save(state *state.State) (bool, error)
+	Unsave() (bool, error)
 	ReaperState() *state.State
 	IncrementState() bool
 }

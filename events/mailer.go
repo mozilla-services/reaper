@@ -15,10 +15,10 @@ type Mailer struct {
 
 type HTTPConfig struct {
 	TokenSecret string
-	HTTPApiURL  string
-	HTTPListen  string
-	HTTPToken   string
-	HTTPAction  string
+	ApiURL      string
+	Listen      string
+	Token       string
+	Action      string
 }
 
 type SMTPConfig struct {

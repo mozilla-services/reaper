@@ -6,22 +6,21 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mostlygeek/reaper/events"
-	"github.com/mostlygeek/reaper/reapable"
 	"github.com/op/go-logging"
+
+	reaperaws "github.com/mostlygeek/reaper/aws"
+	reaperevents "github.com/mostlygeek/reaper/events"
+	"github.com/mostlygeek/reaper/reaper"
 )
 
-// Log, Events, Reapables, and Conf are all exported global variables
+// Log, Events, Reapables, and Config are all exported global variables
 
 var (
 	// Log -> exported global logger
-	Log *logging.Logger
-	// Events -> exported global events array
-	Events []events.EventReporter
-	// Reapables -> exported global array of reapables
-	Reapables map[string]map[string]reapable.Reapable
-	// Conf -> exported global config
-	Conf *Config
+	log *logging.Logger
+	// Config -> exported global config
+	config *reaper.Config
+	events []reaperevents.EventReporter
 )
 
 func init() {
@@ -31,7 +30,7 @@ func init() {
 	flag.Parse()
 
 	// set up logging
-	Log = logging.MustGetLogger("Reaper")
+	log = logging.MustGetLogger("Reaper")
 	backend := logging.NewLogBackend(os.Stderr, "", 0)
 	format := logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} ▶%{color:reset} %{message}")
 	backendFormatter := logging.NewBackendFormatter(backend, format)
@@ -39,39 +38,39 @@ func init() {
 
 	// if no config file -> exit with error
 	if *configFile == "" {
-		Log.Error("Config file is a required Argument. Specify with -conf='filename'")
+		log.Error("Config file is a required Argument. Specify with -config='filename'")
 		os.Exit(1)
 	}
 
 	// if config file path specified, attempt to load it
-	if c, err := LoadConfig(*configFile); err == nil {
+	if c, err := reaper.LoadConfig(*configFile); err == nil {
 		// catches panics loading config
 		defer func() {
 			if r := recover(); r != nil {
-				Log.Error("Invalid config, %s", r)
+				log.Error("Invalid config, %s", r)
 				os.Exit(1)
 			}
 		}()
 
 		// TODO: extraneous assignment?
-		Conf = c
-		Log.Info("Configuration loaded from %s", *configFile)
+		config = c
+		log.Info("Configuration loaded from %s", *configFile)
 	} else {
 		// config not successfully loaded -> exit with error
-		Log.Error("toml", err)
+		log.Error("toml", err)
 		os.Exit(1)
 	}
 
 	// if log file path specified, attempt to load it
-	if Conf.LogFile != "" {
+	if config.LogFile != "" {
 		// open file write only, append mode
 		// create it if it doesn't exist
-		f, err := os.OpenFile(Conf.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664)
+		f, err := os.OpenFile(config.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664)
 		if err != nil {
-			Log.Error("Unable to open logfile '%s'", Conf.LogFile)
+			log.Error("Unable to open logfile '%s'", config.LogFile)
 		} else {
 			// if the file was successfully opened
-			Log.Info("Logging to %s", Conf.LogFile)
+			log.Info("Logging to %s", config.LogFile)
 			// reconfigure logging with stdout and logfile as outputs
 			logFileFormat := logging.MustStringFormatter("15:04:05.000: %{shortfunc} ▶ %{level:.4s} ▶ %{message}")
 			logFileBackend := logging.NewLogBackend(f, "", 0)
@@ -80,81 +79,74 @@ func init() {
 		}
 	}
 
-	if Conf.Events.DataDog.Enabled {
-		Log.Info("DataDog EventReporter enabled.")
-		Events = append(Events, &events.DataDog{
-			Config: &Conf.Events.DataDog,
-		})
+	if config.Events.DataDog.Enabled {
+		log.Info("DataDog EventReporter enabled.")
+		events = append(events, reaperevents.NewDataDog(&config.Events.DataDog))
 	}
 
-	// Events = append(Events, &events.ErrorEventReporter{})
+	// Events = append(Events, &reaperevents.ErrorEventReporter{})
 
-	if Conf.Events.Email.Enabled {
-		Log.Info("Email EventReporter enabled.")
-		Events = append(Events, events.NewMailer(&Conf.Events.Email))
+	if config.Events.Email.Enabled {
+		log.Info("Email EventReporter enabled.")
+		events = append(events, reaperevents.NewMailer(&config.Events.Email))
 		// these methods have pointer receivers
-		Log.Debug("SMTP Config: %s", &Conf.Events.Email)
-		Log.Debug("SMTP From: %s", &Conf.Events.Email.From)
+		log.Debug("SMTP Config: %s", &config.Events.Email)
+		log.Debug("SMTP From: %s", &config.Events.Email.From)
 	}
 
-	if Conf.Events.Tagger.Enabled {
-		Log.Info("Tagger EventReporter enabled.")
-		Events = append(Events, events.NewTagger(&Conf.Events.Tagger))
-	}
+	if config.Events.Tagger.Enabled {
+		log.Info("Tagger EventReporter enabled.")
+		events = append(events, reaperevents.NewTagger(&config.Events.Tagger))
+		// interactive mode and automatic reaping mode are mutually exclusive
+		config.Interactive = *interactive
+		if *interactive {
+			log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
+			events = append(events, reaperevents.NewInteractiveEvent(&reaperevents.InteractiveEventConfig{Enabled: true}))
+		} else if config.Events.Reaper.Enabled {
+			log.Info("Reaper EventReporter enabled.")
+			events = append(events, reaperevents.NewReaperEvent(&config.Events.Reaper))
+		}
 
-	// interactive mode and automatic reaping mode are mutually exclusive
-	Conf.Interactive = *interactive
-	if *interactive {
-		Log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
-		Events = append(Events, events.NewInteractiveEvent(&events.InteractiveEventConfig{Enabled: true}))
-	} else if Conf.Events.Reaper.Enabled {
-		Log.Info("Reaper EventReporter enabled.")
-		Events = append(Events, events.NewReaperEvent(&Conf.Events.Reaper))
-	}
+		if config.WhitelistTag == "" {
+			log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
+			config.WhitelistTag = "REAPER_SPARE_ME"
+		} else {
+			log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
+		}
 
-	if Conf.WhitelistTag == "" {
-		Log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
-		Conf.WhitelistTag = "REAPER_SPARE_ME"
-	} else {
-		Log.Info("Using WhitelistTag '%s'", Conf.WhitelistTag)
+		config.DryRun = *dryRun
+		if *dryRun {
+			log.Notice("Dry run mode enabled, no changes will be made")
+		}
 	}
-
-	Conf.DryRun = *dryRun
-	if *dryRun {
-		Log.Notice("Dry run mode enabled, no changes will be made")
-	}
-
-	// initialize reapables map
-	// must initialize submaps or else -> nil map crashes
-	Reapables = make(map[string]map[string]reapable.Reapable)
-	regions := Conf.AWS.Regions
-	for _, region := range regions {
-		Reapables[region] = make(map[string]reapable.Reapable)
-	}
-
 }
 
 func main() {
-	// single instance of reaper
-	reapRunner := NewReaper(*Conf)
+	reaper.SetConfig(config)
+	reaper.SetEvents(&events)
+	reaper.Ready()
 
+	reaperaws.SetAWSConfig(&config.AWS)
+
+	// single instance of reaper
+	reapRunner := reaper.NewReaper()
 	// Run the reaper process
 	reapRunner.Start()
 
 	// run the HTTP server
-	api := NewHTTPApi(Conf.HTTP)
+	api := reaper.NewHTTPApi(config.HTTP)
 	if err := api.Serve(); err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 	} else {
 		// HTTP server successfully started
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, os.Kill)
 
 		sig := <-c
-		Log.Notice(fmt.Sprintf("Got signal %s, stopping services", sig.String()))
-		Log.Notice("Stopping HTTP")
+		log.Notice(fmt.Sprintf("Got signal %s, stopping services", sig.String()))
+		log.Notice("Stopping HTTP")
 		api.Stop()
-		Log.Notice("Stopping reaper runner")
+		log.Notice("Stopping reaper runner")
 		reapRunner.Stop()
 	}
 }

@@ -7,13 +7,13 @@ import (
 	"net"
 	"net/mail"
 	"net/url"
+	"os"
 	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
-	"github.com/mostlygeek/reaper/events"
 	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/reapable"
 	"github.com/mostlygeek/reaper/state"
@@ -84,7 +84,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	} else {
 		// initial state
 		i.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(Config.Notifications.FirstNotification.Duration),
+			time.Now().Add(config.Notifications.FirstNotification.Duration),
 			state.STATE_START)
 	}
 
@@ -92,47 +92,57 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 }
 
 func (i *Instance) ReapableEventText() *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable-instance").Funcs(ReapableEventFuncMap).Parse(reapableInstanceEventText))
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("eventText: %s", r)
+			os.Exit(1)
+		}
+	}()
+
+	t := textTemplate.Must(textTemplate.New("reapable-instance").Parse(reapableInstanceEventText))
 	buf := bytes.NewBuffer(nil)
 
-	// anonymous struct
-	data := struct {
-		Config   *events.HTTPConfig
-		Instance *Instance
-	}{
-		Instance: i,
-		Config:   &Config.HTTP,
-	}
-	err := t.Execute(buf, data)
+	data, err := i.getTemplateData()
 	if err != nil {
-		Log.Debug("Template generation error", err)
+		log.Error("%s", err.Error())
+	}
+	err = t.Execute(buf, data)
+	if err != nil {
+		log.Debug("Template generation error", err)
 	}
 	return buf
 }
 
 func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("eventHTML: %s", r)
+		}
+	}()
+
 	// if unowned, return unowned error
 	if !i.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s in region %s does not have an owner tag", i.ID, i.Region)}
 		return
 	}
 
-	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Funcs(htmlTemplate.FuncMap(ReapableEventFuncMap)).Parse(reapableInstanceEventHTML))
+	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Parse(reapableInstanceEventHTML))
 	buf := bytes.NewBuffer(nil)
 
 	// anonymous struct
 	data := struct {
-		Config   *events.HTTPConfig
+		Config   *AWSConfig
 		Instance *Instance
 		Delay1   time.Duration
 		Delay3   time.Duration
 		Delay7   time.Duration
 	}{
 		Instance: i,
-		Config:   &Config.HTTP,
-		Delay1:   time.Duration(24 * time.Hour),
-		Delay3:   time.Duration(3 * 24 * time.Hour),
-		Delay7:   time.Duration(7 * 24 * time.Hour),
+		Config:   config,
+		// TODO: hardcoded
+		Delay1: time.Duration(24 * time.Hour),
+		Delay3: time.Duration(3 * 24 * time.Hour),
+		Delay7: time.Duration(7 * 24 * time.Hour),
 	}
 	err = t.Execute(buf, data)
 	if err != nil {
@@ -142,6 +152,48 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 	owner = *i.Owner()
 	body = buf.String()
 	return
+}
+
+type InstanceEventData struct {
+	Config        *AWSConfig
+	Instance      *Instance
+	TerminateLink string
+	StopLink      string
+	WhitelistLink string
+	IgnoreLink1   string
+	IgnoreLink3   string
+	IgnoreLink7   string
+}
+
+func (i *Instance) getTemplateData() (*InstanceEventData, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("getTemplateData: %s", r)
+			os.Exit(1)
+		}
+	}()
+
+	ignore1, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID, time.Duration(1*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID, time.Duration(3*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID, time.Duration(7*24*time.Hour))
+	terminate, err := MakeTerminateLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID)
+	stop, err := MakeStopLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID)
+	whitelist, err := MakeWhitelistLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &InstanceEventData{
+		Config:        config,
+		Instance:      i,
+		TerminateLink: terminate,
+		StopLink:      stop,
+		WhitelistLink: whitelist,
+		IgnoreLink1:   ignore1,
+		IgnoreLink3:   ignore3,
+		IgnoreLink7:   ignore7,
+	}, nil
 }
 
 // TODO: pass values instead of functions -_-
@@ -158,16 +210,16 @@ const reapableInstanceEventHTML = `
 	<p>
 		You may also choose to:
 		<ul>
-			<li><a href="{{ MakeTerminateLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}">Terminate it now</a></li>
-			<li><a href="{{ MakeStopLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}">Stop it</a></li>
-			<li><a href="{{ MakeIgnoreLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID .Delay1 }}">Ignore it for 1 more day</a></li>
-			<li><a href="{{ MakeIgnoreLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID .Delay3 }}">Ignore it for 3 more days</a></li>
-			<li><a href="{{ MakeIgnoreLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID .Delay7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .terminateLink }}">Terminate it now</a></li>
+			<li><a href="{{ .stopLink }}">Stop it</a></li>
+			<li><a href="{{ .ignoreLink1 }}">Ignore it for 1 more day</a></li>
+			<li><a href="{{ .ignoreLink3 }}">Ignore it for 3 more days</a></li>
+			<li><a href="{{ .ignoreLink7}}">Ignore it for 7 more days</a></li>
 		</ul>
 	</p>
 
 	<p>
-		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ MakeWhitelistLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}">here</a>.
+		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .whitelistLink }}">here</a>.
 	</p>
 </body>
 </html>
@@ -182,16 +234,16 @@ Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.Instance.AWSConsoleURL}})\n
-[Whitelist]({{ MakeWhitelistLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
-[Stop]({{ MakeStopLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
-[Terminate]({{ MakeTerminateLink .Config.HTTP.TokenSecret .Config.HTTP.HTTPApiURL .Instance.Region .Instance.ID }}) this instance.
+[Whitelist]({{ .WhitelistLink }}) this instance.
+[Stop]({{ .StopLink }}) this instance.
+[Terminate]({{ .TerminateLink }}) this instance.
 %%%`
 
 func (i *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
 		i.Region, i.Region, i.ID))
 	if err != nil {
-		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
 	return url
 }
@@ -273,18 +325,9 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+		log.Error("No function %s could be found for filtering Instances.", filter.Function)
 	}
 	return matched
-}
-
-// methods for reapable interface:
-func (i *Instance) Save(s *state.State) (bool, error) {
-	// if !i.Tagged(reaperTag) {
-	// 	Log.Info("Set Reaper start state on %s in region %s. New tag: %s.", i.ID, i.Region, i.reaperState.String())
-	// 	return i.TagReaperState(i.reaperState)
-	// }
-	return i.TagReaperState(s)
 }
 
 func (i *Instance) Terminate() (bool, error) {

@@ -35,7 +35,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
-			reaperState: state.NewStateWithUntil(time.Now().Add(Config.Notifications.FirstNotification.Duration)),
+			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstNotification.Duration)),
 		},
 		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,
@@ -57,7 +57,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 }
 
 func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
-	t := template.Must(template.New("reapable-asg").Funcs(ReapableEventFuncMap).Parse(reapableASGEventText))
+	t := template.Must(template.New("reapable-asg").Parse(reapableASGEventText))
 	buf := bytes.NewBuffer(nil)
 
 	data := struct {
@@ -65,11 +65,11 @@ func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
 		AutoScalingGroup *AutoScalingGroup
 	}{
 		AutoScalingGroup: a,
-		Config:           &Config.HTTP,
+		Config:           &config.HTTP,
 	}
 	err := t.Execute(buf, data)
 	if err != nil {
-		Log.Debug("Template generation error", err)
+		log.Debug("Template generation error", err)
 	}
 	return buf
 }
@@ -138,7 +138,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		Log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+		log.Error("No function %s could be found for filtering ASGs.", filter.Function)
 	}
 	return matched
 }
@@ -147,13 +147,13 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:ID=%s",
 		a.Region, a.Region, a.ID))
 	if err != nil {
-		Log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
 	return url
 }
 
 func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
-	Log.Debug("Stopping ASG %s in region %s", a.ID, a.Region)
+	log.Debug("Stopping ASG %s in region %s", a.ID, a.Region)
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	input := &autoscaling.UpdateAutoScalingGroupInput{
@@ -167,20 +167,15 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		Log.Error("could not update ASG %s in region %s", a.ID, a.Region)
+		log.Error("could not update ASG %s in region %s", a.ID, a.Region)
 		return false, err
 	}
 	return true, nil
 }
 
-// methods for reapable interface:
-func (a *AutoScalingGroup) Save(state *state.State) (bool, error) {
-	return a.TagReaperState(state)
-}
-
 // TODO
 func (a *AutoScalingGroup) Terminate() (bool, error) {
-	Log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
+	log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
 	return false, nil
 }
 

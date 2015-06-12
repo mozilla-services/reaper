@@ -33,7 +33,7 @@ func NewVolume(region string, v *ec2.Volume) *Volume {
 	}
 
 	// TODO: state
-	Log.Info("Volume state: %s", *v.State)
+	log.Info("Volume state: %s", *v.State)
 
 	return &vol
 }

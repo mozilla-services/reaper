@@ -20,6 +20,12 @@ type DataDog struct {
 	godspeed      *godspeed.Godspeed
 }
 
+func NewDataDog(c *DataDogConfig) *DataDog {
+	return &DataDog{
+		Config: c,
+	}
+}
+
 // TODO: make this async?
 // TODO: don't recreate godspeed
 func (d *DataDog) Godspeed() (*godspeed.Godspeed, error) {

@@ -5,7 +5,6 @@ import (
 	"net/mail"
 	"sort"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,15 +13,6 @@ import (
 	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/state"
 )
-
-// ReapableEventFuncMap maps strings to functions for templates
-var ReapableEventFuncMap = template.FuncMap{
-	"MakeTerminateLink": MakeTerminateLink,
-	"MakeIgnoreLink":    MakeIgnoreLink,
-	"MakeWhitelistLink": MakeWhitelistLink,
-	"MakeStopLink":      MakeStopLink,
-	"MakeForceStopLink": MakeForceStopLink,
-}
 
 type ResourceState int
 
@@ -130,28 +120,28 @@ func (a *AWSResource) IncrementState() bool {
 	case state.STATE_NOTIFY1:
 		updated = true
 		newState = state.STATE_NOTIFY2
-		until = until.Add(Config.Notifications.SecondNotification.Duration)
+		until = until.Add(config.Notifications.SecondNotification.Duration)
 
 	case state.STATE_WHITELIST:
 		// keep same state
 		newState = state.STATE_WHITELIST
 	case state.STATE_NOTIFY2:
 		newState = state.STATE_REAPABLE
-		until = until.Add(Config.Notifications.Terminate.Duration)
+		until = until.Add(config.Notifications.Terminate.Duration)
 	case state.STATE_REAPABLE:
 		// keep same state
 		newState = state.STATE_REAPABLE
 	case state.STATE_START:
 		newState = state.STATE_NOTIFY1
-		until = until.Add(Config.Notifications.FirstNotification.Duration)
+		until = until.Add(config.Notifications.FirstNotification.Duration)
 	default:
-		Log.Notice("Unrecognized state %s ", a.reaperState.State)
+		log.Notice("Unrecognized state %s ", a.reaperState.State)
 		newState = a.reaperState.State
 	}
 
 	if newState != a.reaperState.State {
 		updated = true
-		Log.Debug("Updating state on %s in region %s. New state: %s.", a.ID, a.Region, newState.String())
+		log.Debug("Updating state on %s in region %s. New state: %s.", a.ID, a.Region, newState.String())
 	}
 
 	a.reaperState = state.NewStateWithUntilAndState(until, newState)
@@ -167,12 +157,17 @@ func (a *AWSResource) Whitelist() (bool, error) {
 	return Whitelist(a.Region, a.ID)
 }
 
-func (a *AWSResource) TagReaperState(state *state.State) (bool, error) {
-	return updateReaperState(a.Region, a.ID, state)
+// methods for reapable interface:
+func (a *AWSResource) Save(s *state.State) (bool, error) {
+	return TagReaperState(a.Region, a.ID, s)
+}
+
+func (a *AWSResource) Unsave() (bool, error) {
+	return UntagReaperState(a.Region, a.ID)
 }
 
 func Whitelist(region, id string) (bool, error) {
-	whitelist_tag := Config.WhitelistTag
+	whitelist_tag := config.WhitelistTag
 
 	api := ec2.New(&aws.Config{Region: region})
 	req := &ec2.CreateTagsInput{
@@ -205,18 +200,18 @@ func Whitelist(region, id string) (bool, error) {
 	output, err := api.DescribeTags(describereq)
 
 	if *output.Tags[0].Value == whitelist_tag {
-		Log.Info("Whitelist successful.")
+		log.Info("Whitelist successful.")
 		return true, err
 	}
 
 	return false, err
 }
 
-func (a *AWSResource) UntagReaperState() (bool, error) {
-	api := ec2.New(&aws.Config{Region: a.Region})
+func UntagReaperState(region, id string) (bool, error) {
+	api := ec2.New(&aws.Config{Region: region})
 	delreq := &ec2.DeleteTagsInput{
 		DryRun:    aws.Boolean(false),
-		Resources: []*string{aws.String(a.ID)},
+		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
 				Key: aws.String(reaperTag),
@@ -230,7 +225,7 @@ func (a *AWSResource) UntagReaperState() (bool, error) {
 	return true, err
 }
 
-func updateReaperState(region, id string, newState *state.State) (bool, error) {
+func TagReaperState(region, id string, newState *state.State) (bool, error) {
 	api := ec2.New(&aws.Config{Region: region})
 	createreq := &ec2.CreateTagsInput{
 		DryRun:    aws.Boolean(false),

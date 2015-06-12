@@ -105,7 +105,7 @@ func (m *Mailer) NewReapableEvent(r Reapable) error {
 		// if this is an unowned error we don't pass it up
 		switch t := err.(type) {
 		case reapable.UnownedError:
-			Log.Error(t.Error())
+			log.Error(t.Error())
 			return nil
 		default:
 		}
@@ -126,7 +126,7 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf.WriteString(htmlBody)
 	buf.WriteString("\n")
 
-	Log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
+	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
 		to.String(),
 		m.conf.From.Address.String(),
 		subject)

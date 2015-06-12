@@ -30,11 +30,11 @@ func (n *InteractiveEvent) NewCountStatistic(name string, tags []string) error {
 }
 func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 	if n.Config.Enabled {
-		Log.Notice("Choose: T to terminate, S to stop, F to ForceStop, W to whitelist %s. All other input is ignored.", r.ReapableDescription())
+		log.Notice("Choose: T to terminate, S to stop, F to ForceStop, W to whitelist %s. All other input is ignored.", r.ReapableDescription())
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			Log.Error("%s", err.Error())
+			log.Error("%s", err.Error())
 		}
 		inputChar := input[0]
 		switch inputChar {

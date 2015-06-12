@@ -51,8 +51,6 @@ func init() {
 				os.Exit(1)
 			}
 		}()
-
-		// TODO: extraneous assignment?
 		config = c
 		log.Info("Configuration loaded from %s", *configFile)
 	} else {

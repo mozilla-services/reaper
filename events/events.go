@@ -11,11 +11,11 @@ import (
 	"github.com/op/go-logging"
 )
 
-var Log *logging.Logger
+var log *logging.Logger
 
 func init() {
 	// set up logging
-	Log = logging.MustGetLogger("Reaper")
+	log = logging.MustGetLogger("Reaper")
 	backend := logging.NewLogBackend(os.Stderr, "", 0)
 	format := logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} ▶%{color:reset} %{message}")
 	backendFormatter := logging.NewBackendFormatter(backend, format)

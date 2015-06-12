@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"strconv"
 	"text/template"
 
 	"github.com/PagerDuty/godspeed"
@@ -10,6 +11,9 @@ import (
 // DataDogConfig is the configuration for a DataDog
 type DataDogConfig struct {
 	Enabled bool
+	DryRun  bool
+	Host    string
+	Port    string
 }
 
 // implements EventReporter, sends events and statistics to DataDog
@@ -30,9 +34,20 @@ func NewDataDog(c *DataDogConfig) *DataDog {
 // TODO: don't recreate godspeed
 func (d *DataDog) Godspeed() (*godspeed.Godspeed, error) {
 	if d.godspeed == nil {
-		g, err := godspeed.NewDefault()
+		var g *godspeed.Godspeed
+		var err error
+		// if config options not set, use defaults
+		if d.Config.Host == "" || d.Config.Port == "" {
+			g, err = godspeed.NewDefault()
+		} else {
+			port, err := strconv.Atoi(d.Config.Port)
+			if err != nil {
+				return nil, err
+			}
+			g, err = godspeed.New(d.Config.Host, port, false)
+		}
 		if err != nil {
-			return g, err
+			return nil, err
 		}
 		d.godspeed = g
 	}

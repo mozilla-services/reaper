@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+
 	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/reapable"
 	"github.com/mostlygeek/reaper/state"
@@ -205,6 +206,33 @@ func (a *AutoScalingGroup) SizeLessThan(size int64) bool {
 
 func (a *AutoScalingGroup) SizeGreaterThan(size int64) bool {
 	return a.DesiredCapacity <= size
+}
+
+// method for reapable -> overrides promoted AWSResource method of same name?
+func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
+	return a.tagReaperState(a.Region, a.ID, a.ReaperState())
+}
+
+func (a *AutoScalingGroup) tagReaperState(region, id string, newState *state.State) (bool, error) {
+	api := autoscaling.New(&aws.Config{Region: region})
+	createreq := &autoscaling.CreateOrUpdateTagsInput{
+		Tags: []*autoscaling.Tag{
+			&autoscaling.Tag{
+				ResourceID:        aws.String(id),
+				ResourceType:      aws.String("auto-scaling-group"),
+				PropagateAtLaunch: aws.Boolean(false),
+				Key:               aws.String(reaperTag),
+				Value:             aws.String(newState.String()),
+			},
+		},
+	}
+
+	_, err := api.CreateOrUpdateTags(createreq)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {

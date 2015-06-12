@@ -72,7 +72,6 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.ResourceState = stopped
 	}
 
-	// TODO: untested
 	if instance.PublicIPAddress != nil {
 		i.PublicIPAddress = net.ParseIP(*instance.PublicIPAddress)
 	}
@@ -198,7 +197,6 @@ const reapableInstanceEventHTML = `
 		<ul>
 			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
 			<li><a href="{{ .StopLink }}">Stop it now</a></li>
-			<li><a href="{{ .ForceStopLink }}">ForceStop it now</a></li>
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
@@ -212,7 +210,6 @@ const reapableInstanceEventHTML = `
 </html>
 `
 
-// TODO: pass values instead of functions -_-
 const reapableInstanceEventText = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
@@ -227,8 +224,8 @@ Instance Type: {{ .Instance.InstanceType}}.\n
 %%%`
 
 func (i *Instance) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(url.QueryEscape(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.Region, i.Region, i.ID)))
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
+		i.Region, i.Region, url.QueryEscape(i.ID)))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}

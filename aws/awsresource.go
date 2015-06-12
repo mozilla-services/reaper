@@ -178,7 +178,6 @@ func Whitelist(region, id string) (bool, error) {
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
-				// TODO: not hardcoded
 				Key:   aws.String(whitelist_tag),
 				Value: aws.String("true"),
 			},

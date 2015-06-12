@@ -150,7 +150,11 @@ func (a *AWSResource) IncrementState() bool {
 }
 
 func (a *AWSResource) ReapableDescription() string {
-	return fmt.Sprintf("'%s' in %s", a.ID, a.Region)
+	ownerString := ""
+	if owner := a.Owner(); owner != nil {
+		ownerString = fmt.Sprintf(" (owned by %s)", owner)
+	}
+	return fmt.Sprintf("'%s' in %s%s", a.ID, a.Region, ownerString)
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {

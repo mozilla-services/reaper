@@ -101,7 +101,7 @@ func init() {
 	// interactive mode and automatic reaping mode are mutually exclusive
 	config.Interactive = *interactive
 	if *interactive {
-		log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
+		log.Notice("Interactive mode enabled, you will be prompted to handle reapables. Note: this takes precedence over the Reaper EventReporter.")
 		events = append(events, reaperevents.NewInteractiveEvent(&reaperevents.InteractiveEventConfig{Enabled: true}))
 	} else if config.Events.Reaper.Enabled {
 		log.Info("Reaper EventReporter enabled.")

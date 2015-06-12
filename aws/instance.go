@@ -303,11 +303,6 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "ReaperState":
-		// one of:
-		// notify1
-		// notify2
-		// ignore
-		// start
 		if i.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
@@ -330,7 +325,7 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return false, fmt.Errorf("Instance could %s not be terminated.", i.ID)
+		return false, fmt.Errorf("Instance could %s not be terminated.", i.ReapableDescription())
 	}
 
 	return true, nil
@@ -353,7 +348,7 @@ func (i *Instance) Stop() (bool, error) {
 	}
 
 	if len(resp.StoppingInstances) != 1 {
-		return false, fmt.Errorf("Instance %s could not be stopped.", i.ID)
+		return false, fmt.Errorf("Instance %s could not be stopped.", i.ReapableDescription())
 	}
 
 	return true, nil

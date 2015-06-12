@@ -150,7 +150,7 @@ func (a *AWSResource) IncrementState() bool {
 }
 
 func (a *AWSResource) ReapableDescription() string {
-	return fmt.Sprintf("resource %s in %s with state %s", a.ID, a.Region, a.ReaperState())
+	return fmt.Sprintf("'%s' in %s", a.ID, a.Region)
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {

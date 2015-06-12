@@ -3,14 +3,18 @@ package aws
 import (
 	"bytes"
 	"fmt"
+	htmlTemplate "html/template"
+	"net/mail"
 	"net/url"
-	"text/template"
+	"os"
+
+	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/mostlygeek/reaper/events"
 	"github.com/mostlygeek/reaper/filters"
+	"github.com/mostlygeek/reaper/reapable"
 	"github.com/mostlygeek/reaper/state"
 )
 
@@ -57,32 +61,130 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 }
 
 func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
-	t := template.Must(template.New("reapable-asg").Parse(reapableASGEventText))
+	t := textTemplate.Must(textTemplate.New("reapable-asg").Parse(reapableASGEventText))
 	buf := bytes.NewBuffer(nil)
 
-	data := struct {
-		Config           *events.HTTPConfig
-		AutoScalingGroup *AutoScalingGroup
-	}{
-		AutoScalingGroup: a,
-		Config:           &config.HTTP,
+	data, err := a.getTemplateData()
+	if err != nil {
+		log.Error("%s", err.Error())
 	}
-	err := t.Execute(buf, data)
+	err = t.Execute(buf, data)
 	if err != nil {
 		log.Debug("Template generation error", err)
 	}
 	return buf
 }
 
+func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("eventHTML: %s", r)
+		}
+	}()
+
+	// if unowned, return unowned error
+	if !a.Owned() {
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescription())}
+		return
+	}
+
+	t := htmlTemplate.Must(htmlTemplate.New("reapable-asg").Parse(reapableASGEventHTML))
+	buf := bytes.NewBuffer(nil)
+
+	data, err := a.getTemplateData()
+	err = t.Execute(buf, data)
+	if err != nil {
+		return
+	}
+	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescription())
+	owner = *a.Owner()
+	body = buf.String()
+	return
+}
+
+type AutoScalingGroupEventData struct {
+	Config           *AWSConfig
+	AutoScalingGroup *AutoScalingGroup
+	TerminateLink    string
+	StopLink         string
+	ForceStopLink    string
+	WhitelistLink    string
+	IgnoreLink1      string
+	IgnoreLink3      string
+	IgnoreLink7      string
+}
+
+func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("getTemplateData: %s", r)
+			os.Exit(1)
+		}
+	}()
+
+	ignore1, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID, time.Duration(1*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID, time.Duration(3*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID, time.Duration(7*24*time.Hour))
+	terminate, err := MakeTerminateLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
+	stop, err := MakeStopLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
+	forcestop, err := MakeForceStopLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
+	whitelist, err := MakeWhitelistLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &AutoScalingGroupEventData{
+		Config:           config,
+		AutoScalingGroup: a,
+		TerminateLink:    terminate,
+		StopLink:         stop,
+		ForceStopLink:    forcestop,
+		WhitelistLink:    whitelist,
+		IgnoreLink1:      ignore1,
+		IgnoreLink3:      ignore3,
+		IgnoreLink7:      ignore7,
+	}, nil
+}
+
+const reapableASGEventHTML = `
+<html>
+<body>
+	<p>Your AWS Resource <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }} in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated.</p>
+
+	<p>
+		You can ignore this message and your AutoScalingGroup will be automatically
+		terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
+	</p>
+
+	<p>
+		You may also choose to:
+		<ul>
+			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
+			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
+			<li><a href="{{ .ForceStopLink }}">ForceScale it to 0</a></li>
+			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
+			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
+			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
+		</ul>
+	</p>
+
+	<p>
+		If you want the Reaper to ignore this AutoScalingGroup tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
+	</p>
+</body>
+</html>
+`
+
 const reapableASGEventText = `%%%
-Reaper has discovered an ASG qualified as reapable: [{{.ASG.ID}}]({{.ASG.AWSConsoleURL}}) in region: [{{.ASG.Region}}](https://{{.ASG.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.ASG.Region}}).\n
-{{if .ASG.Owned}}Owned by {{.ASG.Owner}}.\n{{end}}
-{{ if .ASG.AWSConsoleURL}}{{.ASG.AWSConsoleURL}}\n{{end}}
-[AWS Console URL]({{.ASG.AWSConsoleURL}})\n
-[Whitelist]({{ MakeWhitelistLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG.
-[Terminate]({{ MakeTerminateLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG.\n
-[Scale]({{ MakeStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG to 0 instances
-[Force Scale]({{ MakeForceStopLink .Config.TokenSecret .Config.HTTPApiURL .ASG.Region .ASG.ID }}) this ASG to 0 instances (changes minimum)
+Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).\n
+{{if .AutoScalingGroup.Owned}}Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
+{{ if .AutoScalingGroup.AWSConsoleURL}}{{.AutoScalingGroup.AWSConsoleURL}}\n{{end}}
+[AWS Console URL]({{.AutoScalingGroup.AWSConsoleURL}})\n
+[Whitelist]({{ .WhitelistLink }}) this AutoScalingGroup.
+[Scale to 0]({{ .StopLink }}) this AutoScalingGroup.
+[ForceScale to 0]({{ .ForceStopLink }}) this AutoScalingGroup.
+[Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
 func (a *AutoScalingGroup) SizeGreaterThanOrEqualTo(size int64) bool {
@@ -138,14 +240,14 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering ASGs.", filter.Function)
+		log.Error("No function %s could be found for filtering AutoScalingGroups.", filter.Function)
 	}
 	return matched
 }
 
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:ID=%s",
-		a.Region, a.Region, a.ID))
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
+		a.Region, a.Region, url.QueryEscape(a.ID)))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}

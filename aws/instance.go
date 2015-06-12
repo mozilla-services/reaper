@@ -3,13 +3,14 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net"
 	"net/mail"
 	"net/url"
 	"os"
-	textTemplate "text/template"
 	"time"
+
+	htmlTemplate "html/template"
+	textTemplate "text/template"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -122,33 +123,19 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 
 	// if unowned, return unowned error
 	if !i.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s in region %s does not have an owner tag", i.ID, i.Region)}
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescription())}
 		return
 	}
 
 	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Parse(reapableInstanceEventHTML))
 	buf := bytes.NewBuffer(nil)
 
-	// anonymous struct
-	data := struct {
-		Config   *AWSConfig
-		Instance *Instance
-		Delay1   time.Duration
-		Delay3   time.Duration
-		Delay7   time.Duration
-	}{
-		Instance: i,
-		Config:   config,
-		// TODO: hardcoded
-		Delay1: time.Duration(24 * time.Hour),
-		Delay3: time.Duration(3 * 24 * time.Hour),
-		Delay7: time.Duration(7 * 24 * time.Hour),
-	}
+	data, err := i.getTemplateData()
 	err = t.Execute(buf, data)
 	if err != nil {
 		return
 	}
-	subject = fmt.Sprintf("An AWS Resource (%s in region %s) you own is going to be Reaped!", i.ID, i.Region)
+	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", i.ReapableDescription())
 	owner = *i.Owner()
 	body = buf.String()
 	return
@@ -196,11 +183,10 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 	}, nil
 }
 
-// TODO: pass values instead of functions -_-
 const reapableInstanceEventHTML = `
 <html>
 <body>
-	<p>Your AWS Resource {{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}} is scheduled to be terminated.</p>
+	<p>Your AWS Resource <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
 		You can ignore this message and your instance will be automatically
@@ -210,16 +196,17 @@ const reapableInstanceEventHTML = `
 	<p>
 		You may also choose to:
 		<ul>
-			<li><a href="{{ .terminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .stopLink }}">Stop it</a></li>
-			<li><a href="{{ .ignoreLink1 }}">Ignore it for 1 more day</a></li>
-			<li><a href="{{ .ignoreLink3 }}">Ignore it for 3 more days</a></li>
-			<li><a href="{{ .ignoreLink7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
+			<li><a href="{{ .StopLink }}">Stop it now</a></li>
+			<li><a href="{{ .ForceStopLink }}">ForceStop it now</a></li>
+			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
+			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
+			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
 		</ul>
 	</p>
 
 	<p>
-		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .whitelistLink }}">here</a>.
+		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
 	</p>
 </body>
 </html>
@@ -240,8 +227,8 @@ Instance Type: {{ .Instance.InstanceType}}.\n
 %%%`
 
 func (i *Instance) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.Region, i.Region, i.ID))
+	url, err := url.Parse(url.QueryEscape(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
+		i.Region, i.Region, i.ID)))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}

@@ -98,6 +98,7 @@ func (m *Mailer) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 
+// TODO: figure out how to goroutine this
 func (m *Mailer) NewReapableEvent(r Reapable) error {
 	addr, subject, body, err := r.ReapableEventEmail()
 	if err != nil {

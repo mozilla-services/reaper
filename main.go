@@ -97,27 +97,27 @@ func init() {
 	if config.Events.Tagger.Enabled {
 		log.Info("Tagger EventReporter enabled.")
 		events = append(events, reaperevents.NewTagger(&config.Events.Tagger))
-		// interactive mode and automatic reaping mode are mutually exclusive
-		config.Interactive = *interactive
-		if *interactive {
-			log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
-			events = append(events, reaperevents.NewInteractiveEvent(&reaperevents.InteractiveEventConfig{Enabled: true}))
-		} else if config.Events.Reaper.Enabled {
-			log.Info("Reaper EventReporter enabled.")
-			events = append(events, reaperevents.NewReaperEvent(&config.Events.Reaper))
-		}
+	}
+	// interactive mode and automatic reaping mode are mutually exclusive
+	config.Interactive = *interactive
+	if *interactive {
+		log.Notice("Interactive mode enabled, you will be prompted to handle reapables")
+		events = append(events, reaperevents.NewInteractiveEvent(&reaperevents.InteractiveEventConfig{Enabled: true}))
+	} else if config.Events.Reaper.Enabled {
+		log.Info("Reaper EventReporter enabled.")
+		events = append(events, reaperevents.NewReaperEvent(&config.Events.Reaper))
+	}
 
-		if config.WhitelistTag == "" {
-			log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
-			config.WhitelistTag = "REAPER_SPARE_ME"
-		} else {
-			log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
-		}
+	if config.WhitelistTag == "" {
+		log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
+		config.WhitelistTag = "REAPER_SPARE_ME"
+	} else {
+		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
+	}
 
-		config.DryRun = *dryRun
-		if *dryRun {
-			log.Notice("Dry run mode enabled, no changes will be made")
-		}
+	config.DryRun = *dryRun
+	if *dryRun {
+		log.Notice("Dry run mode enabled, no changes will be made")
 	}
 }
 

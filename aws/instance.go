@@ -94,7 +94,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 func (i *Instance) ReapableEventText() *bytes.Buffer {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("eventText: %s", r)
+			log.Error(fmt.Sprintf("eventText: %s", r))
 			os.Exit(1)
 		}
 	}()
@@ -104,11 +104,11 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 
 	data, err := i.getTemplateData()
 	if err != nil {
-		log.Error("%s", err.Error())
+		log.Error(fmt.Sprintf("%s", err.Error()))
 	}
 	err = t.Execute(buf, data)
 	if err != nil {
-		log.Debug("Template generation error", err)
+		log.Debug(fmt.Sprintf("Template generation error: %s", err))
 	}
 	return buf
 }
@@ -116,7 +116,7 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("eventHTML: %s", r)
+			log.Error(fmt.Sprintf("eventHTML: %s", r))
 		}
 	}()
 
@@ -154,7 +154,7 @@ type InstanceEventData struct {
 func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("getTemplateData: %s", r)
+			log.Error(fmt.Sprintf("getTemplateData: %s", r))
 			os.Exit(1)
 		}
 	}()
@@ -304,7 +304,7 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering Instances.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
 	}
 	return matched
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	htmlTemplate "html/template"
 	"net/mail"
+
 	"net/url"
 	"os"
 
@@ -67,7 +68,7 @@ func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
 
 	data, err := a.getTemplateData()
 	if err != nil {
-		log.Error("%s", err.Error())
+		log.Error(fmt.Sprintf("%s", err.Error()))
 	}
 	err = t.Execute(buf, data)
 	if err != nil {
@@ -79,7 +80,7 @@ func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
 func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("eventHTML: %s", r)
+			log.Error(fmt.Sprintf("eventHTML: %s", r))
 		}
 	}()
 
@@ -118,7 +119,7 @@ type AutoScalingGroupEventData struct {
 func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("getTemplateData: %s", r)
+			log.Error(fmt.Sprintf("getTemplateData: %s", r))
 			os.Exit(1)
 		}
 	}()
@@ -268,7 +269,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering AutoScalingGroups.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
 	}
 	return matched
 }
@@ -297,7 +298,7 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error("could not update ASG %s in region %s", a.ID, a.Region)
+		log.Error(fmt.Sprintf("could not update ASG %s in region %s", a.ID, a.Region))
 		return false, err
 	}
 	return true, nil

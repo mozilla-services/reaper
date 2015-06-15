@@ -47,7 +47,7 @@ func init() {
 		// catches panics loading config
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error("Invalid config, %s", r)
+				log.Error(fmt.Sprintf("Invalid config, %s", r))
 				os.Exit(1)
 			}
 		}()
@@ -65,7 +65,7 @@ func init() {
 		// create it if it doesn't exist
 		f, err := os.OpenFile(config.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664)
 		if err != nil {
-			log.Error("Unable to open logfile '%s'", config.LogFile)
+			log.Error(fmt.Sprintf("Unable to open logfile '%s'", config.LogFile))
 		} else {
 			// if the file was successfully opened
 			log.Info("Logging to %s", config.LogFile)

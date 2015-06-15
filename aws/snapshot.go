@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -40,7 +41,7 @@ func (s *Snapshot) Filter(filter filters.Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	default:
-		log.Error("No function %s could be found for filtering Snapshots.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering Snapshots.", filter.Function))
 	}
 	return matched
 }

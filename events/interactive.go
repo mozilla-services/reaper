@@ -2,6 +2,7 @@ package events
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 )
 
@@ -40,16 +41,16 @@ func (n *InteractiveEvent) NewCountStatistic(name string, tags []string) error {
 }
 func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 	if n.Config.DryRun && n.Config.Extras {
-		log.Info("DryRun: Interactive choice for %s disabled", r.ReapableDescription())
+		log.Info(fmt.Sprintf("DryRun: Interactive choice for %s disabled", r.ReapableDescription()))
 		return nil
 	}
 
 	if n.Config.Enabled {
-		log.Notice("Choose: T to terminate, S to stop, F to ForceStop, W to whitelist %s. All other input is ignored.", r.ReapableDescription())
+		log.Notice(fmt.Sprintf("Choose: T to terminate, S to stop, F to ForceStop, W to whitelist %s. All other input is ignored.", r.ReapableDescription()))
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			log.Error("%s", err.Error())
+			log.Error(fmt.Sprintf("%s", err.Error()))
 		}
 		inputChar := input[0]
 		switch inputChar {

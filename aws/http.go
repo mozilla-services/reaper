@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
@@ -37,7 +38,7 @@ func MakeWhitelistLink(tokenSecret, apiURL, region, id string) (string, error) {
 	whitelist, err := token.Tokenize(tokenSecret,
 		token.NewWhitelistJob(region, id))
 	if err != nil {
-		log.Error("Error creating whitelist link: %s", err)
+		log.Error(fmt.Sprintf("Error creating whitelist link: %s", err))
 		return "", err
 	}
 
@@ -48,7 +49,7 @@ func MakeStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewStopJob(region, id))
 	if err != nil {
-		log.Error("Error creating ScaleToZero link: %s", err)
+		log.Error(fmt.Sprintf("Error creating ScaleToZero link: %s", err))
 		return "", err
 	}
 
@@ -59,7 +60,7 @@ func MakeForceStopLink(tokenSecret, apiURL, region, id string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewForceStopJob(region, id))
 	if err != nil {
-		log.Error("Error creating ScaleToZero link: %s", err)
+		log.Error(fmt.Sprintf("Error creating ScaleToZero link: %s", err))
 		return "", err
 	}
 

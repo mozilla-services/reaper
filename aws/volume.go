@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
+
+	log "github.com/mostlygeek/reaper/reaperlog"
 )
 
 type Volumes []*Volume

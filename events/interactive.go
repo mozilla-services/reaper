@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	log "github.com/mostlygeek/reaper/reaperlog"
 )
 
 type InteractiveEventConfig struct {

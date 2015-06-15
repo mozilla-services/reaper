@@ -1,6 +1,10 @@
 package events
 
-import "time"
+import (
+	"time"
+
+	log "github.com/mostlygeek/reaper/reaperlog"
+)
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {

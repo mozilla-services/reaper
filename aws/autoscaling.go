@@ -17,6 +17,7 @@ import (
 
 	"github.com/mostlygeek/reaper/filters"
 	"github.com/mostlygeek/reaper/reapable"
+	log "github.com/mostlygeek/reaper/reaperlog"
 	"github.com/mostlygeek/reaper/state"
 )
 

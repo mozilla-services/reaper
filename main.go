@@ -6,19 +6,13 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/op/go-logging"
-
 	reaperaws "github.com/mostlygeek/reaper/aws"
 	reaperevents "github.com/mostlygeek/reaper/events"
 	"github.com/mostlygeek/reaper/reaper"
+	log "github.com/mostlygeek/reaper/reaperlog"
 )
 
-// Log, Events, Reapables, and Config are all exported global variables
-
 var (
-	// Log -> exported global logger
-	log *logging.Logger
-	// Config -> exported global config
 	config *reaper.Config
 	events []reaperevents.EventReporter
 )
@@ -28,13 +22,6 @@ func init() {
 	dryRun := flag.Bool("dryrun", true, "dry run, don't trigger events")
 	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
 	flag.Parse()
-
-	// set up logging
-	log = logging.MustGetLogger("Reaper")
-	backend := logging.NewLogBackend(os.Stderr, "", 0)
-	format := logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} ▶%{color:reset} %{message}")
-	backendFormatter := logging.NewBackendFormatter(backend, format)
-	logging.SetBackend(backendFormatter)
 
 	// if no config file -> exit with error
 	if *configFile == "" {
@@ -61,20 +48,7 @@ func init() {
 
 	// if log file path specified, attempt to load it
 	if config.LogFile != "" {
-		// open file write only, append mode
-		// create it if it doesn't exist
-		f, err := os.OpenFile(config.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664)
-		if err != nil {
-			log.Error(fmt.Sprintf("Unable to open logfile '%s'", config.LogFile))
-		} else {
-			// if the file was successfully opened
-			log.Info("Logging to %s", config.LogFile)
-			// reconfigure logging with stdout and logfile as outputs
-			logFileFormat := logging.MustStringFormatter("15:04:05.000: %{shortfunc} ▶ %{level:.4s} ▶ %{message}")
-			logFileBackend := logging.NewLogBackend(f, "", 0)
-			logFileBackendFormatter := logging.NewBackendFormatter(logFileBackend, logFileFormat)
-			logging.SetBackend(backendFormatter, logFileBackendFormatter)
-		}
+		log.AddLogFile(config.LogFile)
 	}
 
 	if config.Events.DataDog.Enabled {

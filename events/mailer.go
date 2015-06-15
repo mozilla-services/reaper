@@ -7,6 +7,7 @@ import (
 	"net/smtp"
 
 	"github.com/mostlygeek/reaper/reapable"
+	log "github.com/mostlygeek/reaper/reaperlog"
 )
 
 type Mailer struct {

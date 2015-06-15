@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"time"
 
+	log "github.com/mostlygeek/reaper/reaperlog"
 	"github.com/mostlygeek/reaper/token"
 )
 

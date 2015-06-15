@@ -6,6 +6,8 @@ import (
 	"text/template"
 
 	"github.com/PagerDuty/godspeed"
+
+	log "github.com/mostlygeek/reaper/reaperlog"
 )
 
 // DataDogConfig is the configuration for a DataDog

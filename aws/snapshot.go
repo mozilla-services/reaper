@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mostlygeek/reaper/filters"
+	log "github.com/mostlygeek/reaper/reaperlog"
 )
 
 type Snapshot struct {

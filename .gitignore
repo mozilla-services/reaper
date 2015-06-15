@@ -2,7 +2,6 @@
 config/secrets.toml
 
 # reaper binary
-reaper
 reap
 
 ### Go ###

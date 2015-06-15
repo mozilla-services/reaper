@@ -432,13 +432,13 @@ func (r *Reaper) reap(done chan bool) {
 // output of each filterable types aggregator function
 func allFilterables() []reaperaws.Filterable {
 	var filterables []reaperaws.Filterable
-	if config.Enabled.Instances {
+	if config.Instances.Enabled {
 		filterables = append(filterables, allInstances()...)
 	}
-	if config.Enabled.AutoScalingGroups {
+	if config.AutoScalingGroups.Enabled {
 		filterables = append(filterables, allAutoScalingGroups()...)
 	}
-	if config.Enabled.Snapshots {
+	if config.Snapshots.Enabled {
 		filterables = append(filterables, allSnapshots()...)
 	}
 	return filterables
@@ -475,7 +475,7 @@ func applyFilters(f reaperaws.Filterable, fs map[string]filters.Filter) bool {
 }
 
 func reapSnapshot(s *reaperaws.Snapshot) {
-	filters := config.Filters.Snapshot
+	filters := config.Snapshots.Filters
 	if applyFilters(s, filters) {
 		log.Debug(fmt.Sprintf("Snapshot %s matched %s.",
 			s.ID,
@@ -488,7 +488,7 @@ func reapSnapshot(s *reaperaws.Snapshot) {
 }
 
 func reapInstance(i *reaperaws.Instance) {
-	filters := config.Filters.Instance
+	filters := config.Instances.Filters
 	if applyFilters(i, filters) {
 		i.MatchedFilters = fmt.Sprintf(" matched filters %s", reaperaws.PrintFilters(filters))
 		log.Notice(fmt.Sprintf("Reapable instance discovered: %s.", i.ReapableDescription()))
@@ -511,7 +511,7 @@ func reapInstance(i *reaperaws.Instance) {
 }
 
 func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
-	filters := config.Filters.AutoScalingGroup
+	filters := config.AutoScalingGroups.Filters
 	if applyFilters(a, filters) {
 		a.MatchedFilters = fmt.Sprintf(" matched filters %s", reaperaws.PrintFilters(filters))
 		log.Notice(fmt.Sprintf("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription()))
@@ -575,7 +575,7 @@ func Terminate(region, id string) error {
 			region, id, err.Error())
 		return err
 	}
-	log.Debug("Terminate %s", reapable.ReapableDescription())
+	log.Debug("Terminate %s", reapable.ReapableDescriptionShort())
 
 	return nil
 }
@@ -592,7 +592,7 @@ func ForceStop(region, id string) error {
 			region, id, err.Error())
 		return err
 	}
-	log.Debug("ForceStop %s", reapable.ReapableDescription())
+	log.Debug("ForceStop %s", reapable.ReapableDescriptionShort())
 
 	return nil
 }
@@ -609,7 +609,7 @@ func Stop(region, id string) error {
 			region, id, err.Error())
 		return err
 	}
-	log.Debug("Stop %s", reapable.ReapableDescription())
+	log.Debug("Stop %s", reapable.ReapableDescriptionShort())
 
 	return nil
 }

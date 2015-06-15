@@ -141,6 +141,7 @@ func (a *AWSResource) IncrementState() bool {
 
 	if newState != a.reaperState.State {
 		updated = true
+		log.Notice("Updating state on %s. New state: %s.", a.ReapableDescriptionShort(), newState.String())
 	}
 
 	a.reaperState = state.NewStateWithUntilAndState(until, newState)
@@ -149,6 +150,10 @@ func (a *AWSResource) IncrementState() bool {
 }
 
 func (a *AWSResource) ReapableDescription() string {
+	return fmt.Sprintf("%s%s", a.ReapableDescriptionShort(), a.MatchedFilters)
+}
+
+func (a *AWSResource) ReapableDescriptionShort() string {
 	ownerString := ""
 	if owner := a.Owner(); owner != nil {
 		ownerString = fmt.Sprintf(" (owned by %s)", owner)
@@ -157,7 +162,11 @@ func (a *AWSResource) ReapableDescription() string {
 	if name := a.Tag("Name"); name != "" {
 		nameString = fmt.Sprintf(" \"%s\"", name)
 	}
-	return fmt.Sprintf("'%s'%s in %s%s%s with state: %s", a.ID, nameString, a.Region, ownerString, a.MatchedFilters, a.ReaperState().String())
+	return fmt.Sprintf("'%s'%s%s in %s with state: %s", a.ID, nameString, ownerString, a.Region, a.ReaperState().String())
+}
+
+func (a *AWSResource) ReapableDescriptionTiny() string {
+	return fmt.Sprintf("'%s' in %s", a.ID, a.Region)
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {

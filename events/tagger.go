@@ -53,10 +53,7 @@ func (t *Tagger) NewReapableEvent(r Reapable) error {
 	}
 
 	if time.Now().After(r.ReaperState().Until) {
-		b := r.IncrementState()
-		if b {
-			log.Debug("Updating state on %s. New state: %s.", r.ReapableDescription(), r.ReaperState().String())
-		}
+		_ = r.IncrementState()
 	}
 	_, err := r.Save(r.ReaperState())
 	if err != nil {

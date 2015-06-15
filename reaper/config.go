@@ -77,11 +77,13 @@ type Config struct {
 	Notifications reaperevents.NotificationsConfig
 
 	Events       EventTypes
-	Enabled      ResourceTypes
-	Filters      FilterTypes
 	LogFile      string
 	StateFile    string
 	WhitelistTag string
+
+	AutoScalingGroups FilterGroup
+	Instances         FilterGroup
+	Snapshots         FilterGroup
 
 	DryRun      bool
 	Interactive bool
@@ -94,16 +96,7 @@ type EventTypes struct {
 	Reaper  reaperevents.ReaperEventConfig
 }
 
-type ResourceTypes struct {
-	AutoScalingGroups bool
-	Instances         bool
-	Snapshots         bool
-	Volumes           bool
-	SecurityGroups    bool
-}
-
-type FilterTypes struct {
-	AutoScalingGroup map[string]filters.Filter
-	Instance         map[string]filters.Filter
-	Snapshot         map[string]filters.Filter
+type FilterGroup struct {
+	Enabled bool
+	Filters map[string]filters.Filter
 }

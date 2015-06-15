@@ -48,7 +48,7 @@ func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 	}
 
 	if n.Config.Enabled {
-		log.Notice(fmt.Sprintf("Choose: T to terminate, S to stop, F to ForceStop, W to whitelist %s. All other input is ignored.", r.ReapableDescription()))
+		log.Notice(fmt.Sprintf("Choose: T to terminate, S to stop, F to ForceStop, W to whitelist, U to update state %s. All other input is ignored.", r.ReapableDescriptionShort()))
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -65,6 +65,8 @@ func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 			_, err = r.Whitelist()
 		case 'F':
 			_, err = r.ForceStop()
+		case 'U':
+			_ = r.IncrementState()
 		}
 
 		return err

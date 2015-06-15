@@ -45,7 +45,10 @@ type Reapable interface {
 	Stoppable
 	Whitelistable
 	Saveable
+
 	ReapableDescription() string
+	ReapableDescriptionShort() string
+	ReapableDescriptionTiny() string
 }
 
 // used to identify unowned resources

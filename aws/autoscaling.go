@@ -97,7 +97,7 @@ func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject str
 
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescription())}
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 
@@ -109,7 +109,7 @@ func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject str
 	if err != nil {
 		return
 	}
-	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescription())
+	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
 	body = buf.String()
 	return

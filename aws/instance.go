@@ -123,7 +123,7 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 
 	// if unowned, return unowned error
 	if !i.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescription())}
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
 		return
 	}
 
@@ -135,7 +135,7 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 	if err != nil {
 		return
 	}
-	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", i.ReapableDescription())
+	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", i.ReapableDescriptionTiny())
 	owner = *i.Owner()
 	body = buf.String()
 	return
@@ -311,7 +311,6 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 }
 
 func (i *Instance) Terminate() (bool, error) {
-	log.Debug("Terminating Instance %s", i.ReapableDescription())
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.TerminateInstancesInput{
 		InstanceIDs: []*string{aws.String(i.ID)},
@@ -335,7 +334,6 @@ func (i *Instance) ForceStop() (bool, error) {
 }
 
 func (i *Instance) Stop() (bool, error) {
-	log.Debug("Stopping Instance %s", i.ReapableDescription())
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.StopInstancesInput{
 		InstanceIDs: []*string{aws.String(i.ID)},

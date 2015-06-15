@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/signal"
 
-	reaperaws "github.com/mostlygeek/reaper/aws"
-	reaperevents "github.com/mostlygeek/reaper/events"
-	"github.com/mostlygeek/reaper/reaper"
-	log "github.com/mostlygeek/reaper/reaperlog"
+	reaperaws "github.com/milescrabill/reaper/aws"
+	reaperevents "github.com/milescrabill/reaper/events"
+	"github.com/milescrabill/reaper/reaper"
+	log "github.com/milescrabill/reaper/reaperlog"
 )
 
 var (

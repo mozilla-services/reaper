@@ -1,6 +1,6 @@
 package aws
 
-import "github.com/mostlygeek/reaper/events"
+import "github.com/milescrabill/reaper/events"
 
 var config *AWSConfig
 

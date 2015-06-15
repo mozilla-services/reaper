@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/mostlygeek/reaper/reaperlog"
-	"github.com/mostlygeek/reaper/token"
+	log "github.com/milescrabill/reaper/reaperlog"
+	"github.com/milescrabill/reaper/token"
 )
 
 func MakeTerminateLink(tokenSecret, apiURL, region, id string) (string, error) {

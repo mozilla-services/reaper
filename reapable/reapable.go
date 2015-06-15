@@ -1,6 +1,6 @@
 package reapable
 
-import "github.com/mostlygeek/reaper/state"
+import "github.com/milescrabill/reaper/state"
 
 type Terminable interface {
 	Terminate() (bool, error)

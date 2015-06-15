@@ -1,4 +1,4 @@
-package main
+package reaper
 
 import (
 	"net/mail"
@@ -8,35 +8,40 @@ import (
 	"github.com/BurntSushi/toml"
 
 	reaperaws "github.com/milescrabill/reaper/aws"
-	"github.com/milescrabill/reaper/events"
+	reaperevents "github.com/milescrabill/reaper/events"
 	"github.com/milescrabill/reaper/filters"
+	log "github.com/milescrabill/reaper/reaperlog"
 )
 
 func LoadConfig(path string) (*Config, error) {
+	httpconfig := reaperevents.HTTPConfig{
+		TokenSecret: "Default secrets are not safe",
+		ApiURL:      "http://localhost",
+		Listen:      "localhost:9000",
+	}
 	conf := Config{
-		AWS: reaperaws.AWSConfig{},
-		SMTP: events.SMTPConfig{
-			Host:     "localhost",
-			Port:     587,
-			AuthType: "none",
-			From: events.FromAddress{
+		AWS: reaperaws.AWSConfig{
+			HTTP: httpconfig,
+		},
+		SMTP: reaperevents.SMTPConfig{
+			HTTPConfig: httpconfig,
+			Host:       "localhost",
+			Port:       587,
+			AuthType:   "none",
+			From: reaperevents.FromAddress{
 				mail.Address{
 					Name:    "reaper",
 					Address: "aws-reaper@mozilla.com",
 				},
 			},
 		},
-		HTTP: events.HTTPConfig{
-			TokenSecret: "Default secrets are not safe",
-			HTTPApiURL:  "http://localhost",
-			HTTPListen:  "localhost:9000",
-		},
-		Notifications: events.NotificationsConfig{
+		HTTP: httpconfig,
+		Notifications: reaperevents.NotificationsConfig{
 			Extras:             false,
-			Interval:           events.Duration{time.Duration(6) * time.Hour},
-			FirstNotification:  events.Duration{time.Duration(12) * time.Hour},
-			SecondNotification: events.Duration{time.Duration(12) * time.Hour},
-			Terminate:          events.Duration{time.Duration(24) * time.Hour},
+			Interval:           reaperevents.Duration{time.Duration(6) * time.Hour},
+			FirstNotification:  reaperevents.Duration{time.Duration(12) * time.Hour},
+			SecondNotification: reaperevents.Duration{time.Duration(12) * time.Hour},
+			Terminate:          reaperevents.Duration{time.Duration(24) * time.Hour},
 		},
 		DryRun: true,
 	}
@@ -46,20 +51,22 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	if len(md.Undecoded()) > 0 {
-		Log.Error("Undecoded configuration keys: %q\nExiting!", md.Undecoded())
+		log.Error("Undecoded configuration keys: %q\nExiting!", md.Undecoded())
 		os.Exit(1)
 	}
+
+	conf.SMTP.HTTPConfig = httpconfig
 
 	return &conf, nil
 }
 
 // Global reaper config
 type Config struct {
-	HTTP events.HTTPConfig
+	HTTP reaperevents.HTTPConfig
 
 	AWS           reaperaws.AWSConfig
-	SMTP          events.SMTPConfig
-	Notifications events.NotificationsConfig
+	SMTP          reaperevents.SMTPConfig
+	Notifications reaperevents.NotificationsConfig
 
 	Events       EventTypes
 	Enabled      ResourceTypes
@@ -73,10 +80,10 @@ type Config struct {
 }
 
 type EventTypes struct {
-	DataDog events.DataDogConfig
-	Email   events.SMTPConfig
-	Tagger  events.TaggerConfig
-	Reaper  events.ReaperEventConfig
+	DataDog reaperevents.DataDogConfig
+	Email   reaperevents.SMTPConfig
+	Tagger  reaperevents.TaggerConfig
+	Reaper  reaperevents.ReaperEventConfig
 }
 
 type ResourceTypes struct {

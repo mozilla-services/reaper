@@ -3,8 +3,8 @@ package events
 import (
 	"time"
 
-	log "github.com/mostlygeek/reaper/reaperlog"
-	"github.com/mostlygeek/reaper/state"
+	log "github.com/milescrabill/reaper/reaperlog"
+	"github.com/milescrabill/reaper/state"
 )
 
 type ReaperEventConfig struct {

@@ -1,4 +1,4 @@
-package main
+package reaper
 
 import (
 	"fmt"
@@ -7,21 +7,21 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/milescrabill/reaper/events"
+	reaperevents "github.com/milescrabill/reaper/events"
 	log "github.com/milescrabill/reaper/reaperlog"
 	"github.com/milescrabill/reaper/state"
 	"github.com/milescrabill/reaper/token"
 )
 
 type HTTPApi struct {
-	conf   events.HTTPConfig
+	conf   reaperevents.HTTPConfig
 	server *http.Server
 	ln     net.Listener
 }
 
 // Serve should be run in a goroutine
 func (h *HTTPApi) Serve() (e error) {
-	h.ln, e = net.Listen("tcp", h.conf.HTTPListen)
+	h.ln, e = net.Listen("tcp", h.conf.Listen)
 
 	if e != nil {
 		return
@@ -31,7 +31,7 @@ func (h *HTTPApi) Serve() (e error) {
 	mux.HandleFunc("/", processToken(h))
 	h.server = &http.Server{Handler: mux}
 
-	log.Debug("Starting HTTP server: %s", h.conf.HTTPListen)
+	log.Debug("Starting HTTP server: %s", h.conf.Listen)
 	go h.server.Serve(h.ln)
 	return nil
 }
@@ -41,7 +41,7 @@ func (h *HTTPApi) Stop() (e error) {
 	return h.ln.Close()
 }
 
-func NewHTTPApi(c events.HTTPConfig) *HTTPApi {
+func NewHTTPApi(c reaperevents.HTTPConfig) *HTTPApi {
 	return &HTTPApi{conf: c}
 }
 
@@ -57,7 +57,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		userToken := req.Form.Get(h.conf.HTTPToken)
+		userToken := req.Form.Get(h.conf.Token)
 		if userToken == "" {
 			writeResponse(w, http.StatusBadRequest, "Token Missing")
 			return

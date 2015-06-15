@@ -10,9 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
-	"github.com/mostlygeek/reaper/filters"
-	log "github.com/mostlygeek/reaper/reaperlog"
-	"github.com/mostlygeek/reaper/state"
+	"github.com/milescrabill/reaper/filters"
+	log "github.com/milescrabill/reaper/reaperlog"
+	"github.com/milescrabill/reaper/state"
 )
 
 type ResourceState int

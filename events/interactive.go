@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/mostlygeek/reaper/reaperlog"
+	log "github.com/milescrabill/reaper/reaperlog"
 )
 
 type InteractiveEventConfig struct {

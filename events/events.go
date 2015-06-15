@@ -6,7 +6,7 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/mostlygeek/reaper/reapable"
+	"github.com/milescrabill/reaper/reapable"
 )
 
 type Duration struct {

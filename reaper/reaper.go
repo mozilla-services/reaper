@@ -1,4 +1,4 @@
-package main
+package reaper
 
 import (
 	"fmt"
@@ -11,22 +11,41 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	reaperaws "github.com/milescrabill/reaper/aws"
+	reaperevents "github.com/milescrabill/reaper/events"
 	"github.com/milescrabill/reaper/filters"
 	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
 )
 
+var (
+	Reapables map[string]map[string]reapable.Reapable
+	config    Config
+	events    []reaperevents.EventReporter
+)
+
+func SetConfig(c *Config) {
+	config = *c
+}
+
+func SetEvents(e *[]reaperevents.EventReporter) {
+	events = *e
+}
+
+func Ready() {
+	Reapables = make(map[string]map[string]reapable.Reapable)
+	for _, region := range config.AWS.Regions {
+		Reapables[region] = make(map[string]reapable.Reapable)
+	}
+}
+
 // Reaper finds resources and deals with them
 type Reaper struct {
-	conf   Config
 	stopCh chan struct{}
 }
 
 // NewReaper is a Reaper constructor shorthand
-func NewReaper(c Config) *Reaper {
-	return &Reaper{
-		conf: c,
-	}
+func NewReaper() *Reaper {
+	return &Reaper{}
 }
 
 // Start begins Reaper execution in a new goroutine
@@ -50,7 +69,7 @@ func (r *Reaper) start() {
 	for {
 		r.Once()
 		select {
-		case <-time.After(r.conf.Notifications.Interval.Duration):
+		case <-time.After(config.Notifications.Interval.Duration):
 		case <-r.stopCh: // time to exit!
 			log.Debug("Stopping reaper on stop channel message")
 			return
@@ -85,21 +104,21 @@ func (r *Reaper) Once() {
 		<-done
 	}
 
-	if Conf.StateFile != "" {
-		r.SaveState(Conf.StateFile)
+	if config.StateFile != "" {
+		r.SaveState(config.StateFile)
 	}
 
-	log.Notice("Sleeping for %s", r.conf.Notifications.Interval.Duration.String())
+	log.Notice("Sleeping for %s", config.Notifications.Interval.Duration.String())
 }
 
 func (r *Reaper) SaveState(stateFile string) {
 	// open file RW, create it if it doesn't exist
-	s, err := os.OpenFile(Conf.StateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
+	s, err := os.OpenFile(config.StateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
 	defer func() { s.Close() }()
 	if err != nil {
-		log.Error("Unable to create StateFile '%s'", Conf.StateFile)
+		log.Error("Unable to create StateFile '%s'", config.StateFile)
 	} else {
-		log.Info("States will be saved to %s", Conf.StateFile)
+		log.Info("States will be saved to %s", config.StateFile)
 	}
 	// save state to state file
 	for region := range Reapables {
@@ -113,7 +132,7 @@ func (r *Reaper) SaveState(stateFile string) {
 func allASGInstanceIds(as []reaperaws.AutoScalingGroup) map[string]map[string]bool {
 	// maps region to id to bool
 	inASG := make(map[string]map[string]bool)
-	for _, region := range Conf.AWS.Regions {
+	for _, region := range config.AWS.Regions {
 		inASG[region] = make(map[string]bool)
 	}
 	for _, a := range as {
@@ -127,7 +146,7 @@ func allASGInstanceIds(as []reaperaws.AutoScalingGroup) map[string]map[string]bo
 
 // returns ASGs as filterables
 func allAutoScalingGroups() []reaperaws.Filterable {
-	regions := Conf.AWS.Regions
+	regions := config.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -159,15 +178,11 @@ func allAutoScalingGroups() []reaperaws.Filterable {
 			}
 
 			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
-			errChan := make(chan error)
-			for _, e := range Events {
-				go func(c chan error) {
-					c <- e.NewStatistic("reaper.asgs.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
-				}(errChan)
-			}
-			<-errChan
-			for err := range errChan {
-				log.Error("%s", err.Error())
+			for _, e := range events {
+				err := e.NewStatistic("reaper.asgs.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
 			}
 		}(region)
 	}
@@ -196,7 +211,7 @@ func (r *Reaper) reapSnapshots(done chan bool) {
 }
 
 func allSnapshots() []reaperaws.Filterable {
-	regions := Conf.AWS.Regions
+	regions := config.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -227,7 +242,7 @@ func allSnapshots() []reaperaws.Filterable {
 			}
 
 			log.Info(fmt.Sprintf("Found %d total snapshots in %s", sum, region))
-			for _, e := range Events {
+			for _, e := range events {
 				go e.NewStatistic("reaper.snapshots.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
 			}
 		}(region)
@@ -254,14 +269,14 @@ func allSnapshots() []reaperaws.Filterable {
 func (r *Reaper) reapVolumes(done chan bool) {
 	volumes := allVolumes()
 	log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
-	for _, e := range Events {
+	for _, e := range events {
 		e.NewStatistic("reaper.volumes.total", float64(len(volumes)), nil)
 	}
 	done <- true
 }
 
 func allVolumes() reaperaws.Volumes {
-	regions := Conf.AWS.Regions
+	regions := config.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -316,14 +331,14 @@ func allVolumes() reaperaws.Volumes {
 func (r *Reaper) reapSecurityGroups(done chan bool) {
 	securitygroups := allSecurityGroups()
 	log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
-	for _, e := range Events {
+	for _, e := range events {
 		go e.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
 	}
 	done <- true
 }
 
 func allSecurityGroups() reaperaws.SecurityGroups {
-	regions := Conf.AWS.Regions
+	regions := config.AWS.Regions
 
 	// waitgroup for goroutines
 	var wg sync.WaitGroup
@@ -410,13 +425,13 @@ func (r *Reaper) reap(done chan bool) {
 // output of each filterable types aggregator function
 func allFilterables() []reaperaws.Filterable {
 	var filterables []reaperaws.Filterable
-	if Conf.Enabled.Instances {
+	if config.Enabled.Instances {
 		filterables = append(filterables, allInstances()...)
 	}
-	if Conf.Enabled.AutoScalingGroups {
+	if config.Enabled.AutoScalingGroups {
 		filterables = append(filterables, allAutoScalingGroups()...)
 	}
-	if Conf.Enabled.Snapshots {
+	if config.Enabled.Snapshots {
 		filterables = append(filterables, allSnapshots()...)
 	}
 	return filterables
@@ -443,7 +458,7 @@ func applyFilters(f reaperaws.Filterable, fs map[string]filters.Filter) bool {
 	}
 
 	// whitelist filter
-	if f.Filter(*filters.NewFilter("Tagged", []string{Conf.WhitelistTag})) {
+	if f.Filter(*filters.NewFilter("Tagged", []string{config.WhitelistTag})) {
 		// if the filterable matches this filter, then
 		// it should be whitelisted, aka not matched
 		matched = false
@@ -453,20 +468,20 @@ func applyFilters(f reaperaws.Filterable, fs map[string]filters.Filter) bool {
 }
 
 func reapSnapshot(s *reaperaws.Snapshot) {
-	filters := Conf.Filters.Snapshot
+	filters := config.Filters.Snapshot
 	if applyFilters(s, filters) {
 		log.Debug(fmt.Sprintf("Snapshot %s matched %s.",
 			s.ID,
 			reaperaws.PrintFilters(filters)))
 		// TODO
-		// for _, e := range Events {
+		// for _, e := range events {
 		// e.NewReapableSnapshotEvent(s)
 		// }
 	}
 }
 
 func reapInstance(i *reaperaws.Instance) {
-	filters := Conf.Filters.Instance
+	filters := config.Filters.Instance
 	if applyFilters(i, filters) {
 		ownerString := ""
 		if owner := i.Owner(); owner != nil {
@@ -478,7 +493,7 @@ func reapInstance(i *reaperaws.Instance) {
 			i.Region,
 			reaperaws.PrintFilters(filters)))
 
-		for _, e := range Events {
+		for _, e := range events {
 			if err := e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil); err != nil {
 				log.Error(err.Error())
 			}
@@ -496,14 +511,22 @@ func reapInstance(i *reaperaws.Instance) {
 }
 
 func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
-	filters := Conf.Filters.ASG
+	filters := config.Filters.ASG
 	if applyFilters(a, filters) {
 		log.Debug(fmt.Sprintf("ASG %s matched %s.",
 			a.ID,
 			reaperaws.PrintFilters(filters)))
 
-		for _, e := range Events {
-			go e.NewEvent("Reapable ASG discovered", string(a.ReapableEventText().Bytes()), nil, nil)
+		for _, e := range events {
+			if err := e.NewEvent("Reapable ASG discovered", string(a.ReapableEventText().Bytes()), nil, nil); err != nil {
+				log.Error(err.Error())
+			}
+			if err := e.NewStatistic("reaper.autoscalinggroups.reapable", 1, []string{fmt.Sprintf("id:%s", a.ID)}); err != nil {
+				log.Error(err.Error())
+			}
+			if err := e.NewReapableEvent(a); err != nil {
+				log.Error(err.Error())
+			}
 		}
 	}
 
@@ -515,7 +538,7 @@ func (r *Reaper) terminateUnowned(i *reaperaws.Instance) error {
 	log.Info("Terminate UNOWNED instance (%s) %s, owner tag: %s",
 		i.ID, i.Name, i.Tag("Owner"))
 
-	if Conf.DryRun {
+	if config.DryRun {
 		return nil
 	}
 
@@ -597,7 +620,7 @@ func Stop(region, id string) error {
 // returned as Filterables
 func allInstances() []reaperaws.Filterable {
 
-	regions := Conf.AWS.Regions
+	regions := config.AWS.Regions
 	var wg sync.WaitGroup
 	in := make(chan *reaperaws.Instance)
 
@@ -646,7 +669,7 @@ func allInstances() []reaperaws.Filterable {
 			}
 
 			log.Info("Found %d total instances in %s", sum, region)
-			for _, e := range Events {
+			for _, e := range events {
 				go e.NewStatistic("reaper.instances.total", float64(sum), []string{fmt.Sprintf("region:%s", region)})
 			}
 		}(region)

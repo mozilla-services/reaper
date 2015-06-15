@@ -1,85 +1,119 @@
-# Set this to secure the tokens in the links back to the
-# web server.
-TokenSecret = "set this to secure web requests against spoofing"
+### Reaper Configuration File ###
 
-# this is used to generate the link back to the reaper's http
-# service. Do not add a trailing slash, just include
-# <scheme>://<host:port>
-HTTPApiURL = "http://localhost:9000"
+#StateFile = "savedstates.txt"
+#LogFile = "reaperlog.txt"
+WhitelistTag = "REAPER_SPARE_ME"
 
-# this is where the web server will listen for requests
-HTTPListen = "localhost:9000"
+[HTTP]
+    # Set this to secure the tokens in the links back to the
+    # web server.
+    TokenSecret = "set this to secure web requests against spoofing"
+    # this is used to generate the link back to the reaper's http
+    # service. Do not add a trailing slash, just include
+    # <scheme>://<host:port>
+    ApiURL = "http://localhost:9000"
 
-#logfile = "reaperlog.txt"
+    # this is where the web server will listen for requests
+    Listen = "localhost:9000"
 
-[AWS]
+    Token = "t"
+    Action = "a"
 
-	# what regions the reaper will look for ec2 servers in
-	Regions = [
-	    "us-west-1",
-	    "us-west-2",
-	    "us-east-1",
-	    "eu-west-1",
-	]
+[Notifications]
+    # Extra notifications
+    Extras = false
 
+    # The time format must be a duration parsable by go's time.ParseDuration
+    # function. See: http://godoc.org/time#ParseDuration
+    #
+    # Recommended to do things in hourly increments
+
+    # Interval that all instances should be checked for reaping
+    Interval = "1m"
+
+    # How long the instance is allowed to run before sending the first
+    # notification
+    FirstNotification = "30s"
+
+    # How long after the first notification before sending the second
+    # notification
+    SecondNotification = "60s"
+
+    # How long after the second notification before terminating the instance
+    Terminate = "1m"
+
+# i remembered why this exists:
+# it's because [Filters.ASG] is basically a []filters.Filter
+# so I can't throw a bool there
 [Enabled]
-	instances = true
-	asgs = true
-	snapshots = false
+    instances = true
+    autoscalinggroups = true
+    snapshots = false
 
 [Events]
-	datadog = false
-	email = true
+    [Events.DataDog]
+        Enabled = false
+
+    [Events.Email]
+        Enabled = false
+        Host = "localhost"
+        AuthType = "plain"
+
+        # valid: "none", "md5" or "plain". Use "plain" for SES SMTP
+
+        #Address = ""
+        #AuthType = "none"
+
+        Port = 587
+        Username = ""
+        Password = ""
+
+        # must be parsable by http://godoc.org/net/mail#ParseAddress
+        From = "AWS Reaper <reaper@reaper.reaper>"
+
+        # Optional port, defaults to 587
+        # Port = 587
+
+    [Events.Tagger]
+        Enabled = true
+
+    [Events.Reaper]
+        Enabled = false
 
 [Filters]
-	[Filters.ASG]
-		[Filters.ASG.1]
-			function = "SizeGreaterThan"
-			value = "3"
-#		[Filters.ASG.2]
-#			function = "TimeSinceLaunchGreaterThan"
-#			value = "24"
+    [Filters.ASG]
+        [Filters.ASG.1]
+            function = "SizeGreaterThanOrEqualTo"
+            arguments = ["0"]
+        [Filters.ASG.4]
+            function = "Tagged"
+            arguments = ["Owner"]
+        [Filters.ASG.3]
+            function = "Tagged"
+            arguments = ["REAP_ME"]
 
-	[Filters.Instance]
-		[Filters.Instance.1]
-			function = "TimeSinceLaunch"
-			value = "24h"
-		[Filters.Instance.2]
-			function = "Running"
-			value = "true"
+    [Filters.Instance]
+        [Filters.Instance.1]
+            function = "LaunchTimeAfter"
+            arguments = ["2015-06-01T22:08:41+00:00"]
+        [Filters.Instance.2]
+            function = "Running"
+            arguments = ["true"]
+        [Filters.Instance.3]
+            function = "Tagged"
+            arguments = ["REAP_ME"]
+        #[Filters.Instance.4]
+            #function = "Tag"
+            #arguments = ["Owner", "miles"]
+        #[Filters.Instance.5]
+        #    function = "PublicIPAddress"
+        #    arguments = ["127.0.0.1"]
 
-[SMTP]
-	Host = "localhost"
-
-	# valid: "none", "md5" or "plain". Use "plain" for SES SMTP
-	AuthType = "none"
-
-	# Optional port, defaults to 587
-	#Port = 587
-	#Username = ""
-	#Password = ""
-
-	# must be parsable by http://godoc.org/net/mail#ParseAddress
-	From = "AWS Reaper <reaper@none.mozilla.com>"
-
-[Reaper]
-	# The time format must be a duration parsable by go's time.ParseDuration
-	# function. See: http://godoc.org/time#ParseDuration
-	#
-	# Recommended to do things in hourly increments
-
-	# Interval that all instances should be checked for reaping
-	Interval = "1h"
-
-	# How long the instance is allowed to run before sending the first
-	# notification
-	FirstNotification = "12h"
-
-	# How long after the first notification before sending the second
-	# notification
-	SecondNotification = "24h"
-
-	# How long after the second notification before terminating the instance
-	Terminate = "24h"
-
-
+[AWS]
+# what regions the reaper will look for ec2 servers in
+Regions      = [
+    "us-west-1",
+    "us-west-2",
+    "us-east-1",
+    "eu-west-1",
+]

@@ -1,6 +1,0 @@
-[Reaper]
-Interval = "1m"
-FirstNotification = "1m"
-SecondNotification = "5m"
-Terminate = "5m"
-

@@ -43,7 +43,7 @@ WhitelistTag = "REAPER_SPARE_ME"
     Terminate = "1m"
 
 # i remembered why this exists:
-# it's because [Filters.ASG] is basically a []filters.Filter
+# it's because [Filters.AutoScalingGroup] is basically a []filters.Filter
 # so I can't throw a bool there
 [Enabled]
     instances = true
@@ -81,14 +81,14 @@ WhitelistTag = "REAPER_SPARE_ME"
         Enabled = false
 
 [Filters]
-    [Filters.ASG]
-        [Filters.ASG.1]
+    [Filters.AutoScalingGroup]
+        [Filters.AutoScalingGroup.1]
             function = "SizeGreaterThanOrEqualTo"
             arguments = ["0"]
-        [Filters.ASG.4]
+        [Filters.AutoScalingGroup.4]
             function = "Tagged"
             arguments = ["Owner"]
-        [Filters.ASG.3]
+        [Filters.AutoScalingGroup.3]
             function = "Tagged"
             arguments = ["REAP_ME"]
 

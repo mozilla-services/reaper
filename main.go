@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	config *reaper.Config
+	config reaper.Config
 	events []reaperevents.EventReporter
 )
 
@@ -38,7 +38,7 @@ func init() {
 				os.Exit(1)
 			}
 		}()
-		config = c
+		config = *c
 		log.Info("Configuration loaded from %s", *configFile)
 	} else {
 		// config not successfully loaded -> exit with error
@@ -97,7 +97,7 @@ func init() {
 }
 
 func main() {
-	reaper.SetConfig(config)
+	reaper.SetConfig(&config)
 	reaper.SetEvents(&events)
 	reaper.Ready()
 

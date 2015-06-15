@@ -311,6 +311,7 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 }
 
 func (i *Instance) Terminate() (bool, error) {
+	log.Debug("Terminating Instance %s", i.ReapableDescription())
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.TerminateInstancesInput{
 		InstanceIDs: []*string{aws.String(i.ID)},
@@ -334,6 +335,7 @@ func (i *Instance) ForceStop() (bool, error) {
 }
 
 func (i *Instance) Stop() (bool, error) {
+	log.Debug("Stopping Instance %s", i.ReapableDescription())
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.StopInstancesInput{
 		InstanceIDs: []*string{aws.String(i.ID)},

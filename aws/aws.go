@@ -9,6 +9,7 @@ type AWSConfig struct {
 	HTTP          events.HTTPConfig
 	Regions       []string
 	WhitelistTag  string
+	DryRun        bool
 }
 
 func NewAWSConfig() *AWSConfig {

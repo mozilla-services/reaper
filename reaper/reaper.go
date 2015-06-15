@@ -19,22 +19,29 @@ import (
 
 var (
 	Reapables map[string]map[string]reapable.Reapable
-	config    Config
-	events    []reaperevents.EventReporter
+	config    *Config
+	events    *[]reaperevents.EventReporter
 )
 
 func SetConfig(c *Config) {
-	config = *c
+	config = c
 }
 
 func SetEvents(e *[]reaperevents.EventReporter) {
-	events = *e
+	events = e
 }
 
 func Ready() {
+	// initialize Reapables map
 	Reapables = make(map[string]map[string]reapable.Reapable)
 	for _, region := range config.AWS.Regions {
 		Reapables[region] = make(map[string]reapable.Reapable)
+	}
+
+	// set config values for events
+	for _, er := range *events {
+		er.SetDryRun(config.DryRun)
+		er.SetNotificationExtras(config.Notifications.Extras)
 	}
 }
 
@@ -178,7 +185,7 @@ func allAutoScalingGroups() []reaperaws.Filterable {
 			}
 
 			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
-			for _, e := range events {
+			for _, e := range *events {
 				err := e.NewStatistic("reaper.asgs.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
@@ -242,8 +249,8 @@ func allSnapshots() []reaperaws.Filterable {
 			}
 
 			log.Info(fmt.Sprintf("Found %d total snapshots in %s", sum, region))
-			for _, e := range events {
-				go e.NewStatistic("reaper.snapshots.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
+			for _, e := range *events {
+				e.NewStatistic("reaper.snapshots.total", float64(len(in)), []string{fmt.Sprintf("region:%s", region)})
 			}
 		}(region)
 	}
@@ -269,7 +276,7 @@ func allSnapshots() []reaperaws.Filterable {
 func (r *Reaper) reapVolumes(done chan bool) {
 	volumes := allVolumes()
 	log.Info(fmt.Sprintf("Total volumes: %d", len(volumes)))
-	for _, e := range events {
+	for _, e := range *events {
 		e.NewStatistic("reaper.volumes.total", float64(len(volumes)), nil)
 	}
 	done <- true
@@ -331,8 +338,8 @@ func allVolumes() reaperaws.Volumes {
 func (r *Reaper) reapSecurityGroups(done chan bool) {
 	securitygroups := allSecurityGroups()
 	log.Info(fmt.Sprintf("Total security groups: %d", len(securitygroups)))
-	for _, e := range events {
-		go e.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
+	for _, e := range *events {
+		e.NewStatistic("reaper.securitygroups.total", float64(len(securitygroups)), nil)
 	}
 	done <- true
 }
@@ -474,7 +481,7 @@ func reapSnapshot(s *reaperaws.Snapshot) {
 			s.ID,
 			reaperaws.PrintFilters(filters)))
 		// TODO
-		// for _, e := range events {
+		// for _, e := range *events {
 		// e.NewReapableSnapshotEvent(s)
 		// }
 	}
@@ -483,17 +490,10 @@ func reapSnapshot(s *reaperaws.Snapshot) {
 func reapInstance(i *reaperaws.Instance) {
 	filters := config.Filters.Instance
 	if applyFilters(i, filters) {
-		ownerString := ""
-		if owner := i.Owner(); owner != nil {
-			ownerString = fmt.Sprintf("%s ", owner)
-		}
-		log.Debug(fmt.Sprintf("Instance %s %sin region %s matched %s.",
-			i.ID,
-			ownerString,
-			i.Region,
-			reaperaws.PrintFilters(filters)))
+		i.MatchedFilters = fmt.Sprintf(" matched filters %s", reaperaws.PrintFilters(filters))
+		log.Notice(fmt.Sprintf("Reapable instance discovered: %s.", i.ReapableDescription()))
 
-		for _, e := range events {
+		for _, e := range *events {
 			if err := e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil); err != nil {
 				log.Error(err.Error())
 			}
@@ -511,14 +511,13 @@ func reapInstance(i *reaperaws.Instance) {
 }
 
 func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
-	filters := config.Filters.ASG
+	filters := config.Filters.AutoScalingGroup
 	if applyFilters(a, filters) {
-		log.Debug(fmt.Sprintf("ASG %s matched %s.",
-			a.ID,
-			reaperaws.PrintFilters(filters)))
+		a.MatchedFilters = fmt.Sprintf(" matched filters %s", reaperaws.PrintFilters(filters))
+		log.Notice(fmt.Sprintf("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription()))
 
-		for _, e := range events {
-			if err := e.NewEvent("Reapable ASG discovered", string(a.ReapableEventText().Bytes()), nil, nil); err != nil {
+		for _, e := range *events {
+			if err := e.NewEvent("Reapable AutoScalingGroup discovered", string(a.ReapableEventText().Bytes()), nil, nil); err != nil {
 				log.Error(err.Error())
 			}
 			if err := e.NewStatistic("reaper.autoscalinggroups.reapable", 1, []string{fmt.Sprintf("id:%s", a.ID)}); err != nil {
@@ -669,7 +668,7 @@ func allInstances() []reaperaws.Filterable {
 			}
 
 			log.Info("Found %d total instances in %s", sum, region)
-			for _, e := range events {
+			for _, e := range *events {
 				go e.NewStatistic("reaper.instances.total", float64(sum), []string{fmt.Sprintf("region:%s", region)})
 			}
 		}(region)

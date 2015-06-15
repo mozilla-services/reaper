@@ -42,13 +42,14 @@ func PrintFilters(filters map[string]filters.Filter) string {
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	ID            string
-	Name          string
-	Region        string
-	ResourceState ResourceState
-	Description   string
-	VPCID         string
-	OwnerID       string
+	ID             string
+	Name           string
+	Region         string
+	ResourceState  ResourceState
+	Description    string
+	VPCID          string
+	OwnerID        string
+	MatchedFilters string
 
 	Tags map[string]string
 
@@ -119,10 +120,8 @@ func (a *AWSResource) IncrementState() bool {
 
 	switch a.reaperState.State {
 	case state.STATE_NOTIFY1:
-		updated = true
 		newState = state.STATE_NOTIFY2
 		until = until.Add(config.Notifications.SecondNotification.Duration)
-
 	case state.STATE_WHITELIST:
 		// keep same state
 		newState = state.STATE_WHITELIST
@@ -137,12 +136,11 @@ func (a *AWSResource) IncrementState() bool {
 		until = until.Add(config.Notifications.FirstNotification.Duration)
 	default:
 		log.Notice("Unrecognized state %s ", a.reaperState.State)
-		newState = a.reaperState.State
+		newState = state.STATE_START
 	}
 
 	if newState != a.reaperState.State {
 		updated = true
-		log.Debug("Updating state on %s in region %s. New state: %s.", a.ID, a.Region, newState.String())
 	}
 
 	a.reaperState = state.NewStateWithUntilAndState(until, newState)
@@ -155,7 +153,11 @@ func (a *AWSResource) ReapableDescription() string {
 	if owner := a.Owner(); owner != nil {
 		ownerString = fmt.Sprintf(" (owned by %s)", owner)
 	}
-	return fmt.Sprintf("'%s' in %s%s", a.ID, a.Region, ownerString)
+	nameString := ""
+	if name := a.Tag("Name"); name != "" {
+		nameString = fmt.Sprintf(" \"%s\"", name)
+	}
+	return fmt.Sprintf("'%s'%s in %s%s%s with state: %s", a.ID, nameString, a.Region, ownerString, a.MatchedFilters, a.ReaperState().String())
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {

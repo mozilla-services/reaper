@@ -19,9 +19,17 @@ func LoadConfig(path string) (*Config, error) {
 		ApiURL:      "http://localhost",
 		Listen:      "localhost:9000",
 	}
+	notifications := reaperevents.NotificationsConfig{
+		Extras:             true,
+		Interval:           reaperevents.Duration{time.Duration(6) * time.Hour},
+		FirstNotification:  reaperevents.Duration{time.Duration(12) * time.Hour},
+		SecondNotification: reaperevents.Duration{time.Duration(12) * time.Hour},
+		Terminate:          reaperevents.Duration{time.Duration(24) * time.Hour},
+	}
 	conf := Config{
 		AWS: reaperaws.AWSConfig{
-			HTTP: httpconfig,
+			HTTP:          httpconfig,
+			Notifications: notifications,
 		},
 		SMTP: reaperevents.SMTPConfig{
 			HTTPConfig: httpconfig,
@@ -35,15 +43,9 @@ func LoadConfig(path string) (*Config, error) {
 				},
 			},
 		},
-		HTTP: httpconfig,
-		Notifications: reaperevents.NotificationsConfig{
-			Extras:             false,
-			Interval:           reaperevents.Duration{time.Duration(6) * time.Hour},
-			FirstNotification:  reaperevents.Duration{time.Duration(12) * time.Hour},
-			SecondNotification: reaperevents.Duration{time.Duration(12) * time.Hour},
-			Terminate:          reaperevents.Duration{time.Duration(24) * time.Hour},
-		},
-		DryRun: true,
+		HTTP:          httpconfig,
+		Notifications: notifications,
+		DryRun:        true,
 	}
 	md, err := toml.DecodeFile(path, &conf)
 	if err != nil {
@@ -55,7 +57,13 @@ func LoadConfig(path string) (*Config, error) {
 		os.Exit(1)
 	}
 
-	conf.SMTP.HTTPConfig = httpconfig
+	// set dependent values
+	conf.AWS.DryRun = conf.DryRun
+	conf.AWS.Notifications = conf.Notifications
+	conf.AWS.HTTP = conf.HTTP
+	conf.SMTP.HTTPConfig = conf.HTTP
+
+	// TODO: event reporter dependents are done in reaper.Ready()
 
 	return &conf, nil
 }
@@ -95,7 +103,7 @@ type ResourceTypes struct {
 }
 
 type FilterTypes struct {
-	ASG      map[string]filters.Filter
-	Instance map[string]filters.Filter
-	Snapshot map[string]filters.Filter
+	AutoScalingGroup map[string]filters.Filter
+	Instance         map[string]filters.Filter
+	Snapshot         map[string]filters.Filter
 }

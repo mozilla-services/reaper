@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/milescrabill/reaper/reaperlog"
@@ -11,6 +12,7 @@ type ReaperEventConfig struct {
 	Enabled bool
 	DryRun  bool
 	Extras  bool
+	Mode    string
 }
 
 type ReaperEvent struct {
@@ -50,7 +52,15 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	if !e.Config.DryRun && e.Config.Enabled &&
 		time.Now().After(r.ReaperState().Until) &&
 		r.ReaperState().State == state.STATE_REAPABLE {
-		_, err := r.Stop()
+		var err error
+		switch e.Config.Mode {
+		case "Stop":
+			_, err = r.Stop()
+		case "Terminate":
+			_, err = r.Terminate()
+		default:
+			log.Error(fmt.Sprintf("Invalid ReaperEvent Mode %s", e.Config.Mode))
+		}
 		if err != nil {
 			return err
 		}

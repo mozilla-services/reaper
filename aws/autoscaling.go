@@ -60,6 +60,16 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 		a.Tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
 	}
 
+	if a.Tagged(reaperTag) {
+		// restore previously tagged state
+		a.reaperState = state.NewStateWithTag(a.Tags[reaperTag])
+	} else {
+		// initial state
+		a.reaperState = state.NewStateWithUntilAndState(
+			time.Now().Add(config.Notifications.FirstNotification.Duration),
+			state.STATE_START)
+	}
+
 	return &a
 }
 
@@ -285,7 +295,7 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 }
 
 func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
-	log.Debug("Stopping ASG %s in region %s", a.ID, a.Region)
+	log.Debug("Scaling AutoScalingGroup to size %d %s.", size, a.ReapableDescription())
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	input := &autoscaling.UpdateAutoScalingGroupInput{
@@ -299,14 +309,14 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not update ASG %s in region %s", a.ID, a.Region))
+		log.Error(fmt.Sprintf("could not update AutoScalingGroup", a.ReapableDescription()))
 		return false, err
 	}
 	return true, nil
 }
 
 func (a *AutoScalingGroup) Terminate() (bool, error) {
-	log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
+	log.Debug("Terminating AutoScalingGroup %s", a.ReapableDescription())
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	input := &autoscaling.DeleteAutoScalingGroupInput{
@@ -314,7 +324,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete ASG %s in region %s", a.ID, a.Region))
+		log.Error(fmt.Sprintf("could not delete AutoScalingGroup", a.ReapableDescription()))
 		return false, err
 	}
 	return false, nil

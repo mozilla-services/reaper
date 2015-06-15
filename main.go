@@ -25,7 +25,7 @@ var (
 
 func init() {
 	configFile := flag.String("config", "", "path to config file")
-	dryRun := flag.Bool("dryrun", true, "dry run, don't make changes")
+	dryRun := flag.Bool("dryrun", true, "dry run, don't trigger events")
 	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
 	flag.Parse()
 
@@ -115,7 +115,10 @@ func init() {
 
 	config.DryRun = *dryRun
 	if *dryRun {
-		log.Notice("Dry run mode enabled, no changes will be made")
+		log.Notice("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
+		for _, eventReporter := range events {
+			eventReporter.SetDryRun(true)
+		}
 	}
 }
 

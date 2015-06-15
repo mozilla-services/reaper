@@ -5,11 +5,21 @@ import "time"
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {
 	Enabled bool
+	DryRun  bool
+	Extras  bool
 }
 
 // Tagger is an EventReporter that tags AWS Resources
 type Tagger struct {
 	Config *TaggerConfig
+}
+
+func (t *Tagger) SetDryRun(b bool) {
+	t.Config.DryRun = b
+}
+
+func (t *Tagger) SetNotificationExtras(b bool) {
+	t.Config.Extras = b
 }
 
 func NewTagger(c *TaggerConfig) *Tagger {
@@ -29,6 +39,11 @@ func (t *Tagger) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 func (t *Tagger) NewReapableEvent(r Reapable) error {
+	if t.Config.DryRun && t.Config.Extras {
+		log.Notice("DryRun: Not tagging %s", r.ReapableDescription())
+		return nil
+	}
+
 	if time.Now().After(r.ReaperState().Until) {
 		r.IncrementState()
 	}

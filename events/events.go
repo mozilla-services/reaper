@@ -51,6 +51,8 @@ type EventReporter interface {
 	NewStatistic(name string, value float64, tags []string) error
 	NewCountStatistic(name string, tags []string) error
 	NewReapableEvent(r Reapable) error
+	SetDryRun(b bool)
+	SetNotificationExtras(b bool)
 }
 
 // implements EventReporter but does nothing
@@ -70,6 +72,9 @@ func (n *NoEventReporter) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
+func (n *NoEventReporter) SetDryRun(b bool)             {}
+func (n *NoEventReporter) SetNotificationExtras(b bool) {}
+
 type ErrorEventReporter struct{}
 
 func (e *ErrorEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
@@ -87,3 +92,6 @@ func (e *ErrorEventReporter) NewCountStatistic(name string, tags []string) error
 func (e *ErrorEventReporter) NewReapableEvent(r Reapable) error {
 	return fmt.Errorf("ErrorEventReporter")
 }
+
+func (e *ErrorEventReporter) SetDryRun(b bool)             {}
+func (e *ErrorEventReporter) SetNotificationExtras(b bool) {}

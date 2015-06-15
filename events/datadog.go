@@ -12,6 +12,7 @@ import (
 type DataDogConfig struct {
 	Enabled bool
 	DryRun  bool
+	Extras  bool
 	Host    string
 	Port    string
 }
@@ -28,6 +29,14 @@ func NewDataDog(c *DataDogConfig) *DataDog {
 	return &DataDog{
 		Config: c,
 	}
+}
+
+func (d *DataDog) SetDryRun(b bool) {
+	d.Config.DryRun = b
+}
+
+func (d *DataDog) SetNotificationExtras(b bool) {
+	d.Config.Extras = b
 }
 
 // TODO: make this async?
@@ -56,6 +65,11 @@ func (d *DataDog) Godspeed() (*godspeed.Godspeed, error) {
 
 // NewEvent reports an event to DataDog
 func (d *DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+	if d.Config.DryRun && d.Config.Extras {
+		log.Notice("DryRun: Not reporting %s", title)
+		return nil
+	}
+
 	g, err := d.Godspeed()
 	if err != nil {
 		return err
@@ -71,6 +85,11 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 
 // NewStatistic reports a gauge to DataDog
 func (d *DataDog) NewStatistic(name string, value float64, tags []string) error {
+	if d.Config.DryRun && d.Config.Extras {
+		log.Notice("DryRun: Not reporting %s", name)
+		return nil
+	}
+
 	g, err := d.Godspeed()
 	if err != nil {
 		return err
@@ -87,6 +106,11 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 
 // NewCountStatistic reports an Incr to DataDog
 func (d *DataDog) NewCountStatistic(name string, tags []string) error {
+	if d.Config.DryRun && d.Config.Extras {
+		log.Notice("DryRun: Not reporting %s", name)
+		return nil
+	}
+
 	g, err := d.Godspeed()
 	if err != nil {
 		return err

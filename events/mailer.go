@@ -10,7 +10,7 @@ import (
 )
 
 type Mailer struct {
-	conf *SMTPConfig
+	Config *SMTPConfig
 }
 
 type HTTPConfig struct {
@@ -23,13 +23,24 @@ type HTTPConfig struct {
 
 type SMTPConfig struct {
 	HTTPConfig
-	Enabled  bool
+	Enabled bool
+	DryRun  bool
+	Extras  bool
+
 	Host     string
 	Port     int
 	AuthType string
 	Username string
 	Password string
 	From     FromAddress
+}
+
+func (m *Mailer) SetDryRun(b bool) {
+	m.Config.DryRun = b
+}
+
+func (m *Mailer) SetNotificationExtras(b bool) {
+	m.Config.Extras = b
 }
 
 func (s *SMTPConfig) String() string {
@@ -83,8 +94,8 @@ func (f *FromAddress) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func NewMailer(conf *SMTPConfig) *Mailer {
-	return &Mailer{conf}
+func NewMailer(Config *SMTPConfig) *Mailer {
+	return &Mailer{Config}
 }
 
 // methods to conform to EventReporter interface
@@ -100,6 +111,10 @@ func (m *Mailer) NewCountStatistic(name string, tags []string) error {
 
 // TODO: figure out how to goroutine this
 func (m *Mailer) NewReapableEvent(r Reapable) error {
+	if m.Config.DryRun && m.Config.Extras {
+		log.Notice("DryRun: Not mailing about %s", r.ReapableDescription())
+		return nil
+	}
 	addr, subject, body, err := r.ReapableEventEmail()
 	if err != nil {
 		// if this is an unowned error we don't pass it up
@@ -118,7 +133,7 @@ func (m *Mailer) NewReapableEvent(r Reapable) error {
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString("From: " + m.conf.From.Address.String() + "\n")
+	buf.WriteString("From: " + m.Config.From.Address.String() + "\n")
 	buf.WriteString("To: " + to.String() + "\n")
 	buf.WriteString("Subject: " + subject + "\n")
 	buf.WriteString("MIME-Version: 1.0\n")
@@ -128,13 +143,13 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 
 	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
 		to.String(),
-		m.conf.From.Address.String(),
+		m.Config.From.Address.String(),
 		subject)
 
 	return smtp.SendMail(
-		m.conf.Addr(),
-		m.conf.Auth(),
-		m.conf.From.Address.Address,
+		m.Config.Addr(),
+		m.Config.Auth(),
+		m.Config.From.Address.Address,
 		[]string{to.Address},
 		buf.Bytes(),
 	)

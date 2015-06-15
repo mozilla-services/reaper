@@ -304,9 +304,18 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 	return true, nil
 }
 
-// TODO
 func (a *AutoScalingGroup) Terminate() (bool, error) {
 	log.Debug("Terminating ASG %s in region %s.", a.ID, a.Region)
+	as := autoscaling.New(&aws.Config{Region: a.Region})
+
+	input := &autoscaling.DeleteAutoScalingGroupInput{
+		AutoScalingGroupName: &a.ID,
+	}
+	_, err := as.DeleteAutoScalingGroup(input)
+	if err != nil {
+		log.Error(fmt.Sprintf("could not delete ASG %s in region %s", a.ID, a.Region))
+		return false, err
+	}
 	return false, nil
 }
 

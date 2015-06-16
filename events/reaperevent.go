@@ -2,10 +2,8 @@ package events
 
 import (
 	"fmt"
-	"time"
 
 	log "github.com/milescrabill/reaper/reaperlog"
-	"github.com/milescrabill/reaper/state"
 )
 
 type ReaperEventConfig struct {
@@ -27,6 +25,7 @@ func (e *ReaperEvent) SetNotificationExtras(b bool) {
 }
 
 func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
+	c.Name = "ReaperEvent"
 	return &ReaperEvent{c}
 }
 
@@ -40,22 +39,10 @@ func (e *ReaperEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
-	if e.Config.DryRun && e.Config.Extras {
-		log.Notice("DryRun: Not mailing about %s", r.ReapableDescriptionTiny())
-		return nil
-	}
-
-	if !e.Config.Triggering(r) && e.Config.Extras {
-		log.Notice("Not triggering ReaperEvent for %s", r.ReaperState().State.String())
-		return nil
-	}
-
-	// this only gets called if ReaperEvent is added, so we check
-	// for dryrun, that the reapable is in STATE_REAPABLE,
-	// and that current time is later than its Until time
-	if !e.Config.DryRun && e.Config.Enabled &&
-		time.Now().After(r.ReaperState().Until) &&
-		r.ReaperState().State == state.STATE_REAPABLE {
+	if e.Config.ShouldTriggerFor(r) {
+		if e.Config.Extras {
+			log.Error("Triggering ReaperEvent for %s", r.ReaperState().String())
+		}
 		var err error
 		switch e.Config.Mode {
 		case "Stop":
@@ -63,7 +50,7 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 		case "Terminate":
 			_, err = r.Terminate()
 		default:
-			log.Error(fmt.Sprintf("Invalid ReaperEvent Mode %s", e.Config.Mode))
+			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
 		}
 		if err != nil {
 			return err

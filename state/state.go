@@ -6,12 +6,28 @@ import (
 )
 
 const (
-	STATE_START StateEnum = iota
-	STATE_NOTIFY1
-	STATE_NOTIFY2
-	STATE_REAPABLE
-	STATE_WHITELIST
+	FirstState StateEnum = iota
+	SecondState
+	ThirdState
+	FinalState
+	IgnoreState
 )
+
+type Duration struct {
+	time.Duration
+}
+
+func (d *Duration) UnmarshalText(text []byte) (err error) {
+	d.Duration, err = time.ParseDuration(string(text))
+	return
+}
+
+type StatesConfig struct {
+	Interval            Duration
+	FirstStateDuration  Duration
+	SecondStateDuration Duration
+	ThirdStateDuration  Duration
+}
 
 type StateEnum int
 
@@ -34,7 +50,7 @@ func (s *State) String() string {
 func NewState() *State {
 	// default
 	return &State{
-		State:               STATE_START,
+		State:               FirstState,
 		Until:               time.Now(),
 		reaperTagSeparator:  "|",
 		reaperTagTimeFormat: "2006-01-02 03:04PM MST",
@@ -44,7 +60,7 @@ func NewState() *State {
 func NewStateWithUntil(until time.Time) *State {
 	// default
 	return &State{
-		State:               STATE_START,
+		State:               FirstState,
 		Until:               until,
 		reaperTagSeparator:  "|",
 		reaperTagTimeFormat: "2006-01-02 03:04PM MST",
@@ -62,41 +78,35 @@ func NewStateWithUntilAndState(until time.Time, state StateEnum) *State {
 }
 
 func NewStateWithTag(state string) *State {
-	defaultState := NewState()
-
 	if state == "" {
-		return defaultState
+		return NewState()
 	}
 
-	s := strings.Split(state, defaultState.reaperTagSeparator)
+	s := strings.Split(state, NewState().reaperTagSeparator)
 
 	if len(s) != 2 {
-		return defaultState
+		return NewState()
 	}
 
 	var stateEnum StateEnum
 	switch s[0] {
-	case "STATE_START":
-		stateEnum = STATE_START
-	case "STATE_NOTIFY1":
-		stateEnum = STATE_NOTIFY1
-	case "STATE_NOTIFY2":
-		stateEnum = STATE_NOTIFY2
-	case "STATE_WHITELIST":
-		stateEnum = STATE_WHITELIST
-	case "STATE_REAPABLE":
-		stateEnum = STATE_REAPABLE
-	default:
-		return defaultState
+	case "FirstState":
+		stateEnum = FirstState
+	case "SecondState":
+		stateEnum = SecondState
+	case "ThirdState":
+		stateEnum = ThirdState
+	case "FinalState":
+		stateEnum = FinalState
+	case "IgnoreState":
+		stateEnum = IgnoreState
 	}
 
 	// TODO: this only accepts one time format...
-	t, err := time.Parse(defaultState.reaperTagTimeFormat, s[1])
+	t, err := time.Parse(NewState().reaperTagTimeFormat, s[1])
 	if err != nil {
-		return defaultState
+		return NewState()
 	}
 
-	defaultState.Until = t
-	defaultState.State = stateEnum
-	return defaultState
+	return NewStateWithUntilAndState(t, stateEnum)
 }

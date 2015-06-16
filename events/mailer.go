@@ -93,8 +93,9 @@ func (f *FromAddress) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func NewMailer(Config *SMTPConfig) *Mailer {
-	return &Mailer{Config}
+func NewMailer(c *SMTPConfig) *Mailer {
+	c.Name = "Mailer"
+	return &Mailer{c}
 }
 
 // methods to conform to EventReporter interface
@@ -110,28 +111,21 @@ func (m *Mailer) NewCountStatistic(name string, tags []string) error {
 
 // TODO: figure out how to goroutine this
 func (m *Mailer) NewReapableEvent(r Reapable) error {
-	if m.Config.DryRun && m.Config.Extras {
-		log.Notice("DryRun: Not mailing about %s", r.ReapableDescriptionTiny())
-		return nil
-	}
-
-	if !m.Config.Triggering(r) && m.Config.Extras {
-		log.Notice("Not triggering Mailer for %s", r.ReaperState().State.String())
-		return nil
-	}
-
-	addr, subject, body, err := r.ReapableEventEmail()
-	if err != nil {
-		// if this is an unowned error we don't pass it up
-		switch t := err.(type) {
-		case reapable.UnownedError:
-			log.Error(t.Error())
-			return nil
-		default:
+	if m.Config.ShouldTriggerFor(r) {
+		addr, subject, body, err := r.ReapableEventEmail()
+		if err != nil {
+			// if this is an unowned error we don't pass it up
+			switch t := err.(type) {
+			case reapable.UnownedError:
+				log.Error(t.Error())
+				return nil
+			default:
+			}
+			return err
 		}
-		return err
+		return m.Send(addr, subject, body)
 	}
-	return m.Send(addr, subject, body)
+	return nil
 }
 
 // Send an HTML email

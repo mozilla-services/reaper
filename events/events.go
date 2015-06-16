@@ -4,27 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"net/mail"
-	"time"
 
 	"github.com/milescrabill/reaper/reapable"
+	log "github.com/milescrabill/reaper/reaperlog"
 	"github.com/milescrabill/reaper/state"
 )
 
-type Duration struct {
-	time.Duration
-}
-
-func (d *Duration) UnmarshalText(text []byte) (err error) {
-	d.Duration, err = time.ParseDuration(string(text))
-	return
-}
-
 type NotificationsConfig struct {
-	Extras             bool
-	Interval           Duration // like cron, how often to check instances for reaping
-	FirstNotification  Duration // how long after start to first notification
-	SecondNotification Duration // how long after notify1 to second notification
-	Terminate          Duration // how long after notify2 to terminate
+	state.StatesConfig
+	Extras bool
 }
 
 type Reapable interface {
@@ -39,6 +27,8 @@ type EventReporterConfig struct {
 	DryRun  bool
 	Extras  bool
 
+	Name string
+
 	// should be []state.StateEnum...
 	Triggers []string
 }
@@ -46,28 +36,37 @@ type EventReporterConfig struct {
 func (e *EventReporterConfig) ParseTriggers() (triggers []state.StateEnum) {
 	for _, t := range e.Triggers {
 		switch t {
-		case "start":
-			triggers = append(triggers, state.STATE_START)
-		case "notify1":
-			triggers = append(triggers, state.STATE_NOTIFY1)
-		case "notify2":
-			triggers = append(triggers, state.STATE_NOTIFY2)
-		case "reapable":
-			triggers = append(triggers, state.STATE_REAPABLE)
-		case "whitelist":
-			triggers = append(triggers, state.STATE_WHITELIST)
+		case "first":
+			triggers = append(triggers, state.FirstState)
+		case "second":
+			triggers = append(triggers, state.SecondState)
+		case "third":
+			triggers = append(triggers, state.ThirdState)
+		case "final":
+			triggers = append(triggers, state.FinalState)
+		case "ignore":
+			triggers = append(triggers, state.IgnoreState)
+		default:
+			log.Warning("%s is not an available EventReporter trigger", t)
 		}
 	}
 	return
 }
 
-func (e *EventReporterConfig) Triggering(r Reapable) bool {
-	// if the reapable's state is set to trigger this EventReporter
+func (e *EventReporterConfig) ShouldTriggerFor(r Reapable) bool {
 	triggering := false
-	for trigger := range e.Triggers {
-		if r.ReaperState().State == state.StateEnum(trigger) {
+	// if the reapable's state is set to trigger this EventReporter
+	for _, trigger := range e.ParseTriggers() {
+		if trigger == r.ReaperState().State {
 			triggering = true
 		}
+	}
+
+	if e.DryRun {
+		if e.Extras {
+			log.Notice("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
+		}
+		return false
 	}
 	return triggering
 }
@@ -82,7 +81,15 @@ type EventReporter interface {
 }
 
 // implements EventReporter but does nothing
-type NoEventReporter struct{}
+type NoEventReporter struct {
+	EventReporterConfig
+}
+
+// TODO: this is sorta redundant with triggers, won't ever activate
+// not that it ever did...
+func NewNoEventReporter() *NoEventReporter {
+	return &NoEventReporter{EventReporterConfig{Name: "NoEventReporter"}}
+}
 
 func (n *NoEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil
@@ -101,7 +108,14 @@ func (n *NoEventReporter) NewReapableEvent(r Reapable) error {
 func (n *NoEventReporter) SetDryRun(b bool)             {}
 func (n *NoEventReporter) SetNotificationExtras(b bool) {}
 
-type ErrorEventReporter struct{}
+// TODO: this is sorta redundant with triggers, won't ever activate
+type ErrorEventReporter struct {
+	EventReporterConfig
+}
+
+func NewErrorEventReporter() *ErrorEventReporter {
+	return &ErrorEventReporter{EventReporterConfig{Name: "ErrorEventReporter"}}
+}
 
 func (e *ErrorEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return fmt.Errorf("ErrorEventReporter")

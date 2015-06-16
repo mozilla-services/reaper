@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"time"
 
 	log "github.com/milescrabill/reaper/reaperlog"
 )
@@ -18,9 +17,8 @@ type InteractiveEvent struct {
 }
 
 func NewInteractiveEvent(c *InteractiveEventConfig) *InteractiveEvent {
-	return &InteractiveEvent{
-		Config: c,
-	}
+	c.Name = "InteractiveEvent"
+	return &InteractiveEvent{c}
 }
 
 func (n *InteractiveEvent) SetDryRun(b bool) {
@@ -41,23 +39,13 @@ func (n *InteractiveEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
-	if n.Config.DryRun && n.Config.Extras {
-		log.Info(fmt.Sprintf("DryRun: Interactive choice for %s disabled", r.ReapableDescriptionTiny()))
-		return nil
-	}
-
-	if !n.Config.Triggering(r) && n.Config.Extras {
-		log.Notice("Not triggering Interactive Mode for %s", r.ReaperState().State.String())
-		return nil
-	}
-
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescriptionTiny())
 	}
 
 	var err error
-	if time.Now().After(r.ReaperState().Until) {
-		log.Notice(fmt.Sprintf("Choose one of the actions below for %s. All other input is ignored:\nT to terminate\nS to stop\nF to ForceStop\nW to whitelist\nU to update state\n", r.ReapableDescriptionShort()))
+	if n.Config.ShouldTriggerFor(r) {
+		log.Notice(fmt.Sprintf("Choose one of the actions below for %s. All other input is ignored:\nT to terminate\nS to stop\nF to ForceStop\nW to whitelist\nI to increment state\nU to unsave state\n", r.ReapableDescriptionShort()))
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -74,9 +62,11 @@ func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 			_, err = r.Whitelist()
 		case 'F':
 			_, err = r.ForceStop()
-		case 'U':
+		case 'I':
 			_ = r.IncrementState()
 			_, err = r.Save(r.ReaperState())
+		case 'U':
+			_, err = r.Unsave()
 		}
 	}
 	return err

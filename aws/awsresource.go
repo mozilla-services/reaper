@@ -103,29 +103,33 @@ func (a *AWSResource) IncrementState() bool {
 	updated := false
 
 	switch a.reaperState.State {
-	case state.STATE_NOTIFY1:
-		newState = state.STATE_NOTIFY2
-		until = until.Add(config.Notifications.SecondNotification.Duration)
-	case state.STATE_WHITELIST:
-		// keep same state
-		newState = state.STATE_WHITELIST
-	case state.STATE_NOTIFY2:
-		newState = state.STATE_REAPABLE
-		until = until.Add(config.Notifications.Terminate.Duration)
-	case state.STATE_REAPABLE:
-		// keep same state
-		newState = state.STATE_REAPABLE
-	case state.STATE_START:
-		newState = state.STATE_NOTIFY1
-		until = until.Add(config.Notifications.FirstNotification.Duration)
 	default:
-		log.Notice("Unrecognized state %s ", a.reaperState.State)
-		newState = state.STATE_START
+		// shouldn't ever be hit, but if it is
+		// set state to the FirstState
+		newState = state.FirstState
+		until = until.Add(config.Notifications.FirstStateDuration.Duration)
+	case state.FirstState:
+		// go to SecondState at the end of FirstState
+		newState = state.SecondState
+		until = until.Add(config.Notifications.SecondStateDuration.Duration)
+	case state.SecondState:
+		// go to ThirdState at the end of SecondState
+		newState = state.ThirdState
+		until = until.Add(config.Notifications.ThirdStateDuration.Duration)
+	case state.ThirdState:
+		// go to FinalState at the end of ThirdState
+		newState = state.FinalState
+	case state.FinalState:
+		// keep same state
+		newState = state.FinalState
+	case state.IgnoreState:
+		// keep same state
+		newState = state.IgnoreState
 	}
 
 	if newState != a.reaperState.State {
 		updated = true
-		log.Notice("Updating state on %s. New state: %s.", a.ReapableDescriptionShort(), newState.String())
+		log.Notice("Updating state for %s. New state: %s.", a.ReapableDescriptionTiny(), newState.String())
 	}
 
 	a.reaperState = state.NewStateWithUntilAndState(until, newState)
@@ -163,6 +167,7 @@ func (a *AWSResource) Save(s *state.State) (bool, error) {
 }
 
 func (a *AWSResource) Unsave() (bool, error) {
+	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
 	return UntagReaperState(a.Region, a.ID)
 }
 

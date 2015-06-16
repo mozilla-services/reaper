@@ -1,10 +1,6 @@
 package events
 
-import (
-	"time"
-
-	log "github.com/milescrabill/reaper/reaperlog"
-)
+import log "github.com/milescrabill/reaper/reaperlog"
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {
@@ -25,9 +21,8 @@ func (t *Tagger) SetNotificationExtras(b bool) {
 }
 
 func NewTagger(c *TaggerConfig) *Tagger {
-	return &Tagger{
-		Config: c,
-	}
+	c.Name = "Tagger"
+	return &Tagger{c}
 }
 
 // Tagger does nothing for most events
@@ -41,26 +36,15 @@ func (t *Tagger) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 func (t *Tagger) NewReapableEvent(r Reapable) error {
-	if t.Config.DryRun && t.Config.Extras {
-		log.Notice("DryRun: Not tagging %s", r.ReapableDescriptionTiny())
-		return nil
-	}
-
-	if !t.Config.Triggering(r) && t.Config.Extras {
-		log.Notice("Not triggering Tagger for %s", r.ReaperState().State.String())
-		return nil
-	}
-
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescription())
 	}
 
-	if time.Now().After(r.ReaperState().Until) {
-		_ = r.IncrementState()
-	}
-	_, err := r.Save(r.ReaperState())
-	if err != nil {
-		return err
+	if t.Config.ShouldTriggerFor(r) {
+		_, err := r.Save(r.ReaperState())
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

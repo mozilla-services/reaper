@@ -11,6 +11,7 @@ import (
 	reaperevents "github.com/milescrabill/reaper/events"
 	"github.com/milescrabill/reaper/filters"
 	log "github.com/milescrabill/reaper/reaperlog"
+	"github.com/milescrabill/reaper/state"
 )
 
 func LoadConfig(path string) (*Config, error) {
@@ -20,11 +21,13 @@ func LoadConfig(path string) (*Config, error) {
 		Listen:      "localhost:9000",
 	}
 	notifications := reaperevents.NotificationsConfig{
-		Extras:             true,
-		Interval:           reaperevents.Duration{time.Duration(6) * time.Hour},
-		FirstNotification:  reaperevents.Duration{time.Duration(12) * time.Hour},
-		SecondNotification: reaperevents.Duration{time.Duration(12) * time.Hour},
-		Terminate:          reaperevents.Duration{time.Duration(24) * time.Hour},
+		state.StatesConfig{
+			Interval:            state.Duration{time.Duration(6) * time.Hour},
+			FirstStateDuration:  state.Duration{time.Duration(12) * time.Hour},
+			SecondStateDuration: state.Duration{time.Duration(12) * time.Hour},
+			ThirdStateDuration:  state.Duration{time.Duration(12) * time.Hour},
+		},
+		true,
 	}
 	conf := Config{
 		AWS: reaperaws.AWSConfig{
@@ -58,6 +61,7 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	// set dependent values
+	conf.Notifications.StatesConfig = conf.States
 	conf.AWS.DryRun = conf.DryRun
 	conf.AWS.Notifications = conf.Notifications
 	conf.AWS.HTTP = conf.HTTP
@@ -75,6 +79,7 @@ type Config struct {
 	AWS           reaperaws.AWSConfig
 	SMTP          reaperevents.SMTPConfig
 	Notifications reaperevents.NotificationsConfig
+	States        state.StatesConfig
 
 	Events       EventTypes
 	LogFile      string

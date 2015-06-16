@@ -85,8 +85,8 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	} else {
 		// initial state
 		i.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstNotification.Duration),
-			state.STATE_START)
+			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
+			state.FirstState)
 	}
 
 	return &i
@@ -321,6 +321,7 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 }
 
 func (i *Instance) Terminate() (bool, error) {
+	log.Notice("Terminating Instance %s", i.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.TerminateInstancesInput{
 		InstanceIDs: []*string{aws.String(i.ID)},
@@ -333,7 +334,7 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return false, fmt.Errorf("Instance could %s not be terminated.", i.ReapableDescription())
+		return false, fmt.Errorf("Instance could %s not be terminated.", i.ReapableDescriptionTiny())
 	}
 
 	return true, nil
@@ -344,6 +345,7 @@ func (i *Instance) ForceStop() (bool, error) {
 }
 
 func (i *Instance) Stop() (bool, error) {
+	log.Notice("Stopping Instance %s", i.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: i.Region})
 	req := &ec2.StopInstancesInput{
 		InstanceIDs: []*string{aws.String(i.ID)},
@@ -356,7 +358,7 @@ func (i *Instance) Stop() (bool, error) {
 	}
 
 	if len(resp.StoppingInstances) != 1 {
-		return false, fmt.Errorf("Instance %s could not be stopped.", i.ReapableDescription())
+		return false, fmt.Errorf("Instance %s could not be stopped.", i.ReapableDescriptionTiny())
 	}
 
 	return true, nil

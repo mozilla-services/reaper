@@ -33,11 +33,11 @@ WhitelistTag = "REAPER_SPARE_ME"
 
     # How long the instance is allowed to run before sending the first
     # notification
-    FirstNotification = "30s"
+    FirstNoticeStateDuration = "30s"
 
     # How long after the first notification before sending the second
     # notification
-    SecondNotification = "60s"
+    SecondNoticeStateDuration = "60s"
 
     # How long after the second notification before terminating the instance
     Terminate = "1m"

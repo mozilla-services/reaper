@@ -3,7 +3,6 @@ package events
 import (
 	"fmt"
 	"strconv"
-	"text/template"
 
 	"github.com/PagerDuty/godspeed"
 
@@ -20,15 +19,13 @@ type DataDogConfig struct {
 // implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {
-	Config        *DataDogConfig
-	eventTemplate template.Template
-	godspeed      *godspeed.Godspeed
+	Config   *DataDogConfig
+	godspeed *godspeed.Godspeed
 }
 
 func NewDataDog(c *DataDogConfig) *DataDog {
-	return &DataDog{
-		Config: c,
-	}
+	c.Name = "DataDog"
+	return &DataDog{Config: c}
 }
 
 func (d *DataDog) SetDryRun(b bool) {
@@ -65,8 +62,10 @@ func (d *DataDog) Godspeed() (*godspeed.Godspeed, error) {
 
 // NewEvent reports an event to DataDog
 func (d *DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	if d.Config.DryRun && d.Config.Extras {
-		log.Notice("DryRun: Not reporting %s", title)
+	if d.Config.DryRun {
+		if d.Config.Extras {
+			log.Notice("DryRun: Not reporting %s", title)
+		}
 		return nil
 	}
 
@@ -85,8 +84,10 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 
 // NewStatistic reports a gauge to DataDog
 func (d *DataDog) NewStatistic(name string, value float64, tags []string) error {
-	if d.Config.DryRun && d.Config.Extras {
-		log.Notice("DryRun: Not reporting %s", name)
+	if d.Config.DryRun {
+		if d.Config.Extras {
+			log.Notice("DryRun: Not reporting %s", name)
+		}
 		return nil
 	}
 
@@ -106,8 +107,10 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 
 // NewCountStatistic reports an Incr to DataDog
 func (d *DataDog) NewCountStatistic(name string, tags []string) error {
-	if d.Config.DryRun && d.Config.Extras {
-		log.Notice("DryRun: Not reporting %s", name)
+	if d.Config.DryRun {
+		if d.Config.Extras {
+			log.Notice("DryRun: Not reporting %s", name)
+		}
 		return nil
 	}
 
@@ -125,19 +128,11 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 }
 
 func (d *DataDog) NewReapableEvent(r Reapable) error {
-	if d.Config.DryRun && d.Config.Extras {
-		log.Notice("DryRun: Not reporting %s", r.ReapableDescriptionTiny())
-		return nil
-	}
-
-	if !d.Config.Triggering(r) && d.Config.Extras {
-		log.Notice("Not triggering DataDog for %s", r.ReaperState().State.String())
-		return nil
-	}
-
-	err := d.NewEvent("Reapable instance discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
-	if err != nil {
-		return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
+	if d.Config.ShouldTriggerFor(r) {
+		err := d.NewEvent("Reapable instance discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
+		if err != nil {
+			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
+		}
 	}
 	return nil
 }

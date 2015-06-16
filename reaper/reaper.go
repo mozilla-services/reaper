@@ -409,7 +409,7 @@ func (r *Reaper) reap(done chan bool) {
 			reapAutoScalingGroup(t)
 			asgs = append(asgs, *t)
 		case *reaperaws.Snapshot:
-			reapSnapshot(t)
+			// reapSnapshot(t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -474,25 +474,14 @@ func applyFilters(f reaperaws.Filterable, fs map[string]filters.Filter) bool {
 	return matched
 }
 
-func reapSnapshot(s *reaperaws.Snapshot) {
-	filters := config.Snapshots.Filters
-	if applyFilters(s, filters) {
-		log.Debug(fmt.Sprintf("Snapshot %s matched %s.",
-			s.ID,
-			reaperaws.PrintFilters(filters)))
-		// TODO
-		// for _, e := range *events {
-		// e.NewReapableSnapshotEvent(s)
-		// }
-	}
-}
-
 func reapInstance(i *reaperaws.Instance) {
 	filters := config.Instances.Filters
 	if applyFilters(i, filters) {
 		i.MatchedFilters = fmt.Sprintf(" matched filters %s", reaperaws.PrintFilters(filters))
+		if time.Now().After(i.ReaperState().Until) {
+			_ = i.IncrementState()
+		}
 		log.Notice(fmt.Sprintf("Reapable instance discovered: %s.", i.ReapableDescription()))
-
 		for _, e := range *events {
 			if err := e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)}); err != nil {
 				log.Error(err.Error())
@@ -511,6 +500,9 @@ func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 	filters := config.AutoScalingGroups.Filters
 	if applyFilters(a, filters) {
 		a.MatchedFilters = fmt.Sprintf(" matched filters %s", reaperaws.PrintFilters(filters))
+		if time.Now().After(a.ReaperState().Until) {
+			_ = a.IncrementState()
+		}
 		log.Notice(fmt.Sprintf("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription()))
 
 		for _, e := range *events {

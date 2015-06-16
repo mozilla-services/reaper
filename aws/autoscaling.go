@@ -42,7 +42,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:        *asg.AutoScalingGroupName,
 			Region:      region,
 			Tags:        make(map[string]string),
-			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstNotification.Duration)),
+			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstStateDuration.Duration)),
 		},
 		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
 		CreatedTime:             *asg.CreatedTime,
@@ -66,8 +66,8 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	} else {
 		// initial state
 		a.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstNotification.Duration),
-			state.STATE_START)
+			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
+			state.FirstState)
 	}
 
 	return &a
@@ -227,6 +227,7 @@ func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
 
 // method for reapable -> overrides promoted AWSResource method of same name?
 func (a *AutoScalingGroup) Unsave() (bool, error) {
+	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
 	return a.untagReaperState(a.Region, a.ID, a.ReaperState())
 }
 
@@ -320,7 +321,7 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 }
 
 func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
-	log.Debug("Scaling AutoScalingGroup to size %d %s.", size, a.ReapableDescription())
+	log.Notice("Scaling AutoScalingGroup to size %d %s.", size, a.ReapableDescriptionTiny())
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	input := &autoscaling.UpdateAutoScalingGroupInput{
@@ -334,14 +335,14 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not update AutoScalingGroup", a.ReapableDescription()))
+		log.Error(fmt.Sprintf("could not update AutoScalingGroup", a.ReapableDescriptionTiny()))
 		return false, err
 	}
 	return true, nil
 }
 
 func (a *AutoScalingGroup) Terminate() (bool, error) {
-	log.Debug("Terminating AutoScalingGroup %s", a.ReapableDescription())
+	log.Notice("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
 	as := autoscaling.New(&aws.Config{Region: a.Region})
 
 	input := &autoscaling.DeleteAutoScalingGroupInput{
@@ -349,7 +350,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete AutoScalingGroup", a.ReapableDescription()))
+		log.Error(fmt.Sprintf("could not delete AutoScalingGroup", a.ReapableDescriptionTiny()))
 		return false, err
 	}
 	return false, nil

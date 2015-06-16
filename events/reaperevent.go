@@ -9,10 +9,9 @@ import (
 )
 
 type ReaperEventConfig struct {
-	Enabled bool
-	DryRun  bool
-	Extras  bool
-	Mode    string
+	EventReporterConfig
+
+	Mode string
 }
 
 type ReaperEvent struct {
@@ -42,7 +41,12 @@ func (e *ReaperEvent) NewCountStatistic(name string, tags []string) error {
 }
 func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	if e.Config.DryRun && e.Config.Extras {
-		log.Notice("DryRun: Not mailing about %s", r.ReapableDescription())
+		log.Notice("DryRun: Not mailing about %s", r.ReapableDescriptionTiny())
+		return nil
+	}
+
+	if !e.Config.Triggering(r) && e.Config.Extras {
+		log.Notice("Not triggering ReaperEvent for %s", r.ReaperState().State.String())
 		return nil
 	}
 

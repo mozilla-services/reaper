@@ -494,9 +494,6 @@ func reapInstance(i *reaperaws.Instance) {
 		log.Notice(fmt.Sprintf("Reapable instance discovered: %s.", i.ReapableDescription()))
 
 		for _, e := range *events {
-			if err := e.NewEvent("Reapable instance discovered", string(i.ReapableEventText().Bytes()), nil, nil); err != nil {
-				log.Error(err.Error())
-			}
 			if err := e.NewStatistic("reaper.instances.reapable", 1, []string{fmt.Sprintf("id:%s", i.ID)}); err != nil {
 				log.Error(err.Error())
 			}

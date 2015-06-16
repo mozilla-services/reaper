@@ -225,6 +225,31 @@ func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
 	return a.tagReaperState(a.Region, a.ID, a.ReaperState())
 }
 
+// method for reapable -> overrides promoted AWSResource method of same name?
+func (a *AutoScalingGroup) Unsave() (bool, error) {
+	return a.untagReaperState(a.Region, a.ID, a.ReaperState())
+}
+
+func (a *AutoScalingGroup) untagReaperState(region, id string, newState *state.State) (bool, error) {
+	api := autoscaling.New(&aws.Config{Region: region})
+	deletereq := &autoscaling.DeleteTagsInput{
+		Tags: []*autoscaling.Tag{
+			&autoscaling.Tag{
+				ResourceID:   aws.String(id),
+				ResourceType: aws.String("auto-scaling-group"),
+				Key:          aws.String(reaperTag),
+			},
+		},
+	}
+
+	_, err := api.DeleteTags(deletereq)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (a *AutoScalingGroup) tagReaperState(region, id string, newState *state.State) (bool, error) {
 	api := autoscaling.New(&aws.Config{Region: region})
 	createreq := &autoscaling.CreateOrUpdateTagsInput{

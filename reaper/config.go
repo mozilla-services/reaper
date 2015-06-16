@@ -90,10 +90,11 @@ type Config struct {
 }
 
 type EventTypes struct {
-	DataDog reaperevents.DataDogConfig
-	Email   reaperevents.SMTPConfig
-	Tagger  reaperevents.TaggerConfig
-	Reaper  reaperevents.ReaperEventConfig
+	DataDog     reaperevents.DataDogConfig
+	Email       reaperevents.SMTPConfig
+	Tagger      reaperevents.TaggerConfig
+	Reaper      reaperevents.ReaperEventConfig
+	Interactive reaperevents.InteractiveEventConfig
 }
 
 type FilterGroup struct {

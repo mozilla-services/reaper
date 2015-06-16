@@ -300,6 +300,16 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		if err == nil && t.Before(i.LaunchTime) {
 			matched = true
 		}
+	case "LaunchTimeInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && time.Since(i.LaunchTime) < d {
+			matched = true
+		}
+	case "LaunchTimeNotInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && time.Since(i.LaunchTime) > d {
+			matched = true
+		}
 	case "ReaperState":
 		if i.reaperState.State.String() == filter.Arguments[0] {
 			matched = true

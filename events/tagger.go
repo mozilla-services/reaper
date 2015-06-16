@@ -8,9 +8,7 @@ import (
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {
-	Enabled bool
-	DryRun  bool
-	Extras  bool
+	EventReporterConfig
 }
 
 // Tagger is an EventReporter that tags AWS Resources
@@ -44,7 +42,12 @@ func (t *Tagger) NewCountStatistic(name string, tags []string) error {
 }
 func (t *Tagger) NewReapableEvent(r Reapable) error {
 	if t.Config.DryRun && t.Config.Extras {
-		log.Notice("DryRun: Not tagging %s", r.ReapableDescription())
+		log.Notice("DryRun: Not tagging %s", r.ReapableDescriptionTiny())
+		return nil
+	}
+
+	if !t.Config.Triggering(r) && t.Config.Extras {
+		log.Notice("Not triggering Tagger for %s", r.ReaperState().State.String())
 		return nil
 	}
 

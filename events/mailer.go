@@ -24,9 +24,7 @@ type HTTPConfig struct {
 
 type SMTPConfig struct {
 	HTTPConfig
-	Enabled bool
-	DryRun  bool
-	Extras  bool
+	EventReporterConfig
 
 	Host     string
 	Port     int
@@ -113,9 +111,15 @@ func (m *Mailer) NewCountStatistic(name string, tags []string) error {
 // TODO: figure out how to goroutine this
 func (m *Mailer) NewReapableEvent(r Reapable) error {
 	if m.Config.DryRun && m.Config.Extras {
-		log.Notice("DryRun: Not mailing about %s", r.ReapableDescription())
+		log.Notice("DryRun: Not mailing about %s", r.ReapableDescriptionTiny())
 		return nil
 	}
+
+	if !m.Config.Triggering(r) && m.Config.Extras {
+		log.Notice("Not triggering Mailer for %s", r.ReaperState().State.String())
+		return nil
+	}
+
 	addr, subject, body, err := r.ReapableEventEmail()
 	if err != nil {
 		// if this is an unowned error we don't pass it up
@@ -132,7 +136,6 @@ func (m *Mailer) NewReapableEvent(r Reapable) error {
 
 // Send an HTML email
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
-
 	buf := bytes.NewBuffer(nil)
 	buf.WriteString("From: " + m.Config.From.Address.String() + "\n")
 	buf.WriteString("To: " + to.String() + "\n")

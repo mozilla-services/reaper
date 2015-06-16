@@ -12,11 +12,9 @@ import (
 
 // DataDogConfig is the configuration for a DataDog
 type DataDogConfig struct {
-	Enabled bool
-	DryRun  bool
-	Extras  bool
-	Host    string
-	Port    string
+	EventReporterConfig
+	Host string
+	Port string
 }
 
 // implements EventReporter, sends events and statistics to DataDog
@@ -127,5 +125,19 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 }
 
 func (d *DataDog) NewReapableEvent(r Reapable) error {
+	if d.Config.DryRun && d.Config.Extras {
+		log.Notice("DryRun: Not reporting %s", r.ReapableDescriptionTiny())
+		return nil
+	}
+
+	if !d.Config.Triggering(r) && d.Config.Extras {
+		log.Notice("Not triggering DataDog for %s", r.ReaperState().State.String())
+		return nil
+	}
+
+	err := d.NewEvent("Reapable instance discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
+	if err != nil {
+		return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
+	}
 	return nil
 }

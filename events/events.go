@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/milescrabill/reaper/reapable"
+	"github.com/milescrabill/reaper/state"
 )
 
 type Duration struct {
@@ -31,6 +32,44 @@ type Reapable interface {
 	ReapableEventText() *bytes.Buffer
 	//ReapableEventHTML() *bytes.Buffer
 	ReapableEventEmail() (mail.Address, string, string, error)
+}
+
+type EventReporterConfig struct {
+	Enabled bool
+	DryRun  bool
+	Extras  bool
+
+	// should be []state.StateEnum...
+	Triggers []string
+}
+
+func (e *EventReporterConfig) ParseTriggers() (triggers []state.StateEnum) {
+	for _, t := range e.Triggers {
+		switch t {
+		case "start":
+			triggers = append(triggers, state.STATE_START)
+		case "notify1":
+			triggers = append(triggers, state.STATE_NOTIFY1)
+		case "notify2":
+			triggers = append(triggers, state.STATE_NOTIFY2)
+		case "reapable":
+			triggers = append(triggers, state.STATE_REAPABLE)
+		case "whitelist":
+			triggers = append(triggers, state.STATE_WHITELIST)
+		}
+	}
+	return
+}
+
+func (e *EventReporterConfig) Triggering(r Reapable) bool {
+	// if the reapable's state is set to trigger this EventReporter
+	triggering := false
+	for trigger := range e.Triggers {
+		if r.ReaperState().State == state.StateEnum(trigger) {
+			triggering = true
+		}
+	}
+	return triggering
 }
 
 type EventReporter interface {

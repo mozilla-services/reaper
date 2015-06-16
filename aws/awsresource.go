@@ -95,22 +95,6 @@ func (a *AWSResource) Owner() *mail.Address {
 	return nil
 }
 
-func (a *AWSResource) ReaperVisible() bool {
-	return time.Now().After(a.reaperState.Until)
-}
-func (a *AWSResource) ReaperStarted() bool {
-	return a.reaperState.State == state.STATE_START
-}
-func (a *AWSResource) ReaperNotified(notifyNum int) bool {
-	if notifyNum == 1 {
-		return a.reaperState.State == state.STATE_NOTIFY1
-	} else if notifyNum == 2 {
-		return a.reaperState.State == state.STATE_NOTIFY2
-	} else {
-		return false
-	}
-}
-
 func (a *AWSResource) IncrementState() bool {
 	var newState state.StateEnum
 	until := time.Now()

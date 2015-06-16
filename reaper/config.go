@@ -63,6 +63,8 @@ func LoadConfig(path string) (*Config, error) {
 	// set dependent values
 	conf.Notifications.StatesConfig = conf.States
 	conf.AWS.DryRun = conf.DryRun
+	conf.AWS.WhitelistTag = conf.WhitelistTag
+	conf.AWS.DefaultOwner = conf.DefaultOwner
 	conf.AWS.Notifications = conf.Notifications
 	conf.AWS.HTTP = conf.HTTP
 	conf.SMTP.HTTPConfig = conf.HTTP
@@ -85,6 +87,7 @@ type Config struct {
 	LogFile      string
 	StateFile    string
 	WhitelistTag string
+	DefaultOwner string
 
 	AutoScalingGroups FilterGroup
 	Instances         FilterGroup

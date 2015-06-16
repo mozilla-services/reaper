@@ -92,6 +92,12 @@ func (a *AWSResource) Owner() *mail.Address {
 		return addr
 	}
 
+	// default owner is specified
+	if addr, err := mail.ParseAddress(
+		fmt.Sprintf("%s@mozilla.com", config.DefaultOwner)); config.DefaultOwner != "" && err == nil {
+		return addr
+	}
+
 	return nil
 }
 

@@ -9,6 +9,7 @@ type AWSConfig struct {
 	HTTP          events.HTTPConfig
 	Regions       []string
 	WhitelistTag  string
+	DefaultOwner  string
 	DryRun        bool
 }
 

@@ -119,6 +119,17 @@ func (r *Reaper) reap() {
 	for _, ownerMap := range owned {
 		// apply filters to their resources
 		resources := applyFilters(ownerMap)
+		// if there's only one resource for this owner
+		if len(resources) == 1 {
+			// no point sending a batch
+			// so instead just add it to unowned
+			// to be individually sent
+			unowned = append(unowned, resources...)
+			continue
+		}
+
+		// append the resources to filtered
+		// so that reap methods are called on them
 		filtered = append(filtered, resources...)
 		// trigger a per owner batch event
 		for _, e := range *events {
@@ -216,28 +227,29 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 // makes a slice of all filterables by appending
 // output of each filterable types aggregator function
 func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable) {
+	// all resources are appended to owned or unowned
 	owned := make(map[string][]reaperevents.Reapable)
 	var unowned []reaperevents.Reapable
+
 	if config.Instances.Enabled {
 		// get all instances
 		for i := range getInstances() {
 			// group instances by owner
 			if i.Owner() != nil {
-				owned[i.Owner().Name] = append(owned[i.Owner().Name], i)
+				owned[i.Owner().Address] = append(owned[i.Owner().Address], i)
 			} else {
-				// if unowned, append to filterables
+				// if unowned, append to unowned
 				unowned = append(unowned, i)
 			}
 		}
-		// all instances are appended to instances or filterables
 	}
 	if config.AutoScalingGroups.Enabled {
 		for a := range getAutoScalingGroups() {
-			// group instances by owner
+			// group asgs by owner
 			if a.Owner() != nil {
-				owned[a.Owner().Name] = append(owned[a.Owner().Name], a)
+				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
 			} else {
-				// if unowned, append to filterables
+				// if unowned, append to unowned
 				unowned = append(unowned, a)
 			}
 		}

@@ -232,7 +232,6 @@ State: {{ .Instance.AWSState.String}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
-[AWS Console URL]({{.Instance.AWSConsoleURL}})\n
 [Whitelist]({{ .WhitelistLink }}) this instance.
 [Stop]({{ .StopLink }}) this instance.
 [Terminate]({{ .TerminateLink }}) this instance.

@@ -248,6 +248,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	return owned, unowned
 }
 
+// takes an array of filterables
+// actually (reaperevents.Reapables because I suck at the type system)
+// and spits out a filtered array BY THE INDIVIDUAL
 func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 	// recover from potential panics caused by malformed filters
 	defer func() {
@@ -266,6 +269,9 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		case *reaperaws.AutoScalingGroup:
 			fs = config.AutoScalingGroups.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
+		default:
+			log.Warning("You probably screwed and need to make sure applyFilters works!")
+			return []reaperevents.Reapable{}
 		}
 
 		// defaults to a match

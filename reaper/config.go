@@ -21,13 +21,13 @@ func LoadConfig(path string) (*Config, error) {
 		Listen:      "localhost:9000",
 	}
 	notifications := reaperevents.NotificationsConfig{
-		state.StatesConfig{
-			Interval:            state.Duration{time.Duration(6) * time.Hour},
-			FirstStateDuration:  state.Duration{time.Duration(12) * time.Hour},
-			SecondStateDuration: state.Duration{time.Duration(12) * time.Hour},
-			ThirdStateDuration:  state.Duration{time.Duration(12) * time.Hour},
+		StatesConfig: state.StatesConfig{
+			Interval:            state.Duration{Duration: time.Duration(6) * time.Hour},
+			FirstStateDuration:  state.Duration{Duration: time.Duration(12) * time.Hour},
+			SecondStateDuration: state.Duration{Duration: time.Duration(12) * time.Hour},
+			ThirdStateDuration:  state.Duration{Duration: time.Duration(12) * time.Hour},
 		},
-		true,
+		Extras: true,
 	}
 	conf := Config{
 		AWS: reaperaws.AWSConfig{
@@ -40,7 +40,7 @@ func LoadConfig(path string) (*Config, error) {
 			Port:       587,
 			AuthType:   "none",
 			From: reaperevents.FromAddress{
-				mail.Address{
+				Address: mail.Address{
 					Name:    "reaper",
 					Address: "aws-reaper@mozilla.com",
 				},

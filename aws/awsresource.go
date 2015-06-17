@@ -15,10 +15,10 @@ import (
 	"github.com/milescrabill/reaper/state"
 )
 
-type ResourceState int
+type AWSState int
 
 const (
-	pending ResourceState = iota
+	pending AWSState = iota
 	running
 	shuttingDown
 	terminated
@@ -45,7 +45,7 @@ type AWSResource struct {
 	ID             string
 	Name           string
 	Region         string
-	ResourceState  ResourceState
+	AWSState       AWSState
 	Description    string
 	VPCID          string
 	OwnerID        string
@@ -63,12 +63,12 @@ func (a *AWSResource) Tagged(tag string) bool {
 }
 
 // filter funcs for ResourceState
-func (a *AWSResource) Pending() bool      { return a.ResourceState == pending }
-func (a *AWSResource) Running() bool      { return a.ResourceState == running }
-func (a *AWSResource) ShuttingDown() bool { return a.ResourceState == shuttingDown }
-func (a *AWSResource) Terminated() bool   { return a.ResourceState == terminated }
-func (a *AWSResource) Stopping() bool     { return a.ResourceState == stopping }
-func (a *AWSResource) Stopped() bool      { return a.ResourceState == stopped }
+func (a *AWSResource) Pending() bool      { return a.AWSState == pending }
+func (a *AWSResource) Running() bool      { return a.AWSState == running }
+func (a *AWSResource) ShuttingDown() bool { return a.AWSState == shuttingDown }
+func (a *AWSResource) Terminated() bool   { return a.AWSState == terminated }
+func (a *AWSResource) Stopping() bool     { return a.AWSState == stopping }
+func (a *AWSResource) Stopped() bool      { return a.AWSState == stopped }
 
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.Tags[t] }

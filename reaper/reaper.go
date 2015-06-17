@@ -26,22 +26,23 @@ var (
 func SetConfig(c *Config) {
 	config = c
 }
-
 func SetEvents(e *[]reaperevents.EventReporter) {
 	events = e
 }
 
+// Ready NEEDS to be called for EventReporters and Reapables to be properly initialized
+// which means events AND config need to be set BEFORE Ready
 func Ready() {
-	// initialize Reapables map
-	Reapables = make(map[string]map[string]reapable.Reapable)
-	for _, region := range config.AWS.Regions {
-		Reapables[region] = make(map[string]reapable.Reapable)
-	}
-
 	// set config values for events
 	for _, er := range *events {
 		er.SetDryRun(config.DryRun)
 		er.SetNotificationExtras(config.Notifications.Extras)
+	}
+
+	// initialize Reapables map
+	Reapables = make(map[string]map[string]reapable.Reapable)
+	for _, region := range config.AWS.Regions {
+		Reapables[region] = make(map[string]reapable.Reapable)
 	}
 }
 
@@ -87,29 +88,7 @@ func (r *Reaper) start() {
 // Once is run once every time interval by start
 // it is intended to handle all reaping logic
 func (r *Reaper) Once() {
-	// run these as goroutines
-	var reapFuncs = []func(chan bool){
-		// r.reapInstances,
-		// r.reapSecurityGroups,
-		// r.reapVolumes,
-		// r.reapSnapshots,
-		// r.reapAutoScalingGroups,
-		r.reap,
-	}
-
-	// we block execution waiting for done to fill
-	// so that the "sleeping for X" message shows
-	// after all reaping is completed
-	done := make(chan bool, 1)
-	for _, f := range reapFuncs {
-		go f(done)
-	}
-
-	// TODO: I have no idea how concurrency works
-	// TODO update: I have some idea of how concurrency works
-	for i := 0; i < len(reapFuncs); i++ {
-		<-done
-	}
+	r.reap()
 
 	if config.StateFile != "" {
 		r.SaveState(config.StateFile)
@@ -397,7 +376,7 @@ func allSecurityGroups() reaperaws.SecurityGroups {
 	return securityGroups
 }
 
-func (r *Reaper) reap(done chan bool) {
+func (r *Reaper) reap() {
 	filterables := allFilterables()
 	// TODO: consider slice of pointers
 	var asgs []reaperaws.AutoScalingGroup
@@ -424,8 +403,6 @@ func (r *Reaper) reap(done chan bool) {
 			delete(Reapables[region], instanceID)
 		}
 	}
-
-	done <- true
 }
 
 // makes a slice of all filterables by appending

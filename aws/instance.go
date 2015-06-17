@@ -60,17 +60,17 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	switch *instance.State.Code {
 	case 0:
-		i.ResourceState = pending
+		i.AWSState = pending
 	case 16:
-		i.ResourceState = running
+		i.AWSState = running
 	case 32:
-		i.ResourceState = shuttingDown
+		i.AWSState = shuttingDown
 	case 48:
-		i.ResourceState = terminated
+		i.AWSState = terminated
 	case 64:
-		i.ResourceState = stopping
+		i.AWSState = stopping
 	case 80:
-		i.ResourceState = stopped
+		i.AWSState = stopped
 	}
 
 	if instance.PublicIPAddress != nil {

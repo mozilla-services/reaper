@@ -335,7 +335,7 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not update AutoScalingGroup", a.ReapableDescriptionTiny()))
+		log.Error(fmt.Sprintf("could not update AutoScalingGroup %s", a.ReapableDescriptionTiny()))
 		return false, err
 	}
 	return true, nil
@@ -350,7 +350,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete AutoScalingGroup", a.ReapableDescriptionTiny()))
+		log.Error(fmt.Sprintf("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny()))
 		return false, err
 	}
 	return false, nil

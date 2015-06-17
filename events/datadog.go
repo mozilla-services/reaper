@@ -16,11 +16,11 @@ type DataDogConfig struct {
 	Port string
 }
 
-// implements EventReporter, sends events and statistics to DataDog
+// DataDog implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {
-	Config   *DataDogConfig
-	godspeed *godspeed.Godspeed
+	Config    *DataDogConfig
+	_godspeed *godspeed.Godspeed
 }
 
 func NewDataDog(c *DataDogConfig) *DataDog {
@@ -38,8 +38,8 @@ func (d *DataDog) SetNotificationExtras(b bool) {
 
 // TODO: make this async?
 // TODO: don't recreate godspeed
-func (d *DataDog) Godspeed() (*godspeed.Godspeed, error) {
-	if d.godspeed == nil {
+func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
+	if d._godspeed == nil {
 		var g *godspeed.Godspeed
 		var err error
 		// if config options not set, use defaults
@@ -55,9 +55,9 @@ func (d *DataDog) Godspeed() (*godspeed.Godspeed, error) {
 		if err != nil {
 			return nil, err
 		}
-		d.godspeed = g
+		d._godspeed = g
 	}
-	return d.godspeed, nil
+	return d._godspeed, nil
 }
 
 // NewEvent reports an event to DataDog
@@ -69,7 +69,7 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 		return nil
 	}
 
-	g, err := d.Godspeed()
+	g, err := d.godspeed()
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 		return nil
 	}
 
-	g, err := d.Godspeed()
+	g, err := d.godspeed()
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 		return nil
 	}
 
-	g, err := d.Godspeed()
+	g, err := d.godspeed()
 	if err != nil {
 		return err
 	}
@@ -127,9 +127,10 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 
+// NewReapableEvent is shorthand for a NewEvent about a reapable resource
 func (d *DataDog) NewReapableEvent(r Reapable) error {
 	if d.Config.ShouldTriggerFor(r) {
-		err := d.NewEvent("Reapable instance discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
+		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
 		if err != nil {
 			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
 		}

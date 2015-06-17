@@ -18,63 +18,10 @@ import (
 )
 
 var (
-	reapables Reapables
+	reapables reapable.Reapables
 	config    *Config
 	events    *[]reaperevents.EventReporter
 )
-
-type Reapables struct {
-	sync.RWMutex
-	storage map[string]map[string]reapable.Reapable
-}
-
-func NewReapables() {
-	r := Reapables{}
-	r.Lock()
-	defer r.Unlock()
-
-	// initialize Reapables map
-	r.storage = make(map[string]map[string]reapable.Reapable)
-	for _, region := range config.AWS.Regions {
-		r.storage[region] = make(map[string]reapable.Reapable)
-	}
-}
-
-func (rs *Reapables) Put(region, id string, r reapable.Reapable) {
-	rs.Lock()
-	defer rs.Unlock()
-	rs.storage[region][id] = r
-}
-
-func (rs *Reapables) Get(region, id string) (reapable.Reapable, error) {
-	rs.RLock()
-	defer rs.Unlock()
-	r, ok := rs.storage[region][id]
-	if ok {
-		return r, nil
-	}
-	return r, fmt.Errorf("Could not find %s", r.ReapableDescriptionTiny())
-}
-
-func (rs *Reapables) Delete(region, id string) {
-	rs.RLock()
-	defer rs.Unlock()
-	delete(rs.storage[region], id)
-}
-
-func (rs *Reapables) Iter() <-chan reapable.Reapable {
-	ch := make(chan reapable.Reapable)
-	go func(c chan reapable.Reapable) {
-		rs.Lock()
-		defer rs.Unlock()
-		for _, region := range rs.storage {
-			for _, r := range region {
-				c <- r
-			}
-		}
-	}(ch)
-	return ch
-}
 
 func SetConfig(c *Config) {
 	config = c
@@ -155,7 +102,7 @@ func (r *Reaper) SaveState(stateFile string) {
 	}
 	// save state to state file
 	for r := range reapables.Iter() {
-		s.Write([]byte(fmt.Sprintf("%s,%s\n", r.ReapableDescriptionTiny(), r.ReaperState().String())))
+		s.Write([]byte(fmt.Sprintf("%s,%s\n", r.Region, r.ID, r.ReaperState().State.String())))
 	}
 }
 

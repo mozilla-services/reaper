@@ -18,6 +18,7 @@ type NotificationsConfig struct {
 type Reapable interface {
 	reapable.Reapable
 	ReapableEventText() *bytes.Buffer
+	ReapableEventTextShort() *bytes.Buffer
 	//ReapableEventHTML() *bytes.Buffer
 	ReapableEventEmail() (mail.Address, string, string, error)
 }
@@ -76,6 +77,7 @@ type EventReporter interface {
 	NewStatistic(name string, value float64, tags []string) error
 	NewCountStatistic(name string, tags []string) error
 	NewReapableEvent(r Reapable) error
+	NewBatchReapableEvent(rs []Reapable) error
 	SetDryRun(b bool)
 	SetNotificationExtras(b bool)
 }

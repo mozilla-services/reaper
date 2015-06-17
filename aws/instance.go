@@ -92,7 +92,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	return &i
 }
 
-func (i *Instance) ReapableEventText() *bytes.Buffer {
+func (i *Instance) reapableEventText(text string) *bytes.Buffer {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error(fmt.Sprintf("eventText: %s", r))
@@ -100,7 +100,7 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 		}
 	}()
 
-	t := textTemplate.Must(textTemplate.New("reapable-instance").Parse(reapableInstanceEventText))
+	t := textTemplate.Must(textTemplate.New("reapable-instance").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
 	data, err := i.getTemplateData()
@@ -112,6 +112,14 @@ func (i *Instance) ReapableEventText() *bytes.Buffer {
 		log.Debug(fmt.Sprintf("Template generation error: %s", err))
 	}
 	return buf
+}
+
+func (i *Instance) ReapableEventText() *bytes.Buffer {
+	return i.reapableEventText(reapableInstanceEventText)
+}
+
+func (i *Instance) ReapableEventTextShort() *bytes.Buffer {
+	return i.reapableEventText(reapableInstanceEventTextShort)
 }
 
 func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
@@ -211,10 +219,16 @@ const reapableInstanceEventHTML = `
 </html>
 `
 
+const reapableInstanceEventTextShort = `%%%
+Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
+Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.AWSState.String}}{{ if .Instance.PublicIPAddress.String}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
+[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), [Terminate]({{ .TerminateLink }}) this instance.
+%%%`
+
 const reapableInstanceEventText = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
-{{if .Instance.Owned}}Owned by {{.Instance.Owner}}.\n{{end}}
-State: {{ .Instance.ResourceState.String}}.\n
+{{if .Instance.Owner}}Owned by {{.Instance.Owner}}.\n{{end}}
+State: {{ .Instance.AWSState.String}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}

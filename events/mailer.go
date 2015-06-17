@@ -128,6 +128,10 @@ func (m *Mailer) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
+func (e *Mailer) NewBatchReapableEvent(rs []Reapable) error {
+	return nil
+}
+
 // Send an HTML email
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf := bytes.NewBuffer(nil)

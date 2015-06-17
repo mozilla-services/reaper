@@ -58,3 +58,7 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	}
 	return nil
 }
+
+func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable) error {
+	return nil
+}

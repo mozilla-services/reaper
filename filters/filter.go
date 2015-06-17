@@ -2,10 +2,26 @@ package filters
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 
 	log "github.com/milescrabill/reaper/reaperlog"
 )
+
+type Filterable interface {
+	Filter(Filter) bool
+}
+
+func PrintFilters(filters map[string]Filter) string {
+	var filterText []string
+	for _, filter := range filters {
+		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, strings.Join(filter.Arguments, ", ")))
+	}
+	// alphabetize and join filters
+	sort.Strings(filterText)
+	return strings.Join(filterText, ", ")
+}
 
 type Filter struct {
 	Function  string

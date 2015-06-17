@@ -1,6 +1,7 @@
 package events
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 
@@ -136,4 +137,24 @@ func (d *DataDog) NewReapableEvent(r Reapable) error {
 		}
 	}
 	return nil
+}
+
+func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
+	var triggering []Reapable
+	for _, r := range rs {
+		if e.Config.ShouldTriggerFor(r) {
+			triggering = append(triggering, r)
+		}
+	}
+	if len(triggering) == 0 {
+		return nil
+	}
+	var buffer bytes.Buffer
+	for _, r := range triggering {
+		buffer.ReadFrom(r.ReapableEventTextShort())
+		buffer.WriteString("\n")
+	}
+	// TODO: tags? reapablecontainer?
+	err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+	return err
 }

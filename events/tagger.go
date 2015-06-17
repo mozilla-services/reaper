@@ -48,3 +48,7 @@ func (t *Tagger) NewReapableEvent(r Reapable) error {
 	}
 	return nil
 }
+
+func (e *Tagger) NewBatchReapableEvent(rs []Reapable) error {
+	return nil
+}

@@ -3,14 +3,11 @@ package aws
 import (
 	"fmt"
 	"net/mail"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
-	"github.com/milescrabill/reaper/filters"
 	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
 	"github.com/milescrabill/reaper/state"
@@ -26,20 +23,6 @@ const (
 	stopping
 	stopped
 )
-
-type Filterable interface {
-	Filter(filters.Filter) bool
-}
-
-func PrintFilters(filters map[string]filters.Filter) string {
-	var filterText []string
-	for _, filter := range filters {
-		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, strings.Join(filter.Arguments, ", ")))
-	}
-	// alphabetize and join filters
-	sort.Strings(filterText)
-	return strings.Join(filterText, ", ")
-}
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
@@ -74,7 +57,10 @@ func (a *AWSResource) Stopped() bool      { return a.AWSState == stopped }
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.Tags[t] }
 
-func (a *AWSResource) Owned() bool { return a.Tagged("Owner") }
+func (a *AWSResource) Owned() bool {
+	// if the resource has an owner tag or a default owner is specified
+	return a.Tagged("Owner") || config.DefaultOwner != ""
+}
 
 func (a *AWSResource) ReaperState() *state.State {
 	return a.reaperState

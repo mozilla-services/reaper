@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/milescrabill/reaper/filters"
 	"github.com/milescrabill/reaper/state"
 )
 
@@ -46,6 +47,7 @@ type Saveable interface {
 // credit: jgs, http://www.chris.com/ascii/index.php?art=creatures/grim%20reapers
 
 type Reapable interface {
+	filters.Filterable
 	Terminable
 	Stoppable
 	Whitelistable
@@ -73,7 +75,7 @@ type Reapables struct {
 	storage map[Region]map[ID]Reapable
 }
 
-func NewReapables(regions []Region) *Reapables {
+func NewReapables(regions []string) *Reapables {
 	r := Reapables{}
 	r.Lock()
 	defer r.Unlock()
@@ -81,7 +83,7 @@ func NewReapables(regions []Region) *Reapables {
 	// initialize Reapables map
 	r.storage = make(map[Region]map[ID]Reapable)
 	for _, region := range regions {
-		r.storage[region] = make(map[ID]Reapable)
+		r.storage[Region(region)] = make(map[ID]Reapable)
 	}
 	return &r
 }

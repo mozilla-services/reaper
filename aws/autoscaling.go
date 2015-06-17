@@ -73,8 +73,8 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	return &a
 }
 
-func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable-asg").Parse(reapableASGEventText))
+func (a *AutoScalingGroup) reapableEventText(text string) *bytes.Buffer {
+	t := textTemplate.Must(textTemplate.New("reapable-asg").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
 	data, err := a.getTemplateData()
@@ -86,6 +86,14 @@ func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
 		log.Debug("Template generation error", err)
 	}
 	return buf
+}
+
+func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
+	return a.reapableEventText(reapableASGEventText)
+}
+
+func (a *AutoScalingGroup) ReapableEventTextShort() *bytes.Buffer {
+	return a.reapableEventText(reapableASGEventTextShort)
 }
 
 func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
@@ -188,6 +196,11 @@ const reapableASGEventHTML = `
 </body>
 </html>
 `
+
+const reapableASGEventTextShort = `%%%
+AutoScalingGroup [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).{{if .AutoScalingGroup.Owned}} Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
+[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
+%%%`
 
 const reapableASGEventText = `%%%
 Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).\n

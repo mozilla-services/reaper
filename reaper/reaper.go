@@ -18,10 +18,63 @@ import (
 )
 
 var (
-	Reapables map[string]map[string]reapable.Reapable
+	reapables Reapables
 	config    *Config
 	events    *[]reaperevents.EventReporter
 )
+
+type Reapables struct {
+	sync.RWMutex
+	storage map[string]map[string]reapable.Reapable
+}
+
+func NewReapables() {
+	r := Reapables{}
+	r.Lock()
+	defer r.Unlock()
+
+	// initialize Reapables map
+	r.storage = make(map[string]map[string]reapable.Reapable)
+	for _, region := range config.AWS.Regions {
+		r.storage[region] = make(map[string]reapable.Reapable)
+	}
+}
+
+func (rs *Reapables) Put(region, id string, r reapable.Reapable) {
+	rs.Lock()
+	defer rs.Unlock()
+	rs.storage[region][id] = r
+}
+
+func (rs *Reapables) Get(region, id string) (reapable.Reapable, error) {
+	rs.RLock()
+	defer rs.Unlock()
+	r, ok := rs.storage[region][id]
+	if ok {
+		return r, nil
+	}
+	return r, fmt.Errorf("Could not find %s", r.ReapableDescriptionTiny())
+}
+
+func (rs *Reapables) Delete(region, id string) {
+	rs.RLock()
+	defer rs.Unlock()
+	delete(rs.storage[region], id)
+}
+
+func (rs *Reapables) Iter() <-chan reapable.Reapable {
+	ch := make(chan reapable.Reapable)
+	go func(c chan reapable.Reapable) {
+		rs.Lock()
+		defer rs.Unlock()
+		for _, region := range rs.storage {
+			for _, r := range region {
+				c <- r
+			}
+		}
+	}(ch)
+	return ch
+}
 
 func SetConfig(c *Config) {
 	config = c
@@ -37,12 +90,6 @@ func Ready() {
 	for _, er := range *events {
 		er.SetDryRun(config.DryRun)
 		er.SetNotificationExtras(config.Notifications.Extras)
-	}
-
-	// initialize Reapables map
-	Reapables = make(map[string]map[string]reapable.Reapable)
-	for _, region := range config.AWS.Regions {
-		Reapables[region] = make(map[string]reapable.Reapable)
 	}
 }
 
@@ -102,15 +149,13 @@ func (r *Reaper) SaveState(stateFile string) {
 	s, err := os.OpenFile(config.StateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
 	defer func() { s.Close() }()
 	if err != nil {
-		log.Error("Unable to create StateFile '%s'", config.StateFile)
+		log.Error(fmt.Sprintf("Unable to create StateFile '%s'", config.StateFile))
 	} else {
 		log.Info("States will be saved to %s", config.StateFile)
 	}
 	// save state to state file
-	for region := range Reapables {
-		for id := range Reapables[region] {
-			s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", region, id, Reapables[region][id].ReaperState().String())))
-		}
+	for r := range reapables.Iter() {
+		s.Write([]byte(fmt.Sprintf("%s,%s\n", r.ReapableDescriptionTiny(), r.ReaperState().String())))
 	}
 }
 
@@ -400,7 +445,7 @@ func (r *Reaper) reap() {
 	instanceIDsInASGs := allASGInstanceIds(asgs)
 	for region := range instanceIDsInASGs {
 		for instanceID := range instanceIDsInASGs[region] {
-			delete(Reapables[region], instanceID)
+			reapables.Delete(region, instanceID)
 		}
 	}
 }
@@ -469,7 +514,7 @@ func reapInstance(i *reaperaws.Instance) {
 		}
 
 		// add to Reapables if filters matched
-		Reapables[i.Region][i.ID] = i
+		reapables.Put(i.Region, i.ID, i)
 	}
 }
 
@@ -496,7 +541,7 @@ func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 	}
 
 	// add to Reapables
-	Reapables[a.Region][a.ID] = a
+	reapables.Put(a.Region, a.ID, a)
 }
 
 func (r *Reaper) terminateUnowned(i *reaperaws.Instance) error {
@@ -517,21 +562,9 @@ func (r *Reaper) terminateUnowned(i *reaperaws.Instance) error {
 
 }
 
-// fetches a reapable matching region, id from
-// the global slice of reapables
-func getReapable(region, id string) (reapable.Reapable, error) {
-	reapable, ok := Reapables[region][id]
-	if !ok {
-		log.Error("Could not terminate resource with region: %s and id: %s.",
-			region, id)
-		return reapable, fmt.Errorf("No such resource.")
-	}
-	return reapable, nil
-}
-
 // Terminate by region, id, calls a Reapable's own Terminate method
 func Terminate(region, id string) error {
-	reapable, err := getReapable(region, id)
+	reapable, err := reapables.Get(region, id)
 	if err != nil {
 		return err
 	}
@@ -548,7 +581,7 @@ func Terminate(region, id string) error {
 
 // ForceStop by region, id, calls a Reapable's own ForceStop method
 func ForceStop(region, id string) error {
-	reapable, err := getReapable(region, id)
+	reapable, err := reapables.Get(region, id)
 	if err != nil {
 		return err
 	}
@@ -565,7 +598,7 @@ func ForceStop(region, id string) error {
 
 // Stop by region, id, calls a Reapable's own Stop method
 func Stop(region, id string) error {
-	reapable, err := getReapable(region, id)
+	reapable, err := reapables.Get(region, id)
 	if err != nil {
 		return err
 	}

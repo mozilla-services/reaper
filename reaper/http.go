@@ -84,11 +84,9 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// find reapable associated with the job
-		r, ok := Reapables[job.Region][job.ID]
-
-		// reapable not found
-		if !ok {
-			writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Reapable %s in region %s not found.", job.ID, job.Region))
+		r, err := reapables.Get(job.Region, job.ID)
+		if err != nil {
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 

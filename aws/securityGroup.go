@@ -2,6 +2,7 @@ package aws
 
 import (
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/milescrabill/reaper/reapable"
 	"github.com/milescrabill/reaper/state"
 )
 
@@ -13,9 +14,9 @@ type SecurityGroup struct {
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
 		AWSResource{
-			ID:          *sg.GroupID,
+			ID:          reapable.ID(*sg.GroupID),
 			Name:        *sg.GroupName,
-			Region:      region,
+			Region:      reapable.Region(region),
 			Description: *sg.Description,
 			VPCID:       *sg.VPCID,
 			OwnerID:     *sg.OwnerID,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/milescrabill/reaper/filters"
+	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
 )
 
@@ -13,20 +14,20 @@ type Snapshot struct {
 	AWSResource
 	SizeGB        int64
 	SnapshotState string
-	VolumeID      string
+	VolumeID      reapable.ID
 	LaunchTime    time.Time
 }
 
 func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	snap := Snapshot{
 		AWSResource: AWSResource{
-			ID:     *s.SnapshotID,
-			Region: region,
+			ID:     reapable.ID(*s.SnapshotID),
+			Region: reapable.Region(region),
 			Tags:   make(map[string]string),
 		},
 		SizeGB:        *s.VolumeSize,
 		SnapshotState: *s.State,
-		VolumeID:      *s.VolumeID,
+		VolumeID:      reapable.ID(*s.VolumeID),
 		LaunchTime:    *s.StartTime,
 	}
 

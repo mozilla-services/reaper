@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/milescrabill/reaper/filters"
+	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
 	"github.com/milescrabill/reaper/state"
 )
@@ -42,9 +43,9 @@ func PrintFilters(filters map[string]filters.Filter) string {
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	ID             string
+	ID             reapable.ID
 	Name           string
-	Region         string
+	Region         reapable.Region
 	AWSState       AWSState
 	Description    string
 	VPCID          string
@@ -164,17 +165,17 @@ func (a *AWSResource) ReapableDescriptionTiny() string {
 }
 
 func (a *AWSResource) Whitelist() (bool, error) {
-	return Whitelist(a.Region, a.ID)
+	return Whitelist(string(a.Region), string(a.ID))
 }
 
 // methods for reapable interface:
 func (a *AWSResource) Save(s *state.State) (bool, error) {
-	return TagReaperState(a.Region, a.ID, s)
+	return TagReaperState(string(a.Region), string(a.ID), s)
 }
 
 func (a *AWSResource) Unsave() (bool, error) {
 	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
-	return UntagReaperState(a.Region, a.ID)
+	return UntagReaperState(string(a.Region), string(a.ID))
 }
 
 func Whitelist(region, id string) (bool, error) {

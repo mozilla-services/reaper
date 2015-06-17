@@ -25,7 +25,7 @@ type AutoScalingGroup struct {
 	AWSResource
 
 	// autoscaling.Instance exposes minimal info
-	Instances []string
+	Instances []reapable.ID
 
 	AutoScalingGroupARN     string
 	CreatedTime             time.Time
@@ -38,9 +38,9 @@ type AutoScalingGroup struct {
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
-			ID:          *asg.AutoScalingGroupName,
+			Region:      reapable.Region(region),
+			ID:          reapable.ID(*asg.AutoScalingGroupName),
 			Name:        *asg.AutoScalingGroupName,
-			Region:      region,
 			Tags:        make(map[string]string),
 			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstStateDuration.Duration)),
 		},
@@ -53,7 +53,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	}
 
 	for i := 0; i < len(asg.Instances); i++ {
-		a.Instances = append(a.Instances, *asg.Instances[i].InstanceID)
+		a.Instances = append(a.Instances, reapable.ID(*asg.Instances[i].InstanceID))
 	}
 
 	for i := 0; i < len(asg.Tags); i++ {
@@ -135,13 +135,13 @@ func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error)
 		}
 	}()
 
-	ignore1, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID, time.Duration(1*24*time.Hour))
-	ignore3, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID, time.Duration(3*24*time.Hour))
-	ignore7, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID, time.Duration(7*24*time.Hour))
-	terminate, err := MakeTerminateLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
-	stop, err := MakeStopLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
-	forcestop, err := MakeForceStopLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
-	whitelist, err := MakeWhitelistLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, a.Region, a.ID)
+	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
+	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
 
 	if err != nil {
 		return nil, err
@@ -231,12 +231,12 @@ func (a *AutoScalingGroup) Unsave() (bool, error) {
 	return a.untagReaperState(a.Region, a.ID, a.ReaperState())
 }
 
-func (a *AutoScalingGroup) untagReaperState(region, id string, newState *state.State) (bool, error) {
-	api := autoscaling.New(&aws.Config{Region: region})
+func (a *AutoScalingGroup) untagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
+	api := autoscaling.New(&aws.Config{Region: string(region)})
 	deletereq := &autoscaling.DeleteTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
-				ResourceID:   aws.String(id),
+				ResourceID:   aws.String(string(id)),
 				ResourceType: aws.String("auto-scaling-group"),
 				Key:          aws.String(reaperTag),
 			},
@@ -251,12 +251,12 @@ func (a *AutoScalingGroup) untagReaperState(region, id string, newState *state.S
 	return true, nil
 }
 
-func (a *AutoScalingGroup) tagReaperState(region, id string, newState *state.State) (bool, error) {
-	api := autoscaling.New(&aws.Config{Region: region})
+func (a *AutoScalingGroup) tagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
+	api := autoscaling.New(&aws.Config{Region: string(region)})
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
-				ResourceID:        aws.String(id),
+				ResourceID:        aws.String(string(id)),
 				ResourceType:      aws.String("auto-scaling-group"),
 				PropagateAtLaunch: aws.Boolean(false),
 				Key:               aws.String(reaperTag),
@@ -313,7 +313,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
-		a.Region, a.Region, url.QueryEscape(a.ID)))
+		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
@@ -322,10 +322,13 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 
 func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 	log.Notice("Scaling AutoScalingGroup to size %d %s.", size, a.ReapableDescriptionTiny())
-	as := autoscaling.New(&aws.Config{Region: a.Region})
+	as := autoscaling.New(&aws.Config{Region: string(a.Region)})
+
+	// ugh this is stupid
+	stringID := string(a.ID)
 
 	input := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: &a.ID,
+		AutoScalingGroupName: &stringID,
 		DesiredCapacity:      &size,
 	}
 
@@ -343,10 +346,13 @@ func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
 
 func (a *AutoScalingGroup) Terminate() (bool, error) {
 	log.Notice("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
-	as := autoscaling.New(&aws.Config{Region: a.Region})
+	as := autoscaling.New(&aws.Config{Region: string(a.Region)})
+
+	// ugh this is stupid
+	stringID := string(a.ID)
 
 	input := &autoscaling.DeleteAutoScalingGroupInput{
-		AutoScalingGroupName: &a.ID,
+		AutoScalingGroupName: &stringID,
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {

@@ -56,31 +56,43 @@ type Reapable interface {
 	ReapableDescriptionTiny() string
 }
 
-type Reapables struct {
-	sync.RWMutex
-	storage map[string]map[string]Reapable
+type Region string
+
+func (r Region) String() string {
+	return string(r)
 }
 
-func NewReapables(regions []string) *Reapables {
+type ID string
+
+func (i ID) String() string {
+	return string(i)
+}
+
+type Reapables struct {
+	sync.RWMutex
+	storage map[Region]map[ID]Reapable
+}
+
+func NewReapables(regions []Region) *Reapables {
 	r := Reapables{}
 	r.Lock()
 	defer r.Unlock()
 
 	// initialize Reapables map
-	r.storage = make(map[string]map[string]Reapable)
+	r.storage = make(map[Region]map[ID]Reapable)
 	for _, region := range regions {
-		r.storage[region] = make(map[string]Reapable)
+		r.storage[region] = make(map[ID]Reapable)
 	}
 	return &r
 }
 
-func (rs *Reapables) Put(region, id string, r Reapable) {
+func (rs *Reapables) Put(region Region, id ID, r Reapable) {
 	rs.Lock()
 	defer rs.Unlock()
 	rs.storage[region][id] = r
 }
 
-func (rs *Reapables) Get(region, id string) (Reapable, error) {
+func (rs *Reapables) Get(region Region, id ID) (Reapable, error) {
 	rs.RLock()
 	defer rs.Unlock()
 	r, ok := rs.storage[region][id]
@@ -90,7 +102,7 @@ func (rs *Reapables) Get(region, id string) (Reapable, error) {
 	return r, fmt.Errorf("Could not find %s", r.ReapableDescriptionTiny())
 }
 
-func (rs *Reapables) Delete(region, id string) {
+func (rs *Reapables) Delete(region Region, id ID) {
 	rs.RLock()
 	defer rs.Unlock()
 	delete(rs.storage[region], id)
@@ -98,8 +110,8 @@ func (rs *Reapables) Delete(region, id string) {
 
 type ReapableContainer struct {
 	Reapable
-	Region string
-	ID     string
+	Region Region
+	ID     ID
 }
 
 func (rs *Reapables) Iter() <-chan ReapableContainer {

@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	reaperevents "github.com/milescrabill/reaper/events"
+	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
 	"github.com/milescrabill/reaper/state"
 	"github.com/milescrabill/reaper/token"
@@ -84,7 +85,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// find reapable associated with the job
-		r, err := reapables.Get(job.Region, job.ID)
+		r, err := reapables.Get(reapable.Region(job.Region), reapable.ID(job.ID))
 		if err != nil {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return

@@ -40,8 +40,8 @@ type Instance struct {
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	i := Instance{
 		AWSResource: AWSResource{
-			ID:     *instance.InstanceID,
-			Region: region, // passed in cause not possible to extract out of api
+			ID:     reapable.ID(*instance.InstanceID),
+			Region: reapable.Region(region), // passed in cause not possible to extract out of api
 			Tags:   make(map[string]string),
 		},
 
@@ -160,12 +160,12 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 		}
 	}()
 
-	ignore1, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID, time.Duration(1*24*time.Hour))
-	ignore3, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID, time.Duration(3*24*time.Hour))
-	ignore7, err := MakeIgnoreLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID, time.Duration(7*24*time.Hour))
-	terminate, err := MakeTerminateLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID)
-	stop, err := MakeStopLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID)
-	whitelist, err := MakeWhitelistLink(config.HTTP.TokenSecret, config.HTTP.ApiURL, i.Region, i.ID)
+	ignore1, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
+	terminate, err := MakeTerminateLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	stop, err := MakeStopLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	whitelist, err := MakeWhitelistLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
 
 	if err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ Instance Type: {{ .Instance.InstanceType}}.\n
 
 func (i *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		i.Region, i.Region, url.QueryEscape(i.ID)))
+		string(i.Region), string(i.Region), url.QueryEscape(string(i.ID))))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
@@ -322,9 +322,9 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 
 func (i *Instance) Terminate() (bool, error) {
 	log.Notice("Terminating Instance %s", i.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: i.Region})
+	api := ec2.New(&aws.Config{Region: string(i.Region)})
 	req := &ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{aws.String(i.ID)},
+		InstanceIDs: []*string{aws.String(string(i.ID))},
 	}
 
 	resp, err := api.TerminateInstances(req)
@@ -346,9 +346,9 @@ func (i *Instance) ForceStop() (bool, error) {
 
 func (i *Instance) Stop() (bool, error) {
 	log.Notice("Stopping Instance %s", i.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: i.Region})
+	api := ec2.New(&aws.Config{Region: string(i.Region)})
 	req := &ec2.StopInstancesInput{
-		InstanceIDs: []*string{aws.String(i.ID)},
+		InstanceIDs: []*string{aws.String(string(i.ID))},
 	}
 
 	resp, err := api.StopInstances(req)

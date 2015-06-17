@@ -107,16 +107,16 @@ func (r *Reaper) SaveState(stateFile string) {
 }
 
 // convenience function that returns a map of instances in ASGs
-func allASGInstanceIds(as []reaperaws.AutoScalingGroup) map[string]map[string]bool {
+func allASGInstanceIds(as []reaperaws.AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
 	// maps region to id to bool
-	inASG := make(map[string]map[string]bool)
+	inASG := make(map[reapable.Region]map[reapable.ID]bool)
 	for _, region := range config.AWS.Regions {
-		inASG[region] = make(map[string]bool)
+		inASG[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}
 	for _, a := range as {
-		for _, instance := range a.Instances {
+		for _, instanceID := range a.Instances {
 			// add the instance to the map
-			inASG[a.Region][instance] = true
+			inASG[a.Region][instanceID] = true
 		}
 	}
 	return inASG
@@ -510,7 +510,7 @@ func (r *Reaper) terminateUnowned(i *reaperaws.Instance) error {
 }
 
 // Terminate by region, id, calls a Reapable's own Terminate method
-func Terminate(region, id string) error {
+func Terminate(region reapable.Region, id reapable.ID) error {
 	reapable, err := reapables.Get(region, id)
 	if err != nil {
 		return err
@@ -527,7 +527,7 @@ func Terminate(region, id string) error {
 }
 
 // ForceStop by region, id, calls a Reapable's own ForceStop method
-func ForceStop(region, id string) error {
+func ForceStop(region reapable.Region, id reapable.ID) error {
 	reapable, err := reapables.Get(region, id)
 	if err != nil {
 		return err
@@ -544,7 +544,7 @@ func ForceStop(region, id string) error {
 }
 
 // Stop by region, id, calls a Reapable's own Stop method
-func Stop(region, id string) error {
+func Stop(region reapable.Region, id reapable.ID) error {
 	reapable, err := reapables.Get(region, id)
 	if err != nil {
 		return err

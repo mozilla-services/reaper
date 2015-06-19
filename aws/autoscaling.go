@@ -318,14 +318,14 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		if !a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
-	case "CreateTimeInTheLast":
+	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(a.CreateTime) < d {
+		if err == nil && time.Since(a.CreatedTime) < d {
 			matched = true
 		}
-	case "CreateTimeNotInTheLast":
+	case "CreatedTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(a.CreateTime) > d {
+		if err == nil && time.Since(a.CreatedTime) > d {
 			matched = true
 		}
 	default:

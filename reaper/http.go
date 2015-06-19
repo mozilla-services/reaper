@@ -30,6 +30,7 @@ func (h *HTTPApi) Serve() (e error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", processToken(h))
+	mux.HandleFunc("/__heartbeat__", heartbeat(h))
 	h.server = &http.Server{Handler: mux}
 
 	log.Debug("Starting HTTP server: %s", h.conf.Listen)
@@ -49,6 +50,13 @@ func NewHTTPApi(c reaperevents.HTTPConfig) *HTTPApi {
 func writeResponse(w http.ResponseWriter, code int, body string) {
 	w.WriteHeader(code)
 	io.WriteString(w, body)
+}
+
+func heartbeat(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		writeResponse(w, http.StatusOK, "Heart's a beatin'")
+		return
+	}
 }
 
 func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {

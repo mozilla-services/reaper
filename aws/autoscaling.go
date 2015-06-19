@@ -318,6 +318,16 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		if !a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
+	case "CreateTimeInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && time.Since(a.CreateTime) < d {
+			matched = true
+		}
+	case "CreateTimeNotInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && time.Since(a.CreateTime) > d {
+			matched = true
+		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
 	}

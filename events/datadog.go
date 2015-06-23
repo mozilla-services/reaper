@@ -139,6 +139,7 @@ func (d *DataDog) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
+// TODO: make this based on size rather than number of events
 func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 	var triggering []Reapable
 	for _, r := range rs {
@@ -149,12 +150,29 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 	if len(triggering) == 0 {
 		return nil
 	}
-	var buffer bytes.Buffer
-	for _, r := range triggering {
-		buffer.ReadFrom(r.ReapableEventTextShort())
-		buffer.WriteString("\n")
+	// j keeps track of which reapable
+	j := 0
+	for j < len(triggering) {
+		buffer := *bytes.NewBuffer(nil)
+		// i keeps track of how many reapables
+		// have been written to a buffer
+		for j < len(triggering) {
+			buffer.ReadFrom(triggering[j].ReapableEventTextShort())
+			buffer.WriteString("\n")
+
+			// when we've written 3 reapables
+			// move on to the next buffer
+			if j != 0 && j%2 == 0 {
+				// send events in this buffer
+				err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+				if err != nil {
+					return err
+				}
+				break
+			}
+			j++
+		}
 	}
-	// TODO: tags? reapablecontainer?
-	err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
-	return err
+
+	return nil
 }

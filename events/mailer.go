@@ -129,6 +129,27 @@ func (m *Mailer) NewReapableEvent(r Reapable) error {
 }
 
 func (e *Mailer) NewBatchReapableEvent(rs []Reapable) error {
+	var triggering []Reapable
+	for _, r := range rs {
+		if e.Config.ShouldTriggerFor(r) {
+			triggering = append(triggering, r)
+		}
+	}
+	if len(triggering) == 0 {
+		return nil
+	}
+
+	buffer := *bytes.NewBuffer(nil)
+	for _, r := range triggering {
+		buffer.ReadFrom(r.ReapableEventTextShort())
+		buffer.WriteString("\n")
+	}
+
+	err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

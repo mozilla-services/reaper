@@ -140,22 +140,31 @@ func (e *Mailer) NewBatchReapableEvent(rs []Reapable) error {
 	}
 
 	buffer := *bytes.NewBuffer(nil)
-	for _, r := range triggering {
-		buffer.ReadFrom(r.ReapableEventTextShort())
-		buffer.WriteString("\n")
-	}
-
-	err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+	owner, _, err := rs[0].ReapableEventEmailShort()
 	if err != nil {
 		return err
 	}
+	log.Info("Sending batch Mailer event for %d reapables.", len(triggering))
+	subject := fmt.Sprintf("%d AWS Resources you own are going to be reaped!", len(triggering))
+	for _, r := range triggering {
+		_, body, err := r.ReapableEventEmailShort()
+		if err != nil {
+			return err
+		}
+		buffer.WriteString(fmt.Sprintf("%s\n", body))
+	}
 
-	return nil
+	return e.Send(owner, subject, buffer.String())
 }
 
 // Send an HTML email
 func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf := bytes.NewBuffer(nil)
+	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
+		to.String(),
+		m.Config.From.Address.String(),
+		subject)
+
 	buf.WriteString("From: " + m.Config.From.Address.String() + "\n")
 	buf.WriteString("To: " + to.String() + "\n")
 	buf.WriteString("Subject: " + subject + "\n")
@@ -163,11 +172,6 @@ func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
 	buf.WriteString("Content-Type: text/html; charset=utf-8\n\n")
 	buf.WriteString(htmlBody)
 	buf.WriteString("\n")
-
-	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
-		to.String(),
-		m.Config.From.Address.String(),
-		subject)
 
 	return smtp.SendMail(
 		m.Config.Addr(),

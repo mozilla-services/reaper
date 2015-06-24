@@ -5,10 +5,7 @@ import (
 	"fmt"
 	htmlTemplate "html/template"
 	"net/mail"
-
 	"net/url"
-	"os"
-
 	textTemplate "text/template"
 	"time"
 
@@ -73,8 +70,20 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	return &a
 }
 
+func (a *AutoScalingGroup) reapableEventHTML(text string) *bytes.Buffer {
+	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
+	buf := bytes.NewBuffer(nil)
+
+	data, err := a.getTemplateData()
+	err = t.Execute(buf, data)
+	if err != nil {
+		log.Debug(fmt.Sprintf("Template generation error: %s", err))
+	}
+	return buf
+}
+
 func (a *AutoScalingGroup) reapableEventText(text string) *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable-asg").Parse(text))
+	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
 	data, err := a.getTemplateData()
@@ -83,7 +92,7 @@ func (a *AutoScalingGroup) reapableEventText(text string) *bytes.Buffer {
 	}
 	err = t.Execute(buf, data)
 	if err != nil {
-		log.Debug("Template generation error", err)
+		log.Debug(fmt.Sprintf("Template generation error: %s", err))
 	}
 	return buf
 }
@@ -97,29 +106,26 @@ func (a *AutoScalingGroup) ReapableEventTextShort() *bytes.Buffer {
 }
 
 func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error(fmt.Sprintf("eventHTML: %s", r))
-		}
-	}()
-
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 
-	t := htmlTemplate.Must(htmlTemplate.New("reapable-asg").Parse(reapableASGEventHTML))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		return
-	}
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = buf.String()
+	body = a.reapableEventHTML(reapableASGEventHTML).String()
+	return
+}
+
+func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+	// if unowned, return unowned error
+	if !a.Owned() {
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		return
+	}
+	owner = *a.Owner()
+	body = a.reapableEventHTML(reapableASGEventHTMLShort).String()
 	return
 }
 
@@ -136,13 +142,6 @@ type AutoScalingGroupEventData struct {
 }
 
 func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error(fmt.Sprintf("getTemplateData: %s", r))
-			os.Exit(1)
-		}
-	}()
-
 	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
 	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
 	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
@@ -171,7 +170,7 @@ func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error)
 const reapableASGEventHTML = `
 <html>
 <body>
-	<p>Your AWS Resource <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }} in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated.</p>
+	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }} in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
 		You can ignore this message and your AutoScalingGroup will be automatically
@@ -192,6 +191,22 @@ const reapableASGEventHTML = `
 
 	<p>
 		If you want the Reaper to ignore this AutoScalingGroup tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
+	</p>
+</body>
+</html>
+`
+
+const reapableASGEventHTMLShort = `
+<html>
+<body>
+	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }}</a> in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
+		<br />
+		<a href="{{ .TerminateLink }}">Terminate</a>, 
+		<a href="{{ .StopLink }}">Stop</a>, 
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
+		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
 </html>

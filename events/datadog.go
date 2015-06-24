@@ -150,6 +150,7 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 	if len(triggering) == 0 {
 		return nil
 	}
+	log.Info("Sending batch DataDog events for %d reapables.", len(triggering))
 	// j keeps track of which reapable
 	j := 0
 	for j < len(triggering) {
@@ -162,12 +163,13 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 
 			// when we've written 3 reapables
 			// move on to the next buffer
-			if j != 0 && j%2 == 0 {
+			if (j%2 == 0 && j != 0) || j == len(triggering)-1 {
 				// send events in this buffer
 				err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
 				if err != nil {
 					return err
 				}
+				j++
 				break
 			}
 			j++

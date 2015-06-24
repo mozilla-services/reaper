@@ -3,14 +3,12 @@ package aws
 import (
 	"bytes"
 	"fmt"
+	htmlTemplate "html/template"
 	"net"
 	"net/mail"
 	"net/url"
-	"os"
-	"time"
-
-	htmlTemplate "html/template"
 	textTemplate "text/template"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -92,15 +90,20 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 	return &i
 }
 
-func (i *Instance) reapableEventText(text string) *bytes.Buffer {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error(fmt.Sprintf("eventText: %s", r))
-			os.Exit(1)
-		}
-	}()
+func (i *Instance) reapableEventHTML(text string) *bytes.Buffer {
+	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
+	buf := bytes.NewBuffer(nil)
 
-	t := textTemplate.Must(textTemplate.New("reapable-instance").Parse(text))
+	data, err := i.getTemplateData()
+	err = t.Execute(buf, data)
+	if err != nil {
+		log.Debug(fmt.Sprintf("Template generation error: %s", err))
+	}
+	return buf
+}
+
+func (i *Instance) reapableEventText(text string) *bytes.Buffer {
+	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
 	data, err := i.getTemplateData()
@@ -123,29 +126,25 @@ func (i *Instance) ReapableEventTextShort() *bytes.Buffer {
 }
 
 func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error(fmt.Sprintf("eventHTML: %s", r))
-		}
-	}()
-
 	// if unowned, return unowned error
 	if !i.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
 		return
 	}
-
-	t := htmlTemplate.Must(htmlTemplate.New("reapable-instance").Parse(reapableInstanceEventHTML))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := i.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		return
-	}
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", i.ReapableDescriptionTiny())
 	owner = *i.Owner()
-	body = buf.String()
+	body = i.reapableEventHTML(reapableInstanceEventHTML).String()
+	return
+}
+
+func (i *Instance) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+	// if unowned, return unowned error
+	if !i.Owned() {
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
+		return
+	}
+	owner = *i.Owner()
+	body = i.reapableEventHTML(reapableInstanceEventHTMLShort).String()
 	return
 }
 
@@ -161,13 +160,6 @@ type InstanceEventData struct {
 }
 
 func (i *Instance) getTemplateData() (*InstanceEventData, error) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error(fmt.Sprintf("getTemplateData: %s", r))
-			os.Exit(1)
-		}
-	}()
-
 	ignore1, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
 	ignore3, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
 	ignore7, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
@@ -194,7 +186,7 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 const reapableInstanceEventHTML = `
 <html>
 <body>
-	<p>Your AWS Resource <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}}</a> is scheduled to be terminated.</p>
+	<p>Your AWS Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
 		You can ignore this message and your instance will be automatically
@@ -214,6 +206,22 @@ const reapableInstanceEventHTML = `
 
 	<p>
 		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
+	</p>
+</body>
+</html>
+`
+
+const reapableInstanceEventHTMLShort = `
+<html>
+<body>
+	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until}}</strong>.
+		<br />
+		<a href="{{ .TerminateLink }}">Terminate</a>, 
+		<a href="{{ .StopLink }}">Stop</a>, 
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
+		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
 </html>

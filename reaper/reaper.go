@@ -150,16 +150,32 @@ func (r *Reaper) reap() {
 		}
 	}
 
+	filteredInstanceCount := 0
+	filteredAutoScalingGroupCount := 0
+
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
 		switch t := f.(type) {
 		case *reaperaws.Instance:
+			filteredInstanceCount++
 			reapInstance(t)
 		case *reaperaws.AutoScalingGroup:
+			filteredAutoScalingGroupCount++
 			reapAutoScalingGroup(t)
 			asgs = append(asgs, *t)
 		default:
 			log.Error("Reap default case.")
+		}
+	}
+
+	for _, e := range *events {
+		err := e.NewStatistic("reaper.instances.filtered", float64(filteredInstanceCount), nil)
+		if err != nil {
+			log.Error(fmt.Sprintf("%s", err.Error()))
+		}
+		err = e.NewStatistic("reaper.asgs.filtered", float64(filteredAutoScalingGroupCount), nil)
+		if err != nil {
+			log.Error(fmt.Sprintf("%s", err.Error()))
 		}
 	}
 

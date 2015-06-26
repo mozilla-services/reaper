@@ -96,7 +96,7 @@ func (rs *Reapables) Put(region Region, id ID, r Reapable) {
 
 func (rs *Reapables) Get(region Region, id ID) (Reapable, error) {
 	rs.RLock()
-	defer rs.Unlock()
+	defer rs.RUnlock()
 	r, ok := rs.storage[region][id]
 	if ok {
 		return r, nil
@@ -106,7 +106,7 @@ func (rs *Reapables) Get(region Region, id ID) (Reapable, error) {
 
 func (rs *Reapables) Delete(region Region, id ID) {
 	rs.RLock()
-	defer rs.Unlock()
+	defer rs.RUnlock()
 	delete(rs.storage[region], id)
 }
 

@@ -292,9 +292,17 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		fs := make(map[string]filters.Filter)
 		switch t := filterable.(type) {
 		case *reaperaws.Instance:
+			// if instances are not enabled, skip
+			if !config.Instances.Enabled {
+				continue
+			}
 			fs = config.Instances.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		case *reaperaws.AutoScalingGroup:
+			// if ASGs are not enabled, skip
+			if !config.AutoScalingGroups.Enabled {
+				continue
+			}
 			fs = config.AutoScalingGroups.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		default:

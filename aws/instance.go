@@ -301,6 +301,10 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		if i.Tag(filter.Arguments[0]) == filter.Arguments[1] {
 			matched = true
 		}
+	case "TagNotEqual":
+		if i.Tag(filter.Arguments[0]) != filter.Arguments[1] {
+			matched = true
+		}
 	case "HasPublicIPAddress":
 		if i.PublicIPAddress != nil {
 			matched = true

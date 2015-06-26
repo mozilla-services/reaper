@@ -333,6 +333,10 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		if !a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
+	case "TagNotEqual":
+		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
+			matched = true
+		}
 	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && time.Since(a.CreatedTime) < d {

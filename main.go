@@ -111,7 +111,7 @@ func init() {
 
 	if *loadFromStateFile && config.StateFile != "" {
 		config.LoadFromStateFile = *loadFromStateFile
-		log.Notice("State will be loaded from %s ", config.StateFile)
+		log.Notice("State will be loaded from %s", config.StateFile)
 	}
 }
 

@@ -43,20 +43,18 @@ func Ready() {
 
 // Reaper finds resources and deals with them
 type Reaper struct {
-	stopCh chan struct{}
+	stopCh chan bool
 }
 
 // NewReaper is a Reaper constructor shorthand
 func NewReaper() *Reaper {
-	return &Reaper{}
+	return &Reaper{
+		stopCh: make(chan bool),
+	}
 }
 
 // Start begins Reaper execution in a new goroutine
 func (r *Reaper) Start() {
-	if r.stopCh != nil {
-		return
-	}
-	r.stopCh = make(chan struct{})
 	go r.start()
 }
 

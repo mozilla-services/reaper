@@ -167,10 +167,12 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 	stop, err := MakeStopLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
 	whitelist, err := MakeWhitelistLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
 
+	// return the err
 	if err != nil {
 		return nil, err
 	}
 
+	// return the data
 	return &InstanceEventData{
 		Config:        config,
 		Instance:      i,

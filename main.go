@@ -51,13 +51,17 @@ func init() {
 		log.AddLogFile(config.LogFile)
 	}
 
+	// the erroreventreporter always returns errors
+	// use this to debug
+	// Events = append(Events, &reaperevents.ErrorEventReporter{})
+
+	// if Datadog EventReporter is enabled
 	if config.Events.DataDog.Enabled {
 		log.Info("DataDog EventReporter enabled.")
 		events = append(events, reaperevents.NewDataDog(&config.Events.DataDog))
 	}
 
-	// Events = append(Events, &reaperevents.ErrorEventReporter{})
-
+	// if Email EventReporter is enabled
 	if config.Events.Email.Enabled {
 		log.Info("Email EventReporter enabled.")
 		events = append(events, reaperevents.NewMailer(&config.Events.Email))
@@ -66,27 +70,33 @@ func init() {
 		log.Debug("SMTP From: %s", &config.Events.Email.From)
 	}
 
+	// if Tagger EventReporter is enabled
 	if config.Events.Tagger.Enabled {
 		log.Info("Tagger EventReporter enabled.")
 		events = append(events, reaperevents.NewTagger(&config.Events.Tagger))
 	}
 
+	// if Reaper EventReporter is enabled
 	if config.Events.Reaper.Enabled {
 		log.Info("Reaper EventReporter enabled.")
 		events = append(events, reaperevents.NewReaperEvent(&config.Events.Reaper))
 	}
 
 	// interactive mode disables all other EventReporters
+	// TODO: interactive mode config flag does nothing
 	config.Interactive = *interactive
 	if *interactive {
 		log.Notice("Interactive mode enabled, you will be prompted to handle reapables. All other EventReporters are disabled.")
 		events = []reaperevents.EventReporter{reaperevents.NewInteractiveEvent(&config.Events.Interactive)}
 	}
 
+	// if a WhitelistTag is set
 	if config.WhitelistTag == "" {
+		// set the config's WhitelistTag
 		log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
 		config.WhitelistTag = "REAPER_SPARE_ME"
 	} else {
+		// else use the default
 		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
 	}
 
@@ -100,10 +110,18 @@ func init() {
 }
 
 func main() {
+	// config and events are vars in the reaper package
+	// they NEED to be set before a reaper.Reaper can be initialized
 	reaper.SetConfig(&config)
 	reaper.SetEvents(&events)
+
+	// Ready() NEEDS to be called after BOTH SetConfig() and SetEvents()
+	// it uses those values to set individual EventReporter config values
+	// and to init the Reapables map
 	reaper.Ready()
 
+	// sets the config variable in Reaper's AWS package
+	// this also NEEDS to be set before a Reaper can be started
 	reaperaws.SetAWSConfig(&config.AWS)
 
 	// single instance of reaper
@@ -120,6 +138,8 @@ func main() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, os.Kill)
 
+		// waiting for an Interrupt or Kill signal
+		// this channel blocks until it receives one
 		sig := <-c
 		log.Notice(fmt.Sprintf("Got signal %s, stopping services", sig.String()))
 		log.Notice("Stopping HTTP")

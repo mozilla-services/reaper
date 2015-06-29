@@ -66,6 +66,10 @@ func (a *AWSResource) ReaperState() *state.State {
 	return a.reaperState
 }
 
+func (a *AWSResource) SetReaperState(newState *state.State) {
+	a.reaperState = newState
+}
+
 // Owner extracts useful information out of the Owner tag which should
 // be parsable by mail.ParseAddress
 func (a *AWSResource) Owner() *mail.Address {

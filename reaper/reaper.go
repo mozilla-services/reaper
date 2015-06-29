@@ -16,9 +16,10 @@ import (
 )
 
 var (
-	reapables reapable.Reapables
-	config    *Config
-	events    *[]reaperevents.EventReporter
+	reapables   reapable.Reapables
+	savedstates map[reapable.Region]map[reapable.ID]*state.State
+	config      *Config
+	events      *[]reaperevents.EventReporter
 )
 
 func SetConfig(c *Config) {
@@ -84,6 +85,11 @@ func (r *Reaper) start() {
 // Once is run once every time interval by start
 // it is intended to handle all reaping logic
 func (r *Reaper) Once() {
+	// if loading from saved state file (overriding AWS states)
+	if config.LoadFromStateFile {
+		r.LoadState(config.StateFile)
+	}
+
 	r.reap()
 
 	if config.StateFile != "" {
@@ -112,6 +118,13 @@ func (r *Reaper) LoadState(stateFile string) {
 	// open file RDONLY
 	s, err := os.OpenFile(stateFile, os.O_RDONLY, 0664)
 	defer func() { s.Close() }()
+
+	// init saved state map
+	savedstates = make(map[reapable.Region]map[reapable.ID]*state.State)
+	for _, region := range config.AWS.Regions {
+		savedstates[reapable.Region(region)] = make(map[reapable.ID]*state.State)
+	}
+
 	// load state from state file
 	scanner := bufio.NewScanner(s)
 	for scanner.Scan() {
@@ -123,14 +136,9 @@ func (r *Reaper) LoadState(stateFile string) {
 		}
 		region := reapable.Region(line[0])
 		id := reapable.ID(line[1])
-		savedState := line[2]
+		savedState := state.NewStateWithTag(line[2])
 
-		if rpbl, err := reapables.Get(region, id); err == nil {
-			rpbl.Save(state.NewStateWithTag(savedState))
-			reapables.Put(region, id, rpbl)
-		} else {
-			log.Error(err.Error())
-		}
+		savedstates[region][id] = savedState
 	}
 	if err != nil {
 		log.Error(fmt.Sprintf("Unable to open StateFile '%s'", stateFile))
@@ -193,11 +201,6 @@ func (r *Reaper) reap() {
 		}
 	}
 
-	// if loading from saved state file (overriding AWS states)
-	if config.LoadFromStateFile {
-		r.LoadState(config.StateFile)
-	}
-
 	// trigger batch events for each filtered owned resource in a goroutine
 	// for each owner in the owner map
 	for _, ownerMap := range filteredOwned {
@@ -252,6 +255,11 @@ func getInstances() chan *reaperaws.Instance {
 		regionSums := make(map[reapable.Region]int)
 		sum := 0
 		for instance := range instanceCh {
+			// restore saved state from file
+			savedstate, ok := savedstates[instance.Region][instance.ID]
+			if ok {
+				instance.SetReaperState(savedstate)
+			}
 			regionSums[instance.Region]++
 			sum++
 			ch <- instance
@@ -277,6 +285,11 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		regionSums := make(map[reapable.Region]int)
 		sum := 0
 		for asg := range asgCh {
+			// restore saved state from file
+			savedstate, ok := savedstates[asg.Region][asg.ID]
+			if ok {
+				asg.SetReaperState(savedstate)
+			}
 			regionSums[asg.Region]++
 			sum++
 			ch <- asg

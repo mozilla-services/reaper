@@ -29,7 +29,7 @@ func AddLogFile(filename string) {
 			// if the file was successfully opened
 			log.Info("Logging to %s", filename)
 			// reconfigure logging with stdout and logfile as outputs
-			logFileFormat := logging.MustStringFormatter("15:04:05.000: %{shortfunc} ▶ %{level:.4s} ▶ %{message}")
+			logFileFormat := logging.MustStringFormatter("%{time:15:04:05.000}: %{shortfunc} ▶ %{level:.4s} ▶ %{message}")
 			logFileBackend := logging.NewLogBackend(f, "", 0)
 			logFileBackendFormatter := logging.NewBackendFormatter(logFileBackend, logFileFormat)
 

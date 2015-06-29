@@ -101,7 +101,7 @@ func (rs *Reapables) Get(region Region, id ID) (Reapable, error) {
 	if ok {
 		return r, nil
 	}
-	return r, fmt.Errorf("Could not find %s", r.ReapableDescriptionTiny())
+	return r, ReapableNotFoundError{fmt.Sprintf("Could not find resource %s in %s", id.String(), region.String())}
 }
 
 func (rs *Reapables) Delete(region Region, id ID) {
@@ -137,4 +137,12 @@ type UnownedError struct {
 
 func (u UnownedError) Error() string {
 	return u.ErrorText
+}
+
+type ReapableNotFoundError struct {
+	ErrorText string
+}
+
+func (n ReapableNotFoundError) Error() string {
+	return n.ErrorText
 }

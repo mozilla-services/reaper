@@ -1,8 +1,10 @@
 package reaper
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	reaperaws "github.com/milescrabill/reaper/aws"
@@ -10,6 +12,7 @@ import (
 	"github.com/milescrabill/reaper/filters"
 	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
+	"github.com/milescrabill/reaper/state"
 )
 
 var (
@@ -92,16 +95,47 @@ func (r *Reaper) Once() {
 
 func (r *Reaper) SaveState(stateFile string) {
 	// open file RW, create it if it doesn't exist
-	s, err := os.OpenFile(config.StateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
+	s, err := os.OpenFile(stateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
 	defer func() { s.Close() }()
-	if err != nil {
-		log.Error(fmt.Sprintf("Unable to create StateFile '%s'", config.StateFile))
-	} else {
-		log.Info("States will be saved to %s", config.StateFile)
-	}
 	// save state to state file
 	for r := range reapables.Iter() {
-		s.Write([]byte(fmt.Sprintf("%s,%s\n", r.Region, r.ID, r.ReaperState().State.String())))
+		s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", r.Region, r.ID, r.ReaperState().String())))
+	}
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to create StateFile '%s'", stateFile))
+	} else {
+		log.Info("States saved to %s", stateFile)
+	}
+}
+
+func (r *Reaper) LoadState(stateFile string) {
+	// open file RDONLY
+	s, err := os.OpenFile(stateFile, os.O_RDONLY, 0664)
+	defer func() { s.Close() }()
+	// load state from state file
+	scanner := bufio.NewScanner(s)
+	for scanner.Scan() {
+		line := strings.Split(scanner.Text(), ",")
+		// there should be 3 sections in a saved state line
+		if len(line) != 3 {
+			log.Error(fmt.Sprintf("Malformed saved state %s", scanner.Text()))
+			continue
+		}
+		region := reapable.Region(line[0])
+		id := reapable.ID(line[1])
+		savedState := line[2]
+
+		if rpbl, err := reapables.Get(region, id); err == nil {
+			rpbl.Save(state.NewStateWithTag(savedState))
+			reapables.Put(region, id, rpbl)
+		} else {
+			log.Error(err.Error())
+		}
+	}
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to open StateFile '%s'", stateFile))
+	} else {
+		log.Info("States loaded from %s", stateFile)
 	}
 }
 
@@ -157,6 +191,11 @@ func (r *Reaper) reap() {
 		default:
 			log.Error("Reap default case.")
 		}
+	}
+
+	// if loading from saved state file (overriding AWS states)
+	if config.LoadFromStateFile {
+		r.LoadState(config.StateFile)
 	}
 
 	// trigger batch events for each filtered owned resource in a goroutine

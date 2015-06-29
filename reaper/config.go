@@ -93,8 +93,9 @@ type Config struct {
 	Instances         FilterGroup
 	Snapshots         FilterGroup
 
-	DryRun      bool
-	Interactive bool
+	DryRun            bool
+	Interactive       bool
+	LoadFromStateFile bool
 }
 
 type EventTypes struct {

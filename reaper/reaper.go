@@ -112,9 +112,12 @@ func (r *Reaper) reap() {
 	// TODO: consider slice of pointers
 	var asgs []reaperaws.AutoScalingGroup
 
+	// filtered, owned resources
+	filteredOwned := make(map[string][]reaperevents.Reapable)
+
 	// apply filters and trigger events for owned resources
 	// for each owner in the owner map
-	for _, ownerMap := range owned {
+	for owner, ownerMap := range owned {
 		// apply filters to their resources
 		resources := applyFilters(ownerMap)
 		// if there's only one resource for this owner
@@ -129,24 +132,14 @@ func (r *Reaper) reap() {
 		// append the resources to filtered
 		// so that reap methods are called on them
 		filtered = append(filtered, resources...)
-		// trigger a per owner batch event
-		for _, e := range *events {
-			if err := e.NewBatchReapableEvent(resources); err != nil {
-				log.Error(err.Error())
-			}
-		}
+
+		// add resources (post filter) to filteredOwned for batch events
+		filteredOwned[owner] = resources
 	}
 
 	// apply filters and trigger events for unowned resources
 	filteredUnowned := applyFilters(unowned)
 	filtered = append(filtered, filteredUnowned...)
-	for _, r := range filteredUnowned {
-		for _, e := range *events {
-			if err := e.NewReapableEvent(r); err != nil {
-				log.Error(err.Error())
-			}
-		}
-	}
 
 	filteredInstanceCount := 0
 	filteredAutoScalingGroupCount := 0
@@ -166,6 +159,31 @@ func (r *Reaper) reap() {
 		}
 	}
 
+	// trigger batch events for each filtered owned resource in a goroutine
+	// for each owner in the owner map
+	for _, ownerMap := range filteredOwned {
+		// trigger a per owner batch event
+		go func(resources []reaperevents.Reapable) {
+			for _, e := range *events {
+				if err := e.NewBatchReapableEvent(resources); err != nil {
+					log.Error(err.Error())
+				}
+			}
+		}(ownerMap)
+	}
+
+	// trigger events for each filtered unowned resource in a goroutine
+	for _, r := range filteredUnowned {
+		go func(r reaperevents.Reapable) {
+			for _, e := range *events {
+				if err := e.NewReapableEvent(r); err != nil {
+					log.Error(err.Error())
+				}
+			}
+		}(r)
+	}
+
+	// post statistics
 	for _, e := range *events {
 		err := e.NewStatistic("reaper.instances.filtered", float64(filteredInstanceCount), nil)
 		if err != nil {
@@ -304,19 +322,11 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 			fs = config.AutoScalingGroups.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		default:
-			log.Warning("You probably screwed and need to make sure applyFilters works!")
+			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
 		}
 
-		// defaults to a match
-		matched := true
-
-		// if any of the filters return false -> not a match
-		for _, filter := range fs {
-			if !filterable.Filter(filter) {
-				matched = false
-			}
-		}
+		matched := filters.ApplyFilters(filterable, fs)
 
 		// whitelist filter
 		if filterable.Filter(*filters.NewFilter("Tagged", []string{config.WhitelistTag})) {
@@ -333,41 +343,21 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 }
 
 func reapInstance(i *reaperaws.Instance) {
+	// update the internal state
 	if time.Now().After(i.ReaperState().Until) {
 		_ = i.IncrementState()
 	}
 	log.Notice(fmt.Sprintf("Reapable Instance discovered: %s.", i.ReapableDescription()))
-
-	// add to Reapables if filters matched
 	reapables.Put(i.Region, i.ID, i)
 }
 
 func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
+	// update the internal state
 	if time.Now().After(a.ReaperState().Until) {
 		_ = a.IncrementState()
 	}
 	log.Notice(fmt.Sprintf("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription()))
-
-	// add to Reapables if filters matched
 	reapables.Put(a.Region, a.ID, a)
-}
-
-func (r *Reaper) terminateUnowned(i *reaperaws.Instance) error {
-	log.Info("Terminate UNOWNED instance (%s) %s, owner tag: %s",
-		i.ID, i.Name, i.Tag("Owner"))
-
-	if config.DryRun {
-		return nil
-	}
-
-	// TODO: use success here
-	if _, err := i.Terminate(); err != nil {
-		log.Error(fmt.Sprintf("Terminate %s error: %s", i.ID, err.Error()))
-		return err
-	}
-
-	return nil
-
 }
 
 // Terminate by region, id, calls a Reapable's own Terminate method

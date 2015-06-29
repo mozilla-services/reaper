@@ -41,6 +41,7 @@ func (t *Tagger) NewReapableEvent(r Reapable) error {
 	}
 
 	if t.Config.ShouldTriggerFor(r) {
+		log.Notice("Tagging %s with %s", r.ReapableDescriptionTiny(), r.ReaperState().State.String())
 		_, err := r.Save(r.ReaperState())
 		if err != nil {
 			return err
@@ -50,5 +51,11 @@ func (t *Tagger) NewReapableEvent(r Reapable) error {
 }
 
 func (e *Tagger) NewBatchReapableEvent(rs []Reapable) error {
+	for _, r := range rs {
+		err := e.NewReapableEvent(r)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

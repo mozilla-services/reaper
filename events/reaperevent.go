@@ -60,5 +60,11 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 }
 
 func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable) error {
+	for _, r := range rs {
+		err := e.NewReapableEvent(r)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

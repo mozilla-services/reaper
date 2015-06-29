@@ -72,9 +72,9 @@ func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 	return err
 }
 
-func (n *InteractiveEvent) NewBatchReapableEvent(rs []Reapable) error {
+func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable) error {
 	for _, r := range rs {
-		err := n.NewReapableEvent(r)
+		err := e.NewReapableEvent(r)
 		if err != nil {
 			return err
 		}

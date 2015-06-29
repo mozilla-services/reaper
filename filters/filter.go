@@ -13,6 +13,20 @@ type Filterable interface {
 	Filter(Filter) bool
 }
 
+func ApplyFilters(f Filterable, fs map[string]Filter) bool {
+	// defaults to a match
+	matched := true
+
+	// if any of the filters return false -> not a match
+	for _, filter := range fs {
+		if !f.Filter(filter) {
+			matched = false
+		}
+	}
+
+	return matched
+}
+
 func PrintFilters(filters map[string]Filter) string {
 	var filterText []string
 	for _, filter := range filters {

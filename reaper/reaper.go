@@ -183,17 +183,17 @@ func (r *Reaper) reap() {
 	filteredUnowned := applyFilters(unowned)
 	filtered = append(filtered, filteredUnowned...)
 
-	filteredInstanceCount := 0
-	filteredAutoScalingGroupCount := 0
+	filteredInstanceSums := make(map[reapable.Region]int)
+	filteredASGSums := make(map[reapable.Region]int)
 
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
 		switch t := f.(type) {
 		case *reaperaws.Instance:
-			filteredInstanceCount++
+			filteredInstanceSums[t.Region]++
 			reapInstance(t)
 		case *reaperaws.AutoScalingGroup:
-			filteredAutoScalingGroupCount++
+			filteredASGSums[t.Region]++
 			reapAutoScalingGroup(t)
 			asgs = append(asgs, *t)
 		default:
@@ -223,13 +223,17 @@ func (r *Reaper) reap() {
 
 	// post statistics
 	for _, e := range *events {
-		err := e.NewStatistic("reaper.instances.filtered", float64(filteredInstanceCount), nil)
-		if err != nil {
-			log.Error(fmt.Sprintf("%s", err.Error()))
+		for region, sum := range filteredInstanceSums {
+			err := e.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+			if err != nil {
+				log.Error(fmt.Sprintf("%s", err.Error()))
+			}
 		}
-		err = e.NewStatistic("reaper.asgs.filtered", float64(filteredAutoScalingGroupCount), nil)
-		if err != nil {
-			log.Error(fmt.Sprintf("%s", err.Error()))
+		for region, sum := range filteredASGSums {
+			err := e.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+			if err != nil {
+				log.Error(fmt.Sprintf("%s", err.Error()))
+			}
 		}
 	}
 

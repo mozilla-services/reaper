@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/milescrabill/reaper/reaperlog"
+	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
 type Filterable interface {

@@ -7,11 +7,11 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	reaperaws "github.com/milescrabill/reaper/aws"
-	reaperevents "github.com/milescrabill/reaper/events"
-	"github.com/milescrabill/reaper/filters"
-	log "github.com/milescrabill/reaper/reaperlog"
-	"github.com/milescrabill/reaper/state"
+	reaperaws "github.com/mozilla-services/reaper/aws"
+	reaperevents "github.com/mozilla-services/reaper/events"
+	"github.com/mozilla-services/reaper/filters"
+	log "github.com/mozilla-services/reaper/reaperlog"
+	"github.com/mozilla-services/reaper/state"
 )
 
 func LoadConfig(path string) (*Config, error) {

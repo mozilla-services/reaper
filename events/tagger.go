@@ -1,6 +1,6 @@
 package events
 
-import log "github.com/milescrabill/reaper/reaperlog"
+import log "github.com/mozilla-services/reaper/reaperlog"
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {

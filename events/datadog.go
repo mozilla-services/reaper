@@ -7,7 +7,7 @@ import (
 
 	"github.com/PagerDuty/godspeed"
 
-	log "github.com/milescrabill/reaper/reaperlog"
+	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
 // DataDogConfig is the configuration for a DataDog

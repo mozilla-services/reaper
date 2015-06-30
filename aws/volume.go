@@ -5,8 +5,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 
-	"github.com/milescrabill/reaper/reapable"
-	log "github.com/milescrabill/reaper/reaperlog"
+	"github.com/mozilla-services/reaper/reapable"
+	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
 type Volumes []*Volume

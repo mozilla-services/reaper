@@ -12,10 +12,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
-	"github.com/milescrabill/reaper/filters"
-	"github.com/milescrabill/reaper/reapable"
-	log "github.com/milescrabill/reaper/reaperlog"
-	"github.com/milescrabill/reaper/state"
+	"github.com/mozilla-services/reaper/filters"
+	"github.com/mozilla-services/reaper/reapable"
+	log "github.com/mozilla-services/reaper/reaperlog"
+	"github.com/mozilla-services/reaper/state"
 )
 
 type AutoScalingGroup struct {

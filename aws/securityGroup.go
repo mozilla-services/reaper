@@ -2,8 +2,8 @@ package aws
 
 import (
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/milescrabill/reaper/reapable"
-	"github.com/milescrabill/reaper/state"
+	"github.com/mozilla-services/reaper/reapable"
+	"github.com/mozilla-services/reaper/state"
 )
 
 type SecurityGroups []*SecurityGroup

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/milescrabill/reaper/filters"
-	"github.com/milescrabill/reaper/state"
+	"github.com/mozilla-services/reaper/filters"
+	"github.com/mozilla-services/reaper/state"
 )
 
 type Terminable interface {

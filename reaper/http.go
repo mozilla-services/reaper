@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"net/url"
 
-	reaperaws "github.com/milescrabill/reaper/aws"
-	reaperevents "github.com/milescrabill/reaper/events"
-	"github.com/milescrabill/reaper/reapable"
-	log "github.com/milescrabill/reaper/reaperlog"
-	"github.com/milescrabill/reaper/state"
-	"github.com/milescrabill/reaper/token"
+	reaperaws "github.com/mozilla-services/reaper/aws"
+	reaperevents "github.com/mozilla-services/reaper/events"
+	"github.com/mozilla-services/reaper/reapable"
+	log "github.com/mozilla-services/reaper/reaperlog"
+	"github.com/mozilla-services/reaper/state"
+	"github.com/mozilla-services/reaper/token"
 )
 
 type HTTPApi struct {

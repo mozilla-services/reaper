@@ -3,7 +3,7 @@ package events
 import (
 	"fmt"
 
-	log "github.com/milescrabill/reaper/reaperlog"
+	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
 type ReaperEventConfig struct {

@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/milescrabill/reaper/reapable"
-	log "github.com/milescrabill/reaper/reaperlog"
-	"github.com/milescrabill/reaper/token"
+	"github.com/mozilla-services/reaper/reapable"
+	log "github.com/mozilla-services/reaper/reaperlog"
+	"github.com/mozilla-services/reaper/token"
 )
 
 func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {

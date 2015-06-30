@@ -249,6 +249,7 @@ func getInstances() chan *reaperaws.Instance {
 	go func() {
 		instanceCh := reaperaws.AllInstances()
 		regionSums := make(map[reapable.Region]int)
+		instanceTypeSums := make(map[reapable.Region]map[string]int)
 		sum := 0
 		for instance := range instanceCh {
 			// restore saved state from file
@@ -256,14 +257,32 @@ func getInstances() chan *reaperaws.Instance {
 			if ok {
 				instance.SetReaperState(savedstate)
 			}
+
+			// make the map if it is not initialized
+			_, ok = instanceTypeSums[instance.Region]
+			if !ok {
+				instanceTypeSums[instance.Region] = make(map[string]int)
+			}
+			instanceTypeSums[instance.Region][instance.InstanceType]++
+
 			regionSums[instance.Region]++
 			sum++
 			ch <- instance
 		}
-		for region, regionSum := range regionSums {
-			log.Info(fmt.Sprintf("Found %d total Instances in %s", regionSum, region))
-			for _, e := range *events {
-				err := e.NewStatistic("reaper.instances.total", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+
+		for _, e := range *events {
+			for region, regionMap := range instanceTypeSums {
+				for instanceType, instanceTypeSum := range regionMap {
+					err := e.NewStatistic("reaper.instances.instancetype", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+					if err != nil {
+						log.Error(fmt.Sprintf("%s", err.Error()))
+					}
+				}
+			}
+
+			for region, regionSum := range regionSums {
+				log.Info(fmt.Sprintf("Found %d total Instances in %s", regionSum, region))
+				err := e.NewStatistic("reaper.instances.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
 				}
@@ -279,6 +298,7 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 	go func() {
 		asgCh := reaperaws.AllAutoScalingGroups()
 		regionSums := make(map[reapable.Region]int)
+		asgSizeSums := make(map[reapable.Region]map[int64]int)
 		sum := 0
 		for asg := range asgCh {
 			// restore saved state from file
@@ -286,13 +306,30 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			if ok {
 				asg.SetReaperState(savedstate)
 			}
+
+			// make the map if it is not initialized
+			_, ok = asgSizeSums[asg.Region]
+			if !ok {
+				asgSizeSums[asg.Region] = make(map[int64]int)
+			}
+			asgSizeSums[asg.Region][asg.DesiredCapacity]++
+
 			regionSums[asg.Region]++
 			sum++
 			ch <- asg
 		}
-		for region, regionSum := range regionSums {
-			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", regionSum, region))
-			for _, e := range *events {
+		for _, e := range *events {
+			for region, regionMap := range asgSizeSums {
+				for asgSize, asgSizeSum := range regionMap {
+					err := e.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize)})
+					if err != nil {
+						log.Error(fmt.Sprintf("%s", err.Error()))
+					}
+				}
+			}
+
+			for region, regionSum := range regionSums {
+				log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", regionSum, region))
 				err := e.NewStatistic("reaper.asgs.total", float64(sum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))

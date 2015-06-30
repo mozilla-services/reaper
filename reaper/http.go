@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	reaperaws "github.com/milescrabill/reaper/aws"
 	reaperevents "github.com/milescrabill/reaper/events"
 	"github.com/milescrabill/reaper/reapable"
 	log "github.com/milescrabill/reaper/reaperlog"
@@ -144,6 +145,16 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			writeResponse(w, http.StatusInternalServerError, "Unrecognized job token.")
 			return
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf("Resource state: %s", r.ReaperState().String()))
+
+		var consoleURL *url.URL
+		switch t := r.(type) {
+		case *reaperaws.Instance:
+			consoleURL = t.AWSConsoleURL()
+		case *reaperaws.AutoScalingGroup:
+			consoleURL = t.AWSConsoleURL()
+		default:
+			log.Error("No AWSConsoleURL")
+		}
+		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>", consoleURL, r.ReapableDescriptionTiny()))
 	}
 }

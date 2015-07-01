@@ -337,8 +337,16 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "Region":
-		if a.Region == reapable.Region(filter.Arguments[0]) {
-			matched = true
+		for region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		for region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = false
+			}
 		}
 	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])

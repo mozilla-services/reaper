@@ -337,8 +337,16 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "Region":
-		if i.Region == reapable.Region(filter.Arguments[0]) {
-			matched = true
+		for region := range filter.Arguments {
+			if i.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		for region := range filter.Arguments {
+			if i.Region == reapable.Region(region) {
+				matched = false
+			}
 		}
 	case "ReaperState":
 		if i.reaperState.State.String() == filter.Arguments[0] {

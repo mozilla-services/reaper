@@ -78,14 +78,14 @@ func (a *AWSResource) Owner() *mail.Address {
 		return addr
 	}
 
-	// username -> mozilla.com email
-	if addr, err := mail.ParseAddress(fmt.Sprintf("%s@mozilla.com", a.Tag("Owner"))); a.Tagged("Owner") && err == nil {
+	// username -> default email host email address
+	if addr, err := mail.ParseAddress(fmt.Sprintf("%s@%s", a.Tag("Owner"), config.DefaultEmailHost)); a.Tagged("Owner") && config.DefaultEmailHost != "" && err == nil {
 		return addr
 	}
 
 	// default owner is specified
 	if addr, err := mail.ParseAddress(
-		fmt.Sprintf("%s@mozilla.com", config.DefaultOwner)); config.DefaultOwner != "" && err == nil {
+		fmt.Sprintf("%s@%s", config.DefaultOwner, config.DefaultEmailHost)); config.DefaultOwner != "" && config.DefaultEmailHost != "" && err == nil {
 		return addr
 	}
 

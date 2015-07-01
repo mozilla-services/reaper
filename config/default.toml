@@ -4,6 +4,7 @@
 # LogFile = "log.txt"
 WhitelistTag = "REAPER_SPARE_ME"
 DefaultOwner = "reaper_notifications"
+DefaultEmailHost = "mozilla.com"
 
 [HTTP]
     # Set this to secure the tokens in the links back to the

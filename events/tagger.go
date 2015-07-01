@@ -16,10 +16,6 @@ func (t *Tagger) SetDryRun(b bool) {
 	t.Config.DryRun = b
 }
 
-func (t *Tagger) SetNotificationExtras(b bool) {
-	t.Config.Extras = b
-}
-
 func NewTagger(c *TaggerConfig) *Tagger {
 	c.Name = "Tagger"
 	return &Tagger{c}

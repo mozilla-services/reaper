@@ -20,10 +20,6 @@ func (e *ReaperEvent) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
-func (e *ReaperEvent) SetNotificationExtras(b bool) {
-	e.Config.Extras = b
-}
-
 func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 	c.Name = "ReaperEvent"
 	return &ReaperEvent{c}
@@ -40,7 +36,7 @@ func (e *ReaperEvent) NewCountStatistic(name string, tags []string) error {
 }
 func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	if e.Config.ShouldTriggerFor(r) {
-		if e.Config.Extras {
+		if log.Extras() {
 			log.Error("Triggering ReaperEvent for %s", r.ReaperState().String())
 		}
 		var err error

@@ -33,10 +33,6 @@ func (d *DataDog) SetDryRun(b bool) {
 	d.Config.DryRun = b
 }
 
-func (d *DataDog) SetNotificationExtras(b bool) {
-	d.Config.Extras = b
-}
-
 // TODO: make this async?
 // TODO: don't recreate godspeed
 func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
@@ -64,7 +60,7 @@ func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
 // NewEvent reports an event to DataDog
 func (d *DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	if d.Config.DryRun {
-		if d.Config.Extras {
+		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", title)
 		}
 		return nil
@@ -86,7 +82,7 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 // NewStatistic reports a gauge to DataDog
 func (d *DataDog) NewStatistic(name string, value float64, tags []string) error {
 	if d.Config.DryRun {
-		if d.Config.Extras {
+		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", name)
 		}
 		return nil
@@ -109,7 +105,7 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 // NewCountStatistic reports an Incr to DataDog
 func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 	if d.Config.DryRun {
-		if d.Config.Extras {
+		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", name)
 		}
 		return nil

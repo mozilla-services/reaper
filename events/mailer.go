@@ -38,10 +38,6 @@ func (m *Mailer) SetDryRun(b bool) {
 	m.Config.DryRun = b
 }
 
-func (m *Mailer) SetNotificationExtras(b bool) {
-	m.Config.Extras = b
-}
-
 func (s *SMTPConfig) String() string {
 	return fmt.Sprintf("%s:%d auth type:%s, creds: %s:%s",
 		s.Host,

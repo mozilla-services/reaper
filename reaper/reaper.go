@@ -35,7 +35,6 @@ func Ready() {
 	// set config values for events
 	for _, er := range *events {
 		er.SetDryRun(config.DryRun)
-		er.SetNotificationExtras(config.Notifications.Extras)
 	}
 
 	if r := reapable.NewReapables(config.AWS.Regions); r != nil {

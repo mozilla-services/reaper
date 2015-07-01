@@ -336,6 +336,10 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		if err == nil && time.Since(i.LaunchTime) > d {
 			matched = true
 		}
+	case "Region":
+		if i.Region == reapable.Region(filter.Arguments[0]) {
+			matched = true
+		}
 	case "ReaperState":
 		if i.reaperState.State.String() == filter.Arguments[0] {
 			matched = true

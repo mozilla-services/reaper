@@ -88,7 +88,7 @@ func (a *AWSResource) Owner() *mail.Address {
 		fmt.Sprintf("%s@%s", config.DefaultOwner, config.DefaultEmailHost)); config.DefaultOwner != "" && config.DefaultEmailHost != "" && err == nil {
 		return addr
 	}
-
+	log.Warning("No default owner or email host.")
 	return nil
 }
 

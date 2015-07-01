@@ -51,7 +51,6 @@ func LoadConfig(path string) (*Config, error) {
 		Logging: log.LogConfig{
 			Extras: true,
 		},
-		DefaultEmailHost: "mozilla.com",
 	}
 	md, err := toml.DecodeFile(path, &conf)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 
 type NotificationsConfig struct {
 	state.StatesConfig
-	Extras bool
 }
 
 type Reapable interface {
@@ -26,7 +25,6 @@ type Reapable interface {
 type EventReporterConfig struct {
 	Enabled bool
 	DryRun  bool
-	Extras  bool
 
 	Name string
 
@@ -64,7 +62,7 @@ func (e *EventReporterConfig) ShouldTriggerFor(r Reapable) bool {
 	}
 
 	if e.DryRun {
-		if e.Extras {
+		if log.Extras() {
 			log.Notice("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
 		}
 		return false
@@ -79,7 +77,6 @@ type EventReporter interface {
 	NewReapableEvent(r Reapable) error
 	NewBatchReapableEvent(rs []Reapable) error
 	SetDryRun(b bool)
-	SetNotificationExtras(b bool)
 }
 
 // implements EventReporter but does nothing
@@ -107,8 +104,7 @@ func (n *NoEventReporter) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-func (n *NoEventReporter) SetDryRun(b bool)             {}
-func (n *NoEventReporter) SetNotificationExtras(b bool) {}
+func (n *NoEventReporter) SetDryRun(b bool) {}
 
 // TODO: this is sorta redundant with triggers, won't ever activate
 type ErrorEventReporter struct {
@@ -135,5 +131,4 @@ func (e *ErrorEventReporter) NewReapableEvent(r Reapable) error {
 	return fmt.Errorf("ErrorEventReporter")
 }
 
-func (e *ErrorEventReporter) SetDryRun(b bool)             {}
-func (e *ErrorEventReporter) SetNotificationExtras(b bool) {}
+func (e *ErrorEventReporter) SetDryRun(b bool) {}

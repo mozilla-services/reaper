@@ -27,7 +27,6 @@ func LoadConfig(path string) (*Config, error) {
 			SecondStateDuration: state.Duration{Duration: time.Duration(12) * time.Hour},
 			ThirdStateDuration:  state.Duration{Duration: time.Duration(12) * time.Hour},
 		},
-		Extras: true,
 	}
 	conf := Config{
 		AWS: reaperaws.AWSConfig{
@@ -49,6 +48,9 @@ func LoadConfig(path string) (*Config, error) {
 		HTTP:          httpconfig,
 		Notifications: notifications,
 		DryRun:        true,
+		Logging: log.LogConfig{
+			Extras: true,
+		},
 	}
 	md, err := toml.DecodeFile(path, &conf)
 	if err != nil {
@@ -81,6 +83,7 @@ type Config struct {
 	AWS           reaperaws.AWSConfig
 	SMTP          reaperevents.SMTPConfig
 	Notifications reaperevents.NotificationsConfig
+	Logging       log.LogConfig
 	States        state.StatesConfig
 
 	Events       EventTypes

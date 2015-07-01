@@ -8,6 +8,19 @@ import (
 )
 
 var log *logging.Logger
+var config LogConfig
+
+type LogConfig struct {
+	Extras bool
+}
+
+func EnableExtras() {
+	config.Extras = true
+}
+
+func Extras() bool {
+	return config.Extras
+}
 
 func init() {
 	// set up logging

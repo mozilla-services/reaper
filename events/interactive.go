@@ -25,10 +25,6 @@ func (n *InteractiveEvent) SetDryRun(b bool) {
 	n.Config.DryRun = b
 }
 
-func (n *InteractiveEvent) SetNotificationExtras(b bool) {
-	n.Config.Extras = b
-}
-
 func (n *InteractiveEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil
 }

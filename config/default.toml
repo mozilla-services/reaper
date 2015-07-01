@@ -20,8 +20,7 @@ DefaultOwner = "reaper_notifications"
     Token = "t"
     Action = "a"
 
-[Notifications]
-    # Extra notifications
+[Logging]
     Extras = true
 
 [States]

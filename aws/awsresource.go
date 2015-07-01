@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
+	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 	"github.com/mozilla-services/reaper/state"
@@ -26,19 +27,21 @@ const (
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	ID             reapable.ID
-	Name           string
-	Region         reapable.Region
-	AWSState       AWSState
-	Description    string
-	VPCID          string
-	OwnerID        string
-	MatchedFilters string
+	ID          reapable.ID
+	Name        string
+	Region      reapable.Region
+	AWSState    AWSState
+	Description string
+	VPCID       string
+	OwnerID     string
 
 	Tags map[string]string
 
 	// reaper state
 	reaperState *state.State
+
+	// filters for MatchedFilters
+	matchedFilterGroups map[string]filters.FilterGroup
 }
 
 func (a *AWSResource) Tagged(tag string) bool {
@@ -134,8 +137,19 @@ func (a *AWSResource) IncrementState() bool {
 	return updated
 }
 
+func (a *AWSResource) AddFilterGroup(name string, fs filters.FilterGroup) {
+	if a.matchedFilterGroups == nil {
+		a.matchedFilterGroups = make(map[string]filters.FilterGroup)
+	}
+	a.matchedFilterGroups[name] = fs
+}
+
+func (a *AWSResource) MatchedFilters() string {
+	return filters.PrintFilterGroups(a.matchedFilterGroups)
+}
+
 func (a *AWSResource) ReapableDescription() string {
-	return fmt.Sprintf("%s%s", a.ReapableDescriptionShort(), a.MatchedFilters)
+	return fmt.Sprintf("%s matched %s", a.ReapableDescriptionShort(), a.MatchedFilters())
 }
 
 func (a *AWSResource) ReapableDescriptionShort() string {

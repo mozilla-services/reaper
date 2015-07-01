@@ -191,7 +191,7 @@ const reapableInstanceEventHTML = `
 	<p>Your AWS Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
-		You can ignore this message and your instance will advance to the next state after <strong>{{.Instance.ReaperState.Until}}</strong>. If you do not act, it will be terminated!
+		You can ignore this message and your instance will advance to the next state after <strong>{{.Instance.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
 	</p>
 
 	<p>

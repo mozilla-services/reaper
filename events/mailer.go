@@ -146,7 +146,7 @@ func (e *Mailer) NewBatchReapableEvent(rs []Reapable) error {
 	}
 	log.Info("Sending batch Mailer event for %d reapables.", len(triggering))
 	subject := fmt.Sprintf("%d AWS Resources you own are going to be reaped!", len(triggering))
-	buffer.WriteString(fmt.Sprintf("You are receiving this message because your email, %s, is associated with AWS resources that matched Reaper's filters.\nIf you do not take action, they may be terminated.", owner.Address))
+	buffer.WriteString(fmt.Sprintf("You are receiving this message because your email, %s, is associated with AWS resources that matched Reaper's filters.\nIf you do not take action they will be terminated!", owner.Address))
 	for _, r := range triggering {
 		_, body, err := r.ReapableEventEmailShort()
 		if err != nil {

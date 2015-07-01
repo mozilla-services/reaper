@@ -16,12 +16,13 @@ import (
 var config *AWSConfig
 
 type AWSConfig struct {
-	Notifications events.NotificationsConfig
-	HTTP          events.HTTPConfig
-	Regions       []string
-	WhitelistTag  string
-	DefaultOwner  string
-	DryRun        bool
+	Notifications    events.NotificationsConfig
+	HTTP             events.HTTPConfig
+	Regions          []string
+	WhitelistTag     string
+	DefaultOwner     string
+	DefaultEmailHost string
+	DryRun           bool
 }
 
 func NewAWSConfig() *AWSConfig {

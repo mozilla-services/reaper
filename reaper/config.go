@@ -67,6 +67,7 @@ func LoadConfig(path string) (*Config, error) {
 	conf.AWS.DryRun = conf.DryRun
 	conf.AWS.WhitelistTag = conf.WhitelistTag
 	conf.AWS.DefaultOwner = conf.DefaultOwner
+	conf.AWS.DefaultEmailHost = conf.DefaultEmailHost
 	conf.AWS.Notifications = conf.Notifications
 	conf.AWS.HTTP = conf.HTTP
 	conf.SMTP.HTTPConfig = conf.HTTP
@@ -86,11 +87,12 @@ type Config struct {
 	Logging       log.LogConfig
 	States        state.StatesConfig
 
-	Events       EventTypes
-	LogFile      string
-	StateFile    string
-	WhitelistTag string
-	DefaultOwner string
+	Events           EventTypes
+	LogFile          string
+	StateFile        string
+	WhitelistTag     string
+	DefaultOwner     string
+	DefaultEmailHost string
 
 	AutoScalingGroups FilterGroup
 	Instances         FilterGroup

@@ -56,16 +56,28 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 		for _, region := range regions {
 			api := autoscaling.New(&aws.Config{Region: region})
 
-			// TODO: nextToken paging
-			input := &autoscaling.DescribeAutoScalingGroupsInput{}
-			resp, err := api.DescribeAutoScalingGroups(input)
-			if err != nil {
-				// TODO: wee
-				log.Error(err.Error())
-			}
+			// repeat until we have everything
+			var nextToken *string
+			for done := false; done != true; {
+				input := &autoscaling.DescribeAutoScalingGroupsInput{
+					NextToken: nextToken,
+				}
+				resp, err := api.DescribeAutoScalingGroups(input)
+				if err != nil {
+					// TODO: wee
+					log.Error(err.Error())
+				}
 
-			for _, a := range resp.AutoScalingGroups {
-				ch <- NewAutoScalingGroup(region, a)
+				for _, a := range resp.AutoScalingGroups {
+					ch <- NewAutoScalingGroup(region, a)
+				}
+
+				if resp.NextToken != nil {
+					log.Debug("More results for DescribeAutoScalingGroups in %s", region)
+					nextToken = resp.NextToken
+				} else {
+					done = true
+				}
 			}
 		}
 		close(ch)

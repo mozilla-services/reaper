@@ -1,8 +1,9 @@
 ### Reaper Configuration File ###
 
-#StateFile = "savedstates.txt"
-#LogFile = "reaperlog.txt"
+# StateFile = "savedstates.txt"
+# LogFile = "log.txt"
 WhitelistTag = "REAPER_SPARE_ME"
+DefaultOwner = "reaper_notifications"
 
 [HTTP]
     # Set this to secure the tokens in the links back to the
@@ -21,42 +22,36 @@ WhitelistTag = "REAPER_SPARE_ME"
 
 [Notifications]
     # Extra notifications
-    Extras = false
+    Extras = true
 
+[States]
     # The time format must be a duration parsable by go's time.ParseDuration
     # function. See: http://godoc.org/time#ParseDuration
     #
     # Recommended to do things in hourly increments
 
     # Interval that all instances should be checked for reaping
-    Interval = "1m"
+    Interval = "20m"
 
-    # How long the instance is allowed to run before sending the first
-    # notification
-    FirstNoticeStateDuration = "30s"
-
-    # How long after the first notification before sending the second
-    # notification
-    SecondNoticeStateDuration = "60s"
-
-    # How long after the second notification before terminating the instance
-    Terminate = "1m"
-
-# i remembered why this exists:
-# it's because [Filters.AutoScalingGroup] is basically a []filters.Filter
-# so I can't throw a bool there
-[Enabled]
-    instances = true
-    autoscalinggroups = true
-    snapshots = false
+    # Length of time for each state leading to the final state
+    # to disable a state, make its duration 0 and remove its EventReporter triggers
+    FirstStateDuration = "1m"
+    SecondStateDuration = "5m"
+    ThirdStateDuration = "10m"
 
 [Events]
+
+    # Triggers are one of ["first", "second", "third", "final", "ignore"]
+
     [Events.DataDog]
         Enabled = false
+        Triggers = []
 
     [Events.Email]
         Enabled = false
-        Host = "localhost"
+        Triggers = []
+
+        Host = ""
         AuthType = "plain"
 
         # valid: "none", "md5" or "plain". Use "plain" for SES SMTP
@@ -69,45 +64,22 @@ WhitelistTag = "REAPER_SPARE_ME"
         Password = ""
 
         # must be parsable by http://godoc.org/net/mail#ParseAddress
-        From = "AWS Reaper <reaper@reaper.reaper>"
+        From = "AWS Reaper <reaper@reaper.com>"
 
         # Optional port, defaults to 587
         # Port = 587
 
     [Events.Tagger]
-        Enabled = true
+        Enabled = false
+        Triggers = []
 
     [Events.Reaper]
         Enabled = false
+        Triggers = []
+        Mode = "Stop"
 
-[Filters]
-    [Filters.AutoScalingGroup]
-        [Filters.AutoScalingGroup.1]
-            function = "SizeGreaterThanOrEqualTo"
-            arguments = ["0"]
-        [Filters.AutoScalingGroup.4]
-            function = "Tagged"
-            arguments = ["Owner"]
-        [Filters.AutoScalingGroup.3]
-            function = "Tagged"
-            arguments = ["REAP_ME"]
-
-    [Filters.Instance]
-        [Filters.Instance.1]
-            function = "LaunchTimeAfter"
-            arguments = ["2015-06-01T22:08:41+00:00"]
-        [Filters.Instance.2]
-            function = "Running"
-            arguments = ["true"]
-        [Filters.Instance.3]
-            function = "Tagged"
-            arguments = ["REAP_ME"]
-        #[Filters.Instance.4]
-            #function = "Tag"
-            #arguments = ["Owner", "miles"]
-        #[Filters.Instance.5]
-        #    function = "PublicIPAddress"
-        #    arguments = ["127.0.0.1"]
+    [Events.Interactive]
+        Triggers = ["first", "second", "third", "final"]
 
 [AWS]
 # what regions the reaper will look for ec2 servers in
@@ -117,3 +89,31 @@ Regions      = [
     "us-east-1",
     "eu-west-1",
 ]
+
+[AutoScalingGroups]
+    Enabled = true
+
+    [AutoScalingGroups.Filters]
+        [AutoScalingGroups.Filters.1]
+            function = "SizeGreaterThanOrEqualTo"
+            arguments = ["1"]
+        [AutoScalingGroups.Filters.2]
+            function = "CreatedTimeNotInTheLast"
+            arguments = ["24h"]
+        [AutoScalingGroups.Filters.3]
+            function = "Tagged"
+            arguments = ["REAP_ME"]
+
+[Instances]
+    Enabled = true
+
+    [Instances.Filters]
+        [Instances.Filters.1]
+            function = "LaunchTimeNotInTheLast"
+            arguments = ["24h"]
+        [Instances.Filters.2]
+            function = "Running"
+            arguments = ["true"]
+        [Instances.Filters.3]
+            function = "Tagged"
+            arguments = ["REAP_ME"]

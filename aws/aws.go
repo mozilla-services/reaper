@@ -54,10 +54,11 @@ func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.I
 // and are passed to a channel
 func AllAutoScalingGroups() chan *AutoScalingGroup {
 	ch := make(chan *AutoScalingGroup)
+	// waitgroup for all regions
 	wg := sync.WaitGroup{}
-
 	for _, region := range config.Regions {
 		go func(region string) {
+			// add region to waitgroup
 			wg.Add(1)
 			api := autoscaling.New(&aws.Config{Region: region})
 			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
@@ -67,6 +68,7 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 				// if we are at the last page, we should not continue
 				// the return value of this func is "shouldContinue"
 				if lastPage {
+					// on the last page, finish this region
 					wg.Done()
 				}
 				return true
@@ -78,6 +80,8 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 		}(region)
 	}
 	go func() {
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
 		wg.Wait()
 		close(ch)
 
@@ -90,10 +94,11 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 // and are passed to a channel
 func AllInstances() chan *Instance {
 	ch := make(chan *Instance)
+	// waitgroup for all regions
 	wg := sync.WaitGroup{}
-
 	for _, region := range config.Regions {
 		go func(region string) {
+			// add region to waitgroup
 			wg.Add(1)
 			api := ec2.New(&aws.Config{Region: region})
 			// DescribeInstancesPages does autopagination
@@ -117,6 +122,8 @@ func AllInstances() chan *Instance {
 		}(region)
 	}
 	go func() {
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
 		wg.Wait()
 		close(ch)
 	}()

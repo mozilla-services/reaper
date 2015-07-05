@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -48,71 +49,88 @@ func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.I
 	return inASG
 }
 
-// returns ASGs as filterables
+// AllAutoScalingGroups describes every AutoScalingGroup in the requested regions
+// *AutoScalingGroups are created for every *autoscaling.AutoScalingGroup
+// and are passed to a channel
 func AllAutoScalingGroups() chan *AutoScalingGroup {
 	ch := make(chan *AutoScalingGroup)
+	// done keeps track of the number of finished regions
+	done := 0
 
-	go func(regions []string) {
-		for _, region := range regions {
+	for _, region := range config.Regions {
+		go func(region string) {
 			api := autoscaling.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &autoscaling.DescribeAutoScalingGroupsInput{}
-			resp, err := api.DescribeAutoScalingGroups(input)
+			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
+				for _, asg := range resp.AutoScalingGroups {
+					ch <- NewAutoScalingGroup(region, asg)
+				}
+				// if we are at the last page, we should not continue
+				// the return value of this func is "shouldContinue"
+				if lastPage {
+					done++
+				}
+				return true
+			})
 			if err != nil {
-				// TODO: wee
+				// probably should do something here...
 				log.Error(err.Error())
 			}
-
-			for _, a := range resp.AutoScalingGroups {
-				ch <- NewAutoScalingGroup(region, a)
+		}(region)
+	}
+	go func() {
+		for {
+			// if all regions are done, close the channel
+			if done == len(config.Regions) {
+				close(ch)
+				return
 			}
+			time.Sleep(10 * time.Millisecond)
 		}
-		close(ch)
-	}(config.Regions)
-
+	}()
 	return ch
 }
 
-// allInstances describes every instance in the requested regions
-// instances of Instance are created for each *ec2.Instance
-// returned as Filterables
+// AllInstances describes every instance in the requested regions
+// *Instances are created for each *ec2.Instance
+// and are passed to a channel
 func AllInstances() chan *Instance {
 	ch := make(chan *Instance)
+	// done keeps track of the number of finished regions
+	done := 0
 
-	go func(regions []string) {
-		for _, region := range regions {
+	for _, region := range config.Regions {
+		go func(region string) {
 			api := ec2.New(&aws.Config{Region: region})
-
-			// repeat until we have everything
-			var nextToken *string
-			for done := false; done != true; {
-				input := &ec2.DescribeInstancesInput{
-					NextToken: nextToken,
-				}
-				resp, err := api.DescribeInstances(input)
-				if err != nil {
-					// probably should do something here...
-					log.Error(err.Error())
-				}
-
-				for _, r := range resp.Reservations {
-					for _, instance := range r.Instances {
+			// DescribeInstancesPages does autopagination
+			err := api.DescribeInstancesPages(&ec2.DescribeInstancesInput{}, func(resp *ec2.DescribeInstancesOutput, lastPage bool) bool {
+				for _, res := range resp.Reservations {
+					for _, instance := range res.Instances {
 						ch <- NewInstance(region, instance)
 					}
 				}
-
-				if resp.NextToken != nil {
-					log.Debug("More results for DescribeInstances in %s", region)
-					nextToken = resp.NextToken
-				} else {
-					done = true
+				// if we are at the last page, we should not continue
+				// the return value of this func is "shouldContinue"
+				if lastPage {
+					done++
 				}
+				return true
+			})
+			if err != nil {
+				// probably should do something here...
+				log.Error(err.Error())
 			}
+		}(region)
+	}
+	go func() {
+		for {
+			// if all regions are done, close the channel
+			if done == len(config.Regions) {
+				close(ch)
+				return
+			}
+			time.Sleep(10 * time.Millisecond)
 		}
-		close(ch)
-	}(config.Regions)
-
+	}()
 	return ch
 }
 

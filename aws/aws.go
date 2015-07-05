@@ -3,7 +3,6 @@ package aws
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -55,11 +54,11 @@ func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.I
 // and are passed to a channel
 func AllAutoScalingGroups() chan *AutoScalingGroup {
 	ch := make(chan *AutoScalingGroup)
-	// done keeps track of the number of finished regions
-	done := 0
+	wg := sync.WaitGroup{}
 
 	for _, region := range config.Regions {
 		go func(region string) {
+			wg.Add(1)
 			api := autoscaling.New(&aws.Config{Region: region})
 			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
 				for _, asg := range resp.AutoScalingGroups {
@@ -68,7 +67,7 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 				// if we are at the last page, we should not continue
 				// the return value of this func is "shouldContinue"
 				if lastPage {
-					done++
+					wg.Done()
 				}
 				return true
 			})
@@ -79,14 +78,9 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 		}(region)
 	}
 	go func() {
-		for {
-			// if all regions are done, close the channel
-			if done == len(config.Regions) {
-				close(ch)
-				return
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
+		wg.Wait()
+		close(ch)
+
 	}()
 	return ch
 }
@@ -96,11 +90,11 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 // and are passed to a channel
 func AllInstances() chan *Instance {
 	ch := make(chan *Instance)
-	// done keeps track of the number of finished regions
-	done := 0
+	wg := sync.WaitGroup{}
 
 	for _, region := range config.Regions {
 		go func(region string) {
+			wg.Add(1)
 			api := ec2.New(&aws.Config{Region: region})
 			// DescribeInstancesPages does autopagination
 			err := api.DescribeInstancesPages(&ec2.DescribeInstancesInput{}, func(resp *ec2.DescribeInstancesOutput, lastPage bool) bool {
@@ -112,7 +106,7 @@ func AllInstances() chan *Instance {
 				// if we are at the last page, we should not continue
 				// the return value of this func is "shouldContinue"
 				if lastPage {
-					done++
+					wg.Done()
 				}
 				return true
 			})
@@ -123,14 +117,8 @@ func AllInstances() chan *Instance {
 		}(region)
 	}
 	go func() {
-		for {
-			// if all regions are done, close the channel
-			if done == len(config.Regions) {
-				close(ch)
-				return
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
+		wg.Wait()
+		close(ch)
 	}()
 	return ch
 }

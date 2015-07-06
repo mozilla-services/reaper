@@ -122,6 +122,8 @@ Regions      = [
 
     [Cloudformations.Filters]
         [Cloudformations.Filters.1]
-            function = "CreatedTimeInTheLast"
+            function = "CreatedTimeNotInTheLast"
             arguments = ["24h"]
-
+        [Cloudformations.Filters.2]
+            function = "NotStatus"
+            arguments = ["CREATE_COMPLETE"]

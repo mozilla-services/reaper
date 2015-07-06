@@ -238,6 +238,12 @@ func (r *Reaper) reap() {
 				log.Error(fmt.Sprintf("%s", err.Error()))
 			}
 		}
+		for region, sum := range filteredCloudformationStackSums {
+			err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+			if err != nil {
+				log.Error(fmt.Sprintf("%s", err.Error()))
+			}
+		}
 	}
 
 	// TODO: this totally doesn't work because it happens too late
@@ -275,6 +281,10 @@ func getInstances() chan *reaperaws.Instance {
 			ch <- instance
 		}
 
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total Instances in %s", sum, region))
+		}
+
 		for _, e := range *events {
 			for region, regionMap := range instanceTypeSums {
 				for instanceType, instanceTypeSum := range regionMap {
@@ -286,7 +296,6 @@ func getInstances() chan *reaperaws.Instance {
 			}
 
 			for region, regionSum := range regionSums {
-				log.Info(fmt.Sprintf("Found %d total Instances in %s", regionSum, region))
 				err := e.NewStatistic("reaper.instances.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
@@ -313,10 +322,12 @@ func getCloudformationStacks() chan *reaperaws.CloudformationStack {
 			regionSums[cf.Region]++
 			ch <- cf
 		}
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total Cloudformation Stacks in %s", sum, region))
+		}
 		for _, e := range *events {
 			for region, regionSum := range regionSums {
-				log.Info(fmt.Sprintf("Found %d total Cloudformation Stacks in %s", regionSum, region))
-				err := e.NewStatistic("reaper.cloudformationstacks.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
+				err := e.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
 				}
@@ -350,6 +361,9 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			regionSums[asg.Region]++
 			ch <- asg
 		}
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
+		}
 		for _, e := range *events {
 			for region, regionMap := range asgSizeSums {
 				for asgSize, asgSizeSum := range regionMap {
@@ -361,7 +375,6 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			}
 
 			for region, regionSum := range regionSums {
-				log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", regionSum, region))
 				err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))

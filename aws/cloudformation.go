@@ -230,6 +230,31 @@ func (a *CloudformationStack) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
+	case "Status":
+		if *a.StackStatus == filter.Arguments[0] {
+			// one of:
+			// CREATE_COMPLETE
+			// CREATE_IN_PROGRESS
+			// CREATE_FAILED
+			// DELETE_COMPLETE
+			// DELETE_FAILED
+			// DELETE_IN_PROGRESS
+			// ROLLBACK_COMPLETE
+			// ROLLBACK_FAILED
+			// ROLLBACK_IN_PROGRESS
+			// UPDATE_COMPLETE
+			// UPDATE_COMPLETE_CLEANUP_IN_PROGRESS
+			// UPDATE_IN_PROGRESS
+			// UPDATE_ROLLBACK_COMPLETE
+			// UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
+			// UPDATE_ROLLBACK_FAILED
+			// UPDATE_ROLLBACK_IN_PROGRESS
+			matched = true
+		}
+	case "NotStatus":
+		if *a.StackStatus != filter.Arguments[0] {
+			matched = true
+		}
 	case "Tagged":
 		if a.Tagged(filter.Arguments[0]) {
 			matched = true

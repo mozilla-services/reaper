@@ -152,18 +152,16 @@ func (a *CloudformationStack) getTemplateData() (*CloudformationStackEventData, 
 const reapableCloudformationEventHTML = `
 <html>
 <body>
-	<p>CloudformationStack <a href="{{ .CloudformationStack.AWSConsoleURL }}">{{ if .CloudformationStack.Name }}"{{.CloudformationStack.Name}}" {{ end }} in {{.CloudformationStack.Region}}</a> is scheduled to be terminated.</p>
+	<p>Cloudformation <a href="{{ .CloudformationStack.AWSConsoleURL }}">{{ if .CloudformationStack.Name }}"{{.CloudformationStack.Name}}" {{ end }} in {{.CloudformationStack.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
-		You can ignore this message and your CloudformationStack will advance to the next state after <strong>{{.CloudformationStack.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
+		You can ignore this message and your Cloudformation will advance to the next state after <strong>{{.CloudformationStack.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
 	</p>
 
 	<p>
 		You may also choose to:
 		<ul>
 			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
-			<li><a href="{{ .ForceStopLink }}">ForceScale it to 0</a></li>
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
@@ -171,7 +169,7 @@ const reapableCloudformationEventHTML = `
 	</p>
 
 	<p>
-		If you want the Reaper to ignore this CloudformationStack tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
+		If you want the Reaper to ignore this Cloudformation tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
 	</p>
 </body>
 </html>
@@ -180,10 +178,9 @@ const reapableCloudformationEventHTML = `
 const reapableCloudformationEventHTMLShort = `
 <html>
 <body>
-	<p>CloudformationStack <a href="{{ .CloudformationStack.AWSConsoleURL }}">{{ if .CloudformationStack.Name }}"{{.CloudformationStack.Name}}" {{ end }}</a> in {{.CloudformationStack.Region}}</a> is scheduled to be terminated after <strong>{{.CloudformationStack.ReaperState.Until}}</strong>.
+	<p>Cloudformation <a href="{{ .CloudformationStack.AWSConsoleURL }}">{{ if .CloudformationStack.Name }}"{{.CloudformationStack.Name}}" {{ end }}</a> in {{.CloudformationStack.Region}}</a> is scheduled to be terminated after <strong>{{.CloudformationStack.ReaperState.Until}}</strong>.
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
 		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
@@ -194,17 +191,17 @@ const reapableCloudformationEventHTMLShort = `
 `
 
 const reapableCloudformationEventTextShort = `%%%
-CloudformationStack [{{.CloudformationStack.ID}}]({{.CloudformationStack.AWSConsoleURL}}) in region: [{{.CloudformationStack.Region}}](https://{{.CloudformationStack.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.CloudformationStack.Region}}).{{if .CloudformationStack.Owned}} Owned by {{.CloudformationStack.Owner}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), or [Terminate]({{ .TerminateLink }}) this CloudformationStack.
+Cloudformation [{{.CloudformationStack.ID}}]({{.CloudformationStack.AWSConsoleURL}}) in region: [{{.CloudformationStack.Region}}](https://{{.CloudformationStack.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.CloudformationStack.Region}}).{{if .CloudformationStack.Owned}} Owned by {{.CloudformationStack.Owner}}.\n{{end}}
+[Whitelist]({{ .WhitelistLink }}), or [Terminate]({{ .TerminateLink }}) this Cloudformation.
 %%%`
 
 const reapableCloudformationEventText = `%%%
-Reaper has discovered an CloudformationStack qualified as reapable: [{{.CloudformationStack.ID}}]({{.CloudformationStack.AWSConsoleURL}}) in region: [{{.CloudformationStack.Region}}](https://{{.CloudformationStack.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.CloudformationStack.Region}}).\n
+Reaper has discovered a Cloudformation qualified as reapable: [{{.CloudformationStack.ID}}]({{.CloudformationStack.AWSConsoleURL}}) in region: [{{.CloudformationStack.Region}}](https://{{.CloudformationStack.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.CloudformationStack.Region}}).\n
 {{if .CloudformationStack.Owned}}Owned by {{.CloudformationStack.Owner}}.\n{{end}}
 {{ if .CloudformationStack.AWSConsoleURL}}{{.CloudformationStack.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.CloudformationStack.AWSConsoleURL}})\n
-[Whitelist]({{ .WhitelistLink }}) this CloudformationStack.
-[Terminate]({{ .TerminateLink }}) this CloudformationStack.
+[Whitelist]({{ .WhitelistLink }}) this Cloudformation.
+[Terminate]({{ .TerminateLink }}) this Cloudformation.
 %%%`
 
 // method for reapable -> overrides promoted AWSResource method of same name?

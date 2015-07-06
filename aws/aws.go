@@ -33,7 +33,7 @@ func SetAWSConfig(c *AWSConfig) {
 }
 
 // convenience function that returns a map of instances in ASGs
-func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
+func AllASGInstanceIDs(as []*AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
 	// maps region to id to bool
 	inASG := make(map[reapable.Region]map[reapable.ID]bool)
 	for _, region := range config.Regions {
@@ -44,6 +44,19 @@ func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.I
 			// add the instance to the map
 			inASG[a.Region][instanceID] = true
 		}
+	}
+	return inASG
+}
+
+func ASGInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
+	// maps region to id to bool
+	inASG := make(map[reapable.Region]map[reapable.ID]bool)
+	for _, region := range config.Regions {
+		inASG[reapable.Region(region)] = make(map[reapable.ID]bool)
+	}
+	for _, instanceID := range a.Instances {
+		// add the instance to the map
+		inASG[a.Region][instanceID] = true
 	}
 	return inASG
 }

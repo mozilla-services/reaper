@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	reapables   reapable.Reapables
-	savedstates map[reapable.Region]map[reapable.ID]*state.State
-	config      *Config
-	events      *[]reaperevents.EventReporter
+	reapables       reapable.Reapables
+	instancesInASGs map[reapable.Region]map[reapable.ID]bool
+	savedstates     map[reapable.Region]map[reapable.ID]*state.State
+	config          *Config
+	events          *[]reaperevents.EventReporter
 )
 
 func SetConfig(c *Config) {
@@ -150,9 +151,6 @@ func (r *Reaper) reap() {
 	owned, unowned := allReapables()
 	var filtered []reaperevents.Reapable
 
-	// TODO: consider slice of pointers
-	var asgs []reaperaws.AutoScalingGroup
-
 	// filtered, owned resources
 	filteredOwned := make(map[string][]reaperevents.Reapable)
 
@@ -194,7 +192,6 @@ func (r *Reaper) reap() {
 		case *reaperaws.AutoScalingGroup:
 			filteredASGSums[t.Region]++
 			reapAutoScalingGroup(t)
-			asgs = append(asgs, *t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -233,16 +230,6 @@ func (r *Reaper) reap() {
 			if err != nil {
 				log.Error(fmt.Sprintf("%s", err.Error()))
 			}
-		}
-	}
-
-	// TODO: this totally doesn't work because it happens too late
-	// basically this doesn't do anything
-	// identify instances in an ASG and delete them from Reapables
-	instanceIDsInASGs := reaperaws.AllASGInstanceIds(asgs)
-	for region := range instanceIDsInASGs {
-		for instanceID := range instanceIDsInASGs[region] {
-			reapables.Delete(region, instanceID)
 		}
 	}
 }
@@ -346,27 +333,49 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	// all resources are appended to owned or unowned
 	owned := make(map[string][]reaperevents.Reapable)
 	var unowned []reaperevents.Reapable
-
-	if config.Instances.Enabled {
-		// get all instances
-		for i := range getInstances() {
-			// group instances by owner
-			if i.Owner() != nil {
-				owned[i.Owner().Address] = append(owned[i.Owner().Address], i)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, i)
-			}
-		}
-	}
 	if config.AutoScalingGroups.Enabled {
+		// initialize the map of instances in ASGs
+		instancesInASGs = make(map[reapable.Region]map[reapable.ID]bool)
+		for _, region := range config.AWS.Regions {
+			instancesInASGs[reapable.Region(region)] = make(map[reapable.ID]bool)
+		}
+
 		for a := range getAutoScalingGroups() {
+			// identify instances in an ASG
+			instanceIDsInASGs := reaperaws.ASGInstanceIDs(a)
+			for region := range instanceIDsInASGs {
+				for instanceID := range instanceIDsInASGs[region] {
+					instancesInASGs[region][instanceID] = true
+				}
+			}
+
 			// group asgs by owner
 			if a.Owner() != nil {
 				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
 			} else {
 				// if unowned, append to unowned
 				unowned = append(unowned, a)
+			}
+		}
+	}
+	if config.Instances.Enabled {
+		// get all instances
+		for i := range getInstances() {
+			// if this instance is in an ASG
+			if b := instancesInASGs[i.Region][i.ID]; b {
+				if config.Logging.Extras {
+					log.Info("Skipping %s because it's in an AutoScalingGroup", i.ReapableDescriptionTiny())
+				}
+				// skip it!
+				continue
+			}
+
+			// group instances by owner
+			if i.Owner() != nil {
+				owned[i.Owner().Address] = append(owned[i.Owner().Address], i)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, i)
 			}
 		}
 	}

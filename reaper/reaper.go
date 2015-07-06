@@ -363,7 +363,7 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		for i := range getInstances() {
 			// if this instance is in an ASG
 			if b := instancesInASGs[i.Region][i.ID]; b {
-				if config.Logging.Extras {
+				if log.Extras() {
 					log.Info("Skipping %s because it's in an AutoScalingGroup", i.ReapableDescriptionTiny())
 				}
 				// skip it!

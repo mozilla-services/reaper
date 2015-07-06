@@ -126,6 +126,7 @@ func (rs *Reapables) Iter() <-chan ReapableContainer {
 				c <- ReapableContainer{r, region, id}
 			}
 		}
+		close(ch)
 	}(ch)
 	return ch
 }

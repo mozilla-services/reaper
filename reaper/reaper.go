@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	reapables   reapable.Reapables
-	savedstates map[reapable.Region]map[reapable.ID]*state.State
-	config      *Config
-	events      *[]reaperevents.EventReporter
+	reapables          reapable.Reapables
+	securityGroupInUse map[reapable.Region]map[reapable.ID]bool
+	savedstates        map[reapable.Region]map[reapable.ID]*state.State
+	config             *Config
+	events             *[]reaperevents.EventReporter
 )
 
 func SetConfig(c *Config) {
@@ -382,9 +383,23 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	owned := make(map[string][]reaperevents.Reapable)
 	var unowned []reaperevents.Reapable
 
-	if config.Instances.Enabled {
-		// get all instances
-		for i := range getInstances() {
+	// initialize securityGroupsInUse
+	if config.SecurityGroups.Enabled {
+		securityGroupInUse = make(map[reapable.Region]map[reapable.ID]bool)
+		for _, region := range config.AWS.Regions {
+			securityGroupInUse[reapable.Region(region)] = make(map[reapable.ID]bool)
+		}
+	}
+
+	// get all instances
+	for i := range getInstances() {
+		// add security groups to map of in use
+		if config.SecurityGroups.Enabled {
+			for id := range i.SecurityGroups {
+				securityGroupInUse[i.Region][id] = true
+			}
+		}
+		if config.Instances.Enabled {
 			// group instances by owner
 			if i.Owner() != nil {
 				owned[i.Owner().Address] = append(owned[i.Owner().Address], i)
@@ -394,20 +409,8 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			}
 		}
 	}
-	if config.SecurityGroups.Enabled {
-		// get all instances
-		for s := range getSecurityGroups() {
-			// group instances by owner
-			if s.Owner() != nil {
-				owned[s.Owner().Address] = append(owned[s.Owner().Address], s)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, s)
-			}
-		}
-	}
-	if config.AutoScalingGroups.Enabled {
-		for a := range getAutoScalingGroups() {
+	for a := range getAutoScalingGroups() {
+		if config.AutoScalingGroups.Enabled {
 			// group asgs by owner
 			if a.Owner() != nil {
 				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
@@ -419,6 +422,22 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	}
 	if config.Snapshots.Enabled {
 
+	}
+	// get all instances
+	for s := range getSecurityGroups() {
+		// if the security group is in use, it isn't reapable
+		if securityGroupInUse[s.Region][s.ID] {
+			continue
+		}
+		if config.SecurityGroups.Enabled {
+			// group instances by owner
+			if s.Owner() != nil {
+				owned[s.Owner().Address] = append(owned[s.Owner().Address], s)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, s)
+			}
+		}
 	}
 	return owned, unowned
 }

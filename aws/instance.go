@@ -23,7 +23,7 @@ import (
 type Instance struct {
 	AWSResource
 	LaunchTime      time.Time
-	SecurityGroups  map[string]string
+	SecurityGroups  map[reapable.ID]string
 	InstanceType    string
 	PublicIPAddress net.IP
 }
@@ -37,13 +37,13 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 			Tags:   make(map[string]string),
 		},
 
-		SecurityGroups: make(map[string]string),
+		SecurityGroups: make(map[reapable.ID]string),
 		LaunchTime:     *instance.LaunchTime,
 		InstanceType:   *instance.InstanceType,
 	}
 
 	for _, sg := range instance.SecurityGroups {
-		i.SecurityGroups[*sg.GroupID] = *sg.GroupName
+		i.SecurityGroups[reapable.ID(*sg.GroupID)] = *sg.GroupName
 	}
 
 	for _, tag := range instance.Tags {

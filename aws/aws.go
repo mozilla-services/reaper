@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mozilla-services/reaper/events"
 	"github.com/mozilla-services/reaper/filters"
@@ -47,6 +48,43 @@ func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.I
 		}
 	}
 	return inASG
+}
+
+func AllCloudformationStacks() chan *CloudformationStack {
+	ch := make(chan *CloudformationStack)
+	// waitgroup for all regions
+	wg := sync.WaitGroup{}
+	for _, region := range config.Regions {
+		go func(region string) {
+			// add region to waitgroup
+			wg.Add(1)
+			api := cloudformation.New(&aws.Config{Region: region})
+			err := api.DescribeStacksPages(&cloudformation.DescribeStacksInput{}, func(resp *cloudformation.DescribeStacksOutput, lastPage bool) bool {
+				for _, stack := range resp.Stacks {
+					ch <- NewCloudformationStack(region, stack)
+				}
+				// if we are at the last page, we should not continue
+				// the return value of this func is "shouldContinue"
+				if lastPage {
+					// on the last page, finish this region
+					wg.Done()
+				}
+				return true
+			})
+			if err != nil {
+				// probably should do something here...
+				log.Error(err.Error())
+			}
+		}(region)
+	}
+	go func() {
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
+		wg.Wait()
+		close(ch)
+
+	}()
+	return ch
 }
 
 // AllAutoScalingGroups describes every AutoScalingGroup in the requested regions

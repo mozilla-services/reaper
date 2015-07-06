@@ -97,6 +97,7 @@ type Config struct {
 	AutoScalingGroups ResourceConfig
 	Instances         ResourceConfig
 	Snapshots         ResourceConfig
+	Cloudformations   ResourceConfig
 
 	DryRun            bool
 	Interactive       bool

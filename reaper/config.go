@@ -94,6 +94,7 @@ type Config struct {
 
 	AutoScalingGroups FilterGroup
 	Instances         FilterGroup
+	Cloudformations   FilterGroup
 	Snapshots         FilterGroup
 
 	DryRun            bool

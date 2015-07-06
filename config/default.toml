@@ -116,3 +116,12 @@ Regions      = [
         [Instances.Filters.3]
             function = "Tagged"
             arguments = ["REAP_ME"]
+
+[Cloudformations]
+    Enabled = true
+
+    [Cloudformations.Filters]
+        [Cloudformations.Filters.1]
+            function = "CreatedTimeInTheLast"
+            arguments = ["24h"]
+

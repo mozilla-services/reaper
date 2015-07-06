@@ -95,6 +95,7 @@ type Config struct {
 	AutoScalingGroups FilterGroup
 	Instances         FilterGroup
 	Snapshots         FilterGroup
+	SecurityGroups    FilterGroup
 
 	DryRun            bool
 	Interactive       bool

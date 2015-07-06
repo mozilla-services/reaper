@@ -19,12 +19,6 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-const (
-	reaperTag           = "REAPER"
-	reaperTagSeparator  = "|"
-	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
-)
-
 // Instance stores data from an *ec2.Instance
 type Instance struct {
 	AWSResource

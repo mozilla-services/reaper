@@ -184,6 +184,7 @@ func (r *Reaper) reap() {
 
 	filteredInstanceSums := make(map[reapable.Region]int)
 	filteredASGSums := make(map[reapable.Region]int)
+	filteredSecurityGroupSums := make(map[reapable.Region]int)
 
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
@@ -195,6 +196,9 @@ func (r *Reaper) reap() {
 			filteredASGSums[t.Region]++
 			reapAutoScalingGroup(t)
 			asgs = append(asgs, *t)
+		case *reaperaws.SecurityGroup:
+			filteredSecurityGroupSums[t.Region]++
+			reapSecurityGroup(t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -245,6 +249,37 @@ func (r *Reaper) reap() {
 			reapables.Delete(region, instanceID)
 		}
 	}
+}
+
+func getSecurityGroups() chan *reaperaws.SecurityGroup {
+	ch := make(chan *reaperaws.SecurityGroup)
+	go func() {
+		securityGroupCh := reaperaws.AllSecurityGroups()
+		regionSums := make(map[reapable.Region]int)
+		for securityGroup := range securityGroupCh {
+			// restore saved state from file
+			savedstate, ok := savedstates[securityGroup.Region][securityGroup.ID]
+			if ok {
+				securityGroup.SetReaperState(savedstate)
+			}
+			regionSums[securityGroup.Region]++
+			ch <- securityGroup
+		}
+
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total SecurityGroups in %s", sum, region))
+		}
+		for _, e := range *events {
+			for region, regionSum := range regionSums {
+				err := e.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
+			}
+		}
+		close(ch)
+	}()
+	return ch
 }
 
 func getInstances() chan *reaperaws.Instance {
@@ -359,6 +394,18 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			}
 		}
 	}
+	if config.SecurityGroups.Enabled {
+		// get all instances
+		for s := range getSecurityGroups() {
+			// group instances by owner
+			if s.Owner() != nil {
+				owned[s.Owner().Address] = append(owned[s.Owner().Address], s)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, s)
+			}
+		}
+	}
 	if config.AutoScalingGroups.Enabled {
 		for a := range getAutoScalingGroups() {
 			// group asgs by owner
@@ -405,6 +452,12 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 			}
 			fs = config.AutoScalingGroups.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
+		case *reaperaws.SecurityGroup:
+			if !config.SecurityGroups.Enabled {
+				continue
+			}
+			fs = config.SecurityGroups.Filters
+			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
@@ -424,6 +477,15 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		}
 	}
 	return gs
+}
+
+func reapSecurityGroup(s *reaperaws.SecurityGroup) {
+	// update the internal state
+	if time.Now().After(s.ReaperState().Until) {
+		_ = s.IncrementState()
+	}
+	log.Notice(fmt.Sprintf("Reapable SecurityGroup discovered: %s.", s.ReapableDescription()))
+	reapables.Put(s.Region, s.ID, s)
 }
 
 func reapInstance(i *reaperaws.Instance) {

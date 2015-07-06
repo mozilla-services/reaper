@@ -160,6 +160,7 @@ func (a *AWSResource) Whitelist() (bool, error) {
 
 // methods for reapable interface:
 func (a *AWSResource) Save(s *state.State) (bool, error) {
+	log.Notice("Saving %s", a.ReapableDescriptionTiny())
 	return TagReaperState(string(a.Region), string(a.ID), s)
 }
 

@@ -116,3 +116,12 @@ Regions      = [
         [Instances.Filters.3]
             function = "Tagged"
             arguments = ["REAP_ME"]
+
+
+[SecurityGroups]
+    Enabled = true
+
+    [SecurityGroups.Filters]
+        [SecurityGroups.Filters.1]
+            function = "Named"
+            arguments = ["ts-app-jenkins-cloudops-21-ELBSecurityGroup-1JR1B8GXM7FCI"]

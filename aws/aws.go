@@ -1,16 +1,20 @@
 package aws
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mozilla-services/reaper/events"
-	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
+)
+
+const (
+	reaperTag           = "REAPER"
+	reaperTagSeparator  = "|"
+	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
 )
 
 var config *AWSConfig
@@ -129,157 +133,32 @@ func AllInstances() chan *Instance {
 	return ch
 }
 
-func AllSnapshots() []filters.Filterable {
-	regions := config.Regions
-
-	// waitgroup for goroutines
-	var wg sync.WaitGroup
-
-	// channel for creating SecurityGroups
-	in := make(chan *Snapshot)
-
-	for _, region := range regions {
-		wg.Add(1)
-
-		sum := 0
-
-		// goroutine per region to fetch all security groups
+func AllSecurityGroups() chan *SecurityGroup {
+	ch := make(chan *SecurityGroup)
+	// waitgroup for all regions
+	wg := sync.WaitGroup{}
+	for _, region := range config.Regions {
 		go func(region string) {
-			defer wg.Done()
+			// add region to waitgroup
+			wg.Add(1)
 			api := ec2.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &ec2.DescribeSnapshotsInput{}
-			resp, err := api.DescribeSnapshots(input)
-			if err != nil {
-				// TODO: wee
-			}
-
-			for _, v := range resp.Snapshots {
-				sum += 1
-				in <- NewSnapshot(region, v)
-			}
-		}(region)
-	}
-	// aggregate
-	var snapshots []filters.Filterable
-	go func() {
-		for s := range in {
-			// Reapables[s.Region][s.ID] = s
-			snapshots = append(snapshots, s)
-		}
-	}()
-
-	// synchronous wait for all goroutines in wg to be done
-	wg.Wait()
-
-	// done with the channel
-	close(in)
-
-	log.Info("Found %d total snapshots.", len(snapshots))
-	return snapshots
-}
-func AllVolumes() Volumes {
-	regions := config.Regions
-
-	// waitgroup for goroutines
-	var wg sync.WaitGroup
-
-	// channel for creating SecurityGroups
-	in := make(chan *Volume)
-
-	for _, region := range regions {
-		wg.Add(1)
-
-		sum := 0
-
-		// goroutine per region to fetch all security groups
-		go func(region string) {
-			defer wg.Done()
-			api := ec2.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &ec2.DescribeVolumesInput{}
-			resp, err := api.DescribeVolumes(input)
-			if err != nil {
-				// TODO: wee
-			}
-
-			for _, v := range resp.Volumes {
-				sum += 1
-				in <- NewVolume(region, v)
-			}
-
-			log.Info(fmt.Sprintf("Found %d total volumes in %s", sum, region))
-		}(region)
-	}
-	// aggregate
-	var volumes Volumes
-	go func() {
-		for v := range in {
-			// Reapables[v.Region][v.ID] = v
-			volumes = append(volumes, v)
-		}
-	}()
-
-	// synchronous wait for all goroutines in wg to be done
-	wg.Wait()
-
-	// done with the channel
-	close(in)
-
-	log.Info("Found %d total snapshots.", len(volumes))
-	return volumes
-}
-func AllSecurityGroups() SecurityGroups {
-	regions := config.Regions
-
-	// waitgroup for goroutines
-	var wg sync.WaitGroup
-
-	// channel for creating SecurityGroups
-	in := make(chan *SecurityGroup)
-
-	for _, region := range regions {
-		wg.Add(1)
-
-		sum := 0
-
-		// goroutine per region to fetch all security groups
-		go func(region string) {
-			defer wg.Done()
-			api := ec2.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &ec2.DescribeSecurityGroupsInput{}
-			resp, err := api.DescribeSecurityGroups(input)
-			if err != nil {
-				// TODO: wee
-			}
-
+			resp, err := api.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 			for _, sg := range resp.SecurityGroups {
-				sum += 1
-				in <- NewSecurityGroup(region, sg)
+				ch <- NewSecurityGroup(region, sg)
 			}
-
-			log.Info(fmt.Sprintf("Found %d total security groups in %s", sum, region))
+			if err != nil {
+				// probably should do something here...
+				log.Error(err.Error())
+			}
+			wg.Done()
 		}(region)
 	}
-	// aggregate
-	var securityGroups SecurityGroups
 	go func() {
-		for sg := range in {
-			// Reapables[sg.Region][sg.ID] = sg
-			securityGroups = append(securityGroups, sg)
-		}
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
+		wg.Wait()
+		close(ch)
+
 	}()
-
-	// synchronous wait for all goroutines in wg to be done
-	wg.Wait()
-
-	// done with the channel
-	close(in)
-
-	log.Info("Found %d total security groups.", len(securityGroups))
-	return securityGroups
+	return ch
 }

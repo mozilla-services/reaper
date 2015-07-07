@@ -336,6 +336,18 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
 			matched = true
 		}
+	case "Region":
+		for region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		for region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = false
+			}
+		}
 	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && time.Since(a.CreatedTime) < d {

@@ -59,8 +59,8 @@ func AllASGInstanceIDs(as []*AutoScalingGroup) map[reapable.Region]map[reapable.
 	return inASG
 }
 
-func AllCloudformationStacks() chan *CloudformationStack {
-	ch := make(chan *CloudformationStack)
+func AllCloudformations() chan *Cloudformation {
+	ch := make(chan *Cloudformation)
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
@@ -70,7 +70,7 @@ func AllCloudformationStacks() chan *CloudformationStack {
 			api := cloudformation.New(&aws.Config{Region: region})
 			err := api.DescribeStacksPages(&cloudformation.DescribeStacksInput{}, func(resp *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 				for _, stack := range resp.Stacks {
-					ch <- NewCloudformationStack(region, stack)
+					ch <- NewCloudformation(region, stack)
 				}
 				// if we are at the last page, we should not continue
 				// the return value of this func is "shouldContinue"
@@ -97,7 +97,7 @@ func AllCloudformationStacks() chan *CloudformationStack {
 	return ch
 }
 
-func cloudformationStackResources(c CloudformationStack) chan *cloudformation.StackResource {
+func CloudformationResources(c Cloudformation) chan *cloudformation.StackResource {
 	ch := make(chan *cloudformation.StackResource)
 	api := cloudformation.New(&aws.Config{Region: string(c.Region)})
 	// TODO: stupid

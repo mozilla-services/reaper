@@ -182,7 +182,7 @@ func (r *Reaper) reap() {
 	filteredInstanceSums := make(map[reapable.Region]int)
 	filteredASGSums := make(map[reapable.Region]int)
 	filteredSecurityGroupSums := make(map[reapable.Region]int)
-	filteredCloudformationStackSums := make(map[reapable.Region]int)
+	filteredCloudformationSums := make(map[reapable.Region]int)
 
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
@@ -196,9 +196,9 @@ func (r *Reaper) reap() {
 		case *reaperaws.SecurityGroup:
 			filteredSecurityGroupSums[t.Region]++
 			reapSecurityGroup(t)
-		case *reaperaws.CloudformationStack:
-			filteredCloudformationStackSums[t.Region]++
-			reapCloudformationStack(t)
+		case *reaperaws.Cloudformation:
+			filteredCloudformationSums[t.Region]++
+			reapCloudformation(t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -238,7 +238,7 @@ func (r *Reaper) reap() {
 				log.Error(fmt.Sprintf("%s", err.Error()))
 			}
 		}
-		for region, sum := range filteredCloudformationStackSums {
+		for region, sum := range filteredCloudformationSums {
 			err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
 			if err != nil {
 				log.Error(fmt.Sprintf("%s", err.Error()))
@@ -334,10 +334,10 @@ func getInstances() chan *reaperaws.Instance {
 	return ch
 }
 
-func getCloudformationStacks() chan *reaperaws.CloudformationStack {
-	ch := make(chan *reaperaws.CloudformationStack)
+func getCloudformations() chan *reaperaws.Cloudformation {
+	ch := make(chan *reaperaws.Cloudformation)
 	go func() {
-		cfs := reaperaws.AllCloudformationStacks()
+		cfs := reaperaws.AllCloudformations()
 		regionSums := make(map[reapable.Region]int)
 		for cf := range cfs {
 			// restore saved state from file
@@ -437,7 +437,7 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		instancesInASGs[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}
 
-	for c := range getCloudformationStacks() {
+	for c := range getCloudformations() {
 		// because getting resources is rated limited...
 		for !c.DidGetResources() {
 			time.Sleep(1 * time.Second)
@@ -562,7 +562,7 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 				continue
 			}
 			fs = config.SecurityGroups.Filters
-		case *reaperaws.CloudformationStack:
+		case *reaperaws.Cloudformation:
 			// if CFs are not enabled, skip
 			if !config.Cloudformations.Enabled {
 				continue
@@ -599,7 +599,7 @@ func reapSecurityGroup(s *reaperaws.SecurityGroup) {
 	reapables.Put(s.Region, s.ID, s)
 }
 
-func reapCloudformationStack(c *reaperaws.CloudformationStack) {
+func reapCloudformation(c *reaperaws.Cloudformation) {
 	// update the internal state
 	if time.Now().After(c.ReaperState().Until) {
 		_ = c.IncrementState()

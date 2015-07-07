@@ -20,15 +20,15 @@ import (
 
 var StackResources map[reapable.Region]map[reapable.ID]cloudformation.StackResource
 
-type CloudformationStack struct {
+type Cloudformation struct {
 	AWSResource
 	cloudformation.Stack
 	Resources []cloudformation.StackResource
 	done      bool
 }
 
-func NewCloudformationStack(region string, stack *cloudformation.Stack) *CloudformationStack {
-	a := CloudformationStack{
+func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformation {
+	a := Cloudformation{
 		AWSResource: AWSResource{
 			Region:      reapable.Region(region),
 			ID:          reapable.ID(*stack.StackID),
@@ -41,7 +41,7 @@ func NewCloudformationStack(region string, stack *cloudformation.Stack) *Cloudfo
 
 	// because getting resources is rate limited...
 	go func() {
-		for resource := range cloudformationStackResources(a) {
+		for resource := range CloudformationResources(a) {
 			a.Resources = append(a.Resources, *resource)
 		}
 		a.done = true
@@ -64,11 +64,11 @@ func NewCloudformationStack(region string, stack *cloudformation.Stack) *Cloudfo
 	return &a
 }
 
-func (a *CloudformationStack) DidGetResources() bool {
+func (a *Cloudformation) DidGetResources() bool {
 	return a.done
 }
 
-func (a *CloudformationStack) reapableEventHTML(text string) *bytes.Buffer {
+func (a *Cloudformation) reapableEventHTML(text string) *bytes.Buffer {
 	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
@@ -80,7 +80,7 @@ func (a *CloudformationStack) reapableEventHTML(text string) *bytes.Buffer {
 	return buf
 }
 
-func (a *CloudformationStack) reapableEventText(text string) *bytes.Buffer {
+func (a *Cloudformation) reapableEventText(text string) *bytes.Buffer {
 	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
@@ -95,15 +95,15 @@ func (a *CloudformationStack) reapableEventText(text string) *bytes.Buffer {
 	return buf
 }
 
-func (a *CloudformationStack) ReapableEventText() *bytes.Buffer {
+func (a *Cloudformation) ReapableEventText() *bytes.Buffer {
 	return a.reapableEventText(reapableCloudformationEventText)
 }
 
-func (a *CloudformationStack) ReapableEventTextShort() *bytes.Buffer {
+func (a *Cloudformation) ReapableEventTextShort() *bytes.Buffer {
 	return a.reapableEventText(reapableCloudformationEventTextShort)
 }
 
-func (a *CloudformationStack) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
@@ -116,7 +116,7 @@ func (a *CloudformationStack) ReapableEventEmail() (owner mail.Address, subject 
 	return
 }
 
-func (a *CloudformationStack) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+func (a *Cloudformation) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
@@ -127,19 +127,19 @@ func (a *CloudformationStack) ReapableEventEmailShort() (owner mail.Address, bod
 	return
 }
 
-type CloudformationStackEventData struct {
-	Config              *AWSConfig
-	CloudformationStack *CloudformationStack
-	TerminateLink       string
-	StopLink            string
-	ForceStopLink       string
-	WhitelistLink       string
-	IgnoreLink1         string
-	IgnoreLink3         string
-	IgnoreLink7         string
+type CloudformationEventData struct {
+	Config         *AWSConfig
+	Cloudformation *Cloudformation
+	TerminateLink  string
+	StopLink       string
+	ForceStopLink  string
+	WhitelistLink  string
+	IgnoreLink1    string
+	IgnoreLink3    string
+	IgnoreLink7    string
 }
 
-func (a *CloudformationStack) getTemplateData() (*CloudformationStackEventData, error) {
+func (a *Cloudformation) getTemplateData() (*CloudformationEventData, error) {
 	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
 	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
 	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
@@ -152,26 +152,26 @@ func (a *CloudformationStack) getTemplateData() (*CloudformationStackEventData, 
 		return nil, err
 	}
 
-	return &CloudformationStackEventData{
-		Config:              config,
-		CloudformationStack: a,
-		TerminateLink:       terminate,
-		StopLink:            stop,
-		ForceStopLink:       forcestop,
-		WhitelistLink:       whitelist,
-		IgnoreLink1:         ignore1,
-		IgnoreLink3:         ignore3,
-		IgnoreLink7:         ignore7,
+	return &CloudformationEventData{
+		Config:         config,
+		Cloudformation: a,
+		TerminateLink:  terminate,
+		StopLink:       stop,
+		ForceStopLink:  forcestop,
+		WhitelistLink:  whitelist,
+		IgnoreLink1:    ignore1,
+		IgnoreLink3:    ignore3,
+		IgnoreLink7:    ignore7,
 	}, nil
 }
 
 const reapableCloudformationEventHTML = `
 <html>
 <body>
-	<p>Cloudformation <a href="{{ .CloudformationStack.AWSConsoleURL }}">{{ if .CloudformationStack.Name }}"{{.CloudformationStack.Name}}" {{ end }} in {{.CloudformationStack.Region}}</a> is scheduled to be terminated.</p>
+	<p>Cloudformation <a href="{{ .Cloudformation.AWSConsoleURL }}">{{ if .Cloudformation.Name }}"{{.Cloudformation.Name}}" {{ end }} in {{.Cloudformation.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
-		You can ignore this message and your Cloudformation will advance to the next state after <strong>{{.CloudformationStack.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
+		You can ignore this message and your Cloudformation will advance to the next state after <strong>{{.Cloudformation.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
 	</p>
 
 	<p>
@@ -194,7 +194,7 @@ const reapableCloudformationEventHTML = `
 const reapableCloudformationEventHTMLShort = `
 <html>
 <body>
-	<p>Cloudformation <a href="{{ .CloudformationStack.AWSConsoleURL }}">{{ if .CloudformationStack.Name }}"{{.CloudformationStack.Name}}" {{ end }}</a> in {{.CloudformationStack.Region}}</a> is scheduled to be terminated after <strong>{{.CloudformationStack.ReaperState.Until}}</strong>.
+	<p>Cloudformation <a href="{{ .Cloudformation.AWSConsoleURL }}">{{ if .Cloudformation.Name }}"{{.Cloudformation.Name}}" {{ end }}</a> in {{.Cloudformation.Region}}</a> is scheduled to be terminated after <strong>{{.Cloudformation.ReaperState.Until}}</strong>.
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
@@ -207,39 +207,39 @@ const reapableCloudformationEventHTMLShort = `
 `
 
 const reapableCloudformationEventTextShort = `%%%
-Cloudformation [{{.CloudformationStack.ID}}]({{.CloudformationStack.AWSConsoleURL}}) in region: [{{.CloudformationStack.Region}}](https://{{.CloudformationStack.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.CloudformationStack.Region}}).{{if .CloudformationStack.Owned}} Owned by {{.CloudformationStack.Owner}}.\n{{end}}
+Cloudformation [{{.Cloudformation.ID}}]({{.Cloudformation.AWSConsoleURL}}) in region: [{{.Cloudformation.Region}}](https://{{.Cloudformation.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Cloudformation.Region}}).{{if .Cloudformation.Owned}} Owned by {{.Cloudformation.Owner}}.\n{{end}}
 [Whitelist]({{ .WhitelistLink }}), or [Terminate]({{ .TerminateLink }}) this Cloudformation.
 %%%`
 
 const reapableCloudformationEventText = `%%%
-Reaper has discovered a Cloudformation qualified as reapable: [{{.CloudformationStack.ID}}]({{.CloudformationStack.AWSConsoleURL}}) in region: [{{.CloudformationStack.Region}}](https://{{.CloudformationStack.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.CloudformationStack.Region}}).\n
-{{if .CloudformationStack.Owned}}Owned by {{.CloudformationStack.Owner}}.\n{{end}}
-{{ if .CloudformationStack.AWSConsoleURL}}{{.CloudformationStack.AWSConsoleURL}}\n{{end}}
-[AWS Console URL]({{.CloudformationStack.AWSConsoleURL}})\n
+Reaper has discovered a Cloudformation qualified as reapable: [{{.Cloudformation.ID}}]({{.Cloudformation.AWSConsoleURL}}) in region: [{{.Cloudformation.Region}}](https://{{.Cloudformation.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Cloudformation.Region}}).\n
+{{if .Cloudformation.Owned}}Owned by {{.Cloudformation.Owner}}.\n{{end}}
+{{ if .Cloudformation.AWSConsoleURL}}{{.Cloudformation.AWSConsoleURL}}\n{{end}}
+[AWS Console URL]({{.Cloudformation.AWSConsoleURL}})\n
 [Whitelist]({{ .WhitelistLink }}) this Cloudformation.
 [Terminate]({{ .TerminateLink }}) this Cloudformation.
 %%%`
 
 // method for reapable -> overrides promoted AWSResource method of same name?
-func (a *CloudformationStack) Save(s *state.State) (bool, error) {
+func (a *Cloudformation) Save(s *state.State) (bool, error) {
 	return a.tagReaperState(a.Region, a.ID, a.ReaperState())
 }
 
 // method for reapable -> overrides promoted AWSResource method of same name?
-func (a *CloudformationStack) Unsave() (bool, error) {
+func (a *Cloudformation) Unsave() (bool, error) {
 	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
 	return a.untagReaperState(a.Region, a.ID, a.ReaperState())
 }
 
-func (a *CloudformationStack) untagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
+func (a *Cloudformation) untagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
 	return false, nil
 }
 
-func (a *CloudformationStack) tagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
+func (a *Cloudformation) tagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
 	return false, nil
 }
 
-func (a *CloudformationStack) Filter(filter filters.Filter) bool {
+func (a *Cloudformation) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
@@ -291,12 +291,12 @@ func (a *CloudformationStack) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering CloudformationStacks.", filter.Function))
+		log.Error(fmt.Sprintf("No function %s could be found for filtering Cloudformations.", filter.Function))
 	}
 	return matched
 }
 
-func (a *CloudformationStack) AWSConsoleURL() *url.URL {
+func (a *Cloudformation) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks?filter=active&tab=overview&stackId=%s",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
@@ -305,8 +305,8 @@ func (a *CloudformationStack) AWSConsoleURL() *url.URL {
 	return url
 }
 
-func (a *CloudformationStack) Terminate() (bool, error) {
-	log.Notice("Terminating CloudformationStack %s", a.ReapableDescriptionTiny())
+func (a *Cloudformation) Terminate() (bool, error) {
+	log.Notice("Terminating Cloudformation %s", a.ReapableDescriptionTiny())
 	as := cloudformation.New(&aws.Config{Region: string(a.Region)})
 
 	stringID := string(a.ID)
@@ -316,16 +316,16 @@ func (a *CloudformationStack) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteStack(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete CloudformationStack %s", a.ReapableDescriptionTiny()))
+		log.Error(fmt.Sprintf("could not delete Cloudformation %s", a.ReapableDescriptionTiny()))
 		return false, err
 	}
 	return false, nil
 }
 
-func (a *CloudformationStack) Stop() (bool, error) {
+func (a *Cloudformation) Stop() (bool, error) {
 	return false, nil
 }
 
-func (a *CloudformationStack) ForceStop() (bool, error) {
+func (a *Cloudformation) ForceStop() (bool, error) {
 	return false, nil
 }

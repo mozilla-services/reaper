@@ -26,6 +26,7 @@ type Instance struct {
 	SecurityGroups  map[reapable.ID]string
 	InstanceType    string
 	PublicIPAddress net.IP
+	AutoScaled      bool
 }
 
 // NewInstance is a constructor for Instances
@@ -248,9 +249,6 @@ func (i *Instance) AWSConsoleURL() *url.URL {
 	}
 	return url
 }
-
-// Autoscaled checks if the instance is part of an autoscaling group
-func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
 
 func (i *Instance) Filter(filter filters.Filter) bool {
 	matched := false

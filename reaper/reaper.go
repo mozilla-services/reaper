@@ -152,9 +152,6 @@ func (r *Reaper) reap() {
 	owned, unowned := allReapables()
 	var filtered []reaperevents.Reapable
 
-	// TODO: consider slice of pointers
-	var asgs []reaperaws.AutoScalingGroup
-
 	// filtered, owned resources
 	filteredOwned := make(map[string][]reaperevents.Reapable)
 
@@ -198,7 +195,6 @@ func (r *Reaper) reap() {
 		case *reaperaws.AutoScalingGroup:
 			filteredASGSums[t.Region]++
 			reapAutoScalingGroup(t)
-			asgs = append(asgs, *t)
 		case *reaperaws.SecurityGroup:
 			filteredSecurityGroupSums[t.Region]++
 			reapSecurityGroup(t)
@@ -255,16 +251,6 @@ func (r *Reaper) reap() {
 			if err != nil {
 				log.Error(fmt.Sprintf("%s", err.Error()))
 			}
-		}
-	}
-
-	// TODO: this totally doesn't work because it happens too late
-	// basically this doesn't do anything
-	// identify instances in an ASG and delete them from Reapables
-	instanceIDsInASGs := reaperaws.AllASGInstanceIds(asgs)
-	for region := range instanceIDsInASGs {
-		for instanceID := range instanceIDsInASGs[region] {
-			reapables.Delete(region, instanceID)
 		}
 	}
 }
@@ -447,6 +433,12 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		isInCloudformation[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}
 
+	// initialize the map of instances in ASGs
+	instancesInASGs := make(map[reapable.Region]map[reapable.ID]bool)
+	for _, region := range config.AWS.Regions {
+		instancesInASGs[reapable.Region(region)] = make(map[reapable.ID]bool)
+	}
+
 	for c := range getCloudformationStacks() {
 		// because getting resources is rated limited...
 		for !c.DidGetResources() {
@@ -467,6 +459,28 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		}
 	}
 
+	for a := range getAutoScalingGroups() {
+		if isInCloudformation[a.Region][a.ID] {
+			a.IsInCloudformation = true
+		}
+
+		// identify instances in an ASG
+		instanceIDsInASGs := reaperaws.ASGInstanceIDs(a)
+		for region := range instanceIDsInASGs {
+			for instanceID := range instanceIDsInASGs[region] {
+				instancesInASGs[region][instanceID] = true
+			}
+		}
+
+		// group asgs by owner
+		if a.Owner() != nil {
+			owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
+		} else {
+			// if unowned, append to unowned
+			unowned = append(unowned, a)
+		}
+	}
+
 	// get all instances
 	for i := range getInstances() {
 		// add security groups to map of in use
@@ -481,6 +495,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		if isInCloudformation[i.Region][i.ID] {
 			i.IsInCloudformation = true
 		}
+		if instancesInASGs[i.Region][i.ID] {
+			i.AutoScaled = true
+		}
 		// group instances by owner
 		if config.Instances.Enabled {
 			if i.Owner() != nil {
@@ -488,21 +505,6 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			} else {
 				// if unowned, append to unowned
 				unowned = append(unowned, i)
-			}
-		}
-	}
-
-	for a := range getAutoScalingGroups() {
-		if config.AutoScalingGroups.Enabled {
-			if isInCloudformation[a.Region][a.ID] {
-				a.IsInCloudformation = true
-			}
-			// group asgs by owner
-			if a.Owner() != nil {
-				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, a)
 			}
 		}
 	}

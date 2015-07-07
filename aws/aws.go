@@ -58,9 +58,9 @@ func AllCloudformationStacks() chan *CloudformationStack {
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
+		wg.Add(1)
 		go func(region string) {
 			// add region to waitgroup
-			wg.Add(1)
 			api := cloudformation.New(&aws.Config{Region: region})
 			err := api.DescribeStacksPages(&cloudformation.DescribeStacksInput{}, func(resp *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 				for _, stack := range resp.Stacks {
@@ -98,9 +98,9 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
+		wg.Add(1)
 		go func(region string) {
 			// add region to waitgroup
-			wg.Add(1)
 			api := autoscaling.New(&aws.Config{Region: region})
 			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
 				for _, asg := range resp.AutoScalingGroups {
@@ -138,9 +138,9 @@ func AllInstances() chan *Instance {
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
+		wg.Add(1)
 		go func(region string) {
 			// add region to waitgroup
-			wg.Add(1)
 			api := ec2.New(&aws.Config{Region: region})
 			// DescribeInstancesPages does autopagination
 			err := api.DescribeInstancesPages(&ec2.DescribeInstancesInput{}, func(resp *ec2.DescribeInstancesOutput, lastPage bool) bool {
@@ -176,9 +176,9 @@ func AllSecurityGroups() chan *SecurityGroup {
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
+		wg.Add(1)
 		go func(region string) {
 			// add region to waitgroup
-			wg.Add(1)
 			api := ec2.New(&aws.Config{Region: region})
 			resp, err := api.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 			for _, sg := range resp.SecurityGroups {

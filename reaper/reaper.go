@@ -16,12 +16,10 @@ import (
 )
 
 var (
-	reapables          reapable.Reapables
-	dependency         map[reapable.Region]map[reapable.ID]bool
-	isInCloudformation map[reapable.Region]map[reapable.ID]bool
-	savedstates        map[reapable.Region]map[reapable.ID]*state.State
-	config             *Config
-	events             *[]reaperevents.EventReporter
+	reapables   reapable.Reapables
+	savedstates map[reapable.Region]map[reapable.ID]*state.State
+	config      *Config
+	events      *[]reaperevents.EventReporter
 )
 
 func SetConfig(c *Config) {
@@ -423,12 +421,12 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	var unowned []reaperevents.Reapable
 
 	// initialize dependency and isInCloudformation
-	dependency = make(map[reapable.Region]map[reapable.ID]bool)
+	dependency := make(map[reapable.Region]map[reapable.ID]bool)
 	for _, region := range config.AWS.Regions {
 		dependency[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}
 
-	isInCloudformation = make(map[reapable.Region]map[reapable.ID]bool)
+	isInCloudformation := make(map[reapable.Region]map[reapable.ID]bool)
 	for _, region := range config.AWS.Regions {
 		isInCloudformation[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}

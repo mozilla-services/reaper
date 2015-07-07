@@ -145,7 +145,7 @@ func (a *AWSResource) AddFilterGroup(name string, fs filters.FilterGroup) {
 }
 
 func (a *AWSResource) MatchedFilters() string {
-	return filters.PrintFilterGroups(a.matchedFilterGroups)
+	return filters.FormatFilterGroupsText(a.matchedFilterGroups)
 }
 
 func (a *AWSResource) ReapableDescription() string {

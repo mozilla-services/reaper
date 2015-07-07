@@ -391,7 +391,7 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 
 	var gs []reaperevents.Reapable
 	for _, filterable := range filterables {
-		groups := make(map[string]filters.FilterGroup)
+		var groups map[string]filters.FilterGroup
 		switch filterable.(type) {
 		case *reaperaws.Instance:
 			// if instances are not enabled, skip

@@ -336,6 +336,10 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		return i.IsInCloudformation
 	case "NotInCloudformation":
 		return !i.IsInCloudformation
+	case "AutoScaled":
+		return i.AutoScaled
+	case "NotAutoScaled":
+		return !i.AutoScaled
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
 	}

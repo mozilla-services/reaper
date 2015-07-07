@@ -113,7 +113,7 @@ func cloudformationStackResources(c CloudformationStack) chan *cloudformation.St
 		// initial query
 		resp, err := api.DescribeStackResources(input)
 		for err != nil {
-			sleepTime := 2*time.Second + time.Duration(rand.Intn(10))*time.Second
+			sleepTime := 2*time.Second + time.Duration(rand.Intn(4))*time.Second
 			if err != nil {
 				log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
 			}

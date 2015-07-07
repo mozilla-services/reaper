@@ -334,6 +334,10 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		if i.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
+	case "InCloudformation":
+		return i.IsInCloudformation
+	case "NotInCloudformation":
+		return !i.IsInCloudformation
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
 	}

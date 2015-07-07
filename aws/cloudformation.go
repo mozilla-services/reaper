@@ -43,7 +43,6 @@ func NewCloudformationStack(region string, stack *cloudformation.Stack) *Cloudfo
 	go func() {
 		for resource := range cloudformationStackResources(a) {
 			a.Resources = append(a.Resources, *resource)
-			// log.Info("Resource: %s, %s", *resource.PhysicalResourceID)
 		}
 		a.done = true
 	}()

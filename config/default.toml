@@ -43,7 +43,7 @@ DefaultOwner = "reaper_notifications"
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
     [Events.DataDog]
-        Enabled = false
+        Enabled = true
         Triggers = []
 
     [Events.Email]
@@ -114,11 +114,14 @@ Regions      = [
             function = "Running"
             arguments = ["true"]
         [Instances.Filters.3]
-            function = "Tagged"
-            arguments = ["REAP_ME"]
+            function = "NotInCloudformation"
+            arguments = ["true"]
+        #[Instances.Filters.3]
+        #    function = "Tagged"
+        #    arguments = ["REAP_ME"]#
 
 [SecurityGroups]
-    Enabled = true
+    Enabled = false
 
     [SecurityGroups.Filters]
         #[SecurityGroups.Filters.1]
@@ -126,7 +129,7 @@ Regions      = [
         #    arguments = ["ts-app-jenkins-cloudops-21-ELBSecurityGroup-1JR1B8GXM7FCI"]
 
 [Cloudformations]
-    Enabled = true
+    Enabled = false
 
     [Cloudformations.Filters]
         [Cloudformations.Filters.1]

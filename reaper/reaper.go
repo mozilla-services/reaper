@@ -16,11 +16,12 @@ import (
 )
 
 var (
-	reapables   reapable.Reapables
-	dependency  map[reapable.Region]map[reapable.ID]bool
-	savedstates map[reapable.Region]map[reapable.ID]*state.State
-	config      *Config
-	events      *[]reaperevents.EventReporter
+	reapables          reapable.Reapables
+	dependency         map[reapable.Region]map[reapable.ID]bool
+	isInCloudformation map[reapable.Region]map[reapable.ID]bool
+	savedstates        map[reapable.Region]map[reapable.ID]*state.State
+	config             *Config
+	events             *[]reaperevents.EventReporter
 )
 
 func SetConfig(c *Config) {
@@ -435,11 +436,34 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	owned := make(map[string][]reaperevents.Reapable)
 	var unowned []reaperevents.Reapable
 
-	// initialize dependency
-	if config.SecurityGroups.Enabled {
-		dependency = make(map[reapable.Region]map[reapable.ID]bool)
-		for _, region := range config.AWS.Regions {
-			dependency[reapable.Region(region)] = make(map[reapable.ID]bool)
+	// initialize dependency and isInCloudformation
+	dependency = make(map[reapable.Region]map[reapable.ID]bool)
+	for _, region := range config.AWS.Regions {
+		dependency[reapable.Region(region)] = make(map[reapable.ID]bool)
+	}
+
+	isInCloudformation = make(map[reapable.Region]map[reapable.ID]bool)
+	for _, region := range config.AWS.Regions {
+		isInCloudformation[reapable.Region(region)] = make(map[reapable.ID]bool)
+	}
+
+	for c := range getCloudformationStacks() {
+		// because getting resources is rated limited...
+		for !c.DidGetResources() {
+			time.Sleep(1 * time.Second)
+		}
+		for _, resource := range c.Resources {
+			dependency[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
+			isInCloudformation[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
+		}
+		if config.Cloudformations.Enabled {
+			// group CFs by owner
+			if c.Owner() != nil {
+				owned[c.Owner().Address] = append(owned[c.Owner().Address], c)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, c)
+			}
 		}
 	}
 
@@ -454,6 +478,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 				dependency[i.Region][reapable.ID(name)] = true
 			}
 		}
+		if isInCloudformation[i.Region][i.ID] {
+			i.IsInCloudformation = true
+		}
 		// group instances by owner
 		if config.Instances.Enabled {
 			if i.Owner() != nil {
@@ -465,27 +492,11 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		}
 	}
 
-	for c := range getCloudformationStacks() {
-		// because getting resources is rated limited...
-		for !c.DidGetResources() {
-			time.Sleep(1 * time.Second)
-		}
-		for _, resource := range c.Resources {
-			dependency[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
-		}
-		if config.Cloudformations.Enabled {
-			// group CFs by owner
-			if c.Owner() != nil {
-				owned[c.Owner().Address] = append(owned[c.Owner().Address], c)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, c)
-			}
-		}
-	}
-
 	for a := range getAutoScalingGroups() {
 		if config.AutoScalingGroups.Enabled {
+			if isInCloudformation[a.Region][a.ID] {
+				a.IsInCloudformation = true
+			}
 			// group asgs by owner
 			if a.Owner() != nil {
 				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
@@ -500,6 +511,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	for s := range getSecurityGroups() {
 		// if the security group is in use, it isn't reapable
 		// names and IDs are used interchangeably by different parts of the API
+		if isInCloudformation[s.Region][s.ID] {
+			s.IsInCloudformation = true
+		}
 		if dependency[s.Region][s.ID] || dependency[s.Region][reapable.ID(*s.GroupName)] {
 			continue
 		}

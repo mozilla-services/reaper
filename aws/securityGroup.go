@@ -232,6 +232,10 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
+	case "InCloudformation":
+		return a.IsInCloudformation
+	case "NotInCloudformation":
+		return !a.IsInCloudformation
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering SecurityGroups.", filter.Function))
 	}

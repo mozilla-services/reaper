@@ -346,6 +346,10 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		if err == nil && time.Since(a.CreatedTime) > d {
 			matched = true
 		}
+	case "InCloudformation":
+		return a.IsInCloudformation
+	case "NotInCloudformation":
+		return !a.IsInCloudformation
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
 	}

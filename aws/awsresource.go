@@ -26,14 +26,15 @@ const (
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	ID             reapable.ID
-	Name           string
-	Region         reapable.Region
-	AWSState       AWSState
-	Description    string
-	VPCID          string
-	OwnerID        string
-	MatchedFilters string
+	ID                 reapable.ID
+	Name               string
+	Region             reapable.Region
+	AWSState           AWSState
+	Description        string
+	VPCID              string
+	OwnerID            string
+	MatchedFilters     string
+	IsInCloudformation bool
 
 	Tags map[string]string
 

@@ -22,6 +22,10 @@ func Extras() bool {
 	return config.Extras
 }
 
+func SetConfig(c *LogConfig) {
+	config = *c
+}
+
 func init() {
 	// set up logging
 	log = logging.MustGetLogger("Reaper")

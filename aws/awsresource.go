@@ -144,8 +144,8 @@ func (a *AWSResource) ReapableDescriptionShort() string {
 		ownerString = fmt.Sprintf(" (owned by %s)", owner)
 	}
 	nameString := ""
-	if name := a.Tag("Name"); name != "" {
-		nameString = fmt.Sprintf(" \"%s\"", name)
+	if a.Name != "" {
+		nameString = fmt.Sprintf(" \"%s\"", a.Name)
 	}
 	return fmt.Sprintf("'%s'%s%s in %s with state: %s", a.ID, nameString, ownerString, a.Region, a.ReaperState().String())
 }

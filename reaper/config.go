@@ -71,6 +71,8 @@ func LoadConfig(path string) (*Config, error) {
 	conf.AWS.HTTP = conf.HTTP
 	conf.SMTP.HTTPConfig = conf.HTTP
 
+	log.SetConfig(&conf.Logging)
+
 	// TODO: event reporter dependents are done in reaper.Ready()
 
 	return &conf, nil

@@ -18,9 +18,13 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+var StackResources map[reapable.Region]map[reapable.ID]cloudformation.StackResource
+
 type CloudformationStack struct {
 	AWSResource
 	cloudformation.Stack
+	Resources []cloudformation.StackResource
+	done      bool
 }
 
 func NewCloudformationStack(region string, stack *cloudformation.Stack) *CloudformationStack {
@@ -34,6 +38,15 @@ func NewCloudformationStack(region string, stack *cloudformation.Stack) *Cloudfo
 		},
 		Stack: *stack,
 	}
+
+	// because getting resources is rate limited...
+	go func() {
+		for resource := range cloudformationStackResources(a) {
+			a.Resources = append(a.Resources, *resource)
+			// log.Info("Resource: %s, %s", *resource.PhysicalResourceID)
+		}
+		a.done = true
+	}()
 
 	for i := 0; i < len(stack.Tags); i++ {
 		a.AWSResource.Tags[*stack.Tags[i].Key] = *stack.Tags[i].Value
@@ -50,6 +63,10 @@ func NewCloudformationStack(region string, stack *cloudformation.Stack) *Cloudfo
 	}
 
 	return &a
+}
+
+func (a *CloudformationStack) DidGetResources() bool {
+	return a.done
 }
 
 func (a *CloudformationStack) reapableEventHTML(text string) *bytes.Buffer {

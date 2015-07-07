@@ -1,7 +1,10 @@
 package aws
 
 import (
+	"fmt"
+	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -18,7 +21,10 @@ const (
 	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
 )
 
-var config *AWSConfig
+var (
+	config  *AWSConfig
+	timeout = time.Tick(100 * time.Millisecond)
+)
 
 type AWSConfig struct {
 	Notifications events.NotificationsConfig
@@ -71,6 +77,7 @@ func AllCloudformationStacks() chan *CloudformationStack {
 				if lastPage {
 					// on the last page, finish this region
 					wg.Done()
+					return false
 				}
 				return true
 			})
@@ -86,6 +93,45 @@ func AllCloudformationStacks() chan *CloudformationStack {
 		wg.Wait()
 		close(ch)
 
+	}()
+	return ch
+}
+
+func cloudformationStackResources(c CloudformationStack) chan *cloudformation.StackResource {
+	ch := make(chan *cloudformation.StackResource)
+	api := cloudformation.New(&aws.Config{Region: string(c.Region)})
+	// TODO: stupid
+	stringName := string(c.ID)
+
+	go func() {
+		<-timeout
+
+		// this query can fail, so we retry
+		didRetry := false
+		input := &cloudformation.DescribeStackResourcesInput{StackName: &stringName}
+
+		// initial query
+		resp, err := api.DescribeStackResources(input)
+		for err != nil {
+			sleepTime := 2*time.Second + time.Duration(rand.Intn(10))*time.Second
+			if err != nil {
+				log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+			}
+
+			// wait a random amount of time... hopefully long enough to beat rate limiting
+			time.Sleep(sleepTime)
+
+			// retry query
+			resp, err = api.DescribeStackResources(input)
+			didRetry = true
+		}
+		if didRetry && log.Extras() {
+			log.Notice("Retry succeeded for %s!", c.ID)
+		}
+		for _, resource := range resp.StackResources {
+			ch <- resource
+		}
+		close(ch)
 	}()
 	return ch
 }
@@ -111,6 +157,7 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 				if lastPage {
 					// on the last page, finish this region
 					wg.Done()
+					return false
 				}
 				return true
 			})
@@ -153,6 +200,7 @@ func AllInstances() chan *Instance {
 				// the return value of this func is "shouldContinue"
 				if lastPage {
 					wg.Done()
+					return false
 				}
 				return true
 			})

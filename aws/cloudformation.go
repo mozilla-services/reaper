@@ -6,6 +6,7 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"sync"
 	textTemplate "text/template"
 	"time"
 
@@ -24,7 +25,7 @@ type Cloudformation struct {
 	AWSResource
 	cloudformation.Stack
 	Resources []cloudformation.StackResource
-	done      bool
+	sync.RWMutex
 }
 
 func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformation {
@@ -39,12 +40,16 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 		Stack: *stack,
 	}
 
+	a.Lock()
+	defer a.Unlock()
+
 	// because getting resources is rate limited...
 	go func() {
+		a.Lock()
+		defer a.Unlock()
 		for resource := range CloudformationResources(a) {
 			a.Resources = append(a.Resources, *resource)
 		}
-		a.done = true
 	}()
 
 	for i := 0; i < len(stack.Tags); i++ {
@@ -62,10 +67,6 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 	}
 
 	return &a
-}
-
-func (a *Cloudformation) DidGetResources() bool {
-	return a.done
 }
 
 func (a *Cloudformation) reapableEventHTML(text string) *bytes.Buffer {

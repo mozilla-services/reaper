@@ -93,27 +93,31 @@ Regions      = [
 [AutoScalingGroups]
     Enabled = true
 
-    [AutoScalingGroups.Filters]
-        [AutoScalingGroups.Filters.1]
-            function = "SizeGreaterThanOrEqualTo"
-            arguments = ["1"]
-        [AutoScalingGroups.Filters.2]
-            function = "CreatedTimeNotInTheLast"
-            arguments = ["24h"]
-        [AutoScalingGroups.Filters.3]
-            function = "Tagged"
-            arguments = ["REAP_ME"]
+    [AutoScalingGroups.FilterGroups]
+        [AutoScalingGroups.FilterGroups.1]
+            [AutoScalingGroups.FilterGroups.1.1]
+                function = "SizeGreaterThanOrEqualTo"
+                arguments = ["1"]
+            [AutoScalingGroups.FilterGroups.1.2]
+                function = "CreatedTimeNotInTheLast"
+                arguments = ["24h"]
+        [AutoScalingGroups.FilterGroups.2]
+            [AutoScalingGroups.FilterGroups.2.1]
+                function = "Tagged"
+                arguments = ["REAP_ME"]
 
 [Instances]
     Enabled = true
 
-    [Instances.Filters]
-        [Instances.Filters.1]
-            function = "LaunchTimeNotInTheLast"
-            arguments = ["24h"]
-        [Instances.Filters.2]
-            function = "Running"
-            arguments = ["true"]
-        [Instances.Filters.3]
-            function = "Tagged"
-            arguments = ["REAP_ME"]
+    [Instances.FilterGroups]
+        [Instances.FilterGroups.1]
+            [Instances.FilterGroups.1.1]
+                function = "LaunchTimeNotInTheLast"
+                arguments = ["24h"]
+            [Instances.FilterGroups.1.2]
+                function = "Running"
+                arguments = ["true"]
+        [Instances.FilterGroups.2]
+            [Instances.FilterGroups.2.1]
+                function = "Tagged"
+                arguments = ["REAP_ME"]

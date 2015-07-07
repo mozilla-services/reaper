@@ -262,8 +262,7 @@ func getInstances() chan *reaperaws.Instance {
 			}
 
 			// make the map if it is not initialized
-			_, ok = instanceTypeSums[instance.Region]
-			if !ok {
+			if instanceTypeSums[instance.Region] == nil {
 				instanceTypeSums[instance.Region] = make(map[string]int)
 			}
 			instanceTypeSums[instance.Region][instance.InstanceType]++
@@ -311,8 +310,7 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			}
 
 			// make the map if it is not initialized
-			_, ok = asgSizeSums[asg.Region]
-			if !ok {
+			if asgSizeSums[asg.Region] == nil {
 				asgSizeSums[asg.Region] = make(map[int64]int)
 			}
 			asgSizeSums[asg.Region][asg.DesiredCapacity]++
@@ -393,28 +391,33 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 
 	var gs []reaperevents.Reapable
 	for _, filterable := range filterables {
-		fs := make(map[string]filters.Filter)
-		switch t := filterable.(type) {
+		var groups map[string]filters.FilterGroup
+		switch filterable.(type) {
 		case *reaperaws.Instance:
 			// if instances are not enabled, skip
 			if !config.Instances.Enabled {
 				continue
 			}
-			fs = config.Instances.Filters
-			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
+			groups = config.Instances.FilterGroups
 		case *reaperaws.AutoScalingGroup:
 			// if ASGs are not enabled, skip
 			if !config.AutoScalingGroups.Enabled {
 				continue
 			}
-			fs = config.AutoScalingGroups.Filters
-			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
+			groups = config.AutoScalingGroups.FilterGroups
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
 		}
 
-		matched := filters.ApplyFilters(filterable, fs)
+		matched := false
+		for name, group := range groups {
+			didMatch := filters.ApplyFilters(filterable, group)
+			if didMatch {
+				matched = true
+				filterable.AddFilterGroup(name, group)
+			}
+		}
 
 		// whitelist filter
 		if filterable.Filter(*filters.NewFilter("Tagged", []string{config.WhitelistTag})) {

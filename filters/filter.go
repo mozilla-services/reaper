@@ -11,6 +11,7 @@ import (
 
 type Filterable interface {
 	Filter(Filter) bool
+	AddFilterGroup(string, FilterGroup)
 }
 
 func ApplyFilters(f Filterable, fs map[string]Filter) bool {
@@ -27,7 +28,7 @@ func ApplyFilters(f Filterable, fs map[string]Filter) bool {
 	return matched
 }
 
-func PrintFilters(filters map[string]Filter) string {
+func FormatFiltersText(filters map[string]Filter) string {
 	var filterText []string
 	for _, filter := range filters {
 		filterText = append(filterText, fmt.Sprintf("%s(%s)", filter.Function, strings.Join(filter.Arguments, ", ")))
@@ -36,6 +37,16 @@ func PrintFilters(filters map[string]Filter) string {
 	sort.Strings(filterText)
 	return strings.Join(filterText, ", ")
 }
+
+func FormatFilterGroupsText(filterGroups map[string]FilterGroup) string {
+	var filterGroupText []string
+	for name, filterGroup := range filterGroups {
+		filterGroupText = append(filterGroupText, fmt.Sprintf("FilterGroup %s: [%s]", name, FormatFiltersText(filterGroup)))
+	}
+	return fmt.Sprintf("%s", strings.Join(filterGroupText, ", "))
+}
+
+type FilterGroup map[string]Filter
 
 type Filter struct {
 	Function  string

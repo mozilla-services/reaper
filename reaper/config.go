@@ -94,9 +94,9 @@ type Config struct {
 	DefaultOwner     string
 	DefaultEmailHost string
 
-	AutoScalingGroups FilterGroup
-	Instances         FilterGroup
-	Snapshots         FilterGroup
+	AutoScalingGroups ResourceConfig
+	Instances         ResourceConfig
+	Snapshots         ResourceConfig
 
 	DryRun            bool
 	Interactive       bool
@@ -111,7 +111,7 @@ type EventTypes struct {
 	Interactive reaperevents.InteractiveEventConfig
 }
 
-type FilterGroup struct {
-	Enabled bool
-	Filters map[string]filters.Filter
+type ResourceConfig struct {
+	Enabled      bool
+	FilterGroups map[string]filters.FilterGroup
 }

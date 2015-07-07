@@ -117,7 +117,6 @@ Regions      = [
             function = "Tagged"
             arguments = ["REAP_ME"]
 
-
 [SecurityGroups]
     Enabled = true
 
@@ -125,3 +124,14 @@ Regions      = [
         #[SecurityGroups.Filters.1]
         #    function = "Named"
         #    arguments = ["ts-app-jenkins-cloudops-21-ELBSecurityGroup-1JR1B8GXM7FCI"]
+
+[Cloudformations]
+    Enabled = true
+
+    [Cloudformations.Filters]
+        [Cloudformations.Filters.1]
+            function = "CreatedTimeNotInTheLast"
+            arguments = ["24h"]
+        [Cloudformations.Filters.2]
+            function = "NotStatus"
+            arguments = ["CREATE_COMPLETE"]

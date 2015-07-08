@@ -538,9 +538,11 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 // and spits out a filtered array BY THE INDIVIDUAL
 func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 	// recover from potential panics caused by malformed filters
-	if r := recover(); r != nil {
-		log.Error(fmt.Sprintf("Recovered in applyFilters with panic: %s", r))
-	}
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error(fmt.Sprintf("Recovered in applyFilters with panic: %s", r))
+		}
+	}()
 
 	var gs []reaperevents.Reapable
 	for _, filterable := range filterables {

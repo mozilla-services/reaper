@@ -85,6 +85,8 @@ func AllCloudformations() chan *Cloudformation {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				// don't wait if the API call failed
+				wg.Done()
 			}
 		}(region)
 	}
@@ -184,6 +186,7 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				// don't wait if the API call failed
 				wg.Done()
 			}
 		}(region)
@@ -228,6 +231,7 @@ func AllInstances() chan *Instance {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				// don't wait if the API call failed
 				wg.Done()
 			}
 		}(region)

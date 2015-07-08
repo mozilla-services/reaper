@@ -249,7 +249,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	case "Status":
-		if *a.StackStatus == filter.Arguments[0] {
+		if a.StackStatus != nil && *a.StackStatus == filter.Arguments[0] {
 			// one of:
 			// CREATE_COMPLETE
 			// CREATE_IN_PROGRESS
@@ -270,7 +270,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "NotStatus":
-		if *a.StackStatus != filter.Arguments[0] {
+		if a.StackStatus != nil && *a.StackStatus != filter.Arguments[0] {
 			matched = true
 		}
 	case "Tagged":
@@ -287,12 +287,12 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		}
 	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(*a.CreationTime) < d {
+		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) < d {
 			matched = true
 		}
 	case "CreatedTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(*a.CreationTime) > d {
+		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) > d {
 			matched = true
 		}
 	default:

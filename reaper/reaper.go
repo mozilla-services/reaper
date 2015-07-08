@@ -256,7 +256,6 @@ func getInstances() chan *reaperaws.Instance {
 		instanceCh := reaperaws.AllInstances()
 		regionSums := make(map[reapable.Region]int)
 		instanceTypeSums := make(map[reapable.Region]map[string]int)
-		sum := 0
 		for instance := range instanceCh {
 			// restore saved state from file
 			savedstate, ok := savedstates[instance.Region][instance.ID]
@@ -271,7 +270,6 @@ func getInstances() chan *reaperaws.Instance {
 			instanceTypeSums[instance.Region][instance.InstanceType]++
 
 			regionSums[instance.Region]++
-			sum++
 			ch <- instance
 		}
 
@@ -304,7 +302,6 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		asgCh := reaperaws.AllAutoScalingGroups()
 		regionSums := make(map[reapable.Region]int)
 		asgSizeSums := make(map[reapable.Region]map[int64]int)
-		sum := 0
 		for asg := range asgCh {
 			// restore saved state from file
 			savedstate, ok := savedstates[asg.Region][asg.ID]
@@ -319,7 +316,6 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			asgSizeSums[asg.Region][asg.DesiredCapacity]++
 
 			regionSums[asg.Region]++
-			sum++
 			ch <- asg
 		}
 		for _, e := range *events {
@@ -334,7 +330,7 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 
 			for region, regionSum := range regionSums {
 				log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", regionSum, region))
-				err := e.NewStatistic("reaper.asgs.total", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+				err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
 				}

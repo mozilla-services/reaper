@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -113,9 +114,15 @@ func CloudformationResources(c Cloudformation) chan *cloudformation.StackResourc
 		// initial query
 		resp, err := api.DescribeStackResources(input)
 		for err != nil {
-			sleepTime := 2*time.Second + time.Duration(rand.Intn(4))*time.Second
+			sleepTime := 2*time.Second + time.Duration(rand.Intn(2000))*time.Millisecond
 			if err != nil {
-				log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+				// this error is annoying and will come up all the time... so you can disable it
+				if strings.Split(err.Error(), ":")[0] == "Throttling" && log.Extras() {
+					log.Warning(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+				} else if strings.Split(err.Error(), ":")[0] != "Throttling" {
+					// any other errors
+					log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+				}
 			}
 
 			// wait a random amount of time... hopefully long enough to beat rate limiting

@@ -347,9 +347,9 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "InCloudformation":
-		return a.IsInCloudformation
-	case "NotInCloudformation":
-		return !a.IsInCloudformation
+		if b, err := filter.BoolValue(0); err != nil && a.IsInCloudformation == b {
+			matched = true
+		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
 	}

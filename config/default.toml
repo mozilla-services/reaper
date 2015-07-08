@@ -43,7 +43,7 @@ DefaultOwner = "reaper_notifications"
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
     [Events.DataDog]
-        Enabled = false
+        Enabled = true
         Triggers = []
 
     [Events.Email]
@@ -115,6 +115,9 @@ Regions      = [
             arguments = ["true"]
         [Instances.Filters.3]
             function = "NotInCloudformation"
+            arguments = ["true"]
+        [Instances.Filters.4]
+            function = "NotAutoScaled"
             arguments = ["true"]
         #[Instances.Filters.3]
         #    function = "Tagged"

@@ -333,13 +333,13 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "InCloudformation":
-		return i.IsInCloudformation
-	case "NotInCloudformation":
-		return !i.IsInCloudformation
+		if b, err := filter.BoolValue(0); err != nil && i.IsInCloudformation == b {
+			matched = true
+		}
 	case "AutoScaled":
-		return i.AutoScaled
-	case "NotAutoScaled":
-		return !i.AutoScaled
+		if b, err := filter.BoolValue(0); err != nil && i.AutoScaled == b {
+			matched = true
+		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
 	}

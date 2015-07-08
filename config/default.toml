@@ -117,13 +117,9 @@ Regions      = [
             [Instances.FilterGroups.1.2]
                 function = "Running"
                 arguments = ["true"]
-        [Instances.FilterGroups.2]
-            [Instances.FilterGroups.2.1]
+            [Instances.FilterGroups.1.3]
                 function = "InCloudformation"
                 arguments = ["false"]
-            [Instances.FilterGroups.2.2]
-                    function = "Tagged"
-                    arguments = ["REAP_ME"]
 
 [SecurityGroups]
     Enabled = true
@@ -131,6 +127,9 @@ Regions      = [
     [SecurityGroups.FilterGroups]
         # SGs that have dependencies are not reapable
         [SecurityGroups.FilterGroups.1]
+            [SecurityGroups.FilterGroups.1.1]
+                function = "InCloudformation"
+                arguments = ["false"]
 
 [Cloudformations]
     Enabled = true
@@ -138,8 +137,8 @@ Regions      = [
     [Cloudformations.FilterGroups]
         [Cloudformations.FilterGroups.1]
             [Cloudformations.FilterGroups.1.1]
-                function = "CreatedTimeInTheLast"
+                function = "CreatedTimeNotInTheLast"
                 arguments = ["24h"]
             [Cloudformations.FilterGroups.1.2]
-            function = "NotStatus"
-            arguments = ["CREATE_COMPLETE"]
+                function = "Status"
+                arguments = ["CREATE_COMPLETE"]

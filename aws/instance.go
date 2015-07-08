@@ -40,6 +40,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 			Tags:   make(map[string]string),
 		},
 		SecurityGroups: make(map[reapable.ID]string),
+		Instance:       *instance,
 	}
 
 	for _, sg := range instance.SecurityGroups {
@@ -342,11 +343,11 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err != nil && i.IsInCloudformation == b {
+		if b, err := filter.BoolValue(0); err == nil && i.IsInCloudformation == b {
 			matched = true
 		}
 	case "AutoScaled":
-		if b, err := filter.BoolValue(0); err != nil && i.AutoScaled == b {
+		if b, err := filter.BoolValue(0); err == nil && i.AutoScaled == b {
 			matched = true
 		}
 	default:

@@ -441,7 +441,7 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	}
 
 	for c := range getCloudformations() {
-		// because getting resources is rated limited...
+		// because getting resources is rate limited...
 		c.RLock()
 		defer c.RUnlock()
 		for _, resource := range c.Resources {
@@ -462,7 +462,8 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	}
 
 	for a := range getAutoScalingGroups() {
-		if isInCloudformation[a.Region][a.ID] {
+		// ASGs can be identified by name...
+		if isInCloudformation[a.Region][a.ID] || isInCloudformation[a.Region][reapable.ID(a.Name)] {
 			a.IsInCloudformation = true
 		}
 
@@ -488,11 +489,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	// get all instances
 	for i := range getInstances() {
 		// add security groups to map of in use
-		for id := range i.SecurityGroups {
-			dependency[i.Region][id] = true
-		}
-		for _, name := range i.SecurityGroups {
+		for id, name := range i.SecurityGroups {
 			dependency[i.Region][reapable.ID(name)] = true
+			dependency[i.Region][id] = true
 		}
 
 		if isInCloudformation[i.Region][i.ID] {
@@ -564,19 +563,22 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		}
 
 		matched := false
+
 		// if there are no filters groups defined, default to a match
 		if len(groups) == 0 {
 			matched = true
 		}
 
 		// if there are no filters, default to a match
+		noFilters := true
 		for _, group := range groups {
-			// starts as true
-			matched = true
 			if len(group) != 0 {
 				// set to false if any are non-zero length
-				matched = false
+				noFilters = false
 			}
+		}
+		if noFilters {
+			matched = true
 		}
 
 		for name, group := range groups {

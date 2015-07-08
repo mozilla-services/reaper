@@ -27,6 +27,9 @@ type AutoScalingGroup struct {
 }
 
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
+	if asg == nil {
+		return nil
+	}
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
 			Region: reapable.Region(region),
@@ -34,6 +37,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 			Name:   *asg.AutoScalingGroupName,
 			Tags:   make(map[string]string),
 		},
+		Group: *asg,
 	}
 
 	for i := 0; i < len(asg.Instances); i++ {
@@ -361,7 +365,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err != nil && a.IsInCloudformation == b {
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
 			matched = true
 		}
 	default:

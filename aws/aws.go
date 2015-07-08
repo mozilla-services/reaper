@@ -75,6 +75,7 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				wg.Done()
 			}
 		}(region)
 	}
@@ -117,6 +118,7 @@ func AllInstances() chan *Instance {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				wg.Done()
 			}
 		}(region)
 	}

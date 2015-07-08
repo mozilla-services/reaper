@@ -628,8 +628,8 @@ func Terminate(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.Terminate()
 	if err != nil {
-		log.Error("Could not terminate resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error())
+		log.Error(fmt.Sprintf("Could not terminate resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
 		return err
 	}
 	log.Debug("Terminate %s", reapable.ReapableDescriptionShort())
@@ -645,8 +645,8 @@ func ForceStop(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.ForceStop()
 	if err != nil {
-		log.Error("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error())
+		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
 		return err
 	}
 	log.Debug("ForceStop %s", reapable.ReapableDescriptionShort())
@@ -662,8 +662,8 @@ func Stop(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.Stop()
 	if err != nil {
-		log.Error("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error())
+		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
 		return err
 	}
 	log.Debug("Stop %s", reapable.ReapableDescriptionShort())

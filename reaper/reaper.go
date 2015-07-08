@@ -101,16 +101,19 @@ func (r *Reaper) Once() {
 func (r *Reaper) SaveState(stateFile string) {
 	// open file RW, create it if it doesn't exist
 	s, err := os.OpenFile(stateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
-	defer func() { s.Close() }()
-	// save state to state file
-	for r := range reapables.Iter() {
-		s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", r.Region, r.ID, r.ReaperState().String())))
-	}
 	if err != nil {
 		log.Error(fmt.Sprintf("Unable to create StateFile '%s'", stateFile))
-	} else {
-		log.Info("States saved to %s", stateFile)
+		return
 	}
+	defer s.Close()
+	// save state to state file
+	for r := range reapables.Iter() {
+		_, err := s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", r.Region, r.ID, r.ReaperState().String())))
+		if err != nil {
+			log.Error(fmt.Sprintf("Error writing to %s", stateFile))
+		}
+	}
+	log.Info("States saved to %s", stateFile)
 }
 
 func (r *Reaper) LoadState(stateFile string) {

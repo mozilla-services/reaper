@@ -214,35 +214,35 @@ Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScaling
 [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
-func (a *AutoScalingGroup) SizeGreaterThanOrEqualTo(size int64) bool {
+func (a *AutoScalingGroup) sizeGreaterThanOrEqualTo(size int64) bool {
 	if a.DesiredCapacity != nil {
 		return *a.DesiredCapacity >= size
 	}
 	return false
 }
 
-func (a *AutoScalingGroup) SizeLessThanOrEqualTo(size int64) bool {
+func (a *AutoScalingGroup) sizeLessThanOrEqualTo(size int64) bool {
 	if a.DesiredCapacity != nil {
 		return *a.DesiredCapacity <= size
 	}
 	return false
 }
 
-func (a *AutoScalingGroup) SizeEqualTo(size int64) bool {
+func (a *AutoScalingGroup) sizeEqualTo(size int64) bool {
 	if a.DesiredCapacity != nil {
 		return *a.DesiredCapacity == size
 	}
 	return false
 }
 
-func (a *AutoScalingGroup) SizeLessThan(size int64) bool {
+func (a *AutoScalingGroup) sizeLessThan(size int64) bool {
 	if a.DesiredCapacity != nil {
 		return *a.DesiredCapacity < size
 	}
 	return false
 }
 
-func (a *AutoScalingGroup) SizeGreaterThan(size int64) bool {
+func (a *AutoScalingGroup) sizeGreaterThan(size int64) bool {
 	if a.DesiredCapacity != nil {
 		return *a.DesiredCapacity > size
 	}
@@ -307,23 +307,23 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	case "SizeGreaterThan":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeGreaterThan(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeGreaterThan(i) {
 			matched = true
 		}
 	case "SizeLessThan":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeLessThan(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeLessThan(i) {
 			matched = true
 		}
 	case "SizeEqualTo":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeEqualTo(i) {
 			matched = true
 		}
 	case "SizeLessThanOrEqualTo":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeLessThanOrEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeLessThanOrEqualTo(i) {
 			matched = true
 		}
 	case "SizeGreaterThanOrEqualTo":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeGreaterThanOrEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeGreaterThanOrEqualTo(i) {
 			matched = true
 		}
 	case "Tagged":

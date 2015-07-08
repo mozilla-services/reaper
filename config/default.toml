@@ -130,6 +130,7 @@ Regions      = [
 
     [SecurityGroups.FilterGroups]
         # SGs that have dependencies are not reapable
+        [SecurityGroups.FilterGroups.1]
 
 [Cloudformations]
     Enabled = true

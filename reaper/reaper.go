@@ -564,6 +564,21 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		}
 
 		matched := false
+		// if there are no filters groups defined, default to a match
+		if len(groups) == 0 {
+			matched = true
+		}
+
+		// if there are no filters, default to a match
+		for _, group := range groups {
+			// starts as true
+			matched = true
+			if len(group) != 0 {
+				// set to false if any are non-zero length
+				matched = false
+			}
+		}
+
 		for name, group := range groups {
 			didMatch := filters.ApplyFilters(filterable, group)
 			if didMatch {

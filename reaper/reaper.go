@@ -187,6 +187,7 @@ func (r *Reaper) reap() {
 
 	filteredInstanceSums := make(map[reapable.Region]int)
 	filteredASGSums := make(map[reapable.Region]int)
+	filteredCloudformationStackSums := make(map[reapable.Region]int)
 
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
@@ -198,6 +199,9 @@ func (r *Reaper) reap() {
 			filteredASGSums[t.Region]++
 			reapAutoScalingGroup(t)
 			asgs = append(asgs, *t)
+		case *reaperaws.CloudformationStack:
+			filteredCloudformationStackSums[t.Region]++
+			reapCloudformationStack(t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -233,6 +237,12 @@ func (r *Reaper) reap() {
 		}
 		for region, sum := range filteredASGSums {
 			err := e.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+			if err != nil {
+				log.Error(fmt.Sprintf("%s", err.Error()))
+			}
+		}
+		for region, sum := range filteredCloudformationStackSums {
+			err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
 			if err != nil {
 				log.Error(fmt.Sprintf("%s", err.Error()))
 			}
@@ -273,6 +283,10 @@ func getInstances() chan *reaperaws.Instance {
 			ch <- instance
 		}
 
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total Instances in %s", sum, region))
+		}
+
 		for _, e := range *events {
 			for region, regionMap := range instanceTypeSums {
 				for instanceType, instanceTypeSum := range regionMap {
@@ -284,8 +298,38 @@ func getInstances() chan *reaperaws.Instance {
 			}
 
 			for region, regionSum := range regionSums {
-				log.Info(fmt.Sprintf("Found %d total Instances in %s", regionSum, region))
 				err := e.NewStatistic("reaper.instances.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
+			}
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func getCloudformationStacks() chan *reaperaws.CloudformationStack {
+	ch := make(chan *reaperaws.CloudformationStack)
+	go func() {
+		cfs := reaperaws.AllCloudformationStacks()
+		regionSums := make(map[reapable.Region]int)
+		for cf := range cfs {
+			// restore saved state from file
+			savedstate, ok := savedstates[cf.Region][cf.ID]
+			if ok {
+				cf.SetReaperState(savedstate)
+			}
+
+			regionSums[cf.Region]++
+			ch <- cf
+		}
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total Cloudformation Stacks in %s", sum, region))
+		}
+		for _, e := range *events {
+			for region, regionSum := range regionSums {
+				err := e.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
 				}
@@ -318,6 +362,9 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			regionSums[asg.Region]++
 			ch <- asg
 		}
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
+		}
 		for _, e := range *events {
 			for region, regionMap := range asgSizeSums {
 				for asgSize, asgSizeSum := range regionMap {
@@ -329,7 +376,6 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			}
 
 			for region, regionSum := range regionSums {
-				log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", regionSum, region))
 				err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 				if err != nil {
 					log.Error(fmt.Sprintf("%s", err.Error()))
@@ -347,6 +393,18 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	// all resources are appended to owned or unowned
 	owned := make(map[string][]reaperevents.Reapable)
 	var unowned []reaperevents.Reapable
+
+	if config.Cloudformations.Enabled {
+		for c := range getCloudformationStacks() {
+			// group instances by owner
+			if c.Owner() != nil {
+				owned[c.Owner().Address] = append(owned[c.Owner().Address], c)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, c)
+			}
+		}
+	}
 
 	if config.Instances.Enabled {
 		// get all instances
@@ -404,6 +462,12 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 				continue
 			}
 			groups = config.AutoScalingGroups.FilterGroups
+		case *reaperaws.CloudformationStack:
+			// if CFs are not enabled, skip
+			if !config.Cloudformations.Enabled {
+				continue
+			}
+			groups = config.Cloudformations.FilterGroups
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
@@ -430,6 +494,15 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		}
 	}
 	return gs
+}
+
+func reapCloudformationStack(c *reaperaws.CloudformationStack) {
+	// update the internal state
+	if time.Now().After(c.ReaperState().Until) {
+		_ = c.IncrementState()
+	}
+	log.Notice(fmt.Sprintf("Reapable Cloudformation discovered: %s.", c.ReapableDescription()))
+	reapables.Put(c.Region, c.ID, c)
 }
 
 func reapInstance(i *reaperaws.Instance) {

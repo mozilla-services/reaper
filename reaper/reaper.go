@@ -442,8 +442,10 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		c.RLock()
 		defer c.RUnlock()
 		for _, resource := range c.Resources {
-			dependency[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
-			isInCloudformation[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
+			if resource.PhysicalResourceID != nil {
+				dependency[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
+				isInCloudformation[c.Region][reapable.ID(*resource.PhysicalResourceID)] = true
+			}
 		}
 		if config.Cloudformations.Enabled {
 			// group CFs by owner

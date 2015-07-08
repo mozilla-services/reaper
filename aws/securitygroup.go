@@ -42,7 +42,7 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	}
 	if s.Tagged(reaperTag) {
 		// restore previously tagged state
-		s.reaperState = state.NewStateWithTag(s.AWSResource.Tags[reaperTag])
+		s.reaperState = state.NewStateWithTag(s.AWSResource.Tag(reaperTag))
 	} else {
 		// initial state
 		s.reaperState = state.NewStateWithUntilAndState(

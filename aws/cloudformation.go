@@ -62,7 +62,7 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 
 	if a.Tagged(reaperTag) {
 		// restore previously tagged state
-		a.reaperState = state.NewStateWithTag(a.AWSResource.Tags[reaperTag])
+		a.reaperState = state.NewStateWithTag(a.AWSResource.Tag(reaperTag))
 	} else {
 		// initial state
 		a.reaperState = state.NewStateWithUntilAndState(

@@ -24,15 +24,15 @@ type SecurityGroup struct {
 }
 
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
+	if sg == nil {
+		return nil
+	}
 	s := SecurityGroup{
 		AWSResource: AWSResource{
-			ID:          reapable.ID(*sg.GroupID),
-			Name:        *sg.GroupName,
-			Region:      reapable.Region(region),
-			Description: *sg.Description,
-			VPCID:       *sg.VPCID,
-			OwnerID:     *sg.OwnerID,
-			Tags:        make(map[string]string),
+			ID:     reapable.ID(*sg.GroupID),
+			Name:   *sg.GroupName,
+			Region: reapable.Region(region),
+			Tags:   make(map[string]string),
 		},
 		SecurityGroup: *sg,
 	}

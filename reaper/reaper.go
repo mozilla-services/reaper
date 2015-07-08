@@ -302,7 +302,9 @@ func getInstances() chan *reaperaws.Instance {
 			if !ok {
 				instanceTypeSums[instance.Region] = make(map[string]int)
 			}
-			instanceTypeSums[instance.Region][instance.InstanceType]++
+			if instance.InstanceType != nil {
+				instanceTypeSums[instance.Region][*instance.InstanceType]++
+			}
 
 			regionSums[instance.Region]++
 			ch <- instance
@@ -383,7 +385,9 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			if !ok {
 				asgSizeSums[asg.Region] = make(map[int64]int)
 			}
-			asgSizeSums[asg.Region][asg.DesiredCapacity]++
+			if asg.DesiredCapacity != nil {
+				asgSizeSums[asg.Region][*asg.DesiredCapacity]++
+			}
 
 			regionSums[asg.Region]++
 			ch <- asg

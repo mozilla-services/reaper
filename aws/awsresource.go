@@ -30,9 +30,6 @@ type AWSResource struct {
 	Name               string
 	Region             reapable.Region
 	AWSState           AWSState
-	Description        string
-	VPCID              string
-	OwnerID            string
 	MatchedFilters     string
 	IsInCloudformation bool
 

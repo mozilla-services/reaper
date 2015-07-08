@@ -29,6 +29,10 @@ type Cloudformation struct {
 }
 
 func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformation {
+	// if the cloudformation pointer is nil
+	if stack == nil {
+		return nil
+	}
 	a := Cloudformation{
 		AWSResource: AWSResource{
 			Region:      reapable.Region(region),

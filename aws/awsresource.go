@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
+	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 	"github.com/mozilla-services/reaper/state"
@@ -30,13 +31,15 @@ type AWSResource struct {
 	Name               string
 	Region             reapable.Region
 	AWSState           AWSState
-	MatchedFilters     string
 	IsInCloudformation bool
 
 	Tags map[string]string
 
 	// reaper state
 	reaperState *state.State
+
+	// filters for MatchedFilters
+	matchedFilterGroups map[string]filters.FilterGroup
 }
 
 func (a *AWSResource) Tagged(tag string) bool {
@@ -76,17 +79,17 @@ func (a *AWSResource) Owner() *mail.Address {
 		return addr
 	}
 
-	// username -> mozilla.com email
-	if addr, err := mail.ParseAddress(fmt.Sprintf("%s@mozilla.com", a.Tag("Owner"))); a.Tagged("Owner") && err == nil {
+	// username -> default email host email address
+	if addr, err := mail.ParseAddress(fmt.Sprintf("%s@%s", a.Tag("Owner"), config.DefaultEmailHost)); a.Tagged("Owner") && config.DefaultEmailHost != "" && err == nil {
 		return addr
 	}
 
 	// default owner is specified
 	if addr, err := mail.ParseAddress(
-		fmt.Sprintf("%s@mozilla.com", config.DefaultOwner)); config.DefaultOwner != "" && err == nil {
+		fmt.Sprintf("%s@%s", config.DefaultOwner, config.DefaultEmailHost)); config.DefaultOwner != "" && config.DefaultEmailHost != "" && err == nil {
 		return addr
 	}
-
+	log.Warning("No default owner or email host.")
 	return nil
 }
 
@@ -132,8 +135,19 @@ func (a *AWSResource) IncrementState() bool {
 	return updated
 }
 
+func (a *AWSResource) AddFilterGroup(name string, fs filters.FilterGroup) {
+	if a.matchedFilterGroups == nil {
+		a.matchedFilterGroups = make(map[string]filters.FilterGroup)
+	}
+	a.matchedFilterGroups[name] = fs
+}
+
+func (a *AWSResource) MatchedFilters() string {
+	return filters.FormatFilterGroupsText(a.matchedFilterGroups)
+}
+
 func (a *AWSResource) ReapableDescription() string {
-	return fmt.Sprintf("%s%s", a.ReapableDescriptionShort(), a.MatchedFilters)
+	return fmt.Sprintf("%s matched %s", a.ReapableDescriptionShort(), a.MatchedFilters())
 }
 
 func (a *AWSResource) ReapableDescriptionShort() string {
@@ -142,8 +156,8 @@ func (a *AWSResource) ReapableDescriptionShort() string {
 		ownerString = fmt.Sprintf(" (owned by %s)", owner)
 	}
 	nameString := ""
-	if a.Name != "" {
-		nameString = fmt.Sprintf(" \"%s\"", a.Name)
+	if name := a.Tag("Name"); name != "" {
+		nameString = fmt.Sprintf(" \"%s\"", name)
 	}
 	return fmt.Sprintf("'%s'%s%s in %s with state: %s", a.ID, nameString, ownerString, a.Region, a.ReaperState().String())
 }

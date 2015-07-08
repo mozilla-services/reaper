@@ -298,12 +298,12 @@ func getInstances() chan *reaperaws.Instance {
 			}
 
 			// make the map if it is not initialized
-			_, ok = instanceTypeSums[instance.Region]
-			if !ok {
+			if instanceTypeSums[instance.Region] == nil {
 				instanceTypeSums[instance.Region] = make(map[string]int)
-			}
-			if instance.InstanceType != nil {
-				instanceTypeSums[instance.Region][*instance.InstanceType]++
+				if instance.InstanceType != nil {
+					// increment InstanceType counter
+					instanceTypeSums[instance.Region][*instance.InstanceType]++
+				}
 			}
 
 			regionSums[instance.Region]++
@@ -381,8 +381,7 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			}
 
 			// make the map if it is not initialized
-			_, ok = asgSizeSums[asg.Region]
-			if !ok {
+			if asgSizeSums[asg.Region] == nil {
 				asgSizeSums[asg.Region] = make(map[int64]int)
 			}
 			if asg.DesiredCapacity != nil {
@@ -489,14 +488,13 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 	// get all instances
 	for i := range getInstances() {
 		// add security groups to map of in use
-		if config.SecurityGroups.Enabled {
-			for id := range i.SecurityGroups {
-				dependency[i.Region][id] = true
-			}
-			for _, name := range i.SecurityGroups {
-				dependency[i.Region][reapable.ID(name)] = true
-			}
+		for id := range i.SecurityGroups {
+			dependency[i.Region][id] = true
 		}
+		for _, name := range i.SecurityGroups {
+			dependency[i.Region][reapable.ID(name)] = true
+		}
+
 		if isInCloudformation[i.Region][i.ID] {
 			i.IsInCloudformation = true
 		}
@@ -550,25 +548,29 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 
 	var gs []reaperevents.Reapable
 	for _, filterable := range filterables {
-		fs := make(map[string]filters.Filter)
-		switch t := filterable.(type) {
+		var groups map[string]filters.FilterGroup
+		switch filterable.(type) {
 		case *reaperaws.Instance:
-			fs = config.Instances.Filters
-			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
+			groups = config.Instances.FilterGroups
 		case *reaperaws.AutoScalingGroup:
-			fs = config.AutoScalingGroups.Filters
-			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
-		case *reaperaws.SecurityGroup:
-			fs = config.SecurityGroups.Filters
+			groups = config.AutoScalingGroups.FilterGroups
 		case *reaperaws.Cloudformation:
-			fs = config.Cloudformations.Filters
-			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
+			groups = config.Cloudformations.FilterGroups
+		case *reaperaws.SecurityGroup:
+			groups = config.SecurityGroups.FilterGroups
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
 		}
 
-		matched := filters.ApplyFilters(filterable, fs)
+		matched := false
+		for name, group := range groups {
+			didMatch := filters.ApplyFilters(filterable, group)
+			if didMatch {
+				matched = true
+				filterable.AddFilterGroup(name, group)
+			}
+		}
 
 		// whitelist filter
 		if filterable.Filter(*filters.NewFilter("Tagged", []string{config.WhitelistTag})) {

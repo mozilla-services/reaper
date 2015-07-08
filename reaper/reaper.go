@@ -472,11 +472,13 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		}
 
 		// group asgs by owner
-		if a.Owner() != nil {
-			owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
-		} else {
-			// if unowned, append to unowned
-			unowned = append(unowned, a)
+		if config.AutoScalingGroups.Enabled {
+			if a.Owner() != nil {
+				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, a)
+			}
 		}
 	}
 
@@ -545,29 +547,14 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		fs := make(map[string]filters.Filter)
 		switch t := filterable.(type) {
 		case *reaperaws.Instance:
-			// if instances are not enabled, skip
-			if !config.Instances.Enabled {
-				continue
-			}
 			fs = config.Instances.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		case *reaperaws.AutoScalingGroup:
-			// if ASGs are not enabled, skip
-			if !config.AutoScalingGroups.Enabled {
-				continue
-			}
 			fs = config.AutoScalingGroups.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		case *reaperaws.SecurityGroup:
-			if !config.SecurityGroups.Enabled {
-				continue
-			}
 			fs = config.SecurityGroups.Filters
 		case *reaperaws.Cloudformation:
-			// if CFs are not enabled, skip
-			if !config.Cloudformations.Enabled {
-				continue
-			}
 			fs = config.Cloudformations.Filters
 			t.MatchedFilters = fmt.Sprintf(" matched filters %s", filters.PrintFilters(fs))
 		default:

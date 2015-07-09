@@ -20,33 +20,21 @@ import (
 
 type AutoScalingGroup struct {
 	AWSResource
+	autoscaling.Group
 
 	// autoscaling.Instance exposes minimal info
 	Instances []reapable.ID
-
-	AutoScalingGroupARN     string
-	CreatedTime             time.Time
-	MaxSize                 int64
-	MinSize                 int64
-	DesiredCapacity         int64
-	LaunchConfigurationName string
 }
 
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
-			Region:      reapable.Region(region),
-			ID:          reapable.ID(*asg.AutoScalingGroupName),
-			Name:        *asg.AutoScalingGroupName,
-			Tags:        make(map[string]string),
-			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstStateDuration.Duration)),
+			Region: reapable.Region(region),
+			ID:     reapable.ID(*asg.AutoScalingGroupName),
+			Name:   *asg.AutoScalingGroupName,
+			Tags:   make(map[string]string),
 		},
-		AutoScalingGroupARN:     *asg.AutoScalingGroupARN,
-		CreatedTime:             *asg.CreatedTime,
-		MaxSize:                 *asg.MaxSize,
-		MinSize:                 *asg.MinSize,
-		DesiredCapacity:         *asg.DesiredCapacity,
-		LaunchConfigurationName: *asg.LaunchConfigurationName,
+		Group: *asg,
 	}
 
 	for i := 0; i < len(asg.Instances); i++ {
@@ -54,12 +42,12 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	}
 
 	for i := 0; i < len(asg.Tags); i++ {
-		a.Tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
+		a.AWSResource.Tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
 	}
 
 	if a.Tagged(reaperTag) {
 		// restore previously tagged state
-		a.reaperState = state.NewStateWithTag(a.Tags[reaperTag])
+		a.reaperState = state.NewStateWithTag(a.Tag(reaperTag))
 	} else {
 		// initial state
 		a.reaperState = state.NewStateWithUntilAndState(
@@ -227,24 +215,39 @@ Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScaling
 [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
-func (a *AutoScalingGroup) SizeGreaterThanOrEqualTo(size int64) bool {
-	return a.DesiredCapacity >= size
+func (a *AutoScalingGroup) sizeGreaterThanOrEqualTo(size int64) bool {
+	if a.DesiredCapacity != nil {
+		return *a.DesiredCapacity >= size
+	}
+	return false
 }
 
-func (a *AutoScalingGroup) SizeLessThanOrEqualTo(size int64) bool {
-	return a.DesiredCapacity <= size
+func (a *AutoScalingGroup) sizeLessThanOrEqualTo(size int64) bool {
+	if a.DesiredCapacity != nil {
+		return *a.DesiredCapacity <= size
+	}
+	return false
 }
 
-func (a *AutoScalingGroup) SizeEqualTo(size int64) bool {
-	return a.DesiredCapacity == size
+func (a *AutoScalingGroup) sizeEqualTo(size int64) bool {
+	if a.DesiredCapacity != nil {
+		return *a.DesiredCapacity == size
+	}
+	return false
 }
 
-func (a *AutoScalingGroup) SizeLessThan(size int64) bool {
-	return a.DesiredCapacity < size
+func (a *AutoScalingGroup) sizeLessThan(size int64) bool {
+	if a.DesiredCapacity != nil {
+		return *a.DesiredCapacity < size
+	}
+	return false
 }
 
-func (a *AutoScalingGroup) SizeGreaterThan(size int64) bool {
-	return a.DesiredCapacity <= size
+func (a *AutoScalingGroup) sizeGreaterThan(size int64) bool {
+	if a.DesiredCapacity != nil {
+		return *a.DesiredCapacity > size
+	}
+	return false
 }
 
 // method for reapable -> overrides promoted AWSResource method of same name?
@@ -305,23 +308,23 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	case "SizeGreaterThan":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeGreaterThan(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeGreaterThan(i) {
 			matched = true
 		}
 	case "SizeLessThan":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeLessThan(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeLessThan(i) {
 			matched = true
 		}
 	case "SizeEqualTo":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeEqualTo(i) {
 			matched = true
 		}
 	case "SizeLessThanOrEqualTo":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeLessThanOrEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeLessThanOrEqualTo(i) {
 			matched = true
 		}
 	case "SizeGreaterThanOrEqualTo":
-		if i, err := filter.Int64Value(0); err == nil && a.SizeGreaterThanOrEqualTo(i) {
+		if i, err := filter.Int64Value(0); err == nil && a.sizeGreaterThanOrEqualTo(i) {
 			matched = true
 		}
 	case "Tagged":
@@ -350,12 +353,20 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		}
 	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(a.CreatedTime) < d {
+		if err == nil && a.CreatedTime != nil && time.Since(*a.CreatedTime) < d {
 			matched = true
 		}
 	case "CreatedTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(a.CreatedTime) > d {
+		if err == nil && a.CreatedTime != nil && time.Since(*a.CreatedTime) > d {
+			matched = true
+		}
+	case "InCloudformation":
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
+			matched = true
+		}
+	case "IsDependency":
+		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
 			matched = true
 		}
 	default:

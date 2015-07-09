@@ -72,6 +72,8 @@ func LoadConfig(path string) (*Config, error) {
 	conf.AWS.HTTP = conf.HTTP
 	conf.SMTP.HTTPConfig = conf.HTTP
 
+	log.SetConfig(&conf.Logging)
+
 	// TODO: event reporter dependents are done in reaper.Ready()
 
 	return &conf, nil
@@ -97,6 +99,8 @@ type Config struct {
 	AutoScalingGroups ResourceConfig
 	Instances         ResourceConfig
 	Snapshots         ResourceConfig
+	Cloudformations   ResourceConfig
+	SecurityGroups    ResourceConfig
 
 	DryRun            bool
 	Interactive       bool

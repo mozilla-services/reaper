@@ -27,13 +27,12 @@ const (
 
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
-	ID          reapable.ID
-	Name        string
-	Region      reapable.Region
-	AWSState    AWSState
-	Description string
-	VPCID       string
-	OwnerID     string
+	ID                 reapable.ID
+	Name               string
+	Region             reapable.Region
+	AWSState           AWSState
+	Dependency         bool
+	IsInCloudformation bool
 
 	Tags map[string]string
 
@@ -174,6 +173,7 @@ func (a *AWSResource) Whitelist() (bool, error) {
 
 // methods for reapable interface:
 func (a *AWSResource) Save(s *state.State) (bool, error) {
+	log.Notice("Saving %s", a.ReapableDescriptionTiny())
 	return TagReaperState(string(a.Region), string(a.ID), s)
 }
 

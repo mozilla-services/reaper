@@ -14,7 +14,7 @@ type Filterable interface {
 	AddFilterGroup(string, FilterGroup)
 }
 
-func ApplyFilters(f Filterable, fs map[string]Filter) bool {
+func ApplyFilters(f Filterable, fs FilterGroup) bool {
 	// defaults to a match
 	matched := true
 

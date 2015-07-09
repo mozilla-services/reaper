@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	htmlTemplate "html/template"
-	"net"
 	"net/mail"
 	"net/url"
 	textTemplate "text/template"
@@ -19,19 +18,12 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-const (
-	reaperTag           = "REAPER"
-	reaperTagSeparator  = "|"
-	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
-)
-
 // Instance stores data from an *ec2.Instance
 type Instance struct {
 	AWSResource
-	LaunchTime      time.Time
-	SecurityGroups  map[string]string
-	InstanceType    string
-	PublicIPAddress net.IP
+	ec2.Instance
+	SecurityGroups map[reapable.ID]string
+	AutoScaled     bool
 }
 
 // NewInstance is a constructor for Instances
@@ -42,18 +34,18 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 			Region: reapable.Region(region), // passed in cause not possible to extract out of api
 			Tags:   make(map[string]string),
 		},
-
-		SecurityGroups: make(map[string]string),
-		LaunchTime:     *instance.LaunchTime,
-		InstanceType:   *instance.InstanceType,
+		SecurityGroups: make(map[reapable.ID]string),
+		Instance:       *instance,
 	}
 
 	for _, sg := range instance.SecurityGroups {
-		i.SecurityGroups[*sg.GroupID] = *sg.GroupName
+		if sg != nil {
+			i.SecurityGroups[reapable.ID(*sg.GroupID)] = *sg.GroupName
+		}
 	}
 
 	for _, tag := range instance.Tags {
-		i.Tags[*tag.Key] = *tag.Value
+		i.AWSResource.Tags[*tag.Key] = *tag.Value
 	}
 
 	switch *instance.State.Code {
@@ -71,15 +63,11 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.AWSState = stopped
 	}
 
-	if instance.PublicIPAddress != nil {
-		i.PublicIPAddress = net.ParseIP(*instance.PublicIPAddress)
-	}
-
 	i.Name = i.Tag("Name")
 
 	if i.Tagged(reaperTag) {
 		// restore previously tagged state
-		i.reaperState = state.NewStateWithTag(i.Tags[reaperTag])
+		i.reaperState = state.NewStateWithTag(i.Tag(reaperTag))
 	} else {
 		// initial state
 		i.reaperState = state.NewStateWithUntilAndState(
@@ -255,9 +243,6 @@ func (i *Instance) AWSConsoleURL() *url.URL {
 	return url
 }
 
-// Autoscaled checks if the instance is part of an autoscaling group
-func (i *Instance) AutoScaled() (ok bool) { return i.Tagged("aws:autoscaling:groupName") }
-
 func (i *Instance) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
@@ -287,7 +272,7 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "InstanceType":
-		if i.InstanceType == filter.Arguments[0] {
+		if i.InstanceType != nil && *i.InstanceType == filter.Arguments[0] {
 			matched = true
 		}
 	case "Tagged":
@@ -311,29 +296,29 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "PublicIPAddress":
-		if i.PublicIPAddress.String() == filter.Arguments[0] {
+		if i.PublicIPAddress != nil && *i.PublicIPAddress == filter.Arguments[0] {
 			matched = true
 		}
 	// uses RFC3339 format
 	// https://www.ietf.org/rfc/rfc3339.txt
 	case "LaunchTimeBefore":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
-		if err == nil && t.After(i.LaunchTime) {
+		if err == nil && i.LaunchTime != nil && t.After(*i.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeAfter":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
-		if err == nil && t.Before(i.LaunchTime) {
+		if err == nil && i.LaunchTime != nil && t.Before(*i.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(i.LaunchTime) < d {
+		if err == nil && i.LaunchTime != nil && time.Since(*i.LaunchTime) < d {
 			matched = true
 		}
 	case "LaunchTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && time.Since(i.LaunchTime) > d {
+		if err == nil && i.LaunchTime != nil && time.Since(*i.LaunchTime) > d {
 			matched = true
 		}
 	case "Region":
@@ -350,6 +335,18 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		}
 	case "ReaperState":
 		if i.reaperState.State.String() == filter.Arguments[0] {
+			matched = true
+		}
+	case "InCloudformation":
+		if b, err := filter.BoolValue(0); err == nil && i.IsInCloudformation == b {
+			matched = true
+		}
+	case "AutoScaled":
+		if b, err := filter.BoolValue(0); err == nil && i.AutoScaled == b {
+			matched = true
+		}
+	case "IsDependency":
+		if b, err := filter.BoolValue(0); err == nil && i.Dependency == b {
 			matched = true
 		}
 	default:

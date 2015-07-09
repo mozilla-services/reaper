@@ -2,18 +2,30 @@ package aws
 
 import (
 	"fmt"
+	"math/rand"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mozilla-services/reaper/events"
-	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-var config *AWSConfig
+const (
+	reaperTag           = "REAPER"
+	reaperTagSeparator  = "|"
+	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
+)
+
+var (
+	config  *AWSConfig
+	timeout = time.Tick(100 * time.Millisecond)
+)
 
 type AWSConfig struct {
 	Notifications    events.NotificationsConfig
@@ -33,18 +45,100 @@ func SetAWSConfig(c *AWSConfig) {
 	config = c
 }
 
-// convenience function that returns a map of instances in ASGs
-func AllASGInstanceIds(as []AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
+func AllCloudformations() chan *Cloudformation {
+	ch := make(chan *Cloudformation)
+	// waitgroup for all regions
+	wg := sync.WaitGroup{}
+	for _, region := range config.Regions {
+		wg.Add(1)
+		go func(region string) {
+			// add region to waitgroup
+			api := cloudformation.New(&aws.Config{Region: region})
+			err := api.DescribeStacksPages(&cloudformation.DescribeStacksInput{}, func(resp *cloudformation.DescribeStacksOutput, lastPage bool) bool {
+				for _, stack := range resp.Stacks {
+					ch <- NewCloudformation(region, stack)
+				}
+				// if we are at the last page, we should not continue
+				// the return value of this func is "shouldContinue"
+				if lastPage {
+					// on the last page, finish this region
+					wg.Done()
+					return false
+				}
+				return true
+			})
+			if err != nil {
+				// probably should do something here...
+				log.Error(err.Error())
+				// don't wait if the API call failed
+				wg.Done()
+			}
+		}(region)
+	}
+	go func() {
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
+		wg.Wait()
+		close(ch)
+
+	}()
+	return ch
+}
+
+func CloudformationResources(c Cloudformation) chan *cloudformation.StackResource {
+	ch := make(chan *cloudformation.StackResource)
+	api := cloudformation.New(&aws.Config{Region: string(c.Region)})
+	// TODO: stupid
+	stringName := string(c.ID)
+
+	go func() {
+		<-timeout
+
+		// this query can fail, so we retry
+		didRetry := false
+		input := &cloudformation.DescribeStackResourcesInput{StackName: &stringName}
+
+		// initial query
+		resp, err := api.DescribeStackResources(input)
+		for err != nil {
+			sleepTime := 2*time.Second + time.Duration(rand.Intn(2000))*time.Millisecond
+			if err != nil {
+				// this error is annoying and will come up all the time... so you can disable it
+				if strings.Split(err.Error(), ":")[0] == "Throttling" && log.Extras() {
+					log.Warning(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+				} else if strings.Split(err.Error(), ":")[0] != "Throttling" {
+					// any other errors
+					log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+				}
+			}
+
+			// wait a random amount of time... hopefully long enough to beat rate limiting
+			time.Sleep(sleepTime)
+
+			// retry query
+			resp, err = api.DescribeStackResources(input)
+			didRetry = true
+		}
+		if didRetry && log.Extras() {
+			log.Notice("Retry succeeded for %s!", c.ID)
+		}
+		for _, resource := range resp.StackResources {
+			ch <- resource
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func ASGInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
 	// maps region to id to bool
 	inASG := make(map[reapable.Region]map[reapable.ID]bool)
 	for _, region := range config.Regions {
 		inASG[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}
-	for _, a := range as {
-		for _, instanceID := range a.Instances {
-			// add the instance to the map
-			inASG[a.Region][instanceID] = true
-		}
+	for _, instanceID := range a.Instances {
+		// add the instance to the map
+		inASG[a.Region][instanceID] = true
 	}
 	return inASG
 }
@@ -57,9 +151,9 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
+		wg.Add(1)
 		go func(region string) {
 			// add region to waitgroup
-			wg.Add(1)
 			api := autoscaling.New(&aws.Config{Region: region})
 			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
 				for _, asg := range resp.AutoScalingGroups {
@@ -70,12 +164,14 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 				if lastPage {
 					// on the last page, finish this region
 					wg.Done()
+					return false
 				}
 				return true
 			})
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				// don't wait if the API call failed
 				wg.Done()
 			}
 		}(region)
@@ -98,9 +194,9 @@ func AllInstances() chan *Instance {
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
+		wg.Add(1)
 		go func(region string) {
 			// add region to waitgroup
-			wg.Add(1)
 			api := ec2.New(&aws.Config{Region: region})
 			// DescribeInstancesPages does autopagination
 			err := api.DescribeInstancesPages(&ec2.DescribeInstancesInput{}, func(resp *ec2.DescribeInstancesOutput, lastPage bool) bool {
@@ -113,12 +209,14 @@ func AllInstances() chan *Instance {
 				// the return value of this func is "shouldContinue"
 				if lastPage {
 					wg.Done()
+					return false
 				}
 				return true
 			})
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
+				// don't wait if the API call failed
 				wg.Done()
 			}
 		}(region)
@@ -132,157 +230,32 @@ func AllInstances() chan *Instance {
 	return ch
 }
 
-func AllSnapshots() []filters.Filterable {
-	regions := config.Regions
-
-	// waitgroup for goroutines
-	var wg sync.WaitGroup
-
-	// channel for creating SecurityGroups
-	in := make(chan *Snapshot)
-
-	for _, region := range regions {
+func AllSecurityGroups() chan *SecurityGroup {
+	ch := make(chan *SecurityGroup)
+	// waitgroup for all regions
+	wg := sync.WaitGroup{}
+	for _, region := range config.Regions {
 		wg.Add(1)
-
-		sum := 0
-
-		// goroutine per region to fetch all security groups
 		go func(region string) {
-			defer wg.Done()
+			// add region to waitgroup
 			api := ec2.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &ec2.DescribeSnapshotsInput{}
-			resp, err := api.DescribeSnapshots(input)
-			if err != nil {
-				// TODO: wee
-			}
-
-			for _, v := range resp.Snapshots {
-				sum += 1
-				in <- NewSnapshot(region, v)
-			}
-		}(region)
-	}
-	// aggregate
-	var snapshots []filters.Filterable
-	go func() {
-		for s := range in {
-			// Reapables[s.Region][s.ID] = s
-			snapshots = append(snapshots, s)
-		}
-	}()
-
-	// synchronous wait for all goroutines in wg to be done
-	wg.Wait()
-
-	// done with the channel
-	close(in)
-
-	log.Info("Found %d total snapshots.", len(snapshots))
-	return snapshots
-}
-func AllVolumes() Volumes {
-	regions := config.Regions
-
-	// waitgroup for goroutines
-	var wg sync.WaitGroup
-
-	// channel for creating SecurityGroups
-	in := make(chan *Volume)
-
-	for _, region := range regions {
-		wg.Add(1)
-
-		sum := 0
-
-		// goroutine per region to fetch all security groups
-		go func(region string) {
-			defer wg.Done()
-			api := ec2.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &ec2.DescribeVolumesInput{}
-			resp, err := api.DescribeVolumes(input)
-			if err != nil {
-				// TODO: wee
-			}
-
-			for _, v := range resp.Volumes {
-				sum += 1
-				in <- NewVolume(region, v)
-			}
-
-			log.Info(fmt.Sprintf("Found %d total volumes in %s", sum, region))
-		}(region)
-	}
-	// aggregate
-	var volumes Volumes
-	go func() {
-		for v := range in {
-			// Reapables[v.Region][v.ID] = v
-			volumes = append(volumes, v)
-		}
-	}()
-
-	// synchronous wait for all goroutines in wg to be done
-	wg.Wait()
-
-	// done with the channel
-	close(in)
-
-	log.Info("Found %d total snapshots.", len(volumes))
-	return volumes
-}
-func AllSecurityGroups() SecurityGroups {
-	regions := config.Regions
-
-	// waitgroup for goroutines
-	var wg sync.WaitGroup
-
-	// channel for creating SecurityGroups
-	in := make(chan *SecurityGroup)
-
-	for _, region := range regions {
-		wg.Add(1)
-
-		sum := 0
-
-		// goroutine per region to fetch all security groups
-		go func(region string) {
-			defer wg.Done()
-			api := ec2.New(&aws.Config{Region: region})
-
-			// TODO: nextToken paging
-			input := &ec2.DescribeSecurityGroupsInput{}
-			resp, err := api.DescribeSecurityGroups(input)
-			if err != nil {
-				// TODO: wee
-			}
-
+			resp, err := api.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 			for _, sg := range resp.SecurityGroups {
-				sum += 1
-				in <- NewSecurityGroup(region, sg)
+				ch <- NewSecurityGroup(region, sg)
 			}
-
-			log.Info(fmt.Sprintf("Found %d total security groups in %s", sum, region))
+			if err != nil {
+				// probably should do something here...
+				log.Error(err.Error())
+			}
+			wg.Done()
 		}(region)
 	}
-	// aggregate
-	var securityGroups SecurityGroups
 	go func() {
-		for sg := range in {
-			// Reapables[sg.Region][sg.ID] = sg
-			securityGroups = append(securityGroups, sg)
-		}
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
+		wg.Wait()
+		close(ch)
+
 	}()
-
-	// synchronous wait for all goroutines in wg to be done
-	wg.Wait()
-
-	// done with the channel
-	close(in)
-
-	log.Info("Found %d total security groups.", len(securityGroups))
-	return securityGroups
+	return ch
 }

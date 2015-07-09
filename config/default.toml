@@ -35,7 +35,7 @@ DefaultEmailHost = "mozilla.com"
 
     # Length of time for each state leading to the final state
     # to disable a state, make its duration 0 and remove its EventReporter triggers
-    FirstStateDuration = "1m"
+    FirstStateDuration = "5m"
     SecondStateDuration = "5m"
     ThirdStateDuration = "10m"
 
@@ -44,7 +44,7 @@ DefaultEmailHost = "mozilla.com"
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
     [Events.DataDog]
-        Enabled = false
+        Enabled = true
         Triggers = []
 
     [Events.Email]
@@ -117,7 +117,27 @@ Regions      = [
             [Instances.FilterGroups.1.2]
                 function = "Running"
                 arguments = ["true"]
-        [Instances.FilterGroups.2]
-            [Instances.FilterGroups.2.1]
-                function = "Tagged"
-                arguments = ["REAP_ME"]
+            [Instances.FilterGroups.1.3]
+                function = "InCloudformation"
+                arguments = ["false"]
+
+[SecurityGroups]
+    Enabled = true
+
+    [SecurityGroups.FilterGroups]
+        [SecurityGroups.FilterGroups.1]
+            [SecurityGroups.FilterGroups.1.1]
+                function = "IsDependency"
+                arguments = ["true"]
+
+[Cloudformations]
+    Enabled = true
+
+    [Cloudformations.FilterGroups]
+        [Cloudformations.FilterGroups.1]
+            [Cloudformations.FilterGroups.1.1]
+                function = "CreatedTimeNotInTheLast"
+                arguments = ["24h"]
+            [Cloudformations.FilterGroups.1.2]
+                function = "Status"
+                arguments = ["CREATE_COMPLETE"]

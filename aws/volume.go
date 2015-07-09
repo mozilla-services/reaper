@@ -6,37 +6,39 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/mozilla-services/reaper/reapable"
-	log "github.com/mozilla-services/reaper/reaperlog"
+	"github.com/mozilla-services/reaper/state"
 )
 
-type Volumes []*Volume
 type Volume struct {
 	AWSResource
-	SizeGB     int64
-	VolumeType string
-	SnapShotID reapable.ID
-	LaunchTime time.Time
+	ec2.Volume
 }
 
 func NewVolume(region string, v *ec2.Volume) *Volume {
+	if v == nil {
+		return nil
+	}
 	vol := Volume{
 		AWSResource: AWSResource{
 			ID:     reapable.ID(*v.VolumeID),
 			Region: reapable.Region(region),
 			Tags:   make(map[string]string),
 		},
-		SizeGB:     *v.Size,
-		VolumeType: *v.VolumeType,
-		SnapShotID: reapable.ID(*v.SnapshotID),
-		LaunchTime: *v.CreateTime,
 	}
 
 	for _, tag := range v.Tags {
-		vol.Tags[*tag.Key] = *tag.Value
+		vol.AWSResource.Tags[*tag.Key] = *tag.Value
 	}
 
-	// TODO: state
-	log.Info("Volume state: %s", *v.State)
+	if vol.Tagged(reaperTag) {
+		// restore previously tagged state
+		vol.reaperState = state.NewStateWithTag(vol.AWSResource.Tag(reaperTag))
+	} else {
+		// initial state
+		vol.reaperState = state.NewStateWithUntilAndState(
+			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
+			state.FirstState)
+	}
 
 	return &vol
 }

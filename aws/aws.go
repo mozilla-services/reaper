@@ -45,22 +45,6 @@ func SetAWSConfig(c *AWSConfig) {
 	config = c
 }
 
-// convenience function that returns a map of instances in ASGs
-func AllASGInstanceIDs(as []*AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
-	// maps region to id to bool
-	inASG := make(map[reapable.Region]map[reapable.ID]bool)
-	for _, region := range config.Regions {
-		inASG[reapable.Region(region)] = make(map[reapable.ID]bool)
-	}
-	for _, a := range as {
-		for _, instanceID := range a.Instances {
-			// add the instance to the map
-			inASG[a.Region][instanceID] = true
-		}
-	}
-	return inASG
-}
-
 func AllCloudformations() chan *Cloudformation {
 	ch := make(chan *Cloudformation)
 	// waitgroup for all regions

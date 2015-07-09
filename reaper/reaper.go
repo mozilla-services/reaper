@@ -470,6 +470,10 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			a.IsInCloudformation = true
 		}
 
+		if dependency[a.Region][a.ID] || dependency[a.Region][reapable.ID(a.Name)] {
+			a.Dependency = true
+		}
+
 		// identify instances in an ASG
 		instanceIDsInASGs := reaperaws.ASGInstanceIDs(a)
 		for region := range instanceIDsInASGs {
@@ -497,6 +501,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			dependency[i.Region][id] = true
 		}
 
+		if dependency[i.Region][i.ID] {
+			i.Dependency = true
+		}
 		if isInCloudformation[i.Region][i.ID] {
 			i.IsInCloudformation = true
 		}
@@ -522,7 +529,7 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			s.IsInCloudformation = true
 		}
 		if dependency[s.Region][s.ID] || dependency[s.Region][reapable.ID(*s.GroupName)] {
-			continue
+			s.Dependency = true
 		}
 		if config.SecurityGroups.Enabled {
 			// group instances by owner

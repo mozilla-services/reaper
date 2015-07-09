@@ -365,6 +365,10 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
 			matched = true
 		}
+	case "IsDependency":
+		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
+			matched = true
+		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
 	}

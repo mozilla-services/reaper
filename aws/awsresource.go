@@ -31,6 +31,7 @@ type AWSResource struct {
 	Name               string
 	Region             reapable.Region
 	AWSState           AWSState
+	Dependency         bool
 	IsInCloudformation bool
 
 	Tags map[string]string

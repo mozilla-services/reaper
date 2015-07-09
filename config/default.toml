@@ -125,11 +125,10 @@ Regions      = [
     Enabled = true
 
     [SecurityGroups.FilterGroups]
-        # SGs that have dependencies are not reapable
         [SecurityGroups.FilterGroups.1]
             [SecurityGroups.FilterGroups.1.1]
-                function = "InCloudformation"
-                arguments = ["false"]
+                function = "IsDependency"
+                arguments = ["true"]
 
 [Cloudformations]
     Enabled = true

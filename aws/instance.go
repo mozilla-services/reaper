@@ -28,11 +28,6 @@ type Instance struct {
 
 // NewInstance is a constructor for Instances
 func NewInstance(region string, instance *ec2.Instance) *Instance {
-	// if the instance pointer is nil
-	if instance == nil {
-		return nil
-	}
-
 	i := Instance{
 		AWSResource: AWSResource{
 			ID:     reapable.ID(*instance.InstanceID),

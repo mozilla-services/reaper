@@ -27,9 +27,6 @@ type AutoScalingGroup struct {
 }
 
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
-	if asg == nil {
-		return nil
-	}
 	a := AutoScalingGroup{
 		AWSResource: AWSResource{
 			Region: reapable.Region(region),

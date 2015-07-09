@@ -69,6 +69,11 @@ func (r *Reaper) Stop() {
 // unexported start is continuous loop that reaps every
 // time interval
 func (r *Reaper) start() {
+	// if loading from saved state file (overriding AWS states)
+	if config.LoadFromStateFile {
+		r.LoadState(config.StateFile)
+	}
+
 	// make a list of all eligible instances
 	for {
 		r.Once()
@@ -84,11 +89,6 @@ func (r *Reaper) start() {
 // Once is run once every time interval by start
 // it is intended to handle all reaping logic
 func (r *Reaper) Once() {
-	// if loading from saved state file (overriding AWS states)
-	if config.LoadFromStateFile {
-		r.LoadState(config.StateFile)
-	}
-
 	r.reap()
 
 	if config.StateFile != "" {

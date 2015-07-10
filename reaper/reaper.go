@@ -319,7 +319,7 @@ func getInstances() chan *reaperaws.Instance {
 		// default behavior returns an empty map if no filename is supplied
 		pricesMap, err := prices.GetPricesMapFromFile(config.PricesFile)
 		if err != nil {
-			log.Error(fmt.Sprintf("%s", err.Error()))
+			log.Error(fmt.Sprintf("Error getting prices: %s", err.Error()))
 		}
 
 		for region, sum := range regionSums {
@@ -329,15 +329,17 @@ func getInstances() chan *reaperaws.Instance {
 		for _, e := range *events {
 			for region, regionMap := range instanceTypeSums {
 				for instanceType, instanceTypeSum := range regionMap {
-					if pricesMap != nil {
+					if pricesMap != nil && config.PricesFile != "" {
 						price, ok := pricesMap[string(region)][instanceType]
-						if !ok && log.Extras() {
-							// some instance types don't have prices
+						if ok {
+							err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+							if err != nil {
+								log.Error(fmt.Sprintf("%s", err.Error()))
+							}
+						} else {
+							// some instance types are priceless
 							log.Error(fmt.Sprintf("No price for %s", instanceType))
-						}
-						err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
-						if err != nil {
-							log.Error(fmt.Sprintf("%s", err.Error()))
+
 						}
 					}
 					err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})

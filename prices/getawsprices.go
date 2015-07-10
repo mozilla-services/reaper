@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 )
 
+// the format of this is based on the output format of https://github.com/erans/ec2instancespricing
 type prices struct {
 	Config struct {
 		Currency string `json:"currency"`
@@ -24,14 +25,10 @@ type prices struct {
 
 type PricesMap map[string]map[string]float64
 
-func getPrices(r io.Reader, p *prices) error {
-	return json.NewDecoder(r).Decode(p)
-}
-
 func getPricesMap(r io.Reader) (PricesMap, error) {
 	var pricesMap PricesMap
 	var prices prices
-	err := getPrices(r, &prices)
+	err := json.NewDecoder(r).Decode(&prices)
 	if err != nil {
 		// pricesMap is nil
 		return pricesMap, err

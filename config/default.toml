@@ -2,7 +2,7 @@
 
 # StateFile = "savedstates.txt"
 # LogFile = "log.txt"
-PricesFile = "prices/prices.json"
+# PricesFile = "prices.json"
 WhitelistTag = "REAPER_SPARE_ME"
 DefaultOwner = "reaper_notifications"
 DefaultEmailHost = "mozilla.com"

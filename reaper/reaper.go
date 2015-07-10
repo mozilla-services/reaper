@@ -303,10 +303,12 @@ func getInstances() chan *reaperaws.Instance {
 			// make the map if it is not initialized
 			if instanceTypeSums[instance.Region] == nil {
 				instanceTypeSums[instance.Region] = make(map[string]int)
-				if instance.InstanceType != nil {
-					// increment InstanceType counter
-					instanceTypeSums[instance.Region][*instance.InstanceType]++
-				}
+			}
+
+			// don't count terminated or stopped instances
+			if !instance.Terminated() && !instance.Stopped() {
+				// increment InstanceType counter
+				instanceTypeSums[instance.Region][*instance.InstanceType]++
 			}
 
 			regionSums[instance.Region]++

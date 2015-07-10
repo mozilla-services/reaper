@@ -14,23 +14,11 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-type AWSState int
-
-const (
-	pending AWSState = iota
-	running
-	shuttingDown
-	terminated
-	stopping
-	stopped
-)
-
 // basic AWS resource, has properties that most/all resources have
 type AWSResource struct {
 	ID                 reapable.ID
 	Name               string
 	Region             reapable.Region
-	AWSState           AWSState
 	Dependency         bool
 	IsInCloudformation bool
 
@@ -47,14 +35,6 @@ func (a *AWSResource) Tagged(tag string) bool {
 	_, ok := a.Tags[tag]
 	return ok
 }
-
-// filter funcs for ResourceState
-func (a *AWSResource) Pending() bool      { return a.AWSState == pending }
-func (a *AWSResource) Running() bool      { return a.AWSState == running }
-func (a *AWSResource) ShuttingDown() bool { return a.AWSState == shuttingDown }
-func (a *AWSResource) Terminated() bool   { return a.AWSState == terminated }
-func (a *AWSResource) Stopping() bool     { return a.AWSState == stopping }
-func (a *AWSResource) Stopped() bool      { return a.AWSState == stopped }
 
 // Tag returns the tag's value or an empty string if it does not exist
 func (a *AWSResource) Tag(t string) string { return a.Tags[t] }

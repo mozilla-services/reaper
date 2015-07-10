@@ -1,45 +1,13 @@
 package prices
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
+	"io"
 	"io/ioutil"
-	"regexp"
-
-	"github.com/yosuke-furukawa/json5/encoding/json5"
-
-	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
 type prices struct {
-	Vers   json5.Number `json:"vers,Number"`
-	Config struct {
-		Rate         string   `json:"rate"`
-		ValueColumns []string `json:"valueColumns"`
-		Currencies   []string `json:"currencies"`
-		Regions      []struct {
-			Region        string `json:"region"`
-			InstanceTypes []struct {
-				Type  string `json:"type"`
-				Sizes []struct {
-					Size         string `json:"size"`
-					VCPU         string `json:"vCPU"`
-					ECU          string `json:"ECU"`
-					MemoryGiB    string `json:"memoryGiB"`
-					StorageGB    string `json:"storageGB"`
-					ValueColumns []struct {
-						Name   string `json:"name"`
-						Prices struct {
-							USD string `json:"USD"`
-						} `json:"prices"`
-					} `json:"valueColumns"`
-				} `json:"sizes"`
-			} `json:"instanceTypes"`
-		} `json:"regions"`
-	} `json:"config"`
-}
-
-type pricesFromScript struct {
 	Config struct {
 		Currency string `json:"currency"`
 		Unit     string `json:"unit"`
@@ -54,19 +22,22 @@ type pricesFromScript struct {
 	} `json:"regions"`
 }
 
-type PricesFromScriptMap map[string]map[string]float64
+type PricesMap map[string]map[string]float64
 
-func GetPricesFromScriptMap() PricesFromScriptMap {
-	b, err := ioutil.ReadFile("prices/prices.json")
+func getPrices(r io.Reader, p *prices) error {
+	return json.NewDecoder(r).Decode(p)
+}
+
+func getPricesMap(r io.Reader) (PricesMap, error) {
+	var pricesMap PricesMap
+	var prices prices
+	err := getPrices(r, &prices)
 	if err != nil {
-		log.Error(fmt.Sprintf("%s", err))
+		// pricesMap is nil
+		return pricesMap, err
 	}
-	var prices pricesFromScript
-	err = json.Unmarshal(b, &prices)
-	if err != nil {
-		return PricesFromScriptMap{}
-	}
-	pricesMap := make(PricesFromScriptMap)
+
+	pricesMap = make(PricesMap)
 	for _, region := range prices.Regions {
 		// make all region maps
 		pricesMap[region.Region] = make(map[string]float64)
@@ -74,52 +45,16 @@ func GetPricesFromScriptMap() PricesFromScriptMap {
 			pricesMap[region.Region][instanceType.Type] = instanceType.Price
 		}
 	}
-	return pricesMap
+	return pricesMap, nil
 }
 
-// PricesMap is a map of Region -> Type -> Size -> Price
-type PricesMap map[string]map[string]string
-
-func GetPricesMap() PricesMap {
-	prices := getPrices()
-	pricesMap := make(map[string]map[string]string)
-	for _, region := range prices.Config.Regions {
-		// make all region maps
-		pricesMap[region.Region] = make(map[string]string)
-		for _, instanceType := range region.InstanceTypes {
-			for _, size := range instanceType.Sizes {
-				pricesMap[region.Region][size.Size] = size.ValueColumns[0].Prices.USD
-			}
-		}
+func GetPricesMapFromFile(filename string) (PricesMap, error) {
+	if filename == "" {
+		return PricesMap{}, nil
 	}
-	return pricesMap
-}
-
-func getPrices() prices {
-	b, err := ioutil.ReadFile("linux-od.min.js")
+	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Error(fmt.Sprintf("%s", err))
+		return nil, err
 	}
-	s := string(b)
-
-	// strip initial comment (with newline)
-	r := regexp.MustCompile("(?s)/\\*.*\\*/\n")
-	s = r.ReplaceAllString(s, "")
-
-	// strip from front of request
-	r = regexp.MustCompile("^callback\\(")
-	s = r.ReplaceAllString(s, "")
-
-	// strip from end of request
-	r = regexp.MustCompile("\\);*$")
-	s = r.ReplaceAllString(s, "")
-
-	var x prices
-	// using json5 because I don't have to double quote keys
-	// TODO: so hacky it hurts
-	err = json5.Unmarshal([]byte(s), &x)
-	if err != nil {
-		log.Error(fmt.Sprintf("%s", err))
-	}
-	return x
+	return getPricesMap(bytes.NewReader(bs))
 }

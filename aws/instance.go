@@ -48,21 +48,6 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.AWSResource.Tags[*tag.Key] = *tag.Value
 	}
 
-	switch *instance.State.Code {
-	case 0:
-		i.AWSState = pending
-	case 16:
-		i.AWSState = running
-	case 32:
-		i.AWSState = shuttingDown
-	case 48:
-		i.AWSState = terminated
-	case 64:
-		i.AWSState = stopping
-	case 80:
-		i.AWSState = stopped
-	}
-
 	i.Name = i.Tag("Name")
 
 	if i.Tagged(reaperTag) {
@@ -77,6 +62,13 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	return &i
 }
+
+func (a *Instance) Pending() bool      { return *a.State.Code == 0 }
+func (a *Instance) Running() bool      { return *a.State.Code == 16 }
+func (a *Instance) ShuttingDown() bool { return *a.State.Code == 32 }
+func (a *Instance) Terminated() bool   { return *a.State.Code == 48 }
+func (a *Instance) Stopping() bool     { return *a.State.Code == 64 }
+func (a *Instance) Stopped() bool      { return *a.State.Code == 80 }
 
 func (i *Instance) reapableEventHTML(text string) *bytes.Buffer {
 	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
@@ -218,14 +210,14 @@ const reapableInstanceEventHTMLShort = `
 
 const reapableInstanceEventTextShort = `%%%
 Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
-Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.AWSState.String}}{{ if .Instance.PublicIPAddress.String}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
+Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.InstanceState.Name}}{{ if .Instance.PublicIPAddress.String}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
 [Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), [Terminate]({{ .TerminateLink }}) this instance.
 %%%`
 
 const reapableInstanceEventText = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owner}}Owned by {{.Instance.Owner}}.\n{{end}}
-State: {{ .Instance.AWSState.String}}.\n
+State: {{ .Instance.InstanceState.Name}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}

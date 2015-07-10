@@ -10,6 +10,7 @@ import (
 	reaperaws "github.com/mozilla-services/reaper/aws"
 	reaperevents "github.com/mozilla-services/reaper/events"
 	"github.com/mozilla-services/reaper/filters"
+	"github.com/mozilla-services/reaper/prices"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 	"github.com/mozilla-services/reaper/state"
@@ -315,6 +316,12 @@ func getInstances() chan *reaperaws.Instance {
 			ch <- instance
 		}
 
+		// default behavior returns an empty map if no filename is supplied
+		pricesMap, err := prices.GetPricesMapFromFile(config.PricesFile)
+		if err != nil {
+			log.Error(fmt.Sprintf("Error getting prices: %s", err.Error()))
+		}
+
 		for region, sum := range regionSums {
 			log.Info(fmt.Sprintf("Found %d total Instances in %s", sum, region))
 		}
@@ -322,17 +329,23 @@ func getInstances() chan *reaperaws.Instance {
 		for _, e := range *events {
 			for region, regionMap := range instanceTypeSums {
 				for instanceType, instanceTypeSum := range regionMap {
-					err := e.NewStatistic("reaper.instances.instancetype", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+					if pricesMap != nil && config.PricesFile != "" {
+						price, ok := pricesMap[string(region)][instanceType]
+						if ok {
+							err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+							if err != nil {
+								log.Error(fmt.Sprintf("%s", err.Error()))
+							}
+						} else {
+							// some instance types are priceless
+							log.Error(fmt.Sprintf("No price for %s", instanceType))
+
+						}
+					}
+					err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
 					if err != nil {
 						log.Error(fmt.Sprintf("%s", err.Error()))
 					}
-				}
-			}
-
-			for region, regionSum := range regionSums {
-				err := e.NewStatistic("reaper.instances.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
-				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
 				}
 			}
 		}

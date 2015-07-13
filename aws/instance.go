@@ -210,16 +210,16 @@ const reapableInstanceEventHTMLShort = `
 
 const reapableInstanceEventTextShort = `%%%
 Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
-Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.InstanceState.Name}}{{ if .Instance.PublicIPAddress.String}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
+Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIPAddress}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
 [Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), [Terminate]({{ .TerminateLink }}) this instance.
 %%%`
 
 const reapableInstanceEventText = `%%%
 Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
 {{if .Instance.Owner}}Owned by {{.Instance.Owner}}.\n{{end}}
-State: {{ .Instance.InstanceState.Name}}.\n
+State: {{ .Instance.State.Name}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
-{{ if .Instance.PublicIPAddress.String}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
+{{ if .Instance.PublicIPAddress}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 [Whitelist]({{ .WhitelistLink }}) this instance.
 [Stop]({{ .StopLink }}) this instance.

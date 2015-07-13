@@ -49,8 +49,19 @@ func NewHTTPApi(c reaperevents.HTTPConfig) *HTTPApi {
 }
 
 func writeResponse(w http.ResponseWriter, code int, body string) {
-	w.WriteHeader(code)
-	io.WriteString(w, body)
+	w.Header().Set("Content-Type", "text/html")
+	io.WriteString(w, fmt.Sprintf(`<DOCTYPE html>
+		<html>
+			<head>
+				<title>Reaper API</title>
+			</head>
+			<body>
+				<p>
+				%s
+				</p>
+			</body>
+		</html>`,
+		body))
 }
 
 func heartbeat(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
@@ -155,6 +166,6 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		default:
 			log.Error("No AWSConsoleURL")
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>", consoleURL, r.ReapableDescriptionTiny()))
+		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>", r.ReapableDescriptionTiny(), consoleURL))
 	}
 }

@@ -426,6 +426,24 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	return false, nil
 }
 
+func (a *AutoScalingGroup) Whitelist() (bool, error) {
+	log.Notice("Whitelisting AutoScalingGroup %s", a.ReapableDescriptionTiny())
+	api := autoscaling.New(&aws.Config{Region: string(a.Region)})
+	createreq := &autoscaling.CreateOrUpdateTagsInput{
+		Tags: []*autoscaling.Tag{
+			&autoscaling.Tag{
+				ResourceID:        aws.String(string(a.ID)),
+				ResourceType:      aws.String("auto-scaling-group"),
+				PropagateAtLaunch: aws.Boolean(false),
+				Key:               aws.String(config.WhitelistTag),
+				Value:             aws.String("true"),
+			},
+		},
+	}
+	_, err := api.CreateOrUpdateTags(createreq)
+	return err == nil, err
+}
+
 // Stop scales ASGs to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
 	// force -> false

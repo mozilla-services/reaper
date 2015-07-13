@@ -327,6 +327,10 @@ func (a *Cloudformation) Terminate() (bool, error) {
 	return false, nil
 }
 
+func (a *Cloudformation) Whitelist() (bool, error) {
+	return false, nil
+}
+
 func (a *Cloudformation) Stop() (bool, error) {
 	return false, nil
 }

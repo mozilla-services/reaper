@@ -135,7 +135,6 @@ func (d *DataDog) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-// TODO: make this based on size rather than number of events
 func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 	var triggering []Reapable
 	for _, r := range rs {
@@ -143,32 +142,37 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 			triggering = append(triggering, r)
 		}
 	}
+	// no events triggering
 	if len(triggering) == 0 {
 		return nil
 	}
 	log.Info("Sending batch DataDog events for %d reapables.", len(triggering))
-	// j keeps track of which reapable
-	j := 0
-	for j < len(triggering) {
-		buffer := *bytes.NewBuffer(nil)
-		// i keeps track of how many reapables
-		// have been written to a buffer
-		for j < len(triggering) {
-			buffer.ReadFrom(triggering[j].ReapableEventTextShort())
-			buffer.WriteString("\n")
 
-			// when we've written 3 reapables
-			// move on to the next buffer
-			if (j%2 == 0 && j != 0) || j == len(triggering)-1 {
+	// this is a bin packing problem
+	// we ignore its complexity because we don't care (that much)
+	for j := 0; j < len(triggering); {
+		written := 0
+		buffer := *bytes.NewBuffer(nil)
+		for moveOn := false; j < len(triggering) && !moveOn; {
+			// if there is room to write another reapable
+			size := triggering[j].ReapableEventTextShort().Len()
+			log.Info("Written: %d, Size: %d", written, size)
+			if size+written < 4000 {
+				// write it + a newline
+				buffer.ReadFrom(triggering[j].ReapableEventTextShort())
+				buffer.WriteString("\n")
+				written += size
+				// increment counter of written reapables
+				j++
+			} else {
+				// no room for another reapable
 				// send events in this buffer
 				err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
 				if err != nil {
 					return err
 				}
-				j++
-				break
+				moveOn = true
 			}
-			j++
 		}
 	}
 

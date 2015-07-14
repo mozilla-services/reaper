@@ -159,9 +159,12 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 			log.Info("Written: %d, Size: %d", written, size)
 			if size+written < 4000 {
 				// write it + a newline
-				buffer.ReadFrom(triggering[j].ReapableEventTextShort())
-				buffer.WriteString("\n")
-				written += size
+				n, err := buffer.ReadFrom(triggering[j].ReapableEventTextShort())
+				_, err := buffer.WriteString("\n")
+				if err != nil {
+					return err
+				}
+				written += n
 				// increment counter of written reapables
 				j++
 			} else {

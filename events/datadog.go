@@ -151,16 +151,16 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 	// this is a bin packing problem
 	// we ignore its complexity because we don't care (that much)
 	for j := 0; j < len(triggering); {
-		written := 0
+		var written int64 = 0
 		buffer := *bytes.NewBuffer(nil)
 		for moveOn := false; j < len(triggering) && !moveOn; {
 			// if there is room to write another reapable
-			size := triggering[j].ReapableEventTextShort().Len()
+			size := int64(triggering[j].ReapableEventTextShort().Len())
 			log.Info("Written: %d, Size: %d", written, size)
 			if size+written < 4000 {
 				// write it + a newline
 				n, err := buffer.ReadFrom(triggering[j].ReapableEventTextShort())
-				_, err := buffer.WriteString("\n")
+				_, err = buffer.WriteString("\n")
 				if err != nil {
 					return err
 				}

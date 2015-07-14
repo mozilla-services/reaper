@@ -156,7 +156,6 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 		for moveOn := false; j < len(triggering) && !moveOn; {
 			// if there is room to write another reapable
 			size := int64(triggering[j].ReapableEventTextShort().Len())
-			log.Info("Written: %d, Size: %d", written, size)
 			if size+written < 4000 {
 				// write it + a newline
 				n, err := buffer.ReadFrom(triggering[j].ReapableEventTextShort())

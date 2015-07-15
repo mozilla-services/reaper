@@ -213,9 +213,8 @@ func (r *Reaper) reap() {
 	for _, ownerMap := range filteredOwned {
 		// trigger a per owner batch event
 		for _, e := range *events {
-			if err := e.NewBatchReapableEvent(ownerMap); err != nil {
-				log.Error(err.Error())
-			}
+			// using a goroutine makes interactive mode kinda useless
+			go e.NewBatchReapableEvent(ownerMap)
 		}
 	}
 

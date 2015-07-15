@@ -45,7 +45,7 @@ DefaultEmailHost = "mozilla.com"
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
     [Events.DataDog]
-        Enabled = true
+        Enabled = false
         Triggers = []
 
     [Events.Email]
@@ -102,6 +102,9 @@ Regions      = [
             [AutoScalingGroups.FilterGroups.1.2]
                 function = "CreatedTimeNotInTheLast"
                 arguments = ["24h"]
+            [AutoScalingGroups.FilterGroups.1.3]
+                function = "IsDependency"
+                arguments = ["false"]
         [AutoScalingGroups.FilterGroups.2]
             [AutoScalingGroups.FilterGroups.2.1]
                 function = "Tagged"
@@ -118,9 +121,16 @@ Regions      = [
             [Instances.FilterGroups.1.2]
                 function = "Running"
                 arguments = ["true"]
-            [Instances.FilterGroups.1.3]
-                function = "InCloudformation"
+            [Instances.FilterGroups.1.4]
+                function = "IsDependency"
                 arguments = ["false"]
+            [Instances.FilterGroups.1.5]
+                function = "AutoScaled"
+                arguments = ["false"]
+        [Instances.FilterGroups.2]
+            [Instances.FilterGroups.2.1]
+                function = "Tagged"
+                arguments = ["REAP_ME"]
 
 [SecurityGroups]
     Enabled = true
@@ -129,7 +139,11 @@ Regions      = [
         [SecurityGroups.FilterGroups.1]
             [SecurityGroups.FilterGroups.1.1]
                 function = "IsDependency"
-                arguments = ["true"]
+                arguments = ["false"]
+        [SecurityGroups.FilterGroups.2]
+            [SecurityGroups.FilterGroups.2.1]
+                function = "Tagged"
+                arguments = ["REAP_ME"]
 
 [Cloudformations]
     Enabled = true
@@ -141,4 +155,11 @@ Regions      = [
                 arguments = ["24h"]
             [Cloudformations.FilterGroups.1.2]
                 function = "Status"
-                arguments = ["CREATE_COMPLETE"]
+                arguments = ["ROLLBACK_COMPLETE"]
+            [Cloudformations.FilterGroups.1.3]
+                function = "IsDependency"
+                arguments = ["false"]
+        [Cloudformations.FilterGroups.2]
+            [Cloudformations.FilterGroups.2.1]
+                function = "Tagged"
+                arguments = ["REAP_ME"]

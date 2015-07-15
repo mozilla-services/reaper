@@ -494,6 +494,7 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		for region := range instanceIDsInASGs {
 			for instanceID := range instanceIDsInASGs[region] {
 				instancesInASGs[region][instanceID] = true
+				dependency[region][instanceID] = true
 			}
 		}
 

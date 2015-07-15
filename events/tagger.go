@@ -33,7 +33,7 @@ func (t *Tagger) NewStatistic(name string, value float64, tags []string) error {
 func (t *Tagger) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
-func (t *Tagger) NewReapableEvent(r Reapable) error {
+func (t *Tagger) NewReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescription())
 	}
@@ -48,9 +48,9 @@ func (t *Tagger) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-func (e *Tagger) NewBatchReapableEvent(rs []Reapable) error {
+func (e *Tagger) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r)
+		err := e.NewReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}

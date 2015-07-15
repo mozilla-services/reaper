@@ -36,7 +36,7 @@ func (*ReaperEvent) NewStatistic(name string, value float64, tags []string) erro
 func (*ReaperEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
-func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
+func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.ShouldTriggerFor(r) {
 		if log.Extras() {
 			log.Error("Triggering ReaperEvent for %s", r.ReaperState().String())
@@ -57,9 +57,9 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable) error {
+func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r)
+		err := e.NewReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}

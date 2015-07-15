@@ -83,13 +83,13 @@ DefaultEmailHost = "mozilla.com"
         Triggers = ["first", "second", "third", "final"]
 
 [AWS]
-# what regions the reaper will look for ec2 servers in
-Regions      = [
-    "us-west-1",
-    "us-west-2",
-    "us-east-1",
-    "eu-west-1",
-]
+    # what regions the reaper will look for ec2 servers in
+    Regions      = [
+        "us-west-1",
+        "us-west-2",
+        "us-east-1",
+        "eu-west-1",
+    ]
 
 [AutoScalingGroups]
     Enabled = true

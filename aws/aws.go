@@ -35,6 +35,8 @@ type AWSConfig struct {
 	DefaultOwner     string
 	DefaultEmailHost string
 	DryRun           bool
+
+	WithoutCloudformationResources bool
 }
 
 func NewAWSConfig() *AWSConfig {
@@ -87,6 +89,12 @@ func AllCloudformations() chan *Cloudformation {
 
 func CloudformationResources(c Cloudformation) chan *cloudformation.StackResource {
 	ch := make(chan *cloudformation.StackResource)
+
+	if config.WithoutCloudformationResources {
+		close(ch)
+		return ch
+	}
+
 	api := cloudformation.New(&aws.Config{Region: string(c.Region)})
 	// TODO: stupid
 	stringName := string(c.ID)

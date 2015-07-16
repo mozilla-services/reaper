@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/robfig/cron"
 
 	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/reapable"
@@ -18,10 +19,20 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+type AutoScalingGroupScalingSchedule struct {
+	Enabled           bool
+	ScaleUpSchedule   cron.SpecSchedule
+	ScaleDownSchedule cron.SpecSchedule
+	PreviousScaleSize int64
+	PreviousScaleTime time.Time
+	ScaledDown        bool
+}
+
 type AutoScalingGroup struct {
 	AWSResource
 	autoscaling.Group
 
+	Schedule AutoScalingGroupScalingSchedule
 	// autoscaling.Instance exposes minimal info
 	Instances []reapable.ID
 }
@@ -384,7 +395,71 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	return url
 }
 
-func (a *AutoScalingGroup) scaleToSize(force bool, size int64) (bool, error) {
+// Scaler interface
+func (a *AutoScalingGroup) IsScaledDown() bool {
+	if a.Schedule.Enabled {
+		return a.Schedule.ScaledDown
+	}
+	log.Warning("Checked IsScaledDown() for disabled Schedule.")
+	return false
+}
+
+func (a *AutoScalingGroup) ScaleDown() error {
+	if !a.Schedule.Enabled {
+		return nil
+	}
+
+	// only scale down if the current ASG desired capacity is > 1
+	if *a.DesiredCapacity > 1 &&
+		// and it is not scaled down already
+		!a.Schedule.ScaledDown &&
+		// and the time to run the schedule has passed
+		a.Schedule.ScaleDownSchedule.Next(a.Schedule.PreviousScaleTime).Before(time.Now()) &&
+		// and this schedule should trigger before the other
+		a.Schedule.ScaleDownSchedule.Next(a.Schedule.PreviousScaleTime).Before(a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime)) {
+		log.Notice("Autoscaling %s to 1", a.ReapableDescriptionTiny())
+
+		// scale the ASG to 1, do not force
+		ok, err := a.scaleToSize(1, false)
+		if ok && err != nil {
+			a.Schedule.PreviousScaleSize = *a.DesiredCapacity
+			a.Schedule.ScaledDown = true
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (a *AutoScalingGroup) ScaleUp() error {
+	if !a.Schedule.Enabled {
+		return nil
+	}
+
+	// only scale up if the previous ASG desired capacity is > 1
+	if a.Schedule.PreviousScaleSize > 1 &&
+		// and it is scaled down
+		a.Schedule.ScaledDown &&
+		// and the time to run the schedule has passed
+		a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime).Before(time.Now()) &&
+		// and this schedule should trigger before the other
+		a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime).After(a.Schedule.ScaleDownSchedule.Next(a.Schedule.PreviousScaleTime)) {
+		log.Notice("Autoscaling %s back to %d", a.ReapableDescriptionTiny(), a.Schedule.PreviousScaleSize)
+		// if the current time is after the previous scale down's next time
+		if a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime).Before(time.Now()) {
+			// scale the ASG to back to previous size, do not force
+			ok, err := a.scaleToSize(a.Schedule.PreviousScaleSize, false)
+			if ok && err != nil {
+				a.Schedule.PreviousScaleSize = *a.DesiredCapacity
+				a.Schedule.ScaledDown = true
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *AutoScalingGroup) scaleToSize(size int64, force bool) (bool, error) {
 	log.Notice("Scaling AutoScalingGroup to size %d %s.", size, a.ReapableDescriptionTiny())
 	as := autoscaling.New(&aws.Config{Region: string(a.Region)})
 
@@ -447,11 +522,11 @@ func (a *AutoScalingGroup) Whitelist() (bool, error) {
 // Stop scales ASGs to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
 	// force -> false
-	return a.scaleToSize(false, 0)
+	return a.scaleToSize(0, false)
 }
 
 // ForceStop force scales ASGs to 0
 func (a *AutoScalingGroup) ForceStop() (bool, error) {
 	// force -> true
-	return a.scaleToSize(true, 0)
+	return a.scaleToSize(0, true)
 }

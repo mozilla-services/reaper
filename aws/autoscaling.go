@@ -6,12 +6,13 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"strconv"
+	"strings"
 	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/robfig/cron"
 
 	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/reapable"
@@ -19,20 +20,55 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+const (
+	autoscalerTag = "Reaper-Autoscaler"
+)
+
 type AutoScalingGroupScalingSchedule struct {
 	Enabled           bool
-	ScaleUpSchedule   cron.SpecSchedule
-	ScaleDownSchedule cron.SpecSchedule
+	ScaleDownString   string
+	ScaleUpString     string
 	PreviousScaleSize int64
-	PreviousScaleTime time.Time
-	ScaledDown        bool
+	PreviousMinSize   int64
+}
+
+func (s *AutoScalingGroupScalingSchedule) setSchedule(tag string) {
+	// autoscalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
+	splitTag := strings.Split(tag, ",")
+	if len(splitTag) != 4 {
+		log.Error("Invalid Autoscaler Tag format %s", tag)
+	} else {
+		prev, err := strconv.ParseInt(splitTag[2], 0, 64)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		min, err := strconv.ParseInt(splitTag[3], 0, 64)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		s.ScaleDownString = splitTag[0]
+		s.ScaleUpString = splitTag[1]
+		s.PreviousScaleSize = prev
+		s.PreviousMinSize = min
+		s.Enabled = true
+	}
+}
+
+func (s AutoScalingGroupScalingSchedule) scheduleTag() string {
+	return strings.Join([]string{
+		// keep the same schedules
+		s.ScaleDownString,
+		s.ScaleUpString,
+		strconv.FormatInt(s.PreviousScaleSize, 10),
+		strconv.FormatInt(s.PreviousMinSize, 10),
+	}, ",")
 }
 
 type AutoScalingGroup struct {
 	AWSResource
 	autoscaling.Group
 
-	Schedule AutoScalingGroupScalingSchedule
+	Scheduling AutoScalingGroupScalingSchedule
 	// autoscaling.Instance exposes minimal info
 	Instances []reapable.ID
 }
@@ -54,6 +90,11 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 
 	for i := 0; i < len(asg.Tags); i++ {
 		a.AWSResource.Tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
+	}
+
+	// autoscaler boilerplate
+	if a.Tagged(autoscalerTag) {
+		a.Scheduling.setSchedule(a.Tag(autoscalerTag))
 	}
 
 	if a.Tagged(reaperTag) {
@@ -263,23 +304,23 @@ func (a *AutoScalingGroup) sizeGreaterThan(size int64) bool {
 
 // method for reapable -> overrides promoted AWSResource method of same name?
 func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
-	return a.tagReaperState(a.Region, a.ID, a.ReaperState())
+	return tagAutoScalingGroup(a.Region, a.ID, reaperTag, a.reaperState.String())
 }
 
 // method for reapable -> overrides promoted AWSResource method of same name?
 func (a *AutoScalingGroup) Unsave() (bool, error) {
 	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
-	return a.untagReaperState(a.Region, a.ID, a.ReaperState())
+	return untagAutoScalingGroup(a.Region, a.ID, reaperTag)
 }
 
-func (a *AutoScalingGroup) untagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
+func untagAutoScalingGroup(region reapable.Region, id reapable.ID, key string) (bool, error) {
 	api := autoscaling.New(&aws.Config{Region: string(region)})
 	deletereq := &autoscaling.DeleteTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
 				ResourceID:   aws.String(string(id)),
 				ResourceType: aws.String("auto-scaling-group"),
-				Key:          aws.String(reaperTag),
+				Key:          aws.String(key),
 			},
 		},
 	}
@@ -292,7 +333,8 @@ func (a *AutoScalingGroup) untagReaperState(region reapable.Region, id reapable.
 	return true, nil
 }
 
-func (a *AutoScalingGroup) tagReaperState(region reapable.Region, id reapable.ID, newState *state.State) (bool, error) {
+func tagAutoScalingGroup(region reapable.Region, id reapable.ID, key, value string) (bool, error) {
+	log.Info("Tagging AutoScalingGroup %s in %s with %s:%s", region.String(), id.String(), key, value)
 	api := autoscaling.New(&aws.Config{Region: string(region)})
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{
@@ -300,8 +342,8 @@ func (a *AutoScalingGroup) tagReaperState(region reapable.Region, id reapable.ID
 				ResourceID:        aws.String(string(id)),
 				ResourceType:      aws.String("auto-scaling-group"),
 				PropagateAtLaunch: aws.Boolean(false),
-				Key:               aws.String(reaperTag),
-				Value:             aws.String(newState.String()),
+				Key:               aws.String(key),
+				Value:             aws.String(value),
 			},
 		},
 	}
@@ -388,91 +430,48 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
-		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
+		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
 	return url
 }
 
-// Scaler interface
-func (a *AutoScalingGroup) IsScaledDown() bool {
-	if a.Schedule.Enabled {
-		return a.Schedule.ScaledDown
-	}
-	log.Warning("Checked IsScaledDown() for disabled Schedule.")
-	return false
-}
-
-func (a *AutoScalingGroup) ScaleDown() error {
-	if !a.Schedule.Enabled {
-		return nil
-	}
-
-	// only scale down if the current ASG desired capacity is > 1
-	if *a.DesiredCapacity > 1 &&
-		// and it is not scaled down already
-		!a.Schedule.ScaledDown &&
-		// and the time to run the schedule has passed
-		a.Schedule.ScaleDownSchedule.Next(a.Schedule.PreviousScaleTime).Before(time.Now()) &&
-		// and this schedule should trigger before the other
-		a.Schedule.ScaleDownSchedule.Next(a.Schedule.PreviousScaleTime).Before(a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime)) {
-		log.Notice("Autoscaling %s to 1", a.ReapableDescriptionTiny())
-
-		// scale the ASG to 1, do not force
-		ok, err := a.scaleToSize(1, false)
-		if ok && err != nil {
-			a.Schedule.PreviousScaleSize = *a.DesiredCapacity
-			a.Schedule.ScaledDown = true
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func (a *AutoScalingGroup) ScaleUp() error {
-	if !a.Schedule.Enabled {
-		return nil
-	}
-
-	// only scale up if the previous ASG desired capacity is > 1
-	if a.Schedule.PreviousScaleSize > 1 &&
-		// and it is scaled down
-		a.Schedule.ScaledDown &&
-		// and the time to run the schedule has passed
-		a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime).Before(time.Now()) &&
-		// and this schedule should trigger before the other
-		a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime).After(a.Schedule.ScaleDownSchedule.Next(a.Schedule.PreviousScaleTime)) {
-		log.Notice("Autoscaling %s back to %d", a.ReapableDescriptionTiny(), a.Schedule.PreviousScaleSize)
-		// if the current time is after the previous scale down's next time
-		if a.Schedule.ScaleUpSchedule.Next(a.Schedule.PreviousScaleTime).Before(time.Now()) {
-			// scale the ASG to back to previous size, do not force
-			ok, err := a.scaleToSize(a.Schedule.PreviousScaleSize, false)
-			if ok && err != nil {
-				a.Schedule.PreviousScaleSize = *a.DesiredCapacity
-				a.Schedule.ScaledDown = true
-			}
-			return err
+func (a *AutoScalingGroup) ScaleDown() {
+	// default = 0
+	var size int64
+	// change desired and min to size
+	if *a.DesiredCapacity > size {
+		ok, err := a.scaleToSize(size, size)
+		if ok && err == nil {
+			a.Scheduling.PreviousScaleSize = *a.DesiredCapacity
+			a.Scheduling.PreviousMinSize = *a.MinSize
+			// change current local value so that we don't repeat
+			*a.DesiredCapacity = size
 		}
 	}
-	return nil
 }
 
-func (a *AutoScalingGroup) scaleToSize(size int64, force bool) (bool, error) {
-	log.Notice("Scaling AutoScalingGroup to size %d %s.", size, a.ReapableDescriptionTiny())
-	as := autoscaling.New(&aws.Config{Region: string(a.Region)})
+func (a *AutoScalingGroup) ScaleUp() {
+	if a.Scheduling.PreviousScaleSize > *a.DesiredCapacity {
+		// change desired and min to previous values
+		ok, err := a.scaleToSize(a.Scheduling.PreviousScaleSize, a.Scheduling.PreviousMinSize)
+		if ok && err == nil {
+			// change current local values so that we don't repeat
+			*a.DesiredCapacity = a.Scheduling.PreviousScaleSize
+			*a.MinSize = a.Scheduling.PreviousMinSize
+		}
+	}
+}
 
-	// ugh this is stupid
-	stringID := string(a.ID)
-
+func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) {
+	log.Notice("Scaling AutoScalingGroup %s to size %d.", a.ReapableDescriptionTiny(), size)
+	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
+	idString := a.ID.String()
 	input := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: &stringID,
+		AutoScalingGroupName: &idString,
 		DesiredCapacity:      &size,
-	}
-
-	if force {
-		input.MinSize = &size
+		MinSize:              &minSize,
 	}
 
 	_, err := as.UpdateAutoScalingGroup(input)
@@ -485,13 +484,10 @@ func (a *AutoScalingGroup) scaleToSize(size int64, force bool) (bool, error) {
 
 func (a *AutoScalingGroup) Terminate() (bool, error) {
 	log.Notice("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
-	as := autoscaling.New(&aws.Config{Region: string(a.Region)})
-
-	// ugh this is stupid
-	stringID := string(a.ID)
-
+	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
+	idString := a.ID.String()
 	input := &autoscaling.DeleteAutoScalingGroupInput{
-		AutoScalingGroupName: &stringID,
+		AutoScalingGroupName: &idString,
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
@@ -521,12 +517,12 @@ func (a *AutoScalingGroup) Whitelist() (bool, error) {
 
 // Stop scales ASGs to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
-	// force -> false
-	return a.scaleToSize(0, false)
+	// use existing min size
+	return a.scaleToSize(0, *a.MinSize)
 }
 
 // ForceStop force scales ASGs to 0
 func (a *AutoScalingGroup) ForceStop() (bool, error) {
-	// force -> true
-	return a.scaleToSize(0, true)
+	// also set minsize to 0
+	return a.scaleToSize(0, 0)
 }

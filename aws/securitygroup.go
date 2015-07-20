@@ -150,21 +150,20 @@ func (a *SecurityGroup) getTemplateData() (*SecurityGroupEventData, error) {
 const reapableSecurityGroupEventHTML = `
 <html>
 <body>
-	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }} in {{.SecurityGroup.Region}}</a> is scheduled to be terminated.</p>
+	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }} in {{.SecurityGroup.Region}}</a> is scheduled to be deleted.</p>
 
 	<p>
-		You can ignore this message and your SecurityGroup will advance to the next state after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
+		You can ignore this message and your SecurityGroup will advance to the next state after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>. If you do not take action it will be deleted!
 	</p>
 
 	<p>
 		You may also choose to:
 		<ul>
-			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
-			<li><a href="{{ .ForceStopLink }}">ForceScale it to 0</a></li>
+			<li><a href="{{ .TerminateLink }}">Delete it now</a></li>
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .WhitelistLink }}">Whitelist</a> it.</li>
 		</ul>
 	</p>
 
@@ -178,10 +177,9 @@ const reapableSecurityGroupEventHTML = `
 const reapableSecurityGroupEventHTMLShort = `
 <html>
 <body>
-	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be terminated after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
+	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be deleted after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
 		<br />
-		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
+		<a href="{{ .TerminateLink }}">Delete</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
 		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
@@ -193,7 +191,7 @@ const reapableSecurityGroupEventHTMLShort = `
 
 const reapableSecurityGroupEventTextShort = `%%%
 SecurityGroup [{{.SecurityGroup.ID}}]({{.SecurityGroup.AWSConsoleURL}}) in region: [{{.SecurityGroup.Region}}](https://{{.SecurityGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.SecurityGroup.Region}}).{{if .SecurityGroup.Owned}} Owned by {{.SecurityGroup.Owner}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this SecurityGroup.
+[Whitelist]({{ .WhitelistLink }}) or [Delete]({{ .TerminateLink }}) this SecurityGroup.
 %%%`
 
 const reapableSecurityGroupEventText = `%%%
@@ -202,7 +200,7 @@ Reaper has discovered an SecurityGroup qualified as reapable: [{{.SecurityGroup.
 {{ if .SecurityGroup.AWSConsoleURL}}{{.SecurityGroup.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.SecurityGroup.AWSConsoleURL}})\n
 [Whitelist]({{ .WhitelistLink }}) this SecurityGroup.
-[Terminate]({{ .TerminateLink }}) this SecurityGroup.
+[Delete]({{ .TerminateLink }}) this SecurityGroup.
 %%%`
 
 func (a *SecurityGroup) Filter(filter filters.Filter) bool {

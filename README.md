@@ -5,6 +5,7 @@
 The Reaper terminates forgotten AWS resources.
 
 Reaper workflow:
+
 1. Find all enabled resources, filter them, then fire events based on config
     1.a. Event types include sending emails, posting events to Datadog (Statsd), tagging resources on AWS, stopping or killing resources, and more
 2.b. Reaper uses the `Owner` tag on resources to notify the owner of the resource with options to Ignore (for a time), Whitelist, Terminate, or Stop each resource they own
@@ -16,6 +17,7 @@ Reaper workflow:
 * it's maintained by an intern
 
 ## Building
+* install godep (`go install godep` if you have a proper $GOPATH)
 * checkout repo
 * build binary: `godep go build .`
 * use binary: `./reaper -config config/default.toml`
@@ -29,7 +31,7 @@ Reaper workflow:
 * withoutCloudformationResources: skip checking for Cloudformation Resource dependencies (throttled by AWS, so it takes ages). `boolean` (default: false)
 
 ## Creating a configuration file
-Reaper configuration files should be in toml format.
+Reaper configuration files should be in toml format. See `config/default.toml` for an example config.
 
 * Top level options
     - StateFile: the full filepath of the file that resource states (in custom format) are saved and loaded to / from. `string`
@@ -72,26 +74,23 @@ Reaper configuration files should be in toml format.
         + Username: the username to use for the mailserver. `string`
         + Password: the password to use for the nmailserver. `string`
         + From: the address that Reaper will send mail from, must be parsable by Go's mail.ParseAddress. See: http://godoc.org/net/mail#ParseAddress. `string`
-* Instances (under `[Instances]`)
-    - Enabled: enables or disables reporting of instances. Note: instances will still be queried for as they inform Reaper about the dependencies of other resources. `boolean`
-    - FilterGroups (under `[Instances.FilterGroups]`): FilterGroups are sets of filters that can be applied to resources. In order for an instance to match a FilterGroup, it must match _all_ filters in the FilterGroup. If an instance matches _any_ FilterGroup, it has satisfied Reaper's filters. `[]FilterGroup`
+* All Supported AWS Resource types have these properties
+    - Enabled: enables or disables reporting of this resource type. Note: resources will still be queried for as they inform Reaper about the dependencies of other resources. `boolean`
+    - FilterGroups (under `[ResourceType.FilterGroups]`): FilterGroups are sets of filters that can be applied to resources. In order for a resource to match a FilterGroup, it must match _all_ filters in the FilterGroup. If an resource matches _any_ FilterGroup, it has satisfied Reaper's filters. `[]FilterGroup`
         + Example FilterGroup:
             ```
-            [Instances.FilterGroups.Example]
-                    [Instances.FilterGroups.Example.Filter1]
+            [ResourceType.FilterGroups.Example]
+                    [ResourceType.FilterGroups.Example.Filter1]
                         function = "IsDependency"
                         arguments = ["false"]
-                    [Instances.FilterGroups.Example.Filter2]
+                    [ResourceType.FilterGroups.Example.Filter2]
                         function = "Running"
                         arguments = ["true"]
             ```
         + In this example, we see a FilterGroup named "Example" that has two Filters, Filter1 and Filter2.
         + A FilterGroup is a `[]Filter`, and a Filter has two components, a `function` and `arguments`. The `function` is the name of the filtering function for the associated resource type (`string`), and `arguments` is a slice of arguments to that function (`[]string`).
-* SecurityGroups (under `[SecurityGroups`)
-    - See Instances: all values are the same as for Instances, but are renamed SecurityGroups (however the same filter functions may not be applicable)
-* Cloudformations (under `[Cloudformations`)
-    - See Instances: all values are the same as for Instances, but are renamed Cloudformations (however the same filter functions may not be applicable)
-* AutoScalingGroups (under `[AutoScalingGroups`)
-    - See Instances: all values are the same as for Instances, but are renamed AutoScalingGroups (however the same filter functions may not be applicable)
-
-* see `config/default.toml` for an example
+* Currently supported AWS Resource types:
+    - SecurityGroups (under `[SecurityGroups]`)
+    - Cloudformations (under `[Cloudformations]`)
+    - AutoScalingGroups (under `[AutoScalingGroups]`)
+    - Instances (under `[Instances]`)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/PagerDuty/godspeed"
 
@@ -20,7 +21,9 @@ type DataDogConfig struct {
 // DataDog implements EventReporter, sends events and statistics to DataDog
 // uses godspeed, requires dd-agent running
 type DataDog struct {
-	Config *DataDogConfig
+	Config    *DataDogConfig
+	_godspeed *godspeed.Godspeed
+	sync.Once
 }
 
 func NewDataDog(c *DataDogConfig) *DataDog {
@@ -32,27 +35,39 @@ func (d *DataDog) SetDryRun(b bool) {
 	d.Config.DryRun = b
 }
 
-// TODO: make this async?
-// TODO: don't recreate godspeed
+func (e *DataDog) Cleanup() error {
+	g, err := e.godspeed()
+	if err != nil {
+		return err
+	}
+	err = g.Conn.Close()
+	return err
+}
 
-// TODO: make this use sync.Once?
-func (d *DataDog) godspeed() (*godspeed.AsyncGodspeed, error) {
-	var g *godspeed.AsyncGodspeed
+func (d *DataDog) Do() {
+	var g *godspeed.Godspeed
 	var err error
 	// if config options not set, use defaults
 	if d.Config.Host == "" || d.Config.Port == "" {
-		g, err = godspeed.NewDefaultAsync()
+		g, err = godspeed.NewDefault()
 	} else {
 		port, err := strconv.Atoi(d.Config.Port)
 		if err != nil {
-			return nil, err
+			log.Error(err.Error())
 		}
-		g, err = godspeed.NewAsync(d.Config.Host, port, false)
+		g, err = godspeed.New(d.Config.Host, port, false)
 	}
 	if err != nil {
-		return nil, err
+		log.Error(err.Error())
 	}
-	return g, nil
+	d._godspeed = g
+}
+
+func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
+	if d._godspeed == nil {
+		d.Do()
+	}
+	return d._godspeed, nil
 }
 
 // NewEvent reports an event to DataDog
@@ -68,10 +83,10 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 	if err != nil {
 		return err
 	}
-	defer g.Godspeed.Conn.Close()
-	g.W.Add(1)
-	go g.Event(title, text, fields, tags, g.W)
-	g.W.Wait()
+	err = g.Event(title, text, fields, tags)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -88,11 +103,8 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 	if err != nil {
 		return err
 	}
-	defer g.Godspeed.Conn.Close()
-	g.W.Add(1)
-	go g.Gauge(name, value, tags, g.W)
-	g.W.Wait()
-	return nil
+	err = g.Gauge(name, value, tags)
+	return err
 }
 
 // NewCountStatistic reports an Incr to DataDog
@@ -108,17 +120,15 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 	if err != nil {
 		return err
 	}
-	defer g.Godspeed.Conn.Close()
-	g.W.Add(1)
-	go g.Incr(name, tags, g.W)
-	g.W.Wait()
-	return nil
+	err = g.Incr(name, tags)
+	return err
 }
 
 // NewReapableEvent is shorthand for a NewEvent about a reapable resource
 func (d *DataDog) NewReapableEvent(r Reapable) error {
 	if d.Config.ShouldTriggerFor(r) {
-		d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
+		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
+		return err
 	}
 	return nil
 }
@@ -142,12 +152,13 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 		var written int64
 		buffer := *bytes.NewBuffer(nil)
 		for moveOn := false; j < len(triggering) && !moveOn; {
-			size := int64(triggering[j].ReapableEventTextShort().Len())
+			text := triggering[j].ReapableEventTextShort()
+			size := int64(text.Len())
 
 			// if there is room
 			if size+written < 4500 {
 				// write it + a newline
-				n, err := buffer.ReadFrom(triggering[j].ReapableEventTextShort())
+				n, err := buffer.ReadFrom(text)
 				// not counting this length, but we have padding
 				_, err = buffer.WriteString("\n")
 				if err != nil {

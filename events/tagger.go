@@ -21,6 +21,8 @@ func NewTagger(c *TaggerConfig) *Tagger {
 	return &Tagger{c}
 }
 
+func (*Tagger) Cleanup() error { return nil }
+
 // Tagger does nothing for most events
 func (t *Tagger) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil

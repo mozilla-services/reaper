@@ -160,11 +160,10 @@ const reapableSecurityGroupEventHTML = `
 		You may also choose to:
 		<ul>
 			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
-			<li><a href="{{ .ForceStopLink }}">ForceScale it to 0</a></li>
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .WhitelistLink }}">Whitelist</a> it.</li>
 		</ul>
 	</p>
 
@@ -181,7 +180,6 @@ const reapableSecurityGroupEventHTMLShort = `
 	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be terminated after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
 		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
@@ -193,7 +191,7 @@ const reapableSecurityGroupEventHTMLShort = `
 
 const reapableSecurityGroupEventTextShort = `%%%
 SecurityGroup [{{.SecurityGroup.ID}}]({{.SecurityGroup.AWSConsoleURL}}) in region: [{{.SecurityGroup.Region}}](https://{{.SecurityGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.SecurityGroup.Region}}).{{if .SecurityGroup.Owned}} Owned by {{.SecurityGroup.Owner}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this SecurityGroup.
+[Whitelist]({{ .WhitelistLink }}) or [Terminate]({{ .TerminateLink }}) this SecurityGroup.
 %%%`
 
 const reapableSecurityGroupEventText = `%%%

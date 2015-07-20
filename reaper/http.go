@@ -49,8 +49,19 @@ func NewHTTPApi(c reaperevents.HTTPConfig) *HTTPApi {
 }
 
 func writeResponse(w http.ResponseWriter, code int, body string) {
-	w.WriteHeader(code)
-	io.WriteString(w, body)
+	w.Header().Set("Content-Type", "text/html")
+	io.WriteString(w, fmt.Sprintf(`<DOCTYPE html>
+		<html>
+			<head>
+				<title>Reaper API</title>
+			</head>
+			<body>
+				<p>
+				%s
+				</p>
+			</body>
+		</html>`,
+		body))
 }
 
 func heartbeat(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
@@ -104,40 +115,58 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		case token.J_DELAY:
 			log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
 			s := r.ReaperState()
-			_, err := r.Save(
+			ok, err := r.Save(
 				state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Delay failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
 		case token.J_TERMINATE:
 			log.Debug("Terminate request received for %s in region %s.", job.ID, job.Region)
-			_, err := r.Terminate()
+			ok, err := r.Terminate()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Terminate failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
 		case token.J_WHITELIST:
 			log.Debug("Whitelist request received for %s in region %s", job.ID, job.Region)
-			_, err := r.Whitelist()
+			ok, err := r.Whitelist()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Whitelist failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
 		case token.J_STOP:
 			log.Debug("Stop request received for %s in region %s", job.ID, job.Region)
-			_, err := r.Stop()
+			ok, err := r.Stop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Stop failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
 		case token.J_FORCESTOP:
 			log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
-			_, err := r.ForceStop()
+			ok, err := r.ForceStop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("ForceStop failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
 		default:
@@ -155,6 +184,6 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		default:
 			log.Error("No AWSConsoleURL")
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>", consoleURL, r.ReapableDescriptionTiny()))
+		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>", r.ReapableDescriptionTiny(), consoleURL))
 	}
 }

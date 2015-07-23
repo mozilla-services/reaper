@@ -105,7 +105,7 @@ func (i *Instance) ReapableEventTextShort() *bytes.Buffer {
 	return i.reapableEventText(reapableInstanceEventTextShort)
 }
 
-func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !i.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
@@ -113,18 +113,18 @@ func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 	}
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", i.ReapableDescriptionTiny())
 	owner = *i.Owner()
-	body = i.reapableEventHTML(reapableInstanceEventHTML).String()
+	body = i.reapableEventHTML(reapableInstanceEventHTML)
 	return
 }
 
-func (i *Instance) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+func (i *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !i.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
 		return
 	}
 	owner = *i.Owner()
-	body = i.reapableEventHTML(reapableInstanceEventHTMLShort).String()
+	body = i.reapableEventHTML(reapableInstanceEventHTMLShort)
 	return
 }
 
@@ -171,7 +171,7 @@ const reapableInstanceEventHTML = `
 	<p>Your AWS Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
-		You can ignore this message and your instance will advance to the next state after <strong>{{.Instance.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
+		You can ignore this message and your instance will advance to the next state after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>. If you do not take action it will be terminated!
 	</p>
 
 	<p>
@@ -195,7 +195,7 @@ const reapableInstanceEventHTML = `
 const reapableInstanceEventHTMLShort = `
 <html>
 <body>
-	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until}}</strong>.
+	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
 		<a href="{{ .StopLink }}">Stop</a>, 

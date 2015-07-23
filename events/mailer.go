@@ -6,6 +6,8 @@ import (
 	"net/mail"
 	"net/smtp"
 
+	"github.com/jordan-wright/email"
+
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
@@ -25,6 +27,8 @@ type HTTPConfig struct {
 type SMTPConfig struct {
 	HTTPConfig
 	EventReporterConfig
+
+	CopyEmailAddresses []string
 
 	Host     string
 	Port     int
@@ -148,33 +152,26 @@ func (e *Mailer) NewBatchReapableEvent(rs []Reapable) error {
 		if err != nil {
 			return err
 		}
-		buffer.WriteString(fmt.Sprintf("%s\n", body))
+		buffer.ReadFrom(body)
+		buffer.WriteString("\n")
 	}
 
-	return e.Send(owner, subject, buffer.String())
+	return e.Send(owner, subject, &buffer)
 }
 
 // Send an HTML email
-func (m *Mailer) Send(to mail.Address, subject, htmlBody string) error {
-	buf := bytes.NewBuffer(nil)
+func (m *Mailer) Send(to mail.Address, subject string, htmlBody *bytes.Buffer) error {
 	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
 		to.String(),
 		m.Config.From.Address.String(),
 		subject)
 
-	buf.WriteString("From: " + m.Config.From.Address.String() + "\n")
-	buf.WriteString("To: " + to.String() + "\n")
-	buf.WriteString("Subject: " + subject + "\n")
-	buf.WriteString("MIME-Version: 1.0\n")
-	buf.WriteString("Content-Type: text/html; charset=utf-8\n\n")
-	buf.WriteString(htmlBody)
-	buf.WriteString("\n")
+	e := email.NewEmail()
+	e.From = m.Config.From.Address.String()
+	e.To = []string{to.Address}
+	e.Bcc = m.Config.CopyEmailAddresses
+	e.Subject = subject
+	e.HTML = htmlBody.Bytes()
 
-	return smtp.SendMail(
-		m.Config.Addr(),
-		m.Config.Auth(),
-		m.Config.From.Address.Address,
-		[]string{to.Address},
-		buf.Bytes(),
-	)
+	return e.Send(m.Config.Addr(), m.Config.Auth())
 }

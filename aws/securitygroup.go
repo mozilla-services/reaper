@@ -85,7 +85,7 @@ func (a *SecurityGroup) ReapableEventTextShort() *bytes.Buffer {
 	return a.reapableEventText(reapableSecurityGroupEventTextShort)
 }
 
-func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
@@ -94,18 +94,18 @@ func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableSecurityGroupEventHTML).String()
+	body = a.reapableEventHTML(reapableSecurityGroupEventHTML)
 	return
 }
 
-func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableSecurityGroupEventHTMLShort).String()
+	body = a.reapableEventHTML(reapableSecurityGroupEventHTMLShort)
 	return
 }
 

@@ -216,6 +216,9 @@ func (i *Instance) ScaleUpSchedule() string {
 }
 
 func (i *Instance) ScaleDown() {
+	if !i.Running() {
+		return
+	}
 	_, err := i.Stop()
 	if err != nil {
 		log.Error(err.Error())
@@ -223,6 +226,9 @@ func (i *Instance) ScaleDown() {
 }
 
 func (i *Instance) ScaleUp() {
+	if !i.Stopped() {
+		return
+	}
 	_, err := i.Start()
 	if err != nil {
 		log.Error(err.Error())

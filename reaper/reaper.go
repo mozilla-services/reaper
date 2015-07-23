@@ -22,7 +22,7 @@ var (
 	savedstates map[reapable.Region]map[reapable.ID]*state.State
 	config      *Config
 	events      *[]reaperevents.EventReporter
-	schedule    = cron.New()
+	schedule    *cron.Cron
 )
 
 func SetConfig(c *Config) {
@@ -55,7 +55,7 @@ type Reaper struct {
 // NewReaper is a Reaper constructor shorthand
 func NewReaper() *Reaper {
 	return &Reaper{
-		Cron: schedule,
+		Cron: cron.New(),
 	}
 }
 
@@ -88,6 +88,8 @@ func (r *Reaper) Stop() {
 // Run handles all reaping logic
 // conforms to the cron.Job interface
 func (r *Reaper) Run() {
+	schedule = cron.New()
+	schedule.Start()
 	r.reap()
 
 	if config.StateFile != "" {

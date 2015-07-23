@@ -7,8 +7,8 @@ The Reaper terminates forgotten AWS resources.
 Reaper workflow:
 
 1. Find all enabled resources, filter them, then fire events based on config
-    1.a. Event types include sending emails, posting events to Datadog (Statsd), tagging resources on AWS, stopping or killing resources, and more
-2.b. Reaper uses the `Owner` tag on resources to notify the owner of the resource with options to Ignore (for a time), Whitelist, Terminate, or Stop each resource they own
+    - Event types include sending emails, posting events to Datadog (Statsd), tagging resources on AWS, stopping or killing resources, and more
+    - Reaper uses the `Owner` tag on resources to notify the owner of the resource with options to Ignore (for a time), Whitelist, Terminate, or Stop each resource they own
 2. Report statistics about the resources that were found
 3. Terminate or Stop abandoned resources after a set amount of time
 
@@ -17,7 +17,7 @@ Reaper workflow:
 * it's maintained by an intern
 
 ## Building
-* install godep (`go install godep` if you have a proper $GOPATH)
+* install godep (`go get github.com/tools/godep` if you have a proper $GOPATH)
 * checkout repo
 * build binary: `godep go build .`
 * use binary: `./reaper -config config/default.toml`

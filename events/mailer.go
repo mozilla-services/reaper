@@ -108,7 +108,7 @@ func (*Mailer) NewCountStatistic(name string, tags []string) error {
 }
 
 // TODO: figure out how to goroutine this
-func (m *Mailer) NewReapableEvent(r Reapable) error {
+func (m *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 	if m.Config.ShouldTriggerFor(r) {
 		addr, subject, body, err := r.ReapableEventEmail()
 		if err != nil {
@@ -126,7 +126,7 @@ func (m *Mailer) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-func (e *Mailer) NewBatchReapableEvent(rs []Reapable) error {
+func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	var triggering []Reapable
 	for _, r := range rs {
 		if e.Config.ShouldTriggerFor(r) {

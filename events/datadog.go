@@ -125,15 +125,17 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 }
 
 // NewReapableEvent is shorthand for a NewEvent about a reapable resource
-func (d *DataDog) NewReapableEvent(r Reapable) error {
+func (d *DataDog) NewReapableEvent(r Reapable, tags []string) error {
 	if d.Config.ShouldTriggerFor(r) {
-		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
-		return err
+		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
+		if err != nil {
+			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
+		}
 	}
 	return nil
 }
 
-func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
+func (e *DataDog) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	var triggering []Reapable
 	for _, r := range rs {
 		if e.Config.ShouldTriggerFor(r) {
@@ -173,7 +175,7 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 			}
 		}
 		// send events in this buffer
-		err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+		err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, tags)
 		if err != nil {
 			return err
 		}

@@ -90,6 +90,7 @@ type Config struct {
 	States        state.StatesConfig
 
 	Events           EventTypes
+	EventTag         string
 	LogFile          string
 	StateFile        string
 	PricesFile       string

@@ -36,7 +36,7 @@ func (*InteractiveEvent) NewStatistic(name string, value float64, tags []string)
 func (*InteractiveEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
-func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
+func (n *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescriptionTiny())
 	}
@@ -70,9 +70,9 @@ func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 	return err
 }
 
-func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable) error {
+func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r)
+		err := e.NewReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}

@@ -6,6 +6,7 @@
 WhitelistTag = "REAPER_SPARE_ME"
 DefaultOwner = "reaper_notifications"
 DefaultEmailHost = "mozilla.com"
+EventTag = "env:default"
 
 [HTTP]
     # Set this to secure the tokens in the links back to the

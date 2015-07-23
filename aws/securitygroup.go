@@ -242,7 +242,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 }
 
 func (a *SecurityGroup) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/ec2/home?region=%s#SecurityGroups:id=%s;view=details",
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))

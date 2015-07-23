@@ -6,6 +6,7 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"strings"
 	textTemplate "text/template"
 	"time"
 
@@ -24,6 +25,33 @@ type Instance struct {
 	ec2.Instance
 	SecurityGroups map[reapable.ID]string
 	AutoScaled     bool
+	Scheduling     InstanceScalingSchedule
+}
+
+type InstanceScalingSchedule struct {
+	enabled         bool
+	scaleDownString string
+	scaleUpString   string
+}
+
+func (s *InstanceScalingSchedule) setSchedule(tag string) {
+	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
+	splitTag := strings.Split(tag, ",")
+	if len(splitTag) != 2 {
+		log.Error("Invalid Instance Tag format %s", tag)
+	} else {
+		s.scaleDownString = splitTag[0]
+		s.scaleUpString = splitTag[1]
+		s.enabled = true
+	}
+}
+
+func (s InstanceScalingSchedule) scheduleTag() string {
+	return strings.Join([]string{
+		// keep the same schedules
+		s.scaleDownString,
+		s.scaleUpString,
+	}, ",")
 }
 
 // NewInstance is a constructor for Instances
@@ -46,6 +74,11 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	for _, tag := range instance.Tags {
 		i.AWSResource.Tags[*tag.Key] = *tag.Value
+	}
+
+	// Scaler boilerplate
+	if i.Tagged(scalerTag) {
+		i.Scheduling.setSchedule(i.Tag(scalerTag))
 	}
 
 	i.Name = i.Tag("Name")
@@ -163,6 +196,33 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 		IgnoreLink3:   ignore3,
 		IgnoreLink7:   ignore7,
 	}, nil
+}
+
+// Scaler interface
+func (i *Instance) SchedulingEnabled() bool {
+	return i.Scheduling.enabled
+}
+
+func (i *Instance) ScaleDownSchedule() string {
+	return i.Scheduling.scaleDownString
+}
+
+func (i *Instance) ScaleUpSchedule() string {
+	return i.Scheduling.scaleUpString
+}
+
+func (i *Instance) ScaleDown() {
+	_, err := i.Stop()
+	if err != nil {
+		log.Error(err.Error())
+	}
+}
+
+func (i *Instance) ScaleUp() {
+	_, err := i.Start()
+	if err != nil {
+		log.Error(err.Error())
+	}
 }
 
 const reapableInstanceEventHTML = `
@@ -369,6 +429,26 @@ func (i *Instance) Terminate() (bool, error) {
 
 func (i *Instance) ForceStop() (bool, error) {
 	return i.Stop()
+}
+
+func (i *Instance) Start() (bool, error) {
+	log.Notice("Starting Instance %s", i.ReapableDescriptionTiny())
+	api := ec2.New(&aws.Config{Region: string(i.Region)})
+	req := &ec2.StartInstancesInput{
+		InstanceIDs: []*string{aws.String(string(i.ID))},
+	}
+
+	resp, err := api.StartInstances(req)
+
+	if err != nil {
+		return false, err
+	}
+
+	if len(resp.StartingInstances) != 1 {
+		return false, fmt.Errorf("Instance %s could not be started.", i.ReapableDescriptionTiny())
+	}
+
+	return true, nil
 }
 
 func (i *Instance) Stop() (bool, error) {

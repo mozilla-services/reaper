@@ -20,20 +20,16 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-const (
-	autoscalerTag = "Reaper-Autoscaler"
-)
-
 type AutoScalingGroupScalingSchedule struct {
-	Enabled           bool
-	ScaleDownString   string
-	ScaleUpString     string
-	PreviousScaleSize int64
-	PreviousMinSize   int64
+	enabled           bool
+	scaleDownString   string
+	scaleUpString     string
+	previousScaleSize int64
+	previousMinSize   int64
 }
 
 func (s *AutoScalingGroupScalingSchedule) setSchedule(tag string) {
-	// autoscalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
+	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 4 {
 		log.Error("Invalid Autoscaler Tag format %s", tag)
@@ -46,21 +42,21 @@ func (s *AutoScalingGroupScalingSchedule) setSchedule(tag string) {
 		if err != nil {
 			log.Error(err.Error())
 		}
-		s.ScaleDownString = splitTag[0]
-		s.ScaleUpString = splitTag[1]
-		s.PreviousScaleSize = prev
-		s.PreviousMinSize = min
-		s.Enabled = true
+		s.scaleDownString = splitTag[0]
+		s.scaleUpString = splitTag[1]
+		s.previousScaleSize = prev
+		s.previousMinSize = min
+		s.enabled = true
 	}
 }
 
 func (s AutoScalingGroupScalingSchedule) scheduleTag() string {
 	return strings.Join([]string{
 		// keep the same schedules
-		s.ScaleDownString,
-		s.ScaleUpString,
-		strconv.FormatInt(s.PreviousScaleSize, 10),
-		strconv.FormatInt(s.PreviousMinSize, 10),
+		s.scaleDownString,
+		s.scaleUpString,
+		strconv.FormatInt(s.previousScaleSize, 10),
+		strconv.FormatInt(s.previousMinSize, 10),
 	}, ",")
 }
 
@@ -93,8 +89,8 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	}
 
 	// autoscaler boilerplate
-	if a.Tagged(autoscalerTag) {
-		a.Scheduling.setSchedule(a.Tag(autoscalerTag))
+	if a.Tagged(scalerTag) {
+		a.Scheduling.setSchedule(a.Tag(scalerTag))
 	}
 
 	if a.Tagged(reaperTag) {
@@ -437,6 +433,19 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	return url
 }
 
+// Scaler interface
+func (a *AutoScalingGroup) SchedulingEnabled() bool {
+	return a.Scheduling.enabled
+}
+
+func (a *AutoScalingGroup) ScaleDownSchedule() string {
+	return a.Scheduling.scaleDownString
+}
+
+func (a *AutoScalingGroup) ScaleUpSchedule() string {
+	return a.Scheduling.scaleUpString
+}
+
 func (a *AutoScalingGroup) ScaleDown() {
 	// default = 0
 	var size int64
@@ -444,8 +453,8 @@ func (a *AutoScalingGroup) ScaleDown() {
 	if *a.DesiredCapacity > size {
 		ok, err := a.scaleToSize(size, size)
 		if ok && err == nil {
-			a.Scheduling.PreviousScaleSize = *a.DesiredCapacity
-			a.Scheduling.PreviousMinSize = *a.MinSize
+			a.Scheduling.previousScaleSize = *a.DesiredCapacity
+			a.Scheduling.previousMinSize = *a.MinSize
 			// change current local value so that we don't repeat
 			*a.DesiredCapacity = size
 		}
@@ -453,13 +462,13 @@ func (a *AutoScalingGroup) ScaleDown() {
 }
 
 func (a *AutoScalingGroup) ScaleUp() {
-	if a.Scheduling.PreviousScaleSize > *a.DesiredCapacity {
+	if a.Scheduling.previousScaleSize > *a.DesiredCapacity {
 		// change desired and min to previous values
-		ok, err := a.scaleToSize(a.Scheduling.PreviousScaleSize, a.Scheduling.PreviousMinSize)
+		ok, err := a.scaleToSize(a.Scheduling.previousScaleSize, a.Scheduling.previousMinSize)
 		if ok && err == nil {
 			// change current local values so that we don't repeat
-			*a.DesiredCapacity = a.Scheduling.PreviousScaleSize
-			*a.MinSize = a.Scheduling.PreviousMinSize
+			*a.DesiredCapacity = a.Scheduling.previousScaleSize
+			*a.MinSize = a.Scheduling.previousMinSize
 		}
 	}
 }

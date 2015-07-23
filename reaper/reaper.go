@@ -498,9 +498,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			a.Dependency = true
 		}
 
-		if a.Scheduling.Enabled {
-			schedule.AddFunc(a.Scheduling.ScaleDownString, a.ScaleDown)
-			schedule.AddFunc(a.Scheduling.ScaleUpString, a.ScaleUp)
+		if a.SchedulingEnabled() {
+			schedule.AddFunc(a.ScaleDownSchedule(), a.ScaleDown)
+			schedule.AddFunc(a.ScaleUpSchedule(), a.ScaleUp)
 		}
 
 		// identify instances in an ASG
@@ -540,6 +540,12 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		if instancesInASGs[i.Region][i.ID] {
 			i.AutoScaled = true
 		}
+
+		if i.SchedulingEnabled() {
+			schedule.AddFunc(i.ScaleDownSchedule(), i.ScaleDown)
+			schedule.AddFunc(i.ScaleUpSchedule(), i.ScaleUp)
+		}
+
 		// group instances by owner
 		if config.Instances.Enabled {
 			if i.Owner() != nil {

@@ -81,6 +81,10 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.Scheduling.setSchedule(i.Tag(scalerTag))
 	}
 
+	if i.Tagged("aws:autoscaling:groupName") {
+		i.AutoScaled = true
+	}
+
 	i.Name = i.Tag("Name")
 
 	if i.Tagged(reaperTag) {

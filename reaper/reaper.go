@@ -499,6 +499,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		}
 
 		if a.SchedulingEnabled() {
+			if log.Extras() {
+				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.ScaleDownSchedule(), a.ScaleUpSchedule())
+			}
 			schedule.AddFunc(a.ScaleDownSchedule(), a.ScaleDown)
 			schedule.AddFunc(a.ScaleUpSchedule(), a.ScaleUp)
 		}
@@ -542,6 +545,9 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		}
 
 		if i.SchedulingEnabled() {
+			if log.Extras() {
+				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.ScaleDownSchedule(), i.ScaleUpSchedule())
+			}
 			schedule.AddFunc(i.ScaleDownSchedule(), i.ScaleDown)
 			schedule.AddFunc(i.ScaleUpSchedule(), i.ScaleUp)
 		}

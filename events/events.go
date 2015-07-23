@@ -77,6 +77,7 @@ type EventReporter interface {
 	NewReapableEvent(r Reapable) error
 	NewBatchReapableEvent(rs []Reapable) error
 	SetDryRun(b bool)
+	Cleanup() error
 }
 
 // implements EventReporter but does nothing
@@ -90,21 +91,27 @@ func NewNoEventReporter() *NoEventReporter {
 	return &NoEventReporter{EventReporterConfig{Name: "NoEventReporter"}}
 }
 
-func (n *NoEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+func (*NoEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil
 }
-func (n *NoEventReporter) NewStatistic(name string, value float64, tags []string) error {
+func (*NoEventReporter) NewStatistic(name string, value float64, tags []string) error {
 	return nil
 }
-func (n *NoEventReporter) NewCountStatistic(name string, tags []string) error {
-	return nil
-}
-
-func (n *NoEventReporter) NewReapableEvent(r Reapable) error {
+func (*NoEventReporter) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 
-func (n *NoEventReporter) SetDryRun(b bool) {}
+func (*NoEventReporter) NewReapableEvent(r Reapable) error {
+	return nil
+}
+
+func (*NoEventReporter) NewBatchReapableEvent(rs []Reapable) error {
+	return nil
+}
+
+func (*NoEventReporter) SetDryRun(b bool) {}
+
+func (*NoEventReporter) Cleanup() error { return nil }
 
 // TODO: this is sorta redundant with triggers, won't ever activate
 type ErrorEventReporter struct {
@@ -115,20 +122,28 @@ func NewErrorEventReporter() *ErrorEventReporter {
 	return &ErrorEventReporter{EventReporterConfig{Name: "ErrorEventReporter"}}
 }
 
-func (e *ErrorEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+func (*ErrorEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return fmt.Errorf("ErrorEventReporter")
 }
 
-func (e *ErrorEventReporter) NewStatistic(name string, value float64, tags []string) error {
+func (*ErrorEventReporter) NewStatistic(name string, value float64, tags []string) error {
 	return fmt.Errorf("ErrorEventReporter")
 }
 
-func (e *ErrorEventReporter) NewCountStatistic(name string, tags []string) error {
+func (*ErrorEventReporter) NewCountStatistic(name string, tags []string) error {
 	return fmt.Errorf("ErrorEventReporter")
 }
 
-func (e *ErrorEventReporter) NewReapableEvent(r Reapable) error {
+func (*ErrorEventReporter) NewBatchReapableEvent(rs []Reapable) error {
 	return fmt.Errorf("ErrorEventReporter")
 }
 
-func (e *ErrorEventReporter) SetDryRun(b bool) {}
+func (*ErrorEventReporter) NewReapableEvent(r Reapable) error {
+	return fmt.Errorf("ErrorEventReporter")
+}
+
+func (*ErrorEventReporter) Cleanup() error {
+	return fmt.Errorf("ErrorEventReporter")
+}
+
+func (*ErrorEventReporter) SetDryRun(b bool) {}

@@ -25,13 +25,15 @@ func (n *InteractiveEvent) SetDryRun(b bool) {
 	n.Config.DryRun = b
 }
 
-func (n *InteractiveEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+func (*InteractiveEvent) Cleanup() error { return nil }
+
+func (*InteractiveEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil
 }
-func (n *InteractiveEvent) NewStatistic(name string, value float64, tags []string) error {
+func (*InteractiveEvent) NewStatistic(name string, value float64, tags []string) error {
 	return nil
 }
-func (n *InteractiveEvent) NewCountStatistic(name string, tags []string) error {
+func (*InteractiveEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {

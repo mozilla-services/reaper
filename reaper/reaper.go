@@ -65,6 +65,11 @@ func (r *Reaper) Start() {
 // Stop closes a Reaper's stop channel
 func (r *Reaper) Stop() {
 	close(r.stopCh)
+	for _, e := range *events {
+		if err := e.Cleanup(); err != nil {
+			log.Error(err.Error())
+		}
+	}
 }
 
 // unexported start is continuous loop that reaps every
@@ -210,51 +215,56 @@ func (r *Reaper) reap() {
 
 	// trigger batch events for each filtered owned resource in a goroutine
 	// for each owner in the owner map
-	for _, ownerMap := range filteredOwned {
-		// trigger a per owner batch event
-		for _, e := range *events {
-			if err := e.NewBatchReapableEvent(ownerMap); err != nil {
-				log.Error(err.Error())
+	go func() {
+		for _, ownerMap := range filteredOwned {
+			// trigger a per owner batch event
+			for _, e := range *events {
+				// using a goroutine makes interactive mode kinda useless
+				if err := e.NewBatchReapableEvent(ownerMap); err != nil {
+					log.Error(err.Error())
+				}
 			}
 		}
-	}
 
-	// trigger events for each filtered unowned resource in a goroutine
-	for _, r := range filteredUnowned {
-		for _, e := range *events {
-			if err := e.NewReapableEvent(r); err != nil {
-				log.Error(err.Error())
+		// trigger events for each filtered unowned resource in a goroutine
+		for _, r := range filteredUnowned {
+			for _, e := range *events {
+				if err := e.NewReapableEvent(r); err != nil {
+					log.Error(err.Error())
+				}
 			}
 		}
-	}
+	}()
 
 	// post statistics
-	for _, e := range *events {
-		for region, sum := range filteredInstanceSums {
-			err := e.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
-			if err != nil {
-				log.Error(fmt.Sprintf("%s", err.Error()))
+	go func() {
+		for _, e := range *events {
+			for region, sum := range filteredInstanceSums {
+				err := e.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
+			}
+			for region, sum := range filteredASGSums {
+				err := e.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
+			}
+			for region, sum := range filteredCloudformationSums {
+				err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
+			}
+			for region, sum := range filteredSecurityGroupSums {
+				err := e.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(fmt.Sprintf("%s", err.Error()))
+				}
 			}
 		}
-		for region, sum := range filteredASGSums {
-			err := e.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
-			if err != nil {
-				log.Error(fmt.Sprintf("%s", err.Error()))
-			}
-		}
-		for region, sum := range filteredCloudformationSums {
-			err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
-			if err != nil {
-				log.Error(fmt.Sprintf("%s", err.Error()))
-			}
-		}
-		for region, sum := range filteredSecurityGroupSums {
-			err := e.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region)})
-			if err != nil {
-				log.Error(fmt.Sprintf("%s", err.Error()))
-			}
-		}
-	}
+	}()
 }
 
 func getSecurityGroups() chan *reaperaws.SecurityGroup {
@@ -275,14 +285,16 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 		for region, sum := range regionSums {
 			log.Info(fmt.Sprintf("Found %d total SecurityGroups in %s", sum, region))
 		}
-		for _, e := range *events {
-			for region, regionSum := range regionSums {
-				err := e.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
-				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
+		go func() {
+			for _, e := range *events {
+				for region, regionSum := range regionSums {
+					err := e.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
+					if err != nil {
+						log.Error(fmt.Sprintf("%s", err.Error()))
+					}
 				}
 			}
-		}
+		}()
 		close(ch)
 	}()
 	return ch
@@ -326,29 +338,31 @@ func getInstances() chan *reaperaws.Instance {
 			log.Info(fmt.Sprintf("Found %d total Instances in %s", sum, region))
 		}
 
-		for _, e := range *events {
-			for region, regionMap := range instanceTypeSums {
-				for instanceType, instanceTypeSum := range regionMap {
-					if pricesMap != nil && config.PricesFile != "" {
-						price, ok := pricesMap[string(region)][instanceType]
-						if ok {
-							err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
-							if err != nil {
-								log.Error(fmt.Sprintf("%s", err.Error()))
-							}
-						} else {
-							// some instance types are priceless
-							log.Error(fmt.Sprintf("No price for %s", instanceType))
+		go func() {
+			for _, e := range *events {
+				for region, regionMap := range instanceTypeSums {
+					for instanceType, instanceTypeSum := range regionMap {
+						if pricesMap != nil && config.PricesFile != "" {
+							price, ok := pricesMap[string(region)][instanceType]
+							if ok {
+								err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+								if err != nil {
+									log.Error(fmt.Sprintf("%s", err.Error()))
+								}
+							} else {
+								// some instance types are priceless
+								log.Error(fmt.Sprintf("No price for %s", instanceType))
 
+							}
 						}
-					}
-					err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
-					if err != nil {
-						log.Error(fmt.Sprintf("%s", err.Error()))
+						err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+						if err != nil {
+							log.Error(fmt.Sprintf("%s", err.Error()))
+						}
 					}
 				}
 			}
-		}
+		}()
 		close(ch)
 	}()
 	return ch
@@ -372,14 +386,16 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 		for region, sum := range regionSums {
 			log.Info(fmt.Sprintf("Found %d total Cloudformation Stacks in %s", sum, region))
 		}
-		for _, e := range *events {
-			for region, regionSum := range regionSums {
-				err := e.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
-				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
+		go func() {
+			for _, e := range *events {
+				for region, regionSum := range regionSums {
+					err := e.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
+					if err != nil {
+						log.Error(fmt.Sprintf("%s", err.Error()))
+					}
 				}
 			}
-		}
+		}()
 		close(ch)
 	}()
 	return ch
@@ -412,23 +428,25 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		for region, sum := range regionSums {
 			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
 		}
-		for _, e := range *events {
-			for region, regionMap := range asgSizeSums {
-				for asgSize, asgSizeSum := range regionMap {
-					err := e.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize)})
+		go func() {
+			for _, e := range *events {
+				for region, regionMap := range asgSizeSums {
+					for asgSize, asgSizeSum := range regionMap {
+						err := e.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize)})
+						if err != nil {
+							log.Error(fmt.Sprintf("%s", err.Error()))
+						}
+					}
+				}
+
+				for region, regionSum := range regionSums {
+					err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
 					if err != nil {
 						log.Error(fmt.Sprintf("%s", err.Error()))
 					}
 				}
 			}
-
-			for region, regionSum := range regionSums {
-				err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region)})
-				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
-				}
-			}
-		}
+		}()
 		close(ch)
 	}()
 	return ch

@@ -55,7 +55,7 @@ func init() {
 
 	// the erroreventreporter always returns errors
 	// use this to debug
-	// Events = append(Events, &reaperevents.ErrorEventReporter{})
+	// events = append(events, &reaperevents.ErrorEventReporter{})
 
 	// if Datadog EventReporter is enabled
 	if config.Events.DataDog.Enabled {

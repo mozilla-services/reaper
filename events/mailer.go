@@ -94,14 +94,16 @@ func NewMailer(c *SMTPConfig) *Mailer {
 	return &Mailer{c}
 }
 
+func (*Mailer) Cleanup() error { return nil }
+
 // methods to conform to EventReporter interface
-func (m *Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+func (*Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil
 }
-func (m *Mailer) NewStatistic(name string, value float64, tags []string) error {
+func (*Mailer) NewStatistic(name string, value float64, tags []string) error {
 	return nil
 }
-func (m *Mailer) NewCountStatistic(name string, tags []string) error {
+func (*Mailer) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 

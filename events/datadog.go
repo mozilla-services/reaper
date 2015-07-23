@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/PagerDuty/godspeed"
 
@@ -22,6 +23,7 @@ type DataDogConfig struct {
 type DataDog struct {
 	Config    *DataDogConfig
 	_godspeed *godspeed.Godspeed
+	sync.Once
 }
 
 func NewDataDog(c *DataDogConfig) *DataDog {
@@ -33,26 +35,37 @@ func (d *DataDog) SetDryRun(b bool) {
 	d.Config.DryRun = b
 }
 
-// TODO: make this async?
-// TODO: don't recreate godspeed
+func (e *DataDog) Cleanup() error {
+	g, err := e.godspeed()
+	if err != nil {
+		return err
+	}
+	err = g.Conn.Close()
+	return err
+}
+
+func (d *DataDog) Do() {
+	var g *godspeed.Godspeed
+	var err error
+	// if config options not set, use defaults
+	if d.Config.Host == "" || d.Config.Port == "" {
+		g, err = godspeed.NewDefault()
+	} else {
+		port, err := strconv.Atoi(d.Config.Port)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		g, err = godspeed.New(d.Config.Host, port, false)
+	}
+	if err != nil {
+		log.Error(err.Error())
+	}
+	d._godspeed = g
+}
+
 func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
 	if d._godspeed == nil {
-		var g *godspeed.Godspeed
-		var err error
-		// if config options not set, use defaults
-		if d.Config.Host == "" || d.Config.Port == "" {
-			g, err = godspeed.NewDefault()
-		} else {
-			port, err := strconv.Atoi(d.Config.Port)
-			if err != nil {
-				return nil, err
-			}
-			g, err = godspeed.New(d.Config.Host, port, false)
-		}
-		if err != nil {
-			return nil, err
-		}
-		d._godspeed = g
+		d.Do()
 	}
 	return d._godspeed, nil
 }
@@ -70,11 +83,9 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 	if err != nil {
 		return err
 	}
-	// TODO: fix?
-	// defer g.Conn.Close()
 	err = g.Event(title, text, fields, tags)
 	if err != nil {
-		return fmt.Errorf("Error reporting Godspeed event %s: %s", title, err)
+		return err
 	}
 	return nil
 }
@@ -92,14 +103,8 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 	if err != nil {
 		return err
 	}
-	// TODO: fix?
-	// defer g.Conn.Close()
 	err = g.Gauge(name, value, tags)
-	if err != nil {
-		return fmt.Errorf("Error reporting Godspeed statistic %s: %s", name, err)
-	}
-
-	return nil
+	return err
 }
 
 // NewCountStatistic reports an Incr to DataDog
@@ -115,27 +120,19 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 	if err != nil {
 		return err
 	}
-	// TODO: fix?
-	// defer g.Conn.Close()
 	err = g.Incr(name, tags)
-	if err != nil {
-		return fmt.Errorf("Error reporting Godspeed count statistic %s: %s", name, err)
-	}
-	return nil
+	return err
 }
 
 // NewReapableEvent is shorthand for a NewEvent about a reapable resource
 func (d *DataDog) NewReapableEvent(r Reapable) error {
 	if d.Config.ShouldTriggerFor(r) {
 		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
-		if err != nil {
-			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
-		}
+		return err
 	}
 	return nil
 }
 
-// TODO: make this based on size rather than number of events
 func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 	var triggering []Reapable
 	for _, r := range rs {
@@ -143,32 +140,42 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
 			triggering = append(triggering, r)
 		}
 	}
+	// no events triggering
 	if len(triggering) == 0 {
 		return nil
 	}
-	log.Info("Sending batch DataDog events for %d reapables.", len(triggering))
-	// j keeps track of which reapable
-	j := 0
-	for j < len(triggering) {
-		buffer := *bytes.NewBuffer(nil)
-		// i keeps track of how many reapables
-		// have been written to a buffer
-		for j < len(triggering) {
-			buffer.ReadFrom(triggering[j].ReapableEventTextShort())
-			buffer.WriteString("\n")
 
-			// when we've written 3 reapables
-			// move on to the next buffer
-			if (j%2 == 0 && j != 0) || j == len(triggering)-1 {
-				// send events in this buffer
-				err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+	log.Info("Sending batch DataDog events for %d reapables.", len(triggering))
+	// this is a bin packing problem
+	// we ignore its complexity because we don't care (that much)
+	for j := 0; j < len(triggering); {
+		var written int64
+		buffer := *bytes.NewBuffer(nil)
+		for moveOn := false; j < len(triggering) && !moveOn; {
+			text := triggering[j].ReapableEventTextShort()
+			size := int64(text.Len())
+
+			// if there is room
+			if size+written < 4500 {
+				// write it + a newline
+				n, err := buffer.ReadFrom(text)
+				// not counting this length, but we have padding
+				_, err = buffer.WriteString("\n")
 				if err != nil {
 					return err
 				}
+				written += n
+				// increment counter of written reapables
 				j++
-				break
+			} else {
+				// if we've written enough to the buffer, break the loop
+				moveOn = true
 			}
-			j++
+		}
+		// send events in this buffer
+		err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+		if err != nil {
+			return err
 		}
 	}
 

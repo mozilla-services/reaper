@@ -20,18 +20,20 @@ func (e *ReaperEvent) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
+func (*ReaperEvent) Cleanup() error { return nil }
+
 func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 	c.Name = "ReaperEvent"
 	return &ReaperEvent{c}
 }
 
-func (e *ReaperEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+func (*ReaperEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	return nil
 }
-func (e *ReaperEvent) NewStatistic(name string, value float64, tags []string) error {
+func (*ReaperEvent) NewStatistic(name string, value float64, tags []string) error {
 	return nil
 }
-func (e *ReaperEvent) NewCountStatistic(name string, tags []string) error {
+func (*ReaperEvent) NewCountStatistic(name string, tags []string) error {
 	return nil
 }
 func (e *ReaperEvent) NewReapableEvent(r Reapable) error {

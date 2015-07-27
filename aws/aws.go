@@ -20,7 +20,7 @@ const (
 	reaperTag           = "REAPER"
 	reaperTagSeparator  = "|"
 	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
-	scalerTag           = "Reaper-Autoscaler"
+	scalerTag           = "REAPER_AUTOSCALER"
 )
 
 var (

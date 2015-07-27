@@ -18,8 +18,8 @@ type Reapable interface {
 	reapable.Reapable
 	ReapableEventText() *bytes.Buffer
 	ReapableEventTextShort() *bytes.Buffer
-	ReapableEventEmail() (mail.Address, string, string, error)
-	ReapableEventEmailShort() (mail.Address, string, error)
+	ReapableEventEmail() (mail.Address, string, *bytes.Buffer, error)
+	ReapableEventEmailShort() (mail.Address, *bytes.Buffer, error)
 }
 
 type EventReporterConfig struct {

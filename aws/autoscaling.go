@@ -36,11 +36,15 @@ func (s *AutoScalingGroupScalingSchedule) setSchedule(tag string) {
 	} else {
 		prev, err := strconv.ParseInt(splitTag[2], 0, 64)
 		if err != nil {
+			log.Error("Invalid Autoscaler Tag format %s", tag)
 			log.Error(err.Error())
+			return
 		}
 		min, err := strconv.ParseInt(splitTag[3], 0, 64)
 		if err != nil {
+			log.Error("Invalid Autoscaler Tag format %s", tag)
 			log.Error(err.Error())
+			return
 		}
 		s.scaleDownString = splitTag[0]
 		s.scaleUpString = splitTag[1]

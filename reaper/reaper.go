@@ -14,6 +14,7 @@ import (
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 	"github.com/mozilla-services/reaper/state"
+	"github.com/robfig/cron"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 	savedstates map[reapable.Region]map[reapable.ID]*state.State
 	config      *Config
 	events      *[]reaperevents.EventReporter
+	schedule    *cron.Cron
 )
 
 func SetConfig(c *Config) {
@@ -47,60 +49,54 @@ func Ready() {
 
 // Reaper finds resources and deals with them
 type Reaper struct {
-	stopCh chan bool
+	*cron.Cron
 }
 
 // NewReaper is a Reaper constructor shorthand
 func NewReaper() *Reaper {
 	return &Reaper{
-		stopCh: make(chan bool),
+		Cron: cron.New(),
 	}
 }
 
-// Start begins Reaper execution in a new goroutine
+// Start begins Reaper's schedule
 func (r *Reaper) Start() {
-	go r.start()
+	// adding as a job runs r.Run() every interval
+	r.Cron.Schedule(cron.Every(config.Notifications.Interval.Duration), r)
+	r.Cron.Start()
+
+	// initial run
+	go r.Run()
+
+	// if loading from saved state file (overriding AWS states)
+	if config.LoadFromStateFile {
+		r.LoadState(config.StateFile)
+	}
 }
 
-// Stop closes a Reaper's stop channel
+// Stop stops Reaper's schedule
 func (r *Reaper) Stop() {
-	close(r.stopCh)
+	log.Debug("Stopping Reaper")
 	for _, e := range *events {
 		if err := e.Cleanup(); err != nil {
 			log.Error(err.Error())
 		}
 	}
+	r.Cron.Stop()
 }
 
-// unexported start is continuous loop that reaps every
-// time interval
-func (r *Reaper) start() {
-	// if loading from saved state file (overriding AWS states)
-	if config.LoadFromStateFile {
-		r.LoadState(config.StateFile)
-	}
-
-	// make a list of all eligible instances
-	for {
-		r.Once()
-		select {
-		case <-time.After(config.Notifications.Interval.Duration):
-		case <-r.stopCh: // time to exit!
-			log.Debug("Stopping reaper on stop channel message")
-			return
-		}
-	}
-}
-
-// Once is run once every time interval by start
-// it is intended to handle all reaping logic
-func (r *Reaper) Once() {
+// Run handles all reaping logic
+// conforms to the cron.Job interface
+func (r *Reaper) Run() {
+	schedule = cron.New()
+	schedule.Start()
 	r.reap()
 
 	if config.StateFile != "" {
 		r.SaveState(config.StateFile)
 	}
 
+	// this is no longer true, but is roughly accurate
 	log.Notice("Sleeping for %s", config.Notifications.Interval.Duration.String())
 }
 
@@ -504,6 +500,14 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			a.Dependency = true
 		}
 
+		if a.SchedulingEnabled() {
+			if log.Extras() {
+				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.ScaleDownSchedule(), a.ScaleUpSchedule())
+			}
+			schedule.AddFunc(a.ScaleDownSchedule(), a.ScaleDown)
+			schedule.AddFunc(a.ScaleUpSchedule(), a.ScaleUp)
+		}
+
 		// identify instances in an ASG
 		instanceIDsInASGs := reaperaws.ASGInstanceIDs(a)
 		for region := range instanceIDsInASGs {
@@ -541,6 +545,15 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		if instancesInASGs[i.Region][i.ID] {
 			i.AutoScaled = true
 		}
+
+		if i.SchedulingEnabled() {
+			if log.Extras() {
+				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.ScaleDownSchedule(), i.ScaleUpSchedule())
+			}
+			schedule.AddFunc(i.ScaleDownSchedule(), i.ScaleDown)
+			schedule.AddFunc(i.ScaleUpSchedule(), i.ScaleUp)
+		}
+
 		// group instances by owner
 		if config.Instances.Enabled {
 			if i.Owner() != nil {

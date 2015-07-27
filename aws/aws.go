@@ -20,12 +20,21 @@ const (
 	reaperTag           = "REAPER"
 	reaperTagSeparator  = "|"
 	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
+	scalerTag           = "REAPER_AUTOSCALER"
 )
 
 var (
 	config  *AWSConfig
 	timeout = time.Tick(100 * time.Millisecond)
 )
+
+type Scaler interface {
+	ScaleDownSchedule() string
+	ScaleUpSchedule() string
+	ScaleDown()
+	ScaleUp()
+	SchedulingEnabled() bool
+}
 
 type AWSConfig struct {
 	Notifications    events.NotificationsConfig

@@ -115,8 +115,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		case token.J_DELAY:
 			log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
 			s := r.ReaperState()
-			ok, err := r.Save(
-				state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
+			ok, err := r.Save(state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
@@ -168,6 +167,13 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			if !ok {
 				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("ForceStop failed for %s.", r.ReapableDescriptionTiny()))
 				return
+			}
+		case token.J_SCHEDULE:
+			log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
+			if scaler, ok := r.(reaperaws.Scaler); ok {
+				scaler.SetScaleDownString(job.ScaleDownString)
+				scaler.SetScaleUpString(job.ScaleUpString)
+				scaler.SaveSchedule()
 			}
 		default:
 			log.Error("Unrecognized job token received.")

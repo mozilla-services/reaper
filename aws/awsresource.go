@@ -220,15 +220,15 @@ func UntagReaperState(region, id string) (bool, error) {
 	return true, err
 }
 
-func TagReaperState(region, id string, newState *state.State) (bool, error) {
+func tag(region, id, key, value string) (bool, error) {
 	api := ec2.New(&aws.Config{Region: region})
 	createreq := &ec2.CreateTagsInput{
 		DryRun:    aws.Boolean(false),
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
-				Key:   aws.String(reaperTag),
-				Value: aws.String(newState.String()),
+				Key:   aws.String(key),
+				Value: aws.String(value),
 			},
 		},
 	}
@@ -247,16 +247,20 @@ func TagReaperState(region, id string, newState *state.State) (bool, error) {
 			},
 			&ec2.Filter{
 				Name:   aws.String("key"),
-				Values: []*string{aws.String(reaperTag)},
+				Values: []*string{aws.String(key)},
 			},
 		},
 	}
 
 	output, err := api.DescribeTags(describereq)
 
-	if *output.Tags[0].Value == newState.String() {
+	if *output.Tags[0].Value == value {
 		return true, err
 	}
 
 	return false, err
+}
+
+func TagReaperState(region, id string, newState *state.State) (bool, error) {
+	return tag(region, id, reaperTag, newState.String())
 }

@@ -203,6 +203,18 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 }
 
 // Scaler interface
+func (i *Instance) SetScaleDownString(s string) {
+	i.Scheduling.scaleDownString = s
+}
+
+func (i *Instance) SetScaleUpString(s string) {
+	i.Scheduling.scaleUpString = s
+}
+
+func (i *Instance) SaveSchedule() {
+	tag(i.Region.String(), i.ID.String(), scalerTag, i.Scheduling.scheduleTag())
+}
+
 func (i *Instance) SchedulingEnabled() bool {
 	return i.Scheduling.enabled
 }

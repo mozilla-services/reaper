@@ -54,7 +54,19 @@ func (s *AutoScalingGroupScalingSchedule) setSchedule(tag string) {
 	}
 }
 
-func (s AutoScalingGroupScalingSchedule) scheduleTag() string {
+func (a *AutoScalingGroup) SaveSchedule() {
+	tagAutoScalingGroup(a.Region, a.ID, scalerTag, a.Scheduling.scheduleTag())
+}
+
+func (a *AutoScalingGroup) SetScaleDownString(s string) {
+	a.Scheduling.scaleDownString = s
+}
+
+func (a *AutoScalingGroup) SetScaleUpString(s string) {
+	a.Scheduling.scaleUpString = s
+}
+
+func (s *AutoScalingGroupScalingSchedule) scheduleTag() string {
 	return strings.Join([]string{
 		// keep the same schedules
 		s.scaleDownString,

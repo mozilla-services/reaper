@@ -21,6 +21,10 @@ const (
 	reaperTagSeparator  = "|"
 	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
 	scalerTag           = "REAPER_AUTOSCALER"
+
+	// default schedule options
+	scaleDownBusinessHours = "0 30 18 * * 1-5"
+	scaleUpBusinessHours   = "0 30 7 * * 1-5"
 )
 
 var (
@@ -29,11 +33,9 @@ var (
 )
 
 type Scaler interface {
-	ScaleDownSchedule() string
-	ScaleUpSchedule() string
-	ScaleDown()
-	ScaleUp()
-	SchedulingEnabled() bool
+	SetScaleDownString(s string)
+	SetScaleUpString(s string)
+	SaveSchedule()
 }
 
 type AWSConfig struct {

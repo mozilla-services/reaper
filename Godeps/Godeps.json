@@ -70,8 +70,18 @@
 			"Rev": "5fa0a7e63b3d9f094d7e8549ce483a190587398f"
 		},
 		{
+			"ImportPath": "github.com/jordan-wright/email",
+			"Comment": "v1.0",
+			"Rev": "9c459b245c20bee2cc7adbd1e27e4e716f98ad88"
+		},
+		{
 			"ImportPath": "github.com/op/go-logging",
 			"Rev": "e8d5414f0947014548c2334044a0fac13187dfee"
+		},
+		{
+			"ImportPath": "github.com/robfig/cron",
+			"Comment": "v1-2-g67823cd",
+			"Rev": "67823cd24dece1b04cced3a0a0b3ca2bc84d875e"
 		},
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",

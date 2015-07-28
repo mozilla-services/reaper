@@ -39,8 +39,14 @@ type State struct {
 	reaperTagTimeFormat string
 	reaperTagSeparator  string
 
+	Updated bool
+
 	// State must be maintained until this time
 	Until time.Time
+}
+
+func (s *State) SetUpdated(b bool) {
+	s.Updated = b
 }
 
 func (s *State) String() string {

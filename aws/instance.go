@@ -411,6 +411,10 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 		if b, err := filter.BoolValue(0); err == nil && i.Dependency == b {
 			matched = true
 		}
+	case "NameContains":
+		if strings.Contains(i.Name, filter.Arguments[0]) {
+			matched = true
+		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
 	}

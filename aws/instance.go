@@ -166,39 +166,70 @@ func (i *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Bu
 }
 
 type InstanceEventData struct {
-	Config        *AWSConfig
-	Instance      *Instance
-	TerminateLink string
-	StopLink      string
-	WhitelistLink string
-	IgnoreLink1   string
-	IgnoreLink3   string
-	IgnoreLink7   string
+	Config                           *AWSConfig
+	Instance                         *Instance
+	TerminateLink                    string
+	StopLink                         string
+	WhitelistLink                    string
+	IgnoreLink1                      string
+	IgnoreLink3                      string
+	IgnoreLink7                      string
+	SchedulePacificBusinessHoursLink string
+	ScheduleEasternBusinessHoursLink string
+	ScheduleCESTBusinessHoursLink    string
 }
 
 func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 	ignore1, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
 	ignore3, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
 	ignore7, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
 	terminate, err := MakeTerminateLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	if err != nil {
+		return nil, err
+	}
 	stop, err := MakeStopLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	if err != nil {
+		return nil, err
+	}
 	whitelist, err := MakeWhitelistLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-
-	// return the err
+	if err != nil {
+		return nil, err
+	}
+	schedulePacific, err := MakeScheduleLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
+	if err != nil {
+		return nil, err
+	}
+	scheduleEastern, err := MakeScheduleLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
+	if err != nil {
+		return nil, err
+	}
+	scheduleCEST, err := MakeScheduleLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}
 
 	// return the data
 	return &InstanceEventData{
-		Config:        config,
-		Instance:      i,
-		TerminateLink: terminate,
-		StopLink:      stop,
-		WhitelistLink: whitelist,
-		IgnoreLink1:   ignore1,
-		IgnoreLink3:   ignore3,
-		IgnoreLink7:   ignore7,
+		Config:                           config,
+		Instance:                         i,
+		TerminateLink:                    terminate,
+		StopLink:                         stop,
+		WhitelistLink:                    whitelist,
+		IgnoreLink1:                      ignore1,
+		IgnoreLink3:                      ignore3,
+		IgnoreLink7:                      ignore7,
+		SchedulePacificBusinessHoursLink: schedulePacific,
+		ScheduleEasternBusinessHoursLink: scheduleEastern,
+		ScheduleCESTBusinessHoursLink:    scheduleCEST,
 	}, nil
 }
 
@@ -264,6 +295,9 @@ const reapableInstanceEventHTML = `
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to start and stop with Pacific business hours</a></li>
+			<li><a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to start and stop with Eastern business hours</a></li>
+			<li><a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to start and stop with CEST business hours</a></li>
 		</ul>
 	</p>
 
@@ -283,8 +317,12 @@ const reapableInstanceEventHTMLShort = `
 		<a href="{{ .StopLink }}">Stop</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, 
+		<a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to start and stop with Pacific business hours</a> 
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to start and stop with Eastern business hours</a> 
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to start and stop with CEST business hours</a> or 
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
+
 	</p>
 </body>
 </html>
@@ -293,7 +331,8 @@ const reapableInstanceEventHTMLShort = `
 const reapableInstanceEventTextShort = `%%%
 Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
 Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIPAddress}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), [Terminate]({{ .TerminateLink }}) this instance.
+[Schedule (Pacific Business Hours)]({{ .SchedulePacificBusinessHoursLink}}), [Schedule (Eastern Business Hours)]({{ .ScheduleEasternBusinessHoursLink}}), [Schedule (CEST Business Hours)]({{ .ScheduleCESTBusinessHoursLink}})\n
+[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }})  this instance.
 %%%`
 
 const reapableInstanceEventText = `%%%
@@ -303,6 +342,7 @@ State: {{ .Instance.State.Name}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
+Schedule [Pacific Business Hours]({{ .SchedulePacificBusinessHoursLink}}), [Eastern Business Hours]({{ .ScheduleEasternBusinessHoursLink}}), [CEST Business Hours]({{ .ScheduleCESTBusinessHoursLink}}) this instance.
 [Whitelist]({{ .WhitelistLink }}) this instance.
 [Stop]({{ .StopLink }}) this instance.
 [Terminate]({{ .TerminateLink }}) this instance.

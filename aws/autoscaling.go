@@ -182,40 +182,75 @@ func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *
 }
 
 type AutoScalingGroupEventData struct {
-	Config           *AWSConfig
-	AutoScalingGroup *AutoScalingGroup
-	TerminateLink    string
-	StopLink         string
-	ForceStopLink    string
-	WhitelistLink    string
-	IgnoreLink1      string
-	IgnoreLink3      string
-	IgnoreLink7      string
+	Config                           *AWSConfig
+	AutoScalingGroup                 *AutoScalingGroup
+	TerminateLink                    string
+	StopLink                         string
+	ForceStopLink                    string
+	WhitelistLink                    string
+	IgnoreLink1                      string
+	IgnoreLink3                      string
+	IgnoreLink7                      string
+	SchedulePacificBusinessHoursLink string
+	ScheduleEasternBusinessHoursLink string
+	ScheduleCESTBusinessHoursLink    string
 }
 
 func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error) {
 	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
 	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
 	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
 	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	if err != nil {
+		return nil, err
+	}
 	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	if err != nil {
+		return nil, err
+	}
 	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	if err != nil {
+		return nil, err
+	}
 	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-
+	if err != nil {
+		return nil, err
+	}
+	schedulePacific, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
+	if err != nil {
+		return nil, err
+	}
+	scheduleEastern, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
+	if err != nil {
+		return nil, err
+	}
+	scheduleCEST, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AutoScalingGroupEventData{
-		Config:           config,
-		AutoScalingGroup: a,
-		TerminateLink:    terminate,
-		StopLink:         stop,
-		ForceStopLink:    forcestop,
-		WhitelistLink:    whitelist,
-		IgnoreLink1:      ignore1,
-		IgnoreLink3:      ignore3,
-		IgnoreLink7:      ignore7,
+		Config:                           config,
+		AutoScalingGroup:                 a,
+		TerminateLink:                    terminate,
+		StopLink:                         stop,
+		ForceStopLink:                    forcestop,
+		WhitelistLink:                    whitelist,
+		IgnoreLink1:                      ignore1,
+		IgnoreLink3:                      ignore3,
+		IgnoreLink7:                      ignore7,
+		SchedulePacificBusinessHoursLink: schedulePacific,
+		ScheduleEasternBusinessHoursLink: scheduleEastern,
+		ScheduleCESTBusinessHoursLink:    scheduleCEST,
 	}, nil
 }
 
@@ -237,6 +272,9 @@ const reapableASGEventHTML = `
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to scale up and down with Pacific business hours</a></li>
+			<li><a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to scale up and down with Eastern business hours</a></li>
+			<li><a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to scale up and down with CEST business hours</a></li>
 		</ul>
 	</p>
 
@@ -256,7 +294,10 @@ const reapableASGEventHTMLShort = `
 		<a href="{{ .StopLink }}">Stop</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, 
+		<a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to scale up and down with Pacific business hours</a> 
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to scale up and down with Eastern business hours</a> 
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to scale up and down with CEST business hours</a> or 
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -265,6 +306,7 @@ const reapableASGEventHTMLShort = `
 
 const reapableASGEventTextShort = `%%%
 AutoScalingGroup [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).{{if .AutoScalingGroup.Owned}} Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
+[Schedule (Pacific Business Hours)]({{ .SchedulePacificBusinessHoursLink}}), [Schedule (Eastern Business Hours)]({{ .ScheduleEasternBusinessHoursLink}}), [Schedule (CEST Business Hours)]({{ .ScheduleCESTBusinessHoursLink}})\n
 [Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
@@ -273,6 +315,7 @@ Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScaling
 {{if .AutoScalingGroup.Owned}}Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
 {{ if .AutoScalingGroup.AWSConsoleURL}}{{.AutoScalingGroup.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.AutoScalingGroup.AWSConsoleURL}})\n
+Schedule [Pacific Business Hours]({{ .SchedulePacificBusinessHoursLink}}), [Eastern Business Hours]({{ .ScheduleEasternBusinessHoursLink}}), [CEST Business Hours]({{ .ScheduleCESTBusinessHoursLink}}) this AutoScalingGroup.
 [Whitelist]({{ .WhitelistLink }}) this AutoScalingGroup.
 [Scale to 0]({{ .StopLink }}) this AutoScalingGroup.
 [ForceScale to 0]({{ .ForceStopLink }}) this AutoScalingGroup.

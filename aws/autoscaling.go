@@ -290,14 +290,14 @@ const reapableASGEventHTMLShort = `
 <body>
 	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }}</a> in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
 		<br />
+		Schedule it to scale up and down with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>, 
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or 
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours, 
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
 		<a href="{{ .StopLink }}">Stop</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
 		<a href="{{ .IgnoreLink7}}"> 7 days</a>, 
-		<a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to scale up and down with Pacific business hours</a> 
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to scale up and down with Eastern business hours</a> 
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to scale up and down with CEST business hours</a> or 
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -306,7 +306,7 @@ const reapableASGEventHTMLShort = `
 
 const reapableASGEventTextShort = `%%%
 AutoScalingGroup [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).{{if .AutoScalingGroup.Owned}} Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
-[Schedule (Pacific Business Hours)]({{ .SchedulePacificBusinessHoursLink}}), [Schedule (Eastern Business Hours)]({{ .ScheduleEasternBusinessHoursLink}}), [Schedule (CEST Business Hours)]({{ .ScheduleCESTBusinessHoursLink}})\n
+Schedule this AutoScalingGroup to scale up and down with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
@@ -315,7 +315,7 @@ Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScaling
 {{if .AutoScalingGroup.Owned}}Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
 {{ if .AutoScalingGroup.AWSConsoleURL}}{{.AutoScalingGroup.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.AutoScalingGroup.AWSConsoleURL}})\n
-Schedule [Pacific Business Hours]({{ .SchedulePacificBusinessHoursLink}}), [Eastern Business Hours]({{ .ScheduleEasternBusinessHoursLink}}), [CEST Business Hours]({{ .ScheduleCESTBusinessHoursLink}}) this AutoScalingGroup.
+Schedule this AutoScalingGroup to scale up and down with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}) this AutoScalingGroup.
 [Scale to 0]({{ .StopLink }}) this AutoScalingGroup.
 [ForceScale to 0]({{ .ForceStopLink }}) this AutoScalingGroup.

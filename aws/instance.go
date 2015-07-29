@@ -313,16 +313,15 @@ const reapableInstanceEventHTMLShort = `
 <body>
 	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
 		<br />
+		Schedule it to start and stop with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>, 
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or 
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours, 
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
 		<a href="{{ .StopLink }}">Stop</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, 
-		<a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to start and stop with Pacific business hours</a> 
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to start and stop with Eastern business hours</a> 
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to start and stop with CEST business hours</a> or 
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
-
 	</p>
 </body>
 </html>
@@ -331,8 +330,8 @@ const reapableInstanceEventHTMLShort = `
 const reapableInstanceEventTextShort = `%%%
 Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
 Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIPAddress}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
-[Schedule (Pacific Business Hours)]({{ .SchedulePacificBusinessHoursLink}}), [Schedule (Eastern Business Hours)]({{ .ScheduleEasternBusinessHoursLink}}), [Schedule (CEST Business Hours)]({{ .ScheduleCESTBusinessHoursLink}})\n
-[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }})  this instance.
+Schedule this instance to stop and start with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
+[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this instance.
 %%%`
 
 const reapableInstanceEventText = `%%%
@@ -342,8 +341,8 @@ State: {{ .Instance.State.Name}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIPAddress}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
-Schedule [Pacific Business Hours]({{ .SchedulePacificBusinessHoursLink}}), [Eastern Business Hours]({{ .ScheduleEasternBusinessHoursLink}}), [CEST Business Hours]({{ .ScheduleCESTBusinessHoursLink}}) this instance.
-[Whitelist]({{ .WhitelistLink }}) this instance.
+Schedule this instance to start and stop with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
+[Whitelist]({{ .WhitelistLink }}).
 [Stop]({{ .StopLink }}) this instance.
 [Terminate]({{ .TerminateLink }}) this instance.
 %%%`

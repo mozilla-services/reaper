@@ -169,7 +169,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 		case token.J_SCHEDULE:
-			log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
+			log.Debug("Schedule request received for %s in region %s", job.ID, job.Region)
 			if scaler, ok := r.(reaperaws.Scaler); ok {
 				scaler.SetScaleDownString(job.ScaleDownString)
 				scaler.SetScaleUpString(job.ScaleUpString)

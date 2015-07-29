@@ -10,9 +10,20 @@ import (
 	"github.com/mozilla-services/reaper/token"
 )
 
+func MakeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL, scaleDownSchedule, scaleUpSchedule string) (string, error) {
+	sched, err := token.Tokenize(tokenSecret,
+		token.NewScheduleJob(region.String(), id.String(), scaleDownSchedule, scaleUpSchedule))
+
+	if err != nil {
+		return "", err
+	}
+
+	return makeURL(apiURL, "schedule", sched), nil
+}
+
 func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	term, err := token.Tokenize(tokenSecret,
-		token.NewTerminateJob(string(region), string(id)))
+		token.NewTerminateJob(id.String(), id.String()))
 
 	if err != nil {
 		return "", err
@@ -24,7 +35,7 @@ func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string,
 	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
-		token.NewDelayJob(string(region), string(id),
+		token.NewDelayJob(id.String(), id.String(),
 			duration))
 
 	if err != nil {
@@ -38,7 +49,7 @@ func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL 
 
 func MakeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	whitelist, err := token.Tokenize(tokenSecret,
-		token.NewWhitelistJob(string(region), string(id)))
+		token.NewWhitelistJob(region.String(), id.String()))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error creating whitelist link: %s", err))
 		return "", err
@@ -49,7 +60,7 @@ func MakeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 
 func MakeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
-		token.NewStopJob(string(region), string(id)))
+		token.NewStopJob(region.String(), id.String()))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error creating ScaleToZero link: %s", err))
 		return "", err
@@ -60,7 +71,7 @@ func MakeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL st
 
 func MakeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
-		token.NewForceStopJob(string(region), string(id)))
+		token.NewForceStopJob(region.String(), id.String()))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error creating ScaleToZero link: %s", err))
 		return "", err

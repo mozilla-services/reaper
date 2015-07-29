@@ -52,7 +52,7 @@ func (s *SMTPConfig) String() string {
 }
 func (s *SMTPConfig) Addr() string {
 	if s.Port == 0 {
-		// friends don't let friend's smtp over port 25
+		// friends don't let friends smtp over port 25
 		return fmt.Sprintf("%s:%d", s.Host, 587)
 	}
 	// default

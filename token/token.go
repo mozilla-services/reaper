@@ -35,15 +35,18 @@ const (
 	J_WHITELIST
 	J_STOP
 	J_FORCESTOP
+	J_SCHEDULE
 )
 
 // Not very scalable but good enough for our requirements
 type JobToken struct {
-	Action      Type
-	ID          string
-	Region      string
-	IgnoreUntil time.Duration
-	ValIDUntil  time.Time
+	Action          Type
+	ID              string
+	Region          string
+	IgnoreUntil     time.Duration
+	ValidUntil      time.Time
+	ScaleDownString string
+	ScaleUpString   string
 }
 
 func (j *JobToken) JSON() []byte {
@@ -55,11 +58,22 @@ func (j *JobToken) Equal(j2 *JobToken) bool {
 
 	return j.Action != j2.Action ||
 		j.ID != j2.ID ||
-		j.ValIDUntil.Equal(j2.ValIDUntil)
+		j.ValidUntil.Equal(j2.ValidUntil)
 }
 
 func (j *JobToken) Expired() bool {
-	return j.ValIDUntil.Before(time.Now())
+	return j.ValidUntil.Before(time.Now())
+}
+
+func NewScheduleJob(region, ID, scaleDownSchedule, scaleUpSchedule string) *JobToken {
+	return &JobToken{
+		Action:          J_SCHEDULE,
+		ID:              ID,
+		Region:          region,
+		ScaleDownString: scaleDownSchedule,
+		ScaleUpString:   scaleUpSchedule,
+		ValidUntil:      time.Now().Add(tokenDuration),
+	}
 }
 
 func NewDelayJob(region, ID string, until time.Duration) *JobToken {
@@ -68,7 +82,7 @@ func NewDelayJob(region, ID string, until time.Duration) *JobToken {
 		ID:          ID,
 		Region:      region,
 		IgnoreUntil: until,
-		ValIDUntil:  time.Now().Add(tokenDuration),
+		ValidUntil:  time.Now().Add(tokenDuration),
 	}
 }
 
@@ -77,7 +91,7 @@ func NewTerminateJob(region, ID string) *JobToken {
 		Action:     J_TERMINATE,
 		ID:         ID,
 		Region:     region,
-		ValIDUntil: time.Now().Add(tokenDuration),
+		ValidUntil: time.Now().Add(tokenDuration),
 	}
 }
 
@@ -86,7 +100,7 @@ func NewWhitelistJob(region, ID string) *JobToken {
 		Action:     J_WHITELIST,
 		ID:         ID,
 		Region:     region,
-		ValIDUntil: time.Now().Add(tokenDuration),
+		ValidUntil: time.Now().Add(tokenDuration),
 	}
 }
 
@@ -95,7 +109,7 @@ func NewStopJob(region, ID string) *JobToken {
 		Action:     J_STOP,
 		ID:         ID,
 		Region:     region,
-		ValIDUntil: time.Now().Add(tokenDuration),
+		ValidUntil: time.Now().Add(tokenDuration),
 	}
 }
 
@@ -104,7 +118,7 @@ func NewForceStopJob(region, ID string) *JobToken {
 		Action:     J_FORCESTOP,
 		ID:         ID,
 		Region:     region,
-		ValIDUntil: time.Now().Add(tokenDuration),
+		ValidUntil: time.Now().Add(tokenDuration),
 	}
 }
 

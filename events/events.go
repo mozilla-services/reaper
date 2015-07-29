@@ -56,7 +56,8 @@ func (e *EventReporterConfig) ShouldTriggerFor(r Reapable) bool {
 	triggering := false
 	// if the reapable's state is set to trigger this EventReporter
 	for _, trigger := range e.ParseTriggers() {
-		if trigger == r.ReaperState().State {
+		// if the reapable's state should trigger this event and the state was just updated
+		if trigger == r.ReaperState().State && r.ReaperState().Updated {
 			triggering = true
 		}
 	}

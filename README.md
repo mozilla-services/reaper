@@ -87,6 +87,7 @@ Reaper configuration files should be in toml format. See `config/default.toml` f
                         function = "Running"
                         arguments = ["true"]
             ```
+            
         + In this example, we see a FilterGroup named "Example" that has two Filters, Filter1 and Filter2.
         + A FilterGroup is a `[]Filter`, and a Filter has two components, a `function` and `arguments`. The `function` is the name of the filtering function for the associated resource type (`string`), and `arguments` is a slice of arguments to that function (`[]string`).
 * Currently supported AWS Resource types:

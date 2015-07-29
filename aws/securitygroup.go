@@ -6,6 +6,7 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"strings"
 	textTemplate "text/template"
 	"time"
 
@@ -233,6 +234,10 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		}
 	case "IsDependency":
 		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
+			matched = true
+		}
+	case "NameContains":
+		if strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:

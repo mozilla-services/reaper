@@ -6,6 +6,7 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"strings"
 	"sync"
 	textTemplate "text/template"
 	"time"
@@ -293,6 +294,10 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		}
 	case "IsDependency":
 		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
+			matched = true
+		}
+	case "NameContains":
+		if strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:

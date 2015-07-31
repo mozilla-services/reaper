@@ -198,6 +198,7 @@ func (r *Reaper) reap() {
 	filteredASGSums := make(map[reapable.Region]int)
 	filteredSecurityGroupSums := make(map[reapable.Region]int)
 	filteredCloudformationSums := make(map[reapable.Region]int)
+	filteredVolumeSums := make(map[reapable.Region]int)
 
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
@@ -214,6 +215,9 @@ func (r *Reaper) reap() {
 		case *reaperaws.Cloudformation:
 			filteredCloudformationSums[t.Region]++
 			reapCloudformation(t)
+		case *reaperaws.Volume:
+			filteredVolumeSums[t.Region]++
+			reapVolume(t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -295,6 +299,50 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 					err := e.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 					if err != nil {
 						log.Error(fmt.Sprintf("%s", err.Error()))
+					}
+				}
+			}
+		}()
+		close(ch)
+	}()
+	return ch
+}
+
+func getVolumes() chan *reaperaws.Volume {
+	ch := make(chan *reaperaws.Volume)
+	go func() {
+		volumeCh := reaperaws.AllVolumes()
+		regionSums := make(map[reapable.Region]int)
+		volumeSizeSums := make(map[reapable.Region]map[int64]int)
+		for volume := range volumeCh {
+			// restore saved state from file
+			savedstate, ok := savedstates[volume.Region][volume.ID]
+			if ok {
+				volume.SetReaperState(savedstate)
+			}
+
+			// make the map if it is not initialized
+			if volumeSizeSums[volume.Region] == nil {
+				volumeSizeSums[volume.Region] = make(map[int64]int)
+			}
+
+			regionSums[volume.Region]++
+			volumeSizeSums[volume.Region][*volume.Size]++
+			ch <- volume
+		}
+
+		for region, sum := range regionSums {
+			log.Info(fmt.Sprintf("Found %d total volumes in %s", sum, region))
+		}
+
+		go func() {
+			for _, e := range *events {
+				for region, regionMap := range volumeSizeSums {
+					for volumeType, volumeSizeSum := range regionMap {
+						err := e.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%s", region, volumeType)})
+						if err != nil {
+							log.Error(fmt.Sprintf("%s", err.Error()))
+						}
 					}
 				}
 			}
@@ -595,6 +643,31 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			}
 		}
 	}
+
+	// get all the volumes
+	for v := range getVolumes() {
+		// if the volume is in use, it isn't reapable
+		// names and IDs are used interchangeably by different parts of the API
+
+		// sort of doesn't make sense for volume
+		if isInCloudformation[v.Region][v.ID] {
+			v.IsInCloudformation = true
+		}
+
+		// if it is a dependency or is attached to an instance
+		if dependency[v.Region][v.ID] || len(v.AttachedInstanceIDs) > 0 {
+			v.Dependency = true
+		}
+		if config.Volumes.Enabled {
+			// group instances by owner
+			if v.Owner() != nil {
+				owned[v.Owner().Address] = append(owned[v.Owner().Address], v)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, v)
+			}
+		}
+	}
 	return owned, unowned
 }
 
@@ -621,6 +694,8 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 			groups = config.Cloudformations.FilterGroups
 		case *reaperaws.SecurityGroup:
 			groups = config.SecurityGroups.FilterGroups
+		case *reaperaws.Volume:
+			groups = config.Volumes.FilterGroups
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
@@ -685,6 +760,16 @@ func reapCloudformation(c *reaperaws.Cloudformation) {
 	}
 	log.Notice(fmt.Sprintf("Reapable Cloudformation discovered: %s.", c.ReapableDescription()))
 	reapables.Put(c.Region, c.ID, c)
+}
+
+func reapVolume(v *reaperaws.Volume) {
+	// update the internal state
+	if time.Now().After(v.ReaperState().Until) {
+		// if we updated the state, mark it as having been updated
+		v.ReaperState().SetUpdated(v.IncrementState())
+	}
+	log.Notice(fmt.Sprintf("Reapable Volume discovered: %s.", v.ReapableDescription()))
+	reapables.Put(v.Region, v.ID, v)
 }
 
 func reapInstance(i *reaperaws.Instance) {

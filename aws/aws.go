@@ -253,6 +253,48 @@ func AllInstances() chan *Instance {
 	return ch
 }
 
+// AllVolumes describes every instance in the requested regions
+// *Volumes are created for each *ec2.Volume
+// and are passed to a channel
+func AllVolumes() chan *Volume {
+	ch := make(chan *Volume)
+	// waitgroup for all regions
+	wg := sync.WaitGroup{}
+	for _, region := range config.Regions {
+		wg.Add(1)
+		go func(region string) {
+			// add region to waitgroup
+			api := ec2.New(&aws.Config{Region: region})
+			// DescribeVolumesPages does autopagination
+			err := api.DescribeVolumesPages(&ec2.DescribeVolumesInput{}, func(resp *ec2.DescribeVolumesOutput, lastPage bool) bool {
+				for _, vol := range resp.Volumes {
+					ch <- NewVolume(region, vol)
+				}
+				// if we are at the last page, we should not continue
+				// the return value of this func is "shouldContinue"
+				if lastPage {
+					wg.Done()
+					return false
+				}
+				return true
+			})
+			if err != nil {
+				// probably should do something here...
+				log.Error(err.Error())
+				// don't wait if the API call failed
+				wg.Done()
+			}
+		}(region)
+	}
+	go func() {
+		// in a separate goroutine, wait for all regions to finish
+		// when they finish, close the chan
+		wg.Wait()
+		close(ch)
+	}()
+	return ch
+}
+
 func AllSecurityGroups() chan *SecurityGroup {
 	ch := make(chan *SecurityGroup)
 	// waitgroup for all regions

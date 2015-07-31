@@ -164,3 +164,18 @@ EventTag = "env:default"
             [Cloudformations.FilterGroups.2.1]
                 function = "Tagged"
                 arguments = ["REAP_ME"]
+
+[Volumes]
+    Enabled = true
+
+    [Volumes.FilterGroups]
+        [Volumes.FilterGroups.1]
+            [Volumes.FilterGroups.1.1]
+                function = "IsDependency"
+                arguments = ["false"]
+            [Volumes.FilterGroups.1.2]
+                function = "State"
+                arguments = ["available"]
+            [Volumes.FilterGroups.1.3]
+                function = "AttachmentState"
+                arguments = ["detached"]

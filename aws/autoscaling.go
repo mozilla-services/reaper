@@ -566,7 +566,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 		log.Error(fmt.Sprintf("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny()))
 		return false, err
 	}
-	return false, nil
+	return true, nil
 }
 
 func (a *AutoScalingGroup) Whitelist() (bool, error) {

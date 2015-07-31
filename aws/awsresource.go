@@ -203,13 +203,17 @@ func Whitelist(region, id string) (bool, error) {
 }
 
 func UntagReaperState(region, id string) (bool, error) {
+	return untag(region, id, reaperTag)
+}
+
+func untag(region, id, key string) (bool, error) {
 	api := ec2.New(&aws.Config{Region: region})
 	delreq := &ec2.DeleteTagsInput{
 		DryRun:    aws.Boolean(false),
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
-				Key: aws.String(reaperTag),
+				Key: aws.String(key),
 			},
 		},
 	}

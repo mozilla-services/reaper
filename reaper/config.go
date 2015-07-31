@@ -100,6 +100,7 @@ type Config struct {
 	Snapshots         ResourceConfig
 	Cloudformations   ResourceConfig
 	SecurityGroups    ResourceConfig
+	Volumes           ResourceConfig
 
 	DryRun            bool
 	Interactive       bool

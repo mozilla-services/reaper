@@ -11,31 +11,36 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-// DataDogConfig is the configuration for a DataDog
-type DataDogConfig struct {
-	EventReporterConfig
+// DatadogConfig is the configuration for a Datadog
+type DatadogConfig struct {
+	eventReporterConfig
 	Host string
 	Port string
 }
 
-// DataDog implements EventReporter, sends events and statistics to DataDog
+// Datadog implements EventReporter, sends events and statistics to Datadog
 // uses godspeed, requires dd-agent running
-type DataDog struct {
-	Config    *DataDogConfig
+type Datadog struct {
+	Config    *DatadogConfig
 	_godspeed *godspeed.Godspeed
 	sync.Once
 }
 
-func NewDataDog(c *DataDogConfig) *DataDog {
-	c.Name = "DataDog"
-	return &DataDog{Config: c}
+// NewDatadog returns a new instance of Datadog
+func NewDatadog(c *DatadogConfig) *Datadog {
+	c.Name = "Datadog"
+	return &Datadog{Config: c}
 }
 
-func (d *DataDog) SetDryRun(b bool) {
-	d.Config.DryRun = b
+// SetDryRun is a method of EventReporter
+// SetDryRun sets a Datadog's DryRun value
+func (e *Datadog) SetDryRun(b bool) {
+	e.Config.DryRun = b
 }
 
-func (e *DataDog) Cleanup() error {
+// Cleanup is a method of EventReporter
+// Cleanup performs any actions necessary to clean up after a Datadog
+func (e *Datadog) Cleanup() error {
 	g, err := e.godspeed()
 	if err != nil {
 		return err
@@ -44,42 +49,44 @@ func (e *DataDog) Cleanup() error {
 	return err
 }
 
-func (d *DataDog) Do() {
-	var g *godspeed.Godspeed
+// Do is a method of sync.Once
+func (e *Datadog) getGodspeed() {
+	var gs *godspeed.Godspeed
 	var err error
 	// if config options not set, use defaults
-	if d.Config.Host == "" || d.Config.Port == "" {
-		g, err = godspeed.NewDefault()
+	if e.Config.Host == "" || e.Config.Port == "" {
+		gs, err = godspeed.NewDefault()
 	} else {
-		port, err := strconv.Atoi(d.Config.Port)
+		port, err := strconv.Atoi(e.Config.Port)
 		if err != nil {
 			log.Error(err.Error())
 		}
-		g, err = godspeed.New(d.Config.Host, port, false)
+		gs, err = godspeed.New(e.Config.Host, port, false)
 	}
 	if err != nil {
 		log.Error(err.Error())
 	}
-	d._godspeed = g
+	e._godspeed = gs
 }
 
-func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
-	if d._godspeed == nil {
-		d.Do()
+func (e *Datadog) godspeed() (*godspeed.Godspeed, error) {
+	if e._godspeed == nil {
+		e.Do(e.getGodspeed)
 	}
-	return d._godspeed, nil
+	return e._godspeed, nil
 }
 
-// NewEvent reports an event to DataDog
-func (d *DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	if d.Config.DryRun {
+// NewEvent is a method of EventReporter
+// NewEvent reports an event to Datadog
+func (e *Datadog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+	if e.Config.DryRun {
 		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", title)
 		}
 		return nil
 	}
 
-	g, err := d.godspeed()
+	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
@@ -90,16 +97,17 @@ func (d *DataDog) NewEvent(title string, text string, fields map[string]string, 
 	return nil
 }
 
-// NewStatistic reports a gauge to DataDog
-func (d *DataDog) NewStatistic(name string, value float64, tags []string) error {
-	if d.Config.DryRun {
+// NewStatistic is a method of EventReporter
+// NewStatistic reports a gauge to Datadog
+func (e *Datadog) NewStatistic(name string, value float64, tags []string) error {
+	if e.Config.DryRun {
 		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", name)
 		}
 		return nil
 	}
 
-	g, err := d.godspeed()
+	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
@@ -107,16 +115,17 @@ func (d *DataDog) NewStatistic(name string, value float64, tags []string) error 
 	return err
 }
 
-// NewCountStatistic reports an Incr to DataDog
-func (d *DataDog) NewCountStatistic(name string, tags []string) error {
-	if d.Config.DryRun {
+// NewCountStatistic is a method of EventReporter
+// NewCountStatistic reports an Incr to Datadog
+func (e *Datadog) NewCountStatistic(name string, tags []string) error {
+	if e.Config.DryRun {
 		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", name)
 		}
 		return nil
 	}
 
-	g, err := d.godspeed()
+	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
@@ -124,10 +133,11 @@ func (d *DataDog) NewCountStatistic(name string, tags []string) error {
 	return err
 }
 
+// NewReapableEvent is a method of EventReporter
 // NewReapableEvent is shorthand for a NewEvent about a reapable resource
-func (d *DataDog) NewReapableEvent(r Reapable, tags []string) error {
-	if d.Config.ShouldTriggerFor(r) {
-		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
+func (e *Datadog) NewReapableEvent(r Reapable, tags []string) error {
+	if e.Config.shouldTriggerFor(r) {
+		err := e.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
 		if err != nil {
 			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
 		}
@@ -135,10 +145,11 @@ func (d *DataDog) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-func (e *DataDog) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// NewBatchReapableEvent is a method of EventReporter
+func (e *Datadog) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	var triggering []Reapable
 	for _, r := range rs {
-		if e.Config.ShouldTriggerFor(r) {
+		if e.Config.shouldTriggerFor(r) {
 			triggering = append(triggering, r)
 		}
 	}
@@ -147,7 +158,7 @@ func (e *DataDog) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 		return nil
 	}
 
-	log.Info("Sending batch DataDog events for %d reapables.", len(triggering))
+	log.Info("Sending batch Datadog events for %d reapables.", len(triggering))
 	// this is a bin packing problem
 	// we ignore its complexity because we don't care (that much)
 	for j := 0; j < len(triggering); {

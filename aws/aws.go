@@ -32,17 +32,20 @@ const (
 )
 
 var (
-	config  *AWSConfig
+	// package wide global
+	config  *Config
 	timeout = time.Tick(100 * time.Millisecond)
 )
 
+// Scaler is an interface used to configure scheduable resources' schedules
 type Scaler interface {
 	SetScaleDownString(s string)
 	SetScaleUpString(s string)
 	SaveSchedule()
 }
 
-type AWSConfig struct {
+// Config stores configuration for the aws package
+type Config struct {
 	Notifications    events.NotificationsConfig
 	HTTP             events.HTTPConfig
 	Regions          []string
@@ -54,21 +57,26 @@ type AWSConfig struct {
 	WithoutCloudformationResources bool
 }
 
-func NewAWSConfig() *AWSConfig {
-	return &AWSConfig{}
+// NewConfig returns a new Config for the aws package
+func NewConfig() *Config {
+	return &Config{}
 }
 
-func SetAWSConfig(c *AWSConfig) {
+// SetConfig sets the Config for the aws package
+// package wide global
+func SetConfig(c *Config) {
 	config = c
 }
 
+// AllCloudformations returns a chan of Cloudformations, sourced from the AWS API
 func AllCloudformations() chan *Cloudformation {
-	ch := make(chan *Cloudformation)
+	ch := make(chan *Cloudformation, len(config.Regions))
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
 		wg.Add(1)
 		go func(region string) {
+			defer wg.Done()
 			// add region to waitgroup
 			api := cloudformation.New(&aws.Config{Region: region})
 			err := api.DescribeStacksPages(&cloudformation.DescribeStacksInput{}, func(resp *cloudformation.DescribeStacksOutput, lastPage bool) bool {
@@ -79,7 +87,6 @@ func AllCloudformations() chan *Cloudformation {
 				// the return value of this func is "shouldContinue"
 				if lastPage {
 					// on the last page, finish this region
-					wg.Done()
 					return false
 				}
 				return true
@@ -87,8 +94,6 @@ func AllCloudformations() chan *Cloudformation {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
-				// don't wait if the API call failed
-				wg.Done()
 			}
 		}(region)
 	}
@@ -102,7 +107,10 @@ func AllCloudformations() chan *Cloudformation {
 	return ch
 }
 
-func CloudformationResources(c Cloudformation) chan *cloudformation.StackResource {
+// CloudformationResources returns a chan of CloudformationResources, sourced from the AWS API
+// there is rate limiting in the AWS API for CloudformationResources, so we delay
+// this is skippable with the CLI flag -withoutCloudformationResources
+func CloudformationResources(region, id string) chan *cloudformation.StackResource {
 	ch := make(chan *cloudformation.StackResource)
 
 	if config.WithoutCloudformationResources {
@@ -110,16 +118,13 @@ func CloudformationResources(c Cloudformation) chan *cloudformation.StackResourc
 		return ch
 	}
 
-	api := cloudformation.New(&aws.Config{Region: string(c.Region)})
-	// TODO: stupid
-	stringName := string(c.ID)
-
+	api := cloudformation.New(&aws.Config{Region: region})
 	go func() {
 		<-timeout
 
 		// this query can fail, so we retry
 		didRetry := false
-		input := &cloudformation.DescribeStackResourcesInput{StackName: &stringName}
+		input := &cloudformation.DescribeStackResourcesInput{StackName: &id}
 
 		// initial query
 		resp, err := api.DescribeStackResources(input)
@@ -128,10 +133,10 @@ func CloudformationResources(c Cloudformation) chan *cloudformation.StackResourc
 			if err != nil {
 				// this error is annoying and will come up all the time... so you can disable it
 				if strings.Split(err.Error(), ":")[0] == "Throttling" && log.Extras() {
-					log.Warning(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+					log.Warning(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second))
 				} else if strings.Split(err.Error(), ":")[0] != "Throttling" {
 					// any other errors
-					log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), c.ID, sleepTime*1.0/time.Second))
+					log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second))
 				}
 			}
 
@@ -143,7 +148,7 @@ func CloudformationResources(c Cloudformation) chan *cloudformation.StackResourc
 			didRetry = true
 		}
 		if didRetry && log.Extras() {
-			log.Notice("Retry succeeded for %s!", c.ID)
+			log.Notice("Retry succeeded for %s!", id)
 		}
 		for _, resource := range resp.StackResources {
 			ch <- resource
@@ -153,6 +158,8 @@ func CloudformationResources(c Cloudformation) chan *cloudformation.StackResourc
 	return ch
 }
 
+// ASGInstanceIDs returns a map of regions to a map of ids to bools
+// the bool value is whether the instance with that region/id is in an ASG
 func ASGInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
 	// maps region to id to bool
 	inASG := make(map[reapable.Region]map[reapable.ID]bool)
@@ -170,12 +177,13 @@ func ASGInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[reapable.ID]boo
 // *AutoScalingGroups are created for every *autoscaling.AutoScalingGroup
 // and are passed to a channel
 func AllAutoScalingGroups() chan *AutoScalingGroup {
-	ch := make(chan *AutoScalingGroup)
+	ch := make(chan *AutoScalingGroup, len(config.Regions))
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
 		wg.Add(1)
 		go func(region string) {
+			defer wg.Done()
 			// add region to waitgroup
 			api := autoscaling.New(&aws.Config{Region: region})
 			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
@@ -186,7 +194,6 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 				// the return value of this func is "shouldContinue"
 				if lastPage {
 					// on the last page, finish this region
-					wg.Done()
 					return false
 				}
 				return true
@@ -194,8 +201,6 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
-				// don't wait if the API call failed
-				wg.Done()
 			}
 		}(region)
 	}
@@ -213,12 +218,13 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 // *Instances are created for each *ec2.Instance
 // and are passed to a channel
 func AllInstances() chan *Instance {
-	ch := make(chan *Instance)
+	ch := make(chan *Instance, len(config.Regions))
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
 		wg.Add(1)
 		go func(region string) {
+			defer wg.Done()
 			// add region to waitgroup
 			api := ec2.New(&aws.Config{Region: region})
 			// DescribeInstancesPages does autopagination
@@ -231,7 +237,6 @@ func AllInstances() chan *Instance {
 				// if we are at the last page, we should not continue
 				// the return value of this func is "shouldContinue"
 				if lastPage {
-					wg.Done()
 					return false
 				}
 				return true
@@ -239,8 +244,6 @@ func AllInstances() chan *Instance {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
-				// don't wait if the API call failed
-				wg.Done()
 			}
 		}(region)
 	}
@@ -257,12 +260,13 @@ func AllInstances() chan *Instance {
 // *Volumes are created for each *ec2.Volume
 // and are passed to a channel
 func AllVolumes() chan *Volume {
-	ch := make(chan *Volume)
+	ch := make(chan *Volume, len(config.Regions))
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
 		wg.Add(1)
 		go func(region string) {
+			defer wg.Done()
 			// add region to waitgroup
 			api := ec2.New(&aws.Config{Region: region})
 			// DescribeVolumesPages does autopagination
@@ -273,7 +277,6 @@ func AllVolumes() chan *Volume {
 				// if we are at the last page, we should not continue
 				// the return value of this func is "shouldContinue"
 				if lastPage {
-					wg.Done()
 					return false
 				}
 				return true
@@ -281,8 +284,6 @@ func AllVolumes() chan *Volume {
 			if err != nil {
 				// probably should do something here...
 				log.Error(err.Error())
-				// don't wait if the API call failed
-				wg.Done()
 			}
 		}(region)
 	}
@@ -295,13 +296,17 @@ func AllVolumes() chan *Volume {
 	return ch
 }
 
+// AllSecurityGroups describes every instance in the requested regions
+// *SecurityGroups are created for each *ec2.SecurityGroup
+// and are passed to a channel
 func AllSecurityGroups() chan *SecurityGroup {
-	ch := make(chan *SecurityGroup)
+	ch := make(chan *SecurityGroup, len(config.Regions))
 	// waitgroup for all regions
 	wg := sync.WaitGroup{}
 	for _, region := range config.Regions {
 		wg.Add(1)
 		go func(region string) {
+			defer wg.Done()
 			// add region to waitgroup
 			api := ec2.New(&aws.Config{Region: region})
 			resp, err := api.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
@@ -312,7 +317,6 @@ func AllSecurityGroups() chan *SecurityGroup {
 				// probably should do something here...
 				log.Error(err.Error())
 			}
-			wg.Done()
 		}(region)
 	}
 	go func() {

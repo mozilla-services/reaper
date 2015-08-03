@@ -19,14 +19,17 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+// SecurityGroup is a Reapable, Filterable
+// embeds AWS API's ec2.SecurityGroup
 type SecurityGroup struct {
-	AWSResource
+	Resource
 	ec2.SecurityGroup
 }
 
+// NewSecurityGroup creates an SecurityGroup from the AWS API's ec2.SecurityGroup
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
-		AWSResource: AWSResource{
+		Resource: Resource{
 			ID:     reapable.ID(*sg.GroupID),
 			Name:   *sg.GroupName,
 			Region: reapable.Region(region),
@@ -36,11 +39,11 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	}
 
 	for _, tag := range sg.Tags {
-		s.AWSResource.Tags[*tag.Key] = *tag.Value
+		s.Resource.Tags[*tag.Key] = *tag.Value
 	}
 	if s.Tagged(reaperTag) {
 		// restore previously tagged state
-		s.reaperState = state.NewStateWithTag(s.AWSResource.Tag(reaperTag))
+		s.reaperState = state.NewStateWithTag(s.Resource.Tag(reaperTag))
 	} else {
 		// initial state
 		s.reaperState = state.NewStateWithUntilAndState(
@@ -78,14 +81,17 @@ func (a *SecurityGroup) reapableEventText(text string) *bytes.Buffer {
 	return buf
 }
 
+// ReapableEventText is part of the events.Reapable interface
 func (a *SecurityGroup) ReapableEventText() *bytes.Buffer {
 	return a.reapableEventText(reapableSecurityGroupEventText)
 }
 
+// ReapableEventTextShort is part of the events.Reapable interface
 func (a *SecurityGroup) ReapableEventTextShort() *bytes.Buffer {
 	return a.reapableEventText(reapableSecurityGroupEventTextShort)
 }
 
+// ReapableEventEmail is part of the events.Reapable interface
 func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
@@ -99,6 +105,7 @@ func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string
 	return
 }
 
+// ReapableEventEmailShort is part of the events.Reapable interface
 func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
@@ -110,8 +117,8 @@ func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *byt
 	return
 }
 
-type SecurityGroupEventData struct {
-	Config        *AWSConfig
+type securityGroupEventData struct {
+	Config        *Config
 	SecurityGroup *SecurityGroup
 	TerminateLink string
 	StopLink      string
@@ -122,7 +129,7 @@ type SecurityGroupEventData struct {
 	IgnoreLink7   string
 }
 
-func (a *SecurityGroup) getTemplateData() (*SecurityGroupEventData, error) {
+func (a *SecurityGroup) getTemplateData() (*securityGroupEventData, error) {
 	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
@@ -130,12 +137,11 @@ func (a *SecurityGroup) getTemplateData() (*SecurityGroupEventData, error) {
 	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &SecurityGroupEventData{
+	return &securityGroupEventData{
 		Config:        config,
 		SecurityGroup: a,
 		TerminateLink: terminate,
@@ -204,6 +210,7 @@ Reaper has discovered an SecurityGroup qualified as reapable: [{{.SecurityGroup.
 [Delete]({{ .TerminateLink }}) this SecurityGroup.
 %%%`
 
+// Filter is part of the filter.Filterable interface
 func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
@@ -246,6 +253,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 	return matched
 }
 
+// AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
@@ -255,6 +263,7 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 	return url
 }
 
+// Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *SecurityGroup) Terminate() (bool, error) {
 	log.Notice("Terminating SecurityGroup %s", a.ReapableDescriptionTiny())
 	as := ec2.New(&aws.Config{Region: string(a.Region)})
@@ -273,11 +282,13 @@ func (a *SecurityGroup) Terminate() (bool, error) {
 	return false, nil
 }
 
+// Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // noop
 func (a *SecurityGroup) Stop() (bool, error) {
 	return false, nil
 }
 
+// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // noop
 func (a *SecurityGroup) ForceStop() (bool, error) {
 	return false, nil

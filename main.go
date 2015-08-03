@@ -129,7 +129,7 @@ func main() {
 
 	// sets the config variable in Reaper's AWS package
 	// this also NEEDS to be set before a Reaper can be started
-	reaperaws.SetAWSConfig(&config.AWS)
+	reaperaws.SetConfig(&config.AWS)
 
 	// single instance of reaper
 	reapRunner := reaper.NewReaper()

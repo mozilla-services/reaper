@@ -19,16 +19,19 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+// Volume is a is a Reapable, Filterable
+// embeds AWS API's ec2.Volume
 type Volume struct {
-	AWSResource
+	Resource
 	ec2.Volume
 
 	AttachedInstanceIDs []string
 }
 
+// NewVolume creates an Volume from the AWS API's ec2.Volume
 func NewVolume(region string, vol *ec2.Volume) *Volume {
 	a := Volume{
-		AWSResource: AWSResource{
+		Resource: Resource{
 			Region: reapable.Region(region),
 			ID:     reapable.ID(*vol.VolumeID),
 			Name:   *vol.VolumeID,
@@ -37,8 +40,8 @@ func NewVolume(region string, vol *ec2.Volume) *Volume {
 		Volume: *vol,
 	}
 
-	for i := 0; i < len(vol.Tags); i++ {
-		a.AWSResource.Tags[*vol.Tags[i].Key] = *vol.Tags[i].Value
+	for _, tag := range vol.Tags {
+		a.Resource.Tags[*tag.Key] = *tag.Value
 	}
 
 	for _, attachment := range vol.Attachments {
@@ -87,14 +90,17 @@ func (a *Volume) reapableEventText(text string) *bytes.Buffer {
 	return buf
 }
 
+// ReapableEventText is part of the events.Reapable interface
 func (a *Volume) ReapableEventText() *bytes.Buffer {
 	return a.reapableEventText(reapableVolumeEventText)
 }
 
+// ReapableEventTextShort is part of the events.Reapable interface
 func (a *Volume) ReapableEventTextShort() *bytes.Buffer {
 	return a.reapableEventText(reapableVolumeEventTextShort)
 }
 
+// ReapableEventEmail is part of the events.Reapable interface
 func (a *Volume) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
@@ -108,6 +114,7 @@ func (a *Volume) ReapableEventEmail() (owner mail.Address, subject string, body 
 	return
 }
 
+// ReapableEventEmailShort is part of the events.Reapable interface
 func (a *Volume) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
@@ -119,8 +126,8 @@ func (a *Volume) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buff
 	return
 }
 
-type VolumeEventData struct {
-	Config                           *AWSConfig
+type volumeEventData struct {
+	Config                           *Config
 	Volume                           *Volume
 	TerminateLink                    string
 	StopLink                         string
@@ -134,37 +141,37 @@ type VolumeEventData struct {
 	ScheduleCESTBusinessHoursLink    string
 }
 
-func (a *Volume) getTemplateData() (*VolumeEventData, error) {
-	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
+func (a *Volume) getTemplateData() (*volumeEventData, error) {
+	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
 
-	return &VolumeEventData{
+	return &volumeEventData{
 		Config:        config,
 		Volume:        a,
 		TerminateLink: terminate,
@@ -267,17 +274,7 @@ func (a *Volume) sizeGreaterThan(size int64) bool {
 	return false
 }
 
-// method for reapable -> overrides promoted AWSResource method of same name?
-func (a *Volume) Save(s *state.State) (bool, error) {
-	return tag(a.Region.String(), a.ID.String(), reaperTag, a.reaperState.String())
-}
-
-// method for reapable -> overrides promoted AWSResource method of same name?
-func (a *Volume) Unsave() (bool, error) {
-	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
-	return untag(a.Region.String(), a.ID.String(), reaperTag)
-}
-
+// Filter is part of the filter.Filterable interface
 func (a *Volume) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
@@ -379,6 +376,7 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 	return matched
 }
 
+// AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *Volume) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Volumes:volumeId=%s",
 		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
@@ -388,6 +386,7 @@ func (a *Volume) AWSConsoleURL() *url.URL {
 	return url
 }
 
+// Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Volume) Terminate() (bool, error) {
 	log.Notice("Terminating Volume %s", a.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: a.Region.String()})
@@ -403,12 +402,14 @@ func (a *Volume) Terminate() (bool, error) {
 	return true, nil
 }
 
+// Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // noop
 func (a *Volume) Stop() (bool, error) {
 	// use existing min size
 	return false, nil
 }
 
+// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // noop
 func (a *Volume) ForceStop() (bool, error) {
 	return false, nil

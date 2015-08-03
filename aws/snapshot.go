@@ -11,7 +11,7 @@ import (
 )
 
 type Snapshot struct {
-	AWSResource
+	Resource
 	SizeGB        int64
 	SnapshotState string
 	VolumeID      reapable.ID
@@ -20,7 +20,7 @@ type Snapshot struct {
 
 func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	snap := Snapshot{
-		AWSResource: AWSResource{
+		Resource: Resource{
 			ID:     reapable.ID(*s.SnapshotID),
 			Region: reapable.Region(region),
 			Tags:   make(map[string]string),

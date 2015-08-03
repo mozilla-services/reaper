@@ -19,26 +19,57 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-// Instance stores data from an *ec2.Instance
+// Instance is a is a Reapable, Filterable
+// embeds AWS API's ec2.Instance
 type Instance struct {
-	AWSResource
+	Resource
 	ec2.Instance
 	SecurityGroups map[reapable.ID]string
 	AutoScaled     bool
-	Scheduling     InstanceScalingSchedule
+	Scheduling     instanceScalingSchedule
 }
 
-type InstanceScalingSchedule struct {
+type instanceScalingSchedule struct {
 	enabled         bool
 	scaleDownString string
 	scaleUpString   string
 }
 
-func (s *InstanceScalingSchedule) setSchedule(tag string) {
+// SaveSchedule is a method of the Scaler interface
+func (a *Instance) SaveSchedule() {
+	tag(a.Region.String(), a.ID.String(), scalerTag, a.Scheduling.scheduleTag())
+}
+
+// SetScaleDownString is a method of the Scaler interface
+func (a *Instance) SetScaleDownString(s string) {
+	a.Scheduling.scaleDownString = s
+}
+
+// SetScaleUpString is a method of the Scaler interface
+func (a *Instance) SetScaleUpString(s string) {
+	a.Scheduling.scaleUpString = s
+}
+
+// SchedulingEnabled returns whether Scheduling has been enabled for this resource
+func (a *Instance) SchedulingEnabled() bool {
+	return a.Scheduling.enabled
+}
+
+// ScaleDownSchedule returns the ScaleDownString for this resource's schedule
+func (a *Instance) ScaleDownSchedule() string {
+	return a.Scheduling.scaleDownString
+}
+
+// ScaleUpSchedule returns the ScaleUpString for this resource's schedule
+func (a *Instance) ScaleUpSchedule() string {
+	return a.Scheduling.scaleUpString
+}
+
+func (s *instanceScalingSchedule) setSchedule(tag string) {
 	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 2 {
-		log.Error("Invalid Instance Tag format %s", tag)
+		log.Error(fmt.Sprintf("Invalid Instance Tag format %s", tag))
 	} else {
 		s.scaleDownString = splitTag[0]
 		s.scaleUpString = splitTag[1]
@@ -46,7 +77,7 @@ func (s *InstanceScalingSchedule) setSchedule(tag string) {
 	}
 }
 
-func (s InstanceScalingSchedule) scheduleTag() string {
+func (s instanceScalingSchedule) scheduleTag() string {
 	return strings.Join([]string{
 		// keep the same schedules
 		s.scaleDownString,
@@ -54,10 +85,10 @@ func (s InstanceScalingSchedule) scheduleTag() string {
 	}, ",")
 }
 
-// NewInstance is a constructor for Instances
+// NewInstance creates an Instance from the AWS API's ec2.Instance
 func NewInstance(region string, instance *ec2.Instance) *Instance {
-	i := Instance{
-		AWSResource: AWSResource{
+	a := Instance{
+		Resource: Resource{
 			ID:     reapable.ID(*instance.InstanceID),
 			Region: reapable.Region(region), // passed in cause not possible to extract out of api
 			Tags:   make(map[string]string),
@@ -68,50 +99,61 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	for _, sg := range instance.SecurityGroups {
 		if sg != nil {
-			i.SecurityGroups[reapable.ID(*sg.GroupID)] = *sg.GroupName
+			a.SecurityGroups[reapable.ID(*sg.GroupID)] = *sg.GroupName
 		}
 	}
 
 	for _, tag := range instance.Tags {
-		i.AWSResource.Tags[*tag.Key] = *tag.Value
+		a.Resource.Tags[*tag.Key] = *tag.Value
 	}
 
 	// Scaler boilerplate
-	if i.Tagged(scalerTag) {
-		i.Scheduling.setSchedule(i.Tag(scalerTag))
+	if a.Tagged(scalerTag) {
+		a.Scheduling.setSchedule(a.Tag(scalerTag))
 	}
 
-	if i.Tagged("aws:autoscaling:groupName") {
-		i.AutoScaled = true
+	if a.Tagged("aws:autoscaling:groupName") {
+		a.AutoScaled = true
 	}
 
-	i.Name = i.Tag("Name")
+	a.Name = a.Tag("Name")
 
-	if i.Tagged(reaperTag) {
+	if a.Tagged(reaperTag) {
 		// restore previously tagged state
-		i.reaperState = state.NewStateWithTag(i.Tag(reaperTag))
+		a.reaperState = state.NewStateWithTag(a.Tag(reaperTag))
 	} else {
 		// initial state
-		i.reaperState = state.NewStateWithUntilAndState(
+		a.reaperState = state.NewStateWithUntilAndState(
 			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
 			state.FirstState)
 	}
 
-	return &i
+	return &a
 }
 
-func (a *Instance) Pending() bool      { return *a.State.Code == 0 }
-func (a *Instance) Running() bool      { return *a.State.Code == 16 }
-func (a *Instance) ShuttingDown() bool { return *a.State.Code == 32 }
-func (a *Instance) Terminated() bool   { return *a.State.Code == 48 }
-func (a *Instance) Stopping() bool     { return *a.State.Code == 64 }
-func (a *Instance) Stopped() bool      { return *a.State.Code == 80 }
+// Pending returns whether an instance's State is Pending
+func (a *Instance) Pending() bool { return *a.State.Code == 0 }
 
-func (i *Instance) reapableEventHTML(text string) *bytes.Buffer {
+// Running returns whether an instance's State is Running
+func (a *Instance) Running() bool { return *a.State.Code == 16 }
+
+// ShuttingDown returns whether an instance's State is ShuttingDown
+func (a *Instance) ShuttingDown() bool { return *a.State.Code == 32 }
+
+// Terminated returns whether an instance's State is Terminated
+func (a *Instance) Terminated() bool { return *a.State.Code == 48 }
+
+// Stopping returns whether an instance's State is Stopping
+func (a *Instance) Stopping() bool { return *a.State.Code == 64 }
+
+// Stopped returns whether an instance's State is Stopped
+func (a *Instance) Stopped() bool { return *a.State.Code == 80 }
+
+func (a *Instance) reapableEventHTML(text string) *bytes.Buffer {
 	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
-	data, err := i.getTemplateData()
+	data, err := a.getTemplateData()
 	err = t.Execute(buf, data)
 	if err != nil {
 		log.Debug(fmt.Sprintf("Template generation error: %s", err))
@@ -119,11 +161,11 @@ func (i *Instance) reapableEventHTML(text string) *bytes.Buffer {
 	return buf
 }
 
-func (i *Instance) reapableEventText(text string) *bytes.Buffer {
+func (a *Instance) reapableEventText(text string) *bytes.Buffer {
 	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
 	buf := bytes.NewBuffer(nil)
 
-	data, err := i.getTemplateData()
+	data, err := a.getTemplateData()
 	if err != nil {
 		log.Error(fmt.Sprintf("%s", err.Error()))
 	}
@@ -134,39 +176,43 @@ func (i *Instance) reapableEventText(text string) *bytes.Buffer {
 	return buf
 }
 
-func (i *Instance) ReapableEventText() *bytes.Buffer {
-	return i.reapableEventText(reapableInstanceEventText)
+// ReapableEventText is part of the events.Reapable interface
+func (a *Instance) ReapableEventText() *bytes.Buffer {
+	return a.reapableEventText(reapableInstanceEventText)
 }
 
-func (i *Instance) ReapableEventTextShort() *bytes.Buffer {
-	return i.reapableEventText(reapableInstanceEventTextShort)
+// ReapableEventTextShort is part of the events.Reapable interface
+func (a *Instance) ReapableEventTextShort() *bytes.Buffer {
+	return a.reapableEventText(reapableInstanceEventTextShort)
 }
 
-func (i *Instance) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
+// ReapableEventEmail is part of the events.Reapable interface
+func (a *Instance) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
-	if !i.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
+	if !a.Owned() {
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
-	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", i.ReapableDescriptionTiny())
-	owner = *i.Owner()
-	body = i.reapableEventHTML(reapableInstanceEventHTML)
+	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
+	owner = *a.Owner()
+	body = a.reapableEventHTML(reapableInstanceEventHTML)
 	return
 }
 
-func (i *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
+// ReapableEventEmailShort is part of the events.Reapable interface
+func (a *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
-	if !i.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", i.ReapableDescriptionShort())}
+	if !a.Owned() {
+		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
-	owner = *i.Owner()
-	body = i.reapableEventHTML(reapableInstanceEventHTMLShort)
+	owner = *a.Owner()
+	body = a.reapableEventHTML(reapableInstanceEventHTMLShort)
 	return
 }
 
-type InstanceEventData struct {
-	Config                           *AWSConfig
+type instanceEventData struct {
+	Config                           *Config
 	Instance                         *Instance
 	TerminateLink                    string
 	StopLink                         string
@@ -179,48 +225,48 @@ type InstanceEventData struct {
 	ScheduleCESTBusinessHoursLink    string
 }
 
-func (i *Instance) getTemplateData() (*InstanceEventData, error) {
-	ignore1, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+func (a *Instance) getTemplateData() (*instanceEventData, error) {
+	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := MakeIgnoreLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := MakeTerminateLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := MakeStopLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	whitelist, err := MakeWhitelistLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	schedulePacific, err := MakeScheduleLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
+	schedulePacific, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleEastern, err := MakeScheduleLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
+	scheduleEastern, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleCEST, err := MakeScheduleLink(i.Region, i.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
+	scheduleCEST, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}
 
 	// return the data
-	return &InstanceEventData{
+	return &instanceEventData{
 		Config:                           config,
-		Instance:                         i,
+		Instance:                         a,
 		TerminateLink:                    terminate,
 		StopLink:                         stop,
 		WhitelistLink:                    whitelist,
@@ -233,46 +279,23 @@ func (i *Instance) getTemplateData() (*InstanceEventData, error) {
 	}, nil
 }
 
-// Scaler interface
-func (i *Instance) SetScaleDownString(s string) {
-	i.Scheduling.scaleDownString = s
-}
-
-func (i *Instance) SetScaleUpString(s string) {
-	i.Scheduling.scaleUpString = s
-}
-
-func (i *Instance) SaveSchedule() {
-	tag(i.Region.String(), i.ID.String(), scalerTag, i.Scheduling.scheduleTag())
-}
-
-func (i *Instance) SchedulingEnabled() bool {
-	return i.Scheduling.enabled
-}
-
-func (i *Instance) ScaleDownSchedule() string {
-	return i.Scheduling.scaleDownString
-}
-
-func (i *Instance) ScaleUpSchedule() string {
-	return i.Scheduling.scaleUpString
-}
-
-func (i *Instance) ScaleDown() {
-	if !i.Running() {
+// ScaleDown stops an Instance
+func (a *Instance) ScaleDown() {
+	if !a.Running() {
 		return
 	}
-	_, err := i.Stop()
+	_, err := a.Stop()
 	if err != nil {
 		log.Error(err.Error())
 	}
 }
 
-func (i *Instance) ScaleUp() {
-	if !i.Stopped() {
+// ScaleUp starts an Instance
+func (a *Instance) ScaleUp() {
+	if !a.Stopped() {
 		return
 	}
-	_, err := i.Start()
+	_, err := a.Start()
 	if err != nil {
 		log.Error(err.Error())
 	}
@@ -347,123 +370,131 @@ Schedule this instance to start and stop with [Pacific]({{ .SchedulePacificBusin
 [Terminate]({{ .TerminateLink }}) this instance.
 %%%`
 
-func (i *Instance) AWSConsoleURL() *url.URL {
+// AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
+func (a *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		string(i.Region), string(i.Region), url.QueryEscape(string(i.ID))))
+		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}
 	return url
 }
 
-func (i *Instance) Filter(filter filters.Filter) bool {
+// Filter is part of the filter.Filterable interface
+func (a *Instance) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
 	case "Pending":
-		if b, err := filter.BoolValue(0); err == nil && i.Pending() == b {
+		// Pending returns whether an instance's State is Pending
+		if b, err := filter.BoolValue(0); err == nil && a.Pending() == b {
+			// Pending returns whether an instance's State is Pending
 			matched = true
+			// Pending returns whether an instance's State is Pending
 		}
+		// Pending returns whether an instance's State is Pending
 	case "Running":
-		if b, err := filter.BoolValue(0); err == nil && i.Running() == b {
+		// Pending returns whether an instance's State is Pending
+		if b, err := filter.BoolValue(0); err == nil && a.Running() == b {
+			// Pending returns whether an instance's State is Pending
 			matched = true
 		}
 	case "ShuttingDown":
-		if b, err := filter.BoolValue(0); err == nil && i.ShuttingDown() == b {
+		if b, err := filter.BoolValue(0); err == nil && a.ShuttingDown() == b {
 			matched = true
 		}
 	case "Terminated":
-		if b, err := filter.BoolValue(0); err == nil && i.Terminated() == b {
+		if b, err := filter.BoolValue(0); err == nil && a.Terminated() == b {
 			matched = true
 		}
 	case "Stopping":
-		if b, err := filter.BoolValue(0); err == nil && i.Stopping() == b {
+		if b, err := filter.BoolValue(0); err == nil && a.Stopping() == b {
 			matched = true
 		}
 	case "Stopped":
-		if b, err := filter.BoolValue(0); err == nil && i.Stopped() == b {
+		if b, err := filter.BoolValue(0); err == nil && a.Stopped() == b {
 			matched = true
 		}
 	case "InstanceType":
-		if i.InstanceType != nil && *i.InstanceType == filter.Arguments[0] {
+		if a.InstanceType != nil && *a.InstanceType == filter.Arguments[0] {
 			matched = true
 		}
 	case "Tagged":
-		if i.Tagged(filter.Arguments[0]) {
+		if a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
 	case "NotTagged":
-		if !i.Tagged(filter.Arguments[0]) {
+		if !a.Tagged(filter.Arguments[0]) {
 			matched = true
 		}
 	case "Tag":
-		if i.Tag(filter.Arguments[0]) == filter.Arguments[1] {
+		if a.Tag(filter.Arguments[0]) == filter.Arguments[1] {
 			matched = true
 		}
 	case "TagNotEqual":
-		if i.Tag(filter.Arguments[0]) != filter.Arguments[1] {
+		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
 			matched = true
 		}
 	case "HasPublicIPAddress":
-		if i.PublicIPAddress != nil {
+		if a.PublicIPAddress != nil {
 			matched = true
 		}
 	case "PublicIPAddress":
-		if i.PublicIPAddress != nil && *i.PublicIPAddress == filter.Arguments[0] {
+		if a.PublicIPAddress != nil && *a.PublicIPAddress == filter.Arguments[0] {
 			matched = true
 		}
 	// uses RFC3339 format
 	// https://www.ietf.org/rfc/rfc3339.txt
 	case "LaunchTimeBefore":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && t.After(*i.LaunchTime) {
+		if err == nil && a.LaunchTime != nil && t.After(*a.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeAfter":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && t.Before(*i.LaunchTime) {
+		if err == nil && a.LaunchTime != nil && t.Before(*a.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && time.Since(*i.LaunchTime) < d {
+		if err == nil && a.LaunchTime != nil && time.Since(*a.LaunchTime) < d {
 			matched = true
 		}
 	case "LaunchTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && time.Since(*i.LaunchTime) > d {
+		if err == nil && a.LaunchTime != nil && time.Since(*a.LaunchTime) > d {
 			matched = true
 		}
 	case "Region":
 		for region := range filter.Arguments {
-			if i.Region == reapable.Region(region) {
+			if a.Region == reapable.Region(region) {
 				matched = true
 			}
 		}
 	case "NotRegion":
 		for region := range filter.Arguments {
-			if i.Region == reapable.Region(region) {
+			if a.Region == reapable.Region(region) {
 				matched = false
 			}
 		}
 	case "ReaperState":
-		if i.reaperState.State.String() == filter.Arguments[0] {
+		if a.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
 	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && i.IsInCloudformation == b {
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
 			matched = true
 		}
 	case "AutoScaled":
-		if b, err := filter.BoolValue(0); err == nil && i.AutoScaled == b {
+		if b, err := filter.BoolValue(0); err == nil && a.AutoScaled == b {
 			matched = true
 		}
 	case "IsDependency":
-		if b, err := filter.BoolValue(0); err == nil && i.Dependency == b {
+		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
 			matched = true
 		}
 	case "NameContains":
-		if strings.Contains(i.Name, filter.Arguments[0]) {
+		if strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:
@@ -472,11 +503,12 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 	return matched
 }
 
-func (i *Instance) Terminate() (bool, error) {
-	log.Notice("Terminating Instance %s", i.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: string(i.Region)})
+// Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
+func (a *Instance) Terminate() (bool, error) {
+	log.Notice("Terminating Instance %s", a.ReapableDescriptionTiny())
+	api := ec2.New(&aws.Config{Region: string(a.Region)})
 	req := &ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{aws.String(string(i.ID))},
+		InstanceIDs: []*string{aws.String(string(a.ID))},
 	}
 
 	resp, err := api.TerminateInstances(req)
@@ -486,21 +518,23 @@ func (i *Instance) Terminate() (bool, error) {
 	}
 
 	if len(resp.TerminatingInstances) != 1 {
-		return false, fmt.Errorf("Instance could %s not be terminated.", i.ReapableDescriptionTiny())
+		return false, fmt.Errorf("Instance could %s not be terminated.", a.ReapableDescriptionTiny())
 	}
 
 	return true, nil
 }
 
-func (i *Instance) ForceStop() (bool, error) {
-	return i.Stop()
+// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
+func (a *Instance) ForceStop() (bool, error) {
+	return a.Stop()
 }
 
-func (i *Instance) Start() (bool, error) {
-	log.Notice("Starting Instance %s", i.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: string(i.Region)})
+// Start starts an instance
+func (a *Instance) Start() (bool, error) {
+	log.Notice("Starting Instance %s", a.ReapableDescriptionTiny())
+	api := ec2.New(&aws.Config{Region: string(a.Region)})
 	req := &ec2.StartInstancesInput{
-		InstanceIDs: []*string{aws.String(string(i.ID))},
+		InstanceIDs: []*string{aws.String(string(a.ID))},
 	}
 
 	resp, err := api.StartInstances(req)
@@ -510,17 +544,18 @@ func (i *Instance) Start() (bool, error) {
 	}
 
 	if len(resp.StartingInstances) != 1 {
-		return false, fmt.Errorf("Instance %s could not be started.", i.ReapableDescriptionTiny())
+		return false, fmt.Errorf("Instance %s could not be started.", a.ReapableDescriptionTiny())
 	}
 
 	return true, nil
 }
 
-func (i *Instance) Stop() (bool, error) {
-	log.Notice("Stopping Instance %s", i.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: string(i.Region)})
+// Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
+func (a *Instance) Stop() (bool, error) {
+	log.Notice("Stopping Instance %s", a.ReapableDescriptionTiny())
+	api := ec2.New(&aws.Config{Region: string(a.Region)})
 	req := &ec2.StopInstancesInput{
-		InstanceIDs: []*string{aws.String(string(i.ID))},
+		InstanceIDs: []*string{aws.String(string(a.ID))},
 	}
 
 	resp, err := api.StopInstances(req)
@@ -530,7 +565,7 @@ func (i *Instance) Stop() (bool, error) {
 	}
 
 	if len(resp.StoppingInstances) != 1 {
-		return false, fmt.Errorf("Instance %s could not be stopped.", i.ReapableDescriptionTiny())
+		return false, fmt.Errorf("Instance %s could not be stopped.", a.ReapableDescriptionTiny())
 	}
 
 	return true, nil

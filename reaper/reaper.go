@@ -336,7 +336,7 @@ func getVolumes() chan *reaperaws.Volume {
 		}
 
 		go func() {
-			for _, e := range *events {
+			for _, e := range eventReporters {
 				for region, regionMap := range volumeSizeSums {
 					for volumeType, volumeSizeSum := range regionMap {
 						err := e.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%s", region, volumeType)})

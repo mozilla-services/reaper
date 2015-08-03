@@ -62,9 +62,7 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 		a.reaperState = state.NewStateWithTag(a.AWSResource.Tag(reaperTag))
 	} else {
 		// initial state
-		a.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		a.reaperState = state.NewState()
 	}
 
 	return &a

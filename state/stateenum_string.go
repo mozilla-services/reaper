@@ -4,9 +4,9 @@ package state
 
 import "fmt"
 
-const _StateEnum_name = "FirstStateSecondStateThirdStateFinalStateIgnoreState"
+const _StateEnum_name = "InitialStateFirstStateSecondStateThirdStateFinalStateIgnoreState"
 
-var _StateEnum_index = [...]uint8{0, 10, 21, 31, 41, 52}
+var _StateEnum_index = [...]uint8{0, 12, 22, 33, 43, 53, 64}
 
 func (i StateEnum) String() string {
 	if i < 0 || i >= StateEnum(len(_StateEnum_index)-1) {

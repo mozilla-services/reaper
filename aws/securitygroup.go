@@ -43,9 +43,7 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 		s.reaperState = state.NewStateWithTag(s.AWSResource.Tag(reaperTag))
 	} else {
 		// initial state
-		s.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		s.reaperState = state.NewState()
 	}
 
 	return &s

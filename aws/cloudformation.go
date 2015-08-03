@@ -307,8 +307,9 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 }
 
 func (a *Cloudformation) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks?filter=active&tab=overview&stackId=%s",
-		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
+	url, err := url.Parse("https://console.aws.amazon.com/cloudformation/home")
+	// setting RawQuery because QueryEscape messes with the "/"s in the url
+	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region.String(), a.ID.String())
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}

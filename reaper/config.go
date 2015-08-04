@@ -1,7 +1,6 @@
 package reaper
 
 import (
-	"net/mail"
 	"os"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 func LoadConfig(path string) (*Config, error) {
 	httpconfig := reaperevents.HTTPConfig{
 		TokenSecret: "Default secrets are not safe",
-		ApiURL:      "http://localhost",
+		APIURL:      "http://localhost",
 		Listen:      "localhost:9000",
 	}
 	notifications := reaperevents.NotificationsConfig{
@@ -33,16 +32,14 @@ func LoadConfig(path string) (*Config, error) {
 			HTTP:          httpconfig,
 			Notifications: notifications,
 		},
-		SMTP: reaperevents.SMTPConfig{
+		SMTP: reaperevents.MailerConfig{
 			HTTPConfig: httpconfig,
 			Host:       "localhost",
 			Port:       587,
 			AuthType:   "none",
 			From: reaperevents.FromAddress{
-				Address: mail.Address{
-					Name:    "reaper",
-					Address: "aws-reaper@mozilla.com",
-				},
+				Name:    "reaper",
+				Address: "aws-reaper@mozilla.com",
 			},
 		},
 		HTTP:          httpconfig,
@@ -84,7 +81,7 @@ type Config struct {
 	HTTP reaperevents.HTTPConfig
 
 	AWS           reaperaws.AWSConfig
-	SMTP          reaperevents.SMTPConfig
+	SMTP          reaperevents.MailerConfig
 	Notifications reaperevents.NotificationsConfig
 	Logging       log.LogConfig
 	States        state.StatesConfig
@@ -110,8 +107,8 @@ type Config struct {
 }
 
 type EventTypes struct {
-	DataDog     reaperevents.DataDogConfig
-	Email       reaperevents.SMTPConfig
+	DataDog     reaperevents.DatadogConfig
+	Email       reaperevents.MailerConfig
 	Tagger      reaperevents.TaggerConfig
 	Reaper      reaperevents.ReaperEventConfig
 	Interactive reaperevents.InteractiveEventConfig

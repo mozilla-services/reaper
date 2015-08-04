@@ -197,43 +197,43 @@ type AutoScalingGroupEventData struct {
 }
 
 func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error) {
-	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
+	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	schedulePacific, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
+	schedulePacific, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleEastern, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
+	scheduleEastern, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleCEST, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
+	scheduleCEST, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}

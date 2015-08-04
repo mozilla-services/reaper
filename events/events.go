@@ -2,7 +2,6 @@ package events
 
 import (
 	"bytes"
-	"fmt"
 	"net/mail"
 
 	"github.com/mozilla-services/reaper/reapable"
@@ -10,10 +9,12 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+// NotificationsConfig wraps state.StatesConfig
 type NotificationsConfig struct {
 	state.StatesConfig
 }
 
+// Reapable expands upon the reapable.Reapable interface
 type Reapable interface {
 	reapable.Reapable
 	ReapableEventText() *bytes.Buffer
@@ -22,17 +23,18 @@ type Reapable interface {
 	ReapableEventEmailShort() (mail.Address, *bytes.Buffer, error)
 }
 
-type EventReporterConfig struct {
+// EventReporterConfig has configuration variables for EventReporters
+type eventReporterConfig struct {
 	Enabled bool
 	DryRun  bool
 
 	Name string
 
-	// should be []state.StateEnum...
+	// string representations of states from state.StateEnum
 	Triggers []string
 }
 
-func (e *EventReporterConfig) ParseTriggers() (triggers []state.StateEnum) {
+func (e *eventReporterConfig) parseTriggers() (triggers []state.StateEnum) {
 	for _, t := range e.Triggers {
 		switch t {
 		case "first":
@@ -52,10 +54,10 @@ func (e *EventReporterConfig) ParseTriggers() (triggers []state.StateEnum) {
 	return
 }
 
-func (e *EventReporterConfig) ShouldTriggerFor(r Reapable) bool {
+func (e *eventReporterConfig) shouldTriggerFor(r Reapable) bool {
 	triggering := false
 	// if the reapable's state is set to trigger this EventReporter
-	for _, trigger := range e.ParseTriggers() {
+	for _, trigger := range e.parseTriggers() {
 		// if the reapable's state should trigger this event and the state was just updated
 		if trigger == r.ReaperState().State && r.ReaperState().Updated {
 			triggering = true
@@ -71,80 +73,23 @@ func (e *EventReporterConfig) ShouldTriggerFor(r Reapable) bool {
 	return triggering
 }
 
-type EventReporter interface {
-	NewEvent(title string, text string, fields map[string]string, tags []string) error
-	NewStatistic(name string, value float64, tags []string) error
-	NewCountStatistic(name string, tags []string) error
-	NewReapableEvent(r Reapable, tags []string) error
-	NewBatchReapableEvent(rs []Reapable, tags []string) error
-	SetDryRun(b bool)
+// Cleaner needs to be cleaned up
+type Cleaner interface {
 	Cleanup() error
 }
 
-// implements EventReporter but does nothing
-type NoEventReporter struct {
-	EventReporterConfig
+// EventReporter contains different event and statistics reporting
+// embeds ReapableEventReporter
+type EventReporter interface {
+	ReapableEventReporter
+	NewEvent(title string, text string, fields map[string]string, tags []string) error
+	NewStatistic(name string, value float64, tags []string) error
+	NewCountStatistic(name string, tags []string) error
 }
 
-// TODO: this is sorta redundant with triggers, won't ever activate
-// not that it ever did...
-func NewNoEventReporter() *NoEventReporter {
-	return &NoEventReporter{EventReporterConfig{Name: "NoEventReporter"}}
+// ReapableEventReporter handles Reapable events
+type ReapableEventReporter interface {
+	NewReapableEvent(r Reapable, tags []string) error
+	NewBatchReapableEvent(rs []Reapable, tags []string) error
+	SetDryRun(b bool)
 }
-
-func (*NoEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	return nil
-}
-func (*NoEventReporter) NewStatistic(name string, value float64, tags []string) error {
-	return nil
-}
-func (*NoEventReporter) NewCountStatistic(name string, tags []string) error {
-	return nil
-}
-
-func (n *NoEventReporter) NewReapableEvent(r Reapable, tags []string) error {
-	return nil
-}
-
-func (n *NoEventReporter) NewBatchReapableEvent(rs []Reapable, tags []string) error {
-	return nil
-}
-
-func (*NoEventReporter) SetDryRun(b bool) {}
-
-func (*NoEventReporter) Cleanup() error { return nil }
-
-// TODO: this is sorta redundant with triggers, won't ever activate
-type ErrorEventReporter struct {
-	EventReporterConfig
-}
-
-func NewErrorEventReporter() *ErrorEventReporter {
-	return &ErrorEventReporter{EventReporterConfig{Name: "ErrorEventReporter"}}
-}
-
-func (*ErrorEventReporter) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	return fmt.Errorf("ErrorEventReporter")
-}
-
-func (*ErrorEventReporter) NewStatistic(name string, value float64, tags []string) error {
-	return fmt.Errorf("ErrorEventReporter")
-}
-
-func (*ErrorEventReporter) NewCountStatistic(name string, tags []string) error {
-	return fmt.Errorf("ErrorEventReporter")
-}
-
-func (*ErrorEventReporter) Cleanup() error {
-	return fmt.Errorf("ErrorEventReporter")
-}
-
-func (e *ErrorEventReporter) NewReapableEvent(r Reapable, tags []string) error {
-	return fmt.Errorf("ErrorEventReporter")
-}
-
-func (e *ErrorEventReporter) NewBatchReapableEvent(rs []Reapable, tags []string) error {
-	return fmt.Errorf("ErrorEventReporter")
-}
-
-func (*ErrorEventReporter) SetDryRun(b bool) {}

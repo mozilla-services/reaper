@@ -12,21 +12,26 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
+// Mailer implements ReapableEventReporter, sends email
+// uses godspeed, requires dd-agent running
 type Mailer struct {
-	Config *SMTPConfig
+	Config *MailerConfig
 }
 
+// HTTPConfig is the configuration for the HTTP server
+// probably shouldn't be in Events, but it would need its own package + circular imports...
 type HTTPConfig struct {
 	TokenSecret string
-	ApiURL      string
+	APIURL      string
 	Listen      string
 	Token       string
 	Action      string
 }
 
-type SMTPConfig struct {
+// MailerConfig is the configuration for a Mailer
+type MailerConfig struct {
 	HTTPConfig
-	EventReporterConfig
+	eventReporterConfig
 
 	CopyEmailAddresses []string
 
@@ -38,82 +43,76 @@ type SMTPConfig struct {
 	From     FromAddress
 }
 
-func (m *Mailer) SetDryRun(b bool) {
-	m.Config.DryRun = b
+// SetDryRun is a method of ReapableEventReporter
+func (e *Mailer) SetDryRun(b bool) {
+	e.Config.DryRun = b
 }
 
-func (s *SMTPConfig) String() string {
+// String representation of MailerConfig
+func (c *MailerConfig) String() string {
 	return fmt.Sprintf("%s:%d auth type:%s, creds: %s:%s",
-		s.Host,
-		s.Port,
-		s.AuthType,
-		s.Username,
-		s.Password)
+		c.Host,
+		c.Port,
+		c.AuthType,
+		c.Username,
+		c.Password)
 }
-func (s *SMTPConfig) Addr() string {
-	if s.Port == 0 {
+
+// Addr returns the string representation of the MailerConfig's address
+func (c *MailerConfig) Addr() string {
+	if c.Port == 0 {
 		// friends don't let friends smtp over port 25
-		return fmt.Sprintf("%s:%d", s.Host, 587)
+		return fmt.Sprintf("%s:%d", c.Host, 587)
 	}
 	// default
-	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
 // Auth creates the appropriate smtp.Auth from the configured AuthType
-func (s *SMTPConfig) Auth() smtp.Auth {
-	switch s.AuthType {
+func (c *MailerConfig) Auth() smtp.Auth {
+	switch c.AuthType {
 	case "md5":
-		return s.CRAMMD5Auth()
+		return c.CRAMMD5Auth()
 	case "plain":
-		return s.PlainAuth()
+		return c.PlainAuth()
 	default:
 		return nil
 	}
 }
 
-func (s *SMTPConfig) CRAMMD5Auth() smtp.Auth {
-	return smtp.CRAMMD5Auth(s.Username, s.Password)
+// CRAMMD5Auth configures CRAMMD5Auth for MailerConfig
+func (c *MailerConfig) CRAMMD5Auth() smtp.Auth {
+	return smtp.CRAMMD5Auth(c.Username, c.Password)
 }
 
-func (s *SMTPConfig) PlainAuth() smtp.Auth {
-	return smtp.PlainAuth("", s.Username, s.Password, s.Host)
+// PlainAuth configures PlainAuth for MailerConfig
+func (c *MailerConfig) PlainAuth() smtp.Auth {
+	return smtp.PlainAuth("", c.Username, c.Password, c.Host)
 }
 
-type FromAddress struct {
-	mail.Address
-}
+// FromAddress is an alias for mail.Address
+type FromAddress mail.Address
 
+// UnmarshalText parses []byte -> Address string
 func (f *FromAddress) UnmarshalText(text []byte) error {
 	a, err := mail.ParseAddress(string(text))
 	if err != nil {
 		return err
 	}
-
-	f.Address = *a
+	f.Address = a.Address
+	f.Name = a.Name
 	return nil
 }
 
-func NewMailer(c *SMTPConfig) *Mailer {
+// NewMailer is a constructor for Mailers
+func NewMailer(c *MailerConfig) *Mailer {
 	c.Name = "Mailer"
 	return &Mailer{c}
 }
 
-func (*Mailer) Cleanup() error { return nil }
-
-// methods to conform to EventReporter interface
-func (*Mailer) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	return nil
-}
-func (*Mailer) NewStatistic(name string, value float64, tags []string) error {
-	return nil
-}
-func (*Mailer) NewCountStatistic(name string, tags []string) error {
-	return nil
-}
-
-// TODO: figure out how to goroutine this
-func (m *Mailer) NewReapableEvent(r Reapable, tags []string) error {
-	if m.Config.ShouldTriggerFor(r) {
+// NewReapableEvent is a method of ReapableEventReporter
+func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
+	if e.Config.shouldTriggerFor(r) {
 		addr, subject, body, err := r.ReapableEventEmail()
 		if err != nil {
 			// if this is an unowned error we don't pass it up
@@ -125,15 +124,16 @@ func (m *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 			}
 			return err
 		}
-		return m.Send(addr, subject, body)
+		return e.send(addr, subject, body)
 	}
 	return nil
 }
 
+// NewBatchReapableEvent is a method of ReapableEventReporter
 func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	var triggering []Reapable
 	for _, r := range rs {
-		if e.Config.ShouldTriggerFor(r) {
+		if e.Config.shouldTriggerFor(r) {
 			triggering = append(triggering, r)
 		}
 	}
@@ -158,22 +158,22 @@ func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 		buffer.WriteString("\n")
 	}
 
-	return e.Send(owner, subject, &buffer)
+	return e.send(owner, subject, &buffer)
 }
 
 // Send an HTML email
-func (m *Mailer) Send(to mail.Address, subject string, htmlBody *bytes.Buffer) error {
+func (e *Mailer) send(to mail.Address, subject string, htmlBody *bytes.Buffer) error {
 	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
 		to.String(),
-		m.Config.From.Address.String(),
+		e.Config.From.Address,
 		subject)
 
-	e := email.NewEmail()
-	e.From = m.Config.From.Address.String()
-	e.To = []string{to.Address}
-	e.Bcc = m.Config.CopyEmailAddresses
-	e.Subject = subject
-	e.HTML = htmlBody.Bytes()
+	m := email.NewEmail()
+	m.From = e.Config.From.Address
+	m.To = []string{to.Address}
+	m.Bcc = e.Config.CopyEmailAddresses
+	m.Subject = subject
+	m.HTML = htmlBody.Bytes()
 
-	return e.Send(m.Config.Addr(), m.Config.Auth())
+	return m.Send(e.Config.Addr(), e.Config.Auth())
 }

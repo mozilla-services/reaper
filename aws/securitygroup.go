@@ -208,6 +208,27 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
+	case "InCloudformation":
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
+			matched = true
+		}
+	case "Region":
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		// was this resource's region one of those in the NOT list
+		regionSpecified := false
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				regionSpecified = true
+			}
+		}
+		if !regionSpecified {
+			matched = true
+		}
 	case "Tagged":
 		if a.Tagged(filter.Arguments[0]) {
 			matched = true
@@ -220,6 +241,14 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
 			matched = true
 		}
+	case "ReaperState":
+		if a.reaperState.State.String() == filter.Arguments[0] {
+			matched = true
+		}
+	case "NotReaperState":
+		if a.reaperState.State.String() != filter.Arguments[0] {
+			matched = true
+		}
 	case "Named":
 		if a.Name == filter.Arguments[0] {
 			matched = true
@@ -228,16 +257,16 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
-			matched = true
-		}
 	case "IsDependency":
 		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
 			matched = true
 		}
 	case "NameContains":
 		if strings.Contains(a.Name, filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotNameContains":
+		if !strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:

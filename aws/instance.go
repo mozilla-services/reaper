@@ -356,94 +356,111 @@ func (i *Instance) AWSConsoleURL() *url.URL {
 	return url
 }
 
-func (i *Instance) Filter(filter filters.Filter) bool {
+func (a *Instance) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
 	case "State":
-		if i.State != nil && *i.State.Name == filter.Arguments[0] {
+		if a.State != nil && *a.State.Name == filter.Arguments[0] {
 			matched = true
 		}
 	case "InstanceType":
-		if i.InstanceType != nil && *i.InstanceType == filter.Arguments[0] {
-			matched = true
-		}
-	case "Tagged":
-		if i.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotTagged":
-		if !i.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "Tag":
-		if i.Tag(filter.Arguments[0]) == filter.Arguments[1] {
-			matched = true
-		}
-	case "TagNotEqual":
-		if i.Tag(filter.Arguments[0]) != filter.Arguments[1] {
+		if a.InstanceType != nil && *a.InstanceType == filter.Arguments[0] {
 			matched = true
 		}
 	case "HasPublicIPAddress":
-		if b, err := filter.BoolValue(0); err == nil && b == (i.PublicIPAddress != nil) {
+		if b, err := filter.BoolValue(0); err == nil && b == (a.PublicIPAddress != nil) {
 			matched = true
 		}
 	case "PublicIPAddress":
-		if i.PublicIPAddress != nil && *i.PublicIPAddress == filter.Arguments[0] {
+		if a.PublicIPAddress != nil && *a.PublicIPAddress == filter.Arguments[0] {
+			matched = true
+		}
+	case "InCloudformation":
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
+			matched = true
+		}
+	case "AutoScaled":
+		if b, err := filter.BoolValue(0); err == nil && a.AutoScaled == b {
 			matched = true
 		}
 	// uses RFC3339 format
 	// https://www.ietf.org/rfc/rfc3339.txt
 	case "LaunchTimeBefore":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && t.After(*i.LaunchTime) {
+		if err == nil && a.LaunchTime != nil && t.After(*a.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeAfter":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && t.Before(*i.LaunchTime) {
+		if err == nil && a.LaunchTime != nil && t.Before(*a.LaunchTime) {
 			matched = true
 		}
 	case "LaunchTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && time.Since(*i.LaunchTime) < d {
+		if err == nil && a.LaunchTime != nil && time.Since(*a.LaunchTime) < d {
 			matched = true
 		}
 	case "LaunchTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && i.LaunchTime != nil && time.Since(*i.LaunchTime) > d {
+		if err == nil && a.LaunchTime != nil && time.Since(*a.LaunchTime) > d {
 			matched = true
 		}
 	case "Region":
-		for region := range filter.Arguments {
-			if i.Region == reapable.Region(region) {
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
 				matched = true
 			}
 		}
 	case "NotRegion":
-		for region := range filter.Arguments {
-			if i.Region == reapable.Region(region) {
-				matched = false
+		// was this resource's region one of those in the NOT list
+		regionSpecified := false
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				regionSpecified = true
 			}
 		}
+		if !regionSpecified {
+			matched = true
+		}
+	case "Tagged":
+		if a.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotTagged":
+		if !a.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
+	case "TagNotEqual":
+		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
+			matched = true
+		}
 	case "ReaperState":
-		if i.reaperState.State.String() == filter.Arguments[0] {
+		if a.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && i.IsInCloudformation == b {
+	case "NotReaperState":
+		if a.reaperState.State.String() != filter.Arguments[0] {
 			matched = true
 		}
-	case "AutoScaled":
-		if b, err := filter.BoolValue(0); err == nil && i.AutoScaled == b {
+	case "Named":
+		if a.Name == filter.Arguments[0] {
+			matched = true
+		}
+	case "NotNamed":
+		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
 	case "IsDependency":
-		if b, err := filter.BoolValue(0); err == nil && i.Dependency == b {
+		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
 			matched = true
 		}
 	case "NameContains":
-		if strings.Contains(i.Name, filter.Arguments[0]) {
+		if strings.Contains(a.Name, filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotNameContains":
+		if !strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:

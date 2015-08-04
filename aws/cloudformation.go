@@ -270,6 +270,33 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		if a.StackStatus != nil && *a.StackStatus != filter.Arguments[0] {
 			matched = true
 		}
+	case "CreatedTimeInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) < d {
+			matched = true
+		}
+	case "CreatedTimeNotInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) > d {
+			matched = true
+		}
+	case "Region":
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		// was this resource's region one of those in the NOT list
+		regionSpecified := false
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				regionSpecified = true
+			}
+		}
+		if !regionSpecified {
+			matched = true
+		}
 	case "Tagged":
 		if a.Tagged(filter.Arguments[0]) {
 			matched = true
@@ -282,14 +309,20 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
 			matched = true
 		}
-	case "CreatedTimeInTheLast":
-		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) < d {
+	case "ReaperState":
+		if a.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
-	case "CreatedTimeNotInTheLast":
-		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) > d {
+	case "NotReaperState":
+		if a.reaperState.State.String() != filter.Arguments[0] {
+			matched = true
+		}
+	case "Named":
+		if a.Name == filter.Arguments[0] {
+			matched = true
+		}
+	case "NotNamed":
+		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
 	case "IsDependency":
@@ -298,6 +331,10 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		}
 	case "NameContains":
 		if strings.Contains(a.Name, filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotNameContains":
+		if !strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:

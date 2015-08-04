@@ -11,7 +11,7 @@ import (
 )
 
 // MakeScheduleLink creates a tokenized link scheduling a resource
-func MakeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL, scaleDownSchedule, scaleUpSchedule string) (string, error) {
+func makeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL, scaleDownSchedule, scaleUpSchedule string) (string, error) {
 	sched, err := token.Tokenize(tokenSecret,
 		token.NewScheduleJob(region.String(), id.String(), scaleDownSchedule, scaleUpSchedule))
 
@@ -23,7 +23,7 @@ func MakeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiUR
 }
 
 // MakeTerminateLink creates a tokenized link scheduling a resource
-func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+func makeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	term, err := token.Tokenize(tokenSecret,
 		token.NewTerminateJob(id.String(), id.String()))
 
@@ -35,7 +35,7 @@ func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 }
 
 // MakeIgnoreLink creates a tokenized link scheduling a resource
-func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string,
+func makeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string,
 	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
 		token.NewDelayJob(id.String(), id.String(),
@@ -51,7 +51,7 @@ func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL 
 }
 
 // MakeWhitelistLink creates a tokenized link scheduling a resource
-func MakeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+func makeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	whitelist, err := token.Tokenize(tokenSecret,
 		token.NewWhitelistJob(region.String(), id.String()))
 	if err != nil {
@@ -63,7 +63,7 @@ func MakeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 }
 
 // MakeStopLink creates a tokenized link scheduling a resource
-func MakeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+func makeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewStopJob(region.String(), id.String()))
 	if err != nil {
@@ -75,7 +75,7 @@ func MakeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL st
 }
 
 // MakeForceStopLink creates a tokenized link scheduling a resource
-func MakeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+func makeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewForceStopJob(region.String(), id.String()))
 	if err != nil {

@@ -360,28 +360,8 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
-	case "Pending":
-		if b, err := filter.BoolValue(0); err == nil && i.Pending() == b {
-			matched = true
-		}
-	case "Running":
-		if b, err := filter.BoolValue(0); err == nil && i.Running() == b {
-			matched = true
-		}
-	case "ShuttingDown":
-		if b, err := filter.BoolValue(0); err == nil && i.ShuttingDown() == b {
-			matched = true
-		}
-	case "Terminated":
-		if b, err := filter.BoolValue(0); err == nil && i.Terminated() == b {
-			matched = true
-		}
-	case "Stopping":
-		if b, err := filter.BoolValue(0); err == nil && i.Stopping() == b {
-			matched = true
-		}
-	case "Stopped":
-		if b, err := filter.BoolValue(0); err == nil && i.Stopped() == b {
+	case "State":
+		if i.State != nil && *i.State.Name == filter.Arguments[0] {
 			matched = true
 		}
 	case "InstanceType":
@@ -405,7 +385,7 @@ func (i *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "HasPublicIPAddress":
-		if i.PublicIPAddress != nil {
+		if b, err := filter.BoolValue(0); err == nil && b == (i.PublicIPAddress != nil) {
 			matched = true
 		}
 	case "PublicIPAddress":

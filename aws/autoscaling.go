@@ -21,9 +21,9 @@ import (
 )
 
 type autoScalingGroupScalingSchedule struct {
-	enabled           bool
-	scaleDownString   string
-	scaleUpString     string
+	Enabled           bool
+	ScaleDownString   string
+	ScaleUpString     string
 	previousScaleSize int64
 	previousMinSize   int64
 }
@@ -46,11 +46,11 @@ func (s *autoScalingGroupScalingSchedule) setSchedule(tag string) {
 			log.Error(err.Error())
 			return
 		}
-		s.scaleDownString = splitTag[0]
-		s.scaleUpString = splitTag[1]
+		s.ScaleDownString = splitTag[0]
+		s.ScaleUpString = splitTag[1]
 		s.previousScaleSize = prev
 		s.previousMinSize = min
-		s.enabled = true
+		s.Enabled = true
 	}
 }
 
@@ -61,34 +61,19 @@ func (a *AutoScalingGroup) SaveSchedule() {
 
 // SetScaleDownString is a method of the Scaler interface
 func (a *AutoScalingGroup) SetScaleDownString(s string) {
-	a.Scheduling.scaleDownString = s
+	a.Scheduling.ScaleDownString = s
 }
 
 // SetScaleUpString is a method of the Scaler interface
 func (a *AutoScalingGroup) SetScaleUpString(s string) {
-	a.Scheduling.scaleUpString = s
-}
-
-// SchedulingEnabled returns whether Scheduling has been enabled for this resource
-func (a *AutoScalingGroup) SchedulingEnabled() bool {
-	return a.Scheduling.enabled
-}
-
-// ScaleDownSchedule returns the ScaleDownString for this resource's schedule
-func (a *AutoScalingGroup) ScaleDownSchedule() string {
-	return a.Scheduling.scaleDownString
-}
-
-// ScaleUpSchedule returns the ScaleUpString for this resource's schedule
-func (a *AutoScalingGroup) ScaleUpSchedule() string {
-	return a.Scheduling.scaleUpString
+	a.Scheduling.ScaleUpString = s
 }
 
 func (s *autoScalingGroupScalingSchedule) scheduleTag() string {
 	return strings.Join([]string{
 		// keep the same schedules
-		s.scaleDownString,
-		s.scaleUpString,
+		s.ScaleDownString,
+		s.ScaleUpString,
 		strconv.FormatInt(s.previousScaleSize, 10),
 		strconv.FormatInt(s.previousMinSize, 10),
 	}, ",")

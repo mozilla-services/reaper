@@ -30,9 +30,9 @@ type Instance struct {
 }
 
 type instanceScalingSchedule struct {
-	enabled         bool
-	scaleDownString string
-	scaleUpString   string
+	Enabled         bool
+	ScaleDownString string
+	ScaleUpString   string
 }
 
 // SaveSchedule is a method of the Scaler interface
@@ -42,27 +42,12 @@ func (a *Instance) SaveSchedule() {
 
 // SetScaleDownString is a method of the Scaler interface
 func (a *Instance) SetScaleDownString(s string) {
-	a.Scheduling.scaleDownString = s
+	a.Scheduling.ScaleDownString = s
 }
 
 // SetScaleUpString is a method of the Scaler interface
 func (a *Instance) SetScaleUpString(s string) {
-	a.Scheduling.scaleUpString = s
-}
-
-// SchedulingEnabled returns whether Scheduling has been enabled for this resource
-func (a *Instance) SchedulingEnabled() bool {
-	return a.Scheduling.enabled
-}
-
-// ScaleDownSchedule returns the ScaleDownString for this resource's schedule
-func (a *Instance) ScaleDownSchedule() string {
-	return a.Scheduling.scaleDownString
-}
-
-// ScaleUpSchedule returns the ScaleUpString for this resource's schedule
-func (a *Instance) ScaleUpSchedule() string {
-	return a.Scheduling.scaleUpString
+	a.Scheduling.ScaleUpString = s
 }
 
 func (s *instanceScalingSchedule) setSchedule(tag string) {
@@ -71,17 +56,17 @@ func (s *instanceScalingSchedule) setSchedule(tag string) {
 	if len(splitTag) != 2 {
 		log.Error(fmt.Sprintf("Invalid Instance Tag format %s", tag))
 	} else {
-		s.scaleDownString = splitTag[0]
-		s.scaleUpString = splitTag[1]
-		s.enabled = true
+		s.ScaleDownString = splitTag[0]
+		s.ScaleUpString = splitTag[1]
+		s.Enabled = true
 	}
 }
 
 func (s instanceScalingSchedule) scheduleTag() string {
 	return strings.Join([]string{
 		// keep the same schedules
-		s.scaleDownString,
-		s.scaleUpString,
+		s.ScaleDownString,
+		s.ScaleUpString,
 	}, ",")
 }
 

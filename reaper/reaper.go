@@ -558,12 +558,12 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			a.Dependency = true
 		}
 
-		if a.SchedulingEnabled() {
+		if a.Scheduling.Enabled {
 			if log.Extras() {
-				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.ScaleDownSchedule(), a.ScaleUpSchedule())
+				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.Scheduling.ScaleDownString, a.Scheduling.ScaleUpString)
 			}
-			schedule.AddFunc(a.ScaleDownSchedule(), a.ScaleDown)
-			schedule.AddFunc(a.ScaleUpSchedule(), a.ScaleUp)
+			schedule.AddFunc(a.Scheduling.ScaleDownString, a.ScaleDown)
+			schedule.AddFunc(a.Scheduling.ScaleUpString, a.ScaleUp)
 		}
 
 		// identify instances in an ASG
@@ -604,12 +604,12 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			i.AutoScaled = true
 		}
 
-		if i.SchedulingEnabled() {
+		if i.Scheduling.Enabled {
 			if log.Extras() {
-				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.ScaleDownSchedule(), i.ScaleUpSchedule())
+				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.Scheduling.ScaleDownString, i.Scheduling.ScaleUpString)
 			}
-			schedule.AddFunc(i.ScaleDownSchedule(), i.ScaleDown)
-			schedule.AddFunc(i.ScaleUpSchedule(), i.ScaleUp)
+			schedule.AddFunc(i.Scheduling.ScaleDownString, i.ScaleDown)
+			schedule.AddFunc(i.Scheduling.ScaleUpString, i.ScaleUp)
 		}
 
 		// group instances by owner

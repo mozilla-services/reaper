@@ -49,7 +49,6 @@ func (e *Datadog) Cleanup() error {
 	return err
 }
 
-// Do is a method of sync.Once
 func (e *Datadog) getGodspeed() {
 	var gs *godspeed.Godspeed
 	var err error
@@ -71,6 +70,8 @@ func (e *Datadog) getGodspeed() {
 
 func (e *Datadog) godspeed() (*godspeed.Godspeed, error) {
 	if e._godspeed == nil {
+		// Do is a method of sync.Once
+		// this will only get called once
 		e.Do(e.getGodspeed)
 	}
 	return e._godspeed, nil

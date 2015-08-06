@@ -3,11 +3,9 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
 	"strings"
-	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -134,41 +132,14 @@ func (a *Instance) Stopping() bool { return *a.State.Code == 64 }
 // Stopped returns whether an instance's State is Stopped
 func (a *Instance) Stopped() bool { return *a.State.Code == 80 }
 
-func (a *Instance) reapableEventHTML(text string) *bytes.Buffer {
-	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
-func (a *Instance) reapableEventText(text string) *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		log.Error(fmt.Sprintf("%s", err.Error()))
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
 // ReapableEventText is part of the events.Reapable interface
-func (a *Instance) ReapableEventText() *bytes.Buffer {
-	return a.reapableEventText(reapableInstanceEventText)
+func (a *Instance) ReapableEventText() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableInstanceEventText)
 }
 
 // ReapableEventTextShort is part of the events.Reapable interface
-func (a *Instance) ReapableEventTextShort() *bytes.Buffer {
-	return a.reapableEventText(reapableInstanceEventTextShort)
+func (a *Instance) ReapableEventTextShort() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableInstanceEventTextShort)
 }
 
 // ReapableEventEmail is part of the events.Reapable interface
@@ -180,7 +151,7 @@ func (a *Instance) ReapableEventEmail() (owner mail.Address, subject string, bod
 	}
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableInstanceEventHTML)
+	body, err = reapableEventHTML(a, reapableInstanceEventHTML)
 	return
 }
 
@@ -192,7 +163,7 @@ func (a *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Bu
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableInstanceEventHTMLShort)
+	body, err = reapableEventHTML(a, reapableInstanceEventHTMLShort)
 	return
 }
 
@@ -210,7 +181,7 @@ type instanceEventData struct {
 	ScheduleCESTBusinessHoursLink    string
 }
 
-func (a *Instance) getTemplateData() (*instanceEventData, error) {
+func (a *Instance) getTemplateData() (interface{}, error) {
 	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err

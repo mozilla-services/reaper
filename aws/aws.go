@@ -107,10 +107,10 @@ func AllCloudformations() chan *Cloudformation {
 	return ch
 }
 
-// CloudformationResources returns a chan of CloudformationResources, sourced from the AWS API
+// cloudformationResources returns a chan of CloudformationResources, sourced from the AWS API
 // there is rate limiting in the AWS API for CloudformationResources, so we delay
 // this is skippable with the CLI flag -withoutCloudformationResources
-func CloudformationResources(region, id string) chan *cloudformation.StackResource {
+func cloudformationResources(region, id string) chan *cloudformation.StackResource {
 	ch := make(chan *cloudformation.StackResource)
 
 	if config.WithoutCloudformationResources {
@@ -158,9 +158,9 @@ func CloudformationResources(region, id string) chan *cloudformation.StackResour
 	return ch
 }
 
-// ASGInstanceIDs returns a map of regions to a map of ids to bools
+// AutoScalingGroupInstanceIDs returns a map of regions to a map of ids to bools
 // the bool value is whether the instance with that region/id is in an ASG
-func ASGInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
+func AutoScalingGroupInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[reapable.ID]bool {
 	// maps region to id to bool
 	inASG := make(map[reapable.Region]map[reapable.ID]bool)
 	for _, region := range config.Regions {

@@ -1,8 +1,11 @@
 package aws
 
 import (
+	"bytes"
 	"fmt"
+	htmlTemplate "html/template"
 	"net/mail"
+	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -132,6 +135,40 @@ func (a *Resource) AddFilterGroup(name string, fs filters.FilterGroup) {
 // MatchedFiltersString returns a formatted string with the filters the Resource matched
 func (a *Resource) MatchedFiltersString() string {
 	return filters.FormatFilterGroupsText(a.matchedFilterGroups)
+}
+
+type templater interface {
+	getTemplateData() (interface{}, error)
+}
+
+func reapableEventHTML(a templater, text string) (*bytes.Buffer, error) {
+	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
+	buf := bytes.NewBuffer(nil)
+
+	data, err := a.getTemplateData()
+	if err != nil {
+		return nil, err
+	}
+	err = t.Execute(buf, data)
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
+}
+
+func reapableEventText(a templater, text string) (*bytes.Buffer, error) {
+	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
+	buf := bytes.NewBuffer(nil)
+
+	data, err := a.getTemplateData()
+	if err != nil {
+		return nil, err
+	}
+	err = t.Execute(buf, data)
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
 }
 
 // ReapableDescription is a method of reapable.Reapable

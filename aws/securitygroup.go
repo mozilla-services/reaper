@@ -3,11 +3,9 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
 	"strings"
-	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -54,41 +52,14 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	return &s
 }
 
-func (a *SecurityGroup) reapableEventHTML(text string) *bytes.Buffer {
-	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
-func (a *SecurityGroup) reapableEventText(text string) *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		log.Error(fmt.Sprintf("%s", err.Error()))
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
 // ReapableEventText is part of the events.Reapable interface
-func (a *SecurityGroup) ReapableEventText() *bytes.Buffer {
-	return a.reapableEventText(reapableSecurityGroupEventText)
+func (a *SecurityGroup) ReapableEventText() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableSecurityGroupEventText)
 }
 
 // ReapableEventTextShort is part of the events.Reapable interface
-func (a *SecurityGroup) ReapableEventTextShort() *bytes.Buffer {
-	return a.reapableEventText(reapableSecurityGroupEventTextShort)
+func (a *SecurityGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableSecurityGroupEventTextShort)
 }
 
 // ReapableEventEmail is part of the events.Reapable interface
@@ -101,7 +72,7 @@ func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableSecurityGroupEventHTML)
+	body, err = reapableEventHTML(a, reapableSecurityGroupEventHTML)
 	return
 }
 
@@ -113,7 +84,7 @@ func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *byt
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableSecurityGroupEventHTMLShort)
+	body, err = reapableEventHTML(a, reapableSecurityGroupEventHTMLShort)
 	return
 }
 
@@ -129,7 +100,7 @@ type securityGroupEventData struct {
 	IgnoreLink7   string
 }
 
-func (a *SecurityGroup) getTemplateData() (*securityGroupEventData, error) {
+func (a *SecurityGroup) getTemplateData() (interface{}, error) {
 	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))

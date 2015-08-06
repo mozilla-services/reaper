@@ -3,12 +3,10 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
-	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -128,41 +126,14 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	return &a
 }
 
-func (a *AutoScalingGroup) reapableEventHTML(text string) *bytes.Buffer {
-	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
-func (a *AutoScalingGroup) reapableEventText(text string) *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		log.Error(fmt.Sprintf("%s", err.Error()))
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
 // ReapableEventText is part of the events.Reapable interface
-func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
-	return a.reapableEventText(reapableASGEventText)
+func (a *AutoScalingGroup) ReapableEventText() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableASGEventText)
 }
 
 // ReapableEventTextShort is part of the events.Reapable interface
-func (a *AutoScalingGroup) ReapableEventTextShort() *bytes.Buffer {
-	return a.reapableEventText(reapableASGEventTextShort)
+func (a *AutoScalingGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableASGEventTextShort)
 }
 
 // ReapableEventEmail is part of the events.Reapable interface
@@ -175,7 +146,7 @@ func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject str
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableASGEventHTML)
+	body, err = reapableEventHTML(a, reapableASGEventHTML)
 	return
 }
 
@@ -187,7 +158,7 @@ func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableASGEventHTMLShort)
+	body, err = reapableEventHTML(a, reapableASGEventHTMLShort)
 	return
 }
 
@@ -206,7 +177,7 @@ type autoScalingGroupEventData struct {
 	ScheduleCESTBusinessHoursLink    string
 }
 
-func (a *AutoScalingGroup) getTemplateData() (*autoScalingGroupEventData, error) {
+func (a *AutoScalingGroup) getTemplateData() (interface{}, error) {
 	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err

@@ -3,12 +3,10 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
 	"strings"
 	"sync"
-	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -50,7 +48,7 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 	go func() {
 		a.Lock()
 		defer a.Unlock()
-		for resource := range CloudformationResources(a.Region.String(), a.ID.String()) {
+		for resource := range cloudformationResources(a.Region.String(), a.ID.String()) {
 			a.Resources = append(a.Resources, *resource)
 		}
 	}()
@@ -72,41 +70,14 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 	return &a
 }
 
-func (a *Cloudformation) reapableEventHTML(text string) *bytes.Buffer {
-	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
-func (a *Cloudformation) reapableEventText(text string) *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		log.Error(fmt.Sprintf("%s", err.Error()))
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
-}
-
 // ReapableEventText is part of the events.Reapable interface
-func (a *Cloudformation) ReapableEventText() *bytes.Buffer {
-	return a.reapableEventText(reapableCloudformationEventText)
+func (a *Cloudformation) ReapableEventText() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableCloudformationEventText)
 }
 
 // ReapableEventTextShort is part of the events.Reapable interface
-func (a *Cloudformation) ReapableEventTextShort() *bytes.Buffer {
-	return a.reapableEventText(reapableCloudformationEventTextShort)
+func (a *Cloudformation) ReapableEventTextShort() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableCloudformationEventTextShort)
 }
 
 // ReapableEventEmail is part of the events.Reapable interface
@@ -119,7 +90,7 @@ func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject strin
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableCloudformationEventHTML)
+	body, err = reapableEventHTML(a, reapableCloudformationEventHTML)
 	return
 }
 
@@ -131,7 +102,7 @@ func (a *Cloudformation) ReapableEventEmailShort() (owner mail.Address, body *by
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableCloudformationEventHTMLShort)
+	body, err = reapableEventHTML(a, reapableCloudformationEventHTMLShort)
 	return
 }
 
@@ -147,7 +118,7 @@ type cloudformationEventData struct {
 	IgnoreLink7    string
 }
 
-func (a *Cloudformation) getTemplateData() (*cloudformationEventData, error) {
+func (a *Cloudformation) getTemplateData() (interface{}, error) {
 	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))

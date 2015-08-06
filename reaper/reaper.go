@@ -567,7 +567,7 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		}
 
 		// identify instances in an ASG
-		instanceIDsInASGs := reaperaws.ASGInstanceIDs(a)
+		instanceIDsInASGs := reaperaws.AutoScalingGroupInstanceIDs(a)
 		for region := range instanceIDsInASGs {
 			for instanceID := range instanceIDsInASGs[region] {
 				instancesInASGs[region][instanceID] = true

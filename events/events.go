@@ -17,8 +17,8 @@ type NotificationsConfig struct {
 // Reapable expands upon the reapable.Reapable interface
 type Reapable interface {
 	reapable.Reapable
-	ReapableEventText() *bytes.Buffer
-	ReapableEventTextShort() *bytes.Buffer
+	ReapableEventText() (*bytes.Buffer, error)
+	ReapableEventTextShort() (*bytes.Buffer, error)
 	ReapableEventEmail() (mail.Address, string, *bytes.Buffer, error)
 	ReapableEventEmailShort() (mail.Address, *bytes.Buffer, error)
 }

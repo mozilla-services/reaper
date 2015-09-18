@@ -23,7 +23,7 @@ func MakeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiUR
 
 func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	term, err := token.Tokenize(tokenSecret,
-		token.NewTerminateJob(id.String(), id.String()))
+		token.NewTerminateJob(region.String(), id.String()))
 
 	if err != nil {
 		return "", err
@@ -35,7 +35,7 @@ func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string,
 	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
-		token.NewDelayJob(id.String(), id.String(),
+		token.NewDelayJob(region.String(), id.String(),
 			duration))
 
 	if err != nil {

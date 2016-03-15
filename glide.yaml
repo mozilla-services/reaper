@@ -27,14 +27,3 @@ import:
   subpackages:
   - pbkdf2
   - scrypt
-- package: github.com/mozilla-services/reaper
-  subpackages:
-  - aws
-  - events
-  - filters
-  - prices
-  - reapable
-  - reaper
-  - reaperlog
-  - state
-  - token

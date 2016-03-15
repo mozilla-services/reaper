@@ -17,8 +17,10 @@ The reaper terminates forgotten EC2 instances. It works like this:
 ## Building
 
 * checkout repo
-* build binary: `godep go build main.go`
-* use binary: `./reaper -conf config/default.toml`
+* install glide per `https://github.com/Masterminds/glide`
+* install dependencies: `glide install`
+* build binary: `go build main.go`
+* run binary: `./reaper -config config/default.toml`
 * for command line options: `./reaper -help`
 
 ## Creating a configuration file

@@ -1,0 +1,51 @@
+hash: 4e54b4f596a138b64421f05a3c36cf175f16705a0d5d3208a55afe4a10fae587
+updated: 2016-03-15T15:27:35.072877059-07:00
+imports:
+- name: github.com/aws/aws-sdk-go
+  version: 5fa0a7e63b3d9f094d7e8549ce483a190587398f
+  subpackages:
+  - aws
+  - internal/apierr
+  - internal/endpoints
+  - internal/protocol/ec2query
+  - internal/protocol/query
+  - internal/protocol/rest
+  - internal/protocol/xml/xmlutil
+  - internal/signer/v4
+  - service/autoscaling
+  - service/cloudformation
+  - service/ec2
+  - aws/awserr
+  - aws/awsutil
+  - aws/credentials
+  - internal/protocol/query/queryutil
+- name: github.com/BurntSushi/toml
+  version: 056c9bc7be7190eaa7715723883caffa5f8fa3e4
+- name: github.com/jordan-wright/email
+  version: 9c459b245c20bee2cc7adbd1e27e4e716f98ad88
+- name: github.com/mozilla-services/reaper
+  version: ed87553202fc930dab2f2f792b579f0181a907bd
+  subpackages:
+  - aws
+  - events
+  - filters
+  - prices
+  - reapable
+  - reaper
+  - reaperlog
+  - state
+  - token
+- name: github.com/op/go-logging
+  version: e8d5414f0947014548c2334044a0fac13187dfee
+- name: github.com/PagerDuty/godspeed
+  version: 079d1fb267ad66b7a3bd42c24013cbeb29698c3d
+- name: github.com/robfig/cron
+  version: 67823cd24dece1b04cced3a0a0b3ca2bc84d875e
+- name: github.com/vaughan0/go-ini
+  version: a98ad7ee00ec53921f08832bc06ecf7fd600e6a1
+- name: golang.org/x/crypto
+  version: 4d48e5fa3d62b5e6e71260571bf76c767198ca02
+  subpackages:
+  - pbkdf2
+  - scrypt
+devImports: []

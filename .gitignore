@@ -10,6 +10,7 @@ config/secrets.toml
 # Folders
 _obj
 _test
+vendor
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -32,4 +33,3 @@ _testmain.go
 .DS_Store
 .AppleDouble
 .LSOverride
-

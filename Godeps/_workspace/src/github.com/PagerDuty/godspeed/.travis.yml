@@ -1,8 +1,0 @@
-language: go
-go:
-  - 1.4.2
-branches:
-  only:
-    - master
-script: go test -v ./... -check.vv
-sudo: false

@@ -52,7 +52,7 @@ func (s *instanceScalingSchedule) setSchedule(tag string) {
 	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 2 {
-		log.Error(fmt.Sprintf("Invalid Instance Tag format %s", tag))
+		log.Errorf("Invalid Instance Tag format %s", tag)
 	} else {
 		s.ScaleDownString = splitTag[0]
 		s.ScaleUpString = splitTag[1]
@@ -292,14 +292,14 @@ const reapableInstanceEventHTMLShort = `
 <body>
 	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
 		<br />
-		Schedule it to start and stop with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>, 
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or 
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours, 
-		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
-		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		Schedule it to start and stop with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>,
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours,
+		<a href="{{ .TerminateLink }}">Terminate</a>,
+		<a href="{{ .StopLink }}">Stop</a>,
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
+		<a href="{{ .IgnoreLink3 }}">3 days</a>,
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -331,7 +331,7 @@ func (a *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Errorf("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -454,7 +454,7 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
+		log.Errorf("No function %s could be found for filtering Instances.", filter.Function)
 	}
 	return matched
 }

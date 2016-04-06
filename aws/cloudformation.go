@@ -175,10 +175,10 @@ const reapableCloudformationEventHTMLShort = `
 <body>
 	<p>Cloudformation <a href="{{ .Cloudformation.AWSConsoleURL }}">{{ if .Cloudformation.Name }}"{{.Cloudformation.Name}}" {{ end }}</a> in {{.Cloudformation.Region}}</a> is scheduled to be terminated after <strong>{{.Cloudformation.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
 		<br />
-		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
-		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		<a href="{{ .TerminateLink }}">Terminate</a>,
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
+		<a href="{{ .IgnoreLink3 }}">3 days</a>,
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -273,7 +273,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Cloudformations.", filter.Function))
+		log.Errorf("No function %s could be found for filtering Cloudformations.", filter.Function)
 	}
 	return matched
 }
@@ -284,7 +284,7 @@ func (a *Cloudformation) AWSConsoleURL() *url.URL {
 	// setting RawQuery because QueryEscape messes with the "/"s in the url
 	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region.String(), a.ID.String())
 	if err != nil {
-		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Errorf("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -301,7 +301,7 @@ func (a *Cloudformation) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteStack(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete Cloudformation %s", a.ReapableDescriptionTiny()))
+		log.Errorf("could not delete Cloudformation %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return false, nil

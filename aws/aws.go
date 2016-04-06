@@ -133,10 +133,10 @@ func cloudformationResources(region, id string) chan *cloudformation.StackResour
 			if err != nil {
 				// this error is annoying and will come up all the time... so you can disable it
 				if strings.Split(err.Error(), ":")[0] == "Throttling" && log.Extras() {
-					log.Warning(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second))
+					log.Warningf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second)
 				} else if strings.Split(err.Error(), ":")[0] != "Throttling" {
 					// any other errors
-					log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second))
+					log.Errorf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second)
 				}
 			}
 

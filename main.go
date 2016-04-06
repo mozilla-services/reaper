@@ -36,7 +36,7 @@ func init() {
 		// catches panics loading config
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error(fmt.Sprintf("Invalid config, %s", r))
+				log.Errorf("Invalid config, %s", r)
 				os.Exit(1)
 			}
 		}()
@@ -148,7 +148,7 @@ func main() {
 		// waiting for an Interrupt or Kill signal
 		// this channel blocks until it receives one
 		sig := <-c
-		log.Notice(fmt.Sprintf("Got signal %s, stopping services", sig.String()))
+		log.Noticef("Got signal %s, stopping services", sig.String())
 		log.Notice("Stopping HTTP")
 		api.Stop()
 		log.Notice("Stopping reaper runner")

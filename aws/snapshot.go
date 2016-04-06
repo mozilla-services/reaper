@@ -43,7 +43,7 @@ func (s *Snapshot) Filter(filter filters.Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Snapshots.", filter.Function))
+		log.Errorf("No function %s could be found for filtering Snapshots.", filter.Function)
 	}
 	return matched
 }

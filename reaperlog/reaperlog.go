@@ -1,7 +1,6 @@
 package reaperlog
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/op/go-logging"
@@ -41,7 +40,7 @@ func AddLogFile(filename string) {
 		// create it if it doesn't exist
 		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664)
 		if err != nil {
-			log.Error(fmt.Sprintf("Unable to open logfile '%s'", filename))
+			log.Errorf("Unable to open logfile '%s'", filename)
 		} else {
 			// if the file was successfully opened
 			log.Info("Logging to %s", filename)
@@ -66,7 +65,15 @@ func Info(format string, args ...interface{}) {
 	log.Info(format, args...)
 }
 
+func Infof(format string, args ...interface{}) {
+	log.Infof(format, args...)
+}
+
 func Warning(format string, args ...interface{}) {
+	log.Warning(format, args...)
+}
+
+func Warningf(format string, args ...interface{}) {
 	log.Warning(format, args...)
 }
 
@@ -94,6 +101,14 @@ func Error(format string, args ...interface{}) {
 	log.Error(format, args...)
 }
 
+func Errorf(format string, args ...interface{}) {
+	log.Errorf(format, args...)
+}
+
 func Notice(format string, args ...interface{}) {
 	log.Notice(format, args...)
+}
+
+func Noticef(format string, args ...interface{}) {
+	log.Noticef(format, args...)
 }

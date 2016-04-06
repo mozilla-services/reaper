@@ -342,7 +342,7 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Volumes.", filter.Function))
+		log.Errorf("No function %s could be found for filtering Volumes.", filter.Function)
 	}
 	return matched
 }
@@ -352,7 +352,7 @@ func (a *Volume) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Volumes:volumeId=%s",
 		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Errorf("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -367,7 +367,7 @@ func (a *Volume) Terminate() (bool, error) {
 	}
 	_, err := api.DeleteVolume(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete Volume %s", a.ReapableDescriptionTiny()))
+		log.Errorf("could not delete Volume %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil

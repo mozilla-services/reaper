@@ -157,10 +157,10 @@ const reapableSecurityGroupEventHTMLShort = `
 <body>
 	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be deleted after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
 		<br />
-		<a href="{{ .TerminateLink }}">Delete</a>, 
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
-		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
+		<a href="{{ .TerminateLink }}">Delete</a>,
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
+		<a href="{{ .IgnoreLink3 }}">3 days</a>,
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -219,7 +219,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering SecurityGroups.", filter.Function))
+		log.Errorf("No function %s could be found for filtering SecurityGroups.", filter.Function)
 	}
 	return matched
 }
@@ -229,7 +229,7 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Errorf("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -247,7 +247,7 @@ func (a *SecurityGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteSecurityGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete SecurityGroup %s", a.ReapableDescriptionTiny()))
+		log.Errorf("could not delete SecurityGroup %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return false, nil

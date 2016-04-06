@@ -30,26 +30,26 @@ func (s *autoScalingGroupScalingSchedule) setSchedule(tag string) {
 	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 4 {
-		log.Error(fmt.Sprintf("Invalid Autoscaler Tag format %s", tag))
-	} else {
-		prev, err := strconv.ParseInt(splitTag[2], 0, 64)
-		if err != nil {
-			log.Error(fmt.Sprintf("Invalid Autoscaler Tag format %s", tag))
-			log.Error(err.Error())
-			return
-		}
-		min, err := strconv.ParseInt(splitTag[3], 0, 64)
-		if err != nil {
-			log.Error(fmt.Sprintf("Invalid Autoscaler Tag format %s", tag))
-			log.Error(err.Error())
-			return
-		}
-		s.ScaleDownString = splitTag[0]
-		s.ScaleUpString = splitTag[1]
-		s.previousScaleSize = prev
-		s.previousMinSize = min
-		s.Enabled = true
+		log.Errorf("Invalid Autoscaler Tag format %s", tag)
+		return
 	}
+	prev, err := strconv.ParseInt(splitTag[2], 0, 64)
+	if err != nil {
+		log.Errorf("Invalid Autoscaler Tag format %s", tag)
+		log.Error(err.Error())
+		return
+	}
+	min, err := strconv.ParseInt(splitTag[3], 0, 64)
+	if err != nil {
+		log.Errorf("Invalid Autoscaler Tag format %s", tag)
+		log.Error(err.Error())
+		return
+	}
+	s.ScaleDownString = splitTag[0]
+	s.ScaleUpString = splitTag[1]
+	s.previousScaleSize = prev
+	s.previousMinSize = min
+	s.Enabled = true
 }
 
 // SaveSchedule is a method of the Scaler interface
@@ -271,14 +271,14 @@ const reapableASGEventHTMLShort = `
 <body>
 	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }}</a> in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
 		<br />
-		Schedule it to scale up and down with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>, 
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or 
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours, 
-		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
-		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, 
+		Schedule it to scale up and down with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>,
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours,
+		<a href="{{ .TerminateLink }}">Terminate</a>,
+		<a href="{{ .StopLink }}">Stop</a>,
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
+		<a href="{{ .IgnoreLink3 }}">3 days</a>,
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>,
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -464,7 +464,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
+		log.Errorf("No function %s could be found for filtering AutoScalingGroups.", filter.Function)
 	}
 	return matched
 }
@@ -474,7 +474,7 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
 		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Errorf("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -520,7 +520,7 @@ func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) 
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not update AutoScalingGroup %s", a.ReapableDescriptionTiny()))
+		log.Errorf("could not update AutoScalingGroup %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil
@@ -536,7 +536,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny()))
+		log.Errorf("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil

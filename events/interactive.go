@@ -8,39 +8,36 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
+// InteractiveEventConfig is the configuration for an InteractiveEvent
 type InteractiveEventConfig struct {
-	EventReporterConfig
+	eventReporterConfig
 }
 
+// InteractiveEvent implements ReapableEventReporter, offers choices
+// uses godspeed, requires dd-agent running
 type InteractiveEvent struct {
 	Config *InteractiveEventConfig
 }
 
+// NewInteractiveEvent returns a new instance of InteractiveEvent
 func NewInteractiveEvent(c *InteractiveEventConfig) *InteractiveEvent {
 	c.Name = "InteractiveEvent"
 	return &InteractiveEvent{c}
 }
 
-func (n *InteractiveEvent) SetDryRun(b bool) {
-	n.Config.DryRun = b
+// SetDryRun is a method of ReapableEventReporter
+func (e *InteractiveEvent) SetDryRun(b bool) {
+	e.Config.DryRun = b
 }
 
-func (n *InteractiveEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	return nil
-}
-func (n *InteractiveEvent) NewStatistic(name string, value float64, tags []string) error {
-	return nil
-}
-func (n *InteractiveEvent) NewCountStatistic(name string, tags []string) error {
-	return nil
-}
-func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
+// NewReapableEvent is a method of ReapableEventReporter
+func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescriptionTiny())
 	}
 
 	var err error
-	if n.Config.ShouldTriggerFor(r) {
+	if e.Config.shouldTriggerFor(r) {
 		log.Notice(fmt.Sprintf("Choose one of the actions below for %s. All other input is ignored:\nT to terminate\nS to stop\nF to ForceStop\nW to whitelist\nI to increment state\nU to unsave state\n", r.ReapableDescriptionShort()))
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
@@ -68,9 +65,10 @@ func (n *InteractiveEvent) NewReapableEvent(r Reapable) error {
 	return err
 }
 
-func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable) error {
+// NewBatchReapableEvent is a method of EventReporter
+func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r)
+		err := e.NewReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}

@@ -4,130 +4,141 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/PagerDuty/godspeed"
 
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-// DataDogConfig is the configuration for a DataDog
-type DataDogConfig struct {
-	EventReporterConfig
+// DatadogConfig is the configuration for a Datadog
+type DatadogConfig struct {
+	eventReporterConfig
 	Host string
 	Port string
 }
 
-// DataDog implements EventReporter, sends events and statistics to DataDog
+// Datadog implements EventReporter, sends events and statistics to Datadog
 // uses godspeed, requires dd-agent running
-type DataDog struct {
-	Config    *DataDogConfig
+type Datadog struct {
+	Config    *DatadogConfig
 	_godspeed *godspeed.Godspeed
+	sync.Once
 }
 
-func NewDataDog(c *DataDogConfig) *DataDog {
-	c.Name = "DataDog"
-	return &DataDog{Config: c}
+// NewDatadog returns a new instance of Datadog
+func NewDatadog(c *DatadogConfig) *Datadog {
+	c.Name = "Datadog"
+	return &Datadog{Config: c}
 }
 
-func (d *DataDog) SetDryRun(b bool) {
-	d.Config.DryRun = b
+// SetDryRun is a method of EventReporter
+// SetDryRun sets a Datadog's DryRun value
+func (e *Datadog) SetDryRun(b bool) {
+	e.Config.DryRun = b
 }
 
-// TODO: make this async?
-// TODO: don't recreate godspeed
-func (d *DataDog) godspeed() (*godspeed.Godspeed, error) {
-	if d._godspeed == nil {
-		var g *godspeed.Godspeed
-		var err error
-		// if config options not set, use defaults
-		if d.Config.Host == "" || d.Config.Port == "" {
-			g, err = godspeed.NewDefault()
-		} else {
-			port, err := strconv.Atoi(d.Config.Port)
-			if err != nil {
-				return nil, err
-			}
-			g, err = godspeed.New(d.Config.Host, port, false)
-		}
-		if err != nil {
-			return nil, err
-		}
-		d._godspeed = g
+// Cleanup is a method of EventReporter
+// Cleanup performs any actions necessary to clean up after a Datadog
+func (e *Datadog) Cleanup() error {
+	g, err := e.godspeed()
+	if err != nil {
+		return err
 	}
-	return d._godspeed, nil
+	err = g.Conn.Close()
+	return err
 }
 
-// NewEvent reports an event to DataDog
-func (d *DataDog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	if d.Config.DryRun {
+func (e *Datadog) getGodspeed() {
+	var gs *godspeed.Godspeed
+	var err error
+	// if config options not set, use defaults
+	if e.Config.Host == "" || e.Config.Port == "" {
+		gs, err = godspeed.NewDefault()
+	} else {
+		port, err := strconv.Atoi(e.Config.Port)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		gs, err = godspeed.New(e.Config.Host, port, false)
+	}
+	if err != nil {
+		log.Error(err.Error())
+	}
+	e._godspeed = gs
+}
+
+func (e *Datadog) godspeed() (*godspeed.Godspeed, error) {
+	if e._godspeed == nil {
+		// Do is a method of sync.Once
+		// this will only get called once
+		e.Do(e.getGodspeed)
+	}
+	return e._godspeed, nil
+}
+
+// NewEvent is a method of EventReporter
+// NewEvent reports an event to Datadog
+func (e *Datadog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+	if e.Config.DryRun {
 		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", title)
 		}
 		return nil
 	}
 
-	g, err := d.godspeed()
+	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
-	// TODO: fix?
-	// defer g.Conn.Close()
 	err = g.Event(title, text, fields, tags)
 	if err != nil {
-		return fmt.Errorf("Error reporting Godspeed event %s: %s", title, err)
+		return err
 	}
 	return nil
 }
 
-// NewStatistic reports a gauge to DataDog
-func (d *DataDog) NewStatistic(name string, value float64, tags []string) error {
-	if d.Config.DryRun {
+// NewStatistic is a method of EventReporter
+// NewStatistic reports a gauge to Datadog
+func (e *Datadog) NewStatistic(name string, value float64, tags []string) error {
+	if e.Config.DryRun {
 		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", name)
 		}
 		return nil
 	}
 
-	g, err := d.godspeed()
+	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
-	// TODO: fix?
-	// defer g.Conn.Close()
 	err = g.Gauge(name, value, tags)
-	if err != nil {
-		return fmt.Errorf("Error reporting Godspeed statistic %s: %s", name, err)
-	}
-
-	return nil
+	return err
 }
 
-// NewCountStatistic reports an Incr to DataDog
-func (d *DataDog) NewCountStatistic(name string, tags []string) error {
-	if d.Config.DryRun {
+// NewCountStatistic is a method of EventReporter
+// NewCountStatistic reports an Incr to Datadog
+func (e *Datadog) NewCountStatistic(name string, tags []string) error {
+	if e.Config.DryRun {
 		if log.Extras() {
 			log.Notice("DryRun: Not reporting %s", name)
 		}
 		return nil
 	}
 
-	g, err := d.godspeed()
+	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
-	// TODO: fix?
-	// defer g.Conn.Close()
 	err = g.Incr(name, tags)
-	if err != nil {
-		return fmt.Errorf("Error reporting Godspeed count statistic %s: %s", name, err)
-	}
-	return nil
+	return err
 }
 
+// NewReapableEvent is a method of EventReporter
 // NewReapableEvent is shorthand for a NewEvent about a reapable resource
-func (d *DataDog) NewReapableEvent(r Reapable) error {
-	if d.Config.ShouldTriggerFor(r) {
-		err := d.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, []string{fmt.Sprintf("id:%s", r.ReapableDescriptionTiny())})
+func (e *Datadog) NewReapableEvent(r Reapable, tags []string) error {
+	if e.Config.shouldTriggerFor(r) {
+		err := e.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
 		if err != nil {
 			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
 		}
@@ -135,40 +146,50 @@ func (d *DataDog) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-// TODO: make this based on size rather than number of events
-func (e *DataDog) NewBatchReapableEvent(rs []Reapable) error {
+// NewBatchReapableEvent is a method of EventReporter
+func (e *Datadog) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	var triggering []Reapable
 	for _, r := range rs {
-		if e.Config.ShouldTriggerFor(r) {
+		if e.Config.shouldTriggerFor(r) {
 			triggering = append(triggering, r)
 		}
 	}
+	// no events triggering
 	if len(triggering) == 0 {
 		return nil
 	}
-	log.Info("Sending batch DataDog events for %d reapables.", len(triggering))
-	// j keeps track of which reapable
-	j := 0
-	for j < len(triggering) {
-		buffer := *bytes.NewBuffer(nil)
-		// i keeps track of how many reapables
-		// have been written to a buffer
-		for j < len(triggering) {
-			buffer.ReadFrom(triggering[j].ReapableEventTextShort())
-			buffer.WriteString("\n")
 
-			// when we've written 3 reapables
-			// move on to the next buffer
-			if (j%2 == 0 && j != 0) || j == len(triggering)-1 {
-				// send events in this buffer
-				err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, nil)
+	log.Info("Sending batch Datadog events for %d reapables.", len(triggering))
+	// this is a bin packing problem
+	// we ignore its complexity because we don't care (that much)
+	for j := 0; j < len(triggering); {
+		var written int64
+		buffer := *bytes.NewBuffer(nil)
+		for moveOn := false; j < len(triggering) && !moveOn; {
+			text := triggering[j].ReapableEventTextShort()
+			size := int64(text.Len())
+
+			// if there is room
+			if size+written < 4500 {
+				// write it + a newline
+				n, err := buffer.ReadFrom(text)
+				// not counting this length, but we have padding
+				_, err = buffer.WriteString("\n")
 				if err != nil {
 					return err
 				}
+				written += n
+				// increment counter of written reapables
 				j++
-				break
+			} else {
+				// if we've written enough to the buffer, break the loop
+				moveOn = true
 			}
-			j++
+		}
+		// send events in this buffer
+		err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, tags)
+		if err != nil {
+			return err
 		}
 	}
 

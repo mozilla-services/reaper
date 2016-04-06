@@ -6,6 +6,7 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"strings"
 	textTemplate "text/template"
 	"time"
 
@@ -42,9 +43,7 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 		s.reaperState = state.NewStateWithTag(s.AWSResource.Tag(reaperTag))
 	} else {
 		// initial state
-		s.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		s.reaperState = state.NewState()
 	}
 
 	return &s
@@ -85,7 +84,7 @@ func (a *SecurityGroup) ReapableEventTextShort() *bytes.Buffer {
 	return a.reapableEventText(reapableSecurityGroupEventTextShort)
 }
 
-func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
@@ -94,18 +93,18 @@ func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableSecurityGroupEventHTML).String()
+	body = a.reapableEventHTML(reapableSecurityGroupEventHTML)
 	return
 }
 
-func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableSecurityGroupEventHTMLShort).String()
+	body = a.reapableEventHTML(reapableSecurityGroupEventHTMLShort)
 	return
 }
 
@@ -122,13 +121,13 @@ type SecurityGroupEventData struct {
 }
 
 func (a *SecurityGroup) getTemplateData() (*SecurityGroupEventData, error) {
-	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
-	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
-	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
-	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 
 	if err != nil {
 		return nil, err
@@ -150,21 +149,20 @@ func (a *SecurityGroup) getTemplateData() (*SecurityGroupEventData, error) {
 const reapableSecurityGroupEventHTML = `
 <html>
 <body>
-	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }} in {{.SecurityGroup.Region}}</a> is scheduled to be terminated.</p>
+	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }} in {{.SecurityGroup.Region}}</a> is scheduled to be deleted.</p>
 
 	<p>
-		You can ignore this message and your SecurityGroup will advance to the next state after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
+		You can ignore this message and your SecurityGroup will advance to the next state after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>. If you do not take action it will be deleted!
 	</p>
 
 	<p>
 		You may also choose to:
 		<ul>
-			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
-			<li><a href="{{ .ForceStopLink }}">ForceScale it to 0</a></li>
+			<li><a href="{{ .TerminateLink }}">Delete it now</a></li>
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
+			<li><a href="{{ .WhitelistLink }}">Whitelist</a> it.</li>
 		</ul>
 	</p>
 
@@ -178,10 +176,9 @@ const reapableSecurityGroupEventHTML = `
 const reapableSecurityGroupEventHTMLShort = `
 <html>
 <body>
-	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be terminated after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
+	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be deleted after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
 		<br />
-		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
+		<a href="{{ .TerminateLink }}">Delete</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
 		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
 		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or 
@@ -193,7 +190,7 @@ const reapableSecurityGroupEventHTMLShort = `
 
 const reapableSecurityGroupEventTextShort = `%%%
 SecurityGroup [{{.SecurityGroup.ID}}]({{.SecurityGroup.AWSConsoleURL}}) in region: [{{.SecurityGroup.Region}}](https://{{.SecurityGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.SecurityGroup.Region}}).{{if .SecurityGroup.Owned}} Owned by {{.SecurityGroup.Owner}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this SecurityGroup.
+[Whitelist]({{ .WhitelistLink }}) or [Delete]({{ .TerminateLink }}) this SecurityGroup.
 %%%`
 
 const reapableSecurityGroupEventText = `%%%
@@ -202,13 +199,34 @@ Reaper has discovered an SecurityGroup qualified as reapable: [{{.SecurityGroup.
 {{ if .SecurityGroup.AWSConsoleURL}}{{.SecurityGroup.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.SecurityGroup.AWSConsoleURL}})\n
 [Whitelist]({{ .WhitelistLink }}) this SecurityGroup.
-[Terminate]({{ .TerminateLink }}) this SecurityGroup.
+[Delete]({{ .TerminateLink }}) this SecurityGroup.
 %%%`
 
 func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
+	case "InCloudformation":
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
+			matched = true
+		}
+	case "Region":
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		// was this resource's region one of those in the NOT list
+		regionSpecified := false
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				regionSpecified = true
+			}
+		}
+		if !regionSpecified {
+			matched = true
+		}
 	case "Tagged":
 		if a.Tagged(filter.Arguments[0]) {
 			matched = true
@@ -221,6 +239,14 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
 			matched = true
 		}
+	case "ReaperState":
+		if a.reaperState.State.String() == filter.Arguments[0] {
+			matched = true
+		}
+	case "NotReaperState":
+		if a.reaperState.State.String() != filter.Arguments[0] {
+			matched = true
+		}
 	case "Named":
 		if a.Name == filter.Arguments[0] {
 			matched = true
@@ -229,12 +255,16 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
-			matched = true
-		}
 	case "IsDependency":
 		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
+			matched = true
+		}
+	case "NameContains":
+		if strings.Contains(a.Name, filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotNameContains":
+		if !strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:
@@ -244,7 +274,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 }
 
 func (a *SecurityGroup) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/ec2/home?region=%s#SecurityGroups:id=%s;view=details",
+	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))

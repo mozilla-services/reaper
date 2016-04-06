@@ -6,6 +6,7 @@
 WhitelistTag = "REAPER_SPARE_ME"
 DefaultOwner = "reaper_notifications"
 DefaultEmailHost = "mozilla.com"
+EventTag = "env:default"
 
 [HTTP]
     # Set this to secure the tokens in the links back to the
@@ -83,13 +84,13 @@ DefaultEmailHost = "mozilla.com"
         Triggers = ["first", "second", "third", "final"]
 
 [AWS]
-# what regions the reaper will look for ec2 servers in
-Regions      = [
-    "us-west-1",
-    "us-west-2",
-    "us-east-1",
-    "eu-west-1",
-]
+    # what regions the reaper will look for ec2 servers in
+    Regions      = [
+        "us-west-1",
+        "us-west-2",
+        "us-east-1",
+        "eu-west-1",
+    ]
 
 [AutoScalingGroups]
     Enabled = true
@@ -119,8 +120,8 @@ Regions      = [
                 function = "LaunchTimeNotInTheLast"
                 arguments = ["24h"]
             [Instances.FilterGroups.1.2]
-                function = "Running"
-                arguments = ["true"]
+                function = "State"
+                arguments = ["running"]
             [Instances.FilterGroups.1.4]
                 function = "IsDependency"
                 arguments = ["false"]

@@ -6,36 +6,32 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
+// ReaperEventConfig is the configuration for a ReaperEvent
 type ReaperEventConfig struct {
-	EventReporterConfig
+	eventReporterConfig
 
 	Mode string
 }
 
+// ReaperEvent implements ReapableEventReporter, terminates resources
 type ReaperEvent struct {
 	Config *ReaperEventConfig
 }
 
+// SetDryRun is a method of ReapableEventReporter
 func (e *ReaperEvent) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
+// NewReaperEvent returns a new instance of ReaperEvent
 func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 	c.Name = "ReaperEvent"
 	return &ReaperEvent{c}
 }
 
-func (e *ReaperEvent) NewEvent(title string, text string, fields map[string]string, tags []string) error {
-	return nil
-}
-func (e *ReaperEvent) NewStatistic(name string, value float64, tags []string) error {
-	return nil
-}
-func (e *ReaperEvent) NewCountStatistic(name string, tags []string) error {
-	return nil
-}
-func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
-	if e.Config.ShouldTriggerFor(r) {
+// NewReapableEvent is a method of ReapableEventReporter
+func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
+	if e.Config.shouldTriggerFor(r) {
 		if log.Extras() {
 			log.Error("Triggering ReaperEvent for %s", r.ReaperState().String())
 		}
@@ -55,9 +51,10 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable) error {
 	return nil
 }
 
-func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable) error {
+// NewBatchReapableEvent is a method of ReapableEventReporter
+func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r)
+		err := e.NewReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}

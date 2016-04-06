@@ -6,6 +6,7 @@ import (
 	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
+	"strings"
 	"sync"
 	textTemplate "text/template"
 	"time"
@@ -61,9 +62,7 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 		a.reaperState = state.NewStateWithTag(a.AWSResource.Tag(reaperTag))
 	} else {
 		// initial state
-		a.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		a.reaperState = state.NewState()
 	}
 
 	return &a
@@ -104,7 +103,7 @@ func (a *Cloudformation) ReapableEventTextShort() *bytes.Buffer {
 	return a.reapableEventText(reapableCloudformationEventTextShort)
 }
 
-func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject string, body string, err error) {
+func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
@@ -113,18 +112,18 @@ func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject strin
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableCloudformationEventHTML).String()
+	body = a.reapableEventHTML(reapableCloudformationEventHTML)
 	return
 }
 
-func (a *Cloudformation) ReapableEventEmailShort() (owner mail.Address, body string, err error) {
+func (a *Cloudformation) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
 		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableCloudformationEventHTMLShort).String()
+	body = a.reapableEventHTML(reapableCloudformationEventHTMLShort)
 	return
 }
 
@@ -141,13 +140,13 @@ type CloudformationEventData struct {
 }
 
 func (a *Cloudformation) getTemplateData() (*CloudformationEventData, error) {
-	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(1*24*time.Hour))
-	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(3*24*time.Hour))
-	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL, time.Duration(7*24*time.Hour))
-	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
-	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.ApiURL)
+	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 
 	if err != nil {
 		return nil, err
@@ -172,7 +171,7 @@ const reapableCloudformationEventHTML = `
 	<p>Cloudformation <a href="{{ .Cloudformation.AWSConsoleURL }}">{{ if .Cloudformation.Name }}"{{.Cloudformation.Name}}" {{ end }} in {{.Cloudformation.Region}}</a> is scheduled to be terminated.</p>
 
 	<p>
-		You can ignore this message and your Cloudformation will advance to the next state after <strong>{{.Cloudformation.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
+		You can ignore this message and your Cloudformation will advance to the next state after <strong>{{.Cloudformation.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>. If you do not take action it will be terminated!
 	</p>
 
 	<p>
@@ -195,7 +194,7 @@ const reapableCloudformationEventHTML = `
 const reapableCloudformationEventHTMLShort = `
 <html>
 <body>
-	<p>Cloudformation <a href="{{ .Cloudformation.AWSConsoleURL }}">{{ if .Cloudformation.Name }}"{{.Cloudformation.Name}}" {{ end }}</a> in {{.Cloudformation.Region}}</a> is scheduled to be terminated after <strong>{{.Cloudformation.ReaperState.Until}}</strong>.
+	<p>Cloudformation <a href="{{ .Cloudformation.AWSConsoleURL }}">{{ if .Cloudformation.Name }}"{{.Cloudformation.Name}}" {{ end }}</a> in {{.Cloudformation.Region}}</a> is scheduled to be terminated after <strong>{{.Cloudformation.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>, 
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
@@ -269,6 +268,33 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		if a.StackStatus != nil && *a.StackStatus != filter.Arguments[0] {
 			matched = true
 		}
+	case "CreatedTimeInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) < d {
+			matched = true
+		}
+	case "CreatedTimeNotInTheLast":
+		d, err := time.ParseDuration(filter.Arguments[0])
+		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) > d {
+			matched = true
+		}
+	case "Region":
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				matched = true
+			}
+		}
+	case "NotRegion":
+		// was this resource's region one of those in the NOT list
+		regionSpecified := false
+		for _, region := range filter.Arguments {
+			if a.Region == reapable.Region(region) {
+				regionSpecified = true
+			}
+		}
+		if !regionSpecified {
+			matched = true
+		}
 	case "Tagged":
 		if a.Tagged(filter.Arguments[0]) {
 			matched = true
@@ -281,18 +307,32 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
 			matched = true
 		}
-	case "CreatedTimeInTheLast":
-		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) < d {
+	case "ReaperState":
+		if a.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
-	case "CreatedTimeNotInTheLast":
-		d, err := time.ParseDuration(filter.Arguments[0])
-		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) > d {
+	case "NotReaperState":
+		if a.reaperState.State.String() != filter.Arguments[0] {
+			matched = true
+		}
+	case "Named":
+		if a.Name == filter.Arguments[0] {
+			matched = true
+		}
+	case "NotNamed":
+		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
 	case "IsDependency":
 		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
+			matched = true
+		}
+	case "NameContains":
+		if strings.Contains(a.Name, filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotNameContains":
+		if !strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:
@@ -302,8 +342,9 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 }
 
 func (a *Cloudformation) AWSConsoleURL() *url.URL {
-	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks?filter=active&tab=overview&stackId=%s",
-		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
+	url, err := url.Parse("https://console.aws.amazon.com/cloudformation/home")
+	// setting RawQuery because QueryEscape messes with the "/"s in the url
+	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region.String(), a.ID.String())
 	if err != nil {
 		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
 	}

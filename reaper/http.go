@@ -115,41 +115,65 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		case token.J_DELAY:
 			log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
 			s := r.ReaperState()
-			_, err := r.Save(
-				state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
+			ok, err := r.Save(state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Delay failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
 		case token.J_TERMINATE:
 			log.Debug("Terminate request received for %s in region %s.", job.ID, job.Region)
-			_, err := r.Terminate()
+			ok, err := r.Terminate()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Terminate failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
 		case token.J_WHITELIST:
 			log.Debug("Whitelist request received for %s in region %s", job.ID, job.Region)
-			_, err := r.Whitelist()
+			ok, err := r.Whitelist()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Whitelist failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
 		case token.J_STOP:
 			log.Debug("Stop request received for %s in region %s", job.ID, job.Region)
-			_, err := r.Stop()
+			ok, err := r.Stop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Stop failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
 		case token.J_FORCESTOP:
 			log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
-			_, err := r.ForceStop()
+			ok, err := r.ForceStop()
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
+			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("ForceStop failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
+		case token.J_SCHEDULE:
+			log.Debug("Schedule request received for %s in region %s", job.ID, job.Region)
+			if scaler, ok := r.(reaperaws.Scaler); ok {
+				scaler.SetScaleDownString(job.ScaleDownString)
+				scaler.SetScaleUpString(job.ScaleUpString)
+				scaler.SaveSchedule()
 			}
 		default:
 			log.Error("Unrecognized job token received.")

@@ -114,9 +114,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 		a.reaperState = state.NewStateWithTag(a.Tag(reaperTag))
 	} else {
 		// initial state
-		a.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		a.reaperState = state.NewState()
 	}
 
 	return &a

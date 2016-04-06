@@ -92,9 +92,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		i.reaperState = state.NewStateWithTag(i.Tag(reaperTag))
 	} else {
 		// initial state
-		i.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		i.reaperState = state.NewState()
 	}
 
 	return &i

@@ -671,7 +671,7 @@ func reapSecurityGroup(s *reaperaws.SecurityGroup) {
 	// update the internal state
 	if time.Now().After(s.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		s.ReaperState().SetUpdated(s.IncrementState())
+		s.SetUpdated(s.IncrementState())
 	}
 	log.Notice(fmt.Sprintf("Reapable SecurityGroup discovered: %s.", s.ReapableDescription()))
 	reapables.Put(s.Region, s.ID, s)
@@ -681,7 +681,7 @@ func reapCloudformation(c *reaperaws.Cloudformation) {
 	// update the internal state
 	if time.Now().After(c.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		c.ReaperState().SetUpdated(c.IncrementState())
+		c.SetUpdated(c.IncrementState())
 	}
 	log.Notice(fmt.Sprintf("Reapable Cloudformation discovered: %s.", c.ReapableDescription()))
 	reapables.Put(c.Region, c.ID, c)
@@ -691,7 +691,7 @@ func reapInstance(i *reaperaws.Instance) {
 	// update the internal state
 	if time.Now().After(i.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		i.ReaperState().SetUpdated(i.IncrementState())
+		i.SetUpdated(i.IncrementState())
 	}
 	log.Notice(fmt.Sprintf("Reapable Instance discovered: %s.", i.ReapableDescription()))
 	reapables.Put(i.Region, i.ID, i)
@@ -701,7 +701,7 @@ func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 	// update the internal state
 	if time.Now().After(a.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		a.ReaperState().SetUpdated(a.IncrementState())
+		a.SetUpdated(a.IncrementState())
 	}
 	log.Notice(fmt.Sprintf("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription()))
 	reapables.Put(a.Region, a.ID, a)

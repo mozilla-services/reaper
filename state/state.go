@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	FirstState StateEnum = iota
+	InitialState StateEnum = iota
+	FirstState
 	SecondState
 	ThirdState
 	FinalState
@@ -45,10 +46,6 @@ type State struct {
 	Until time.Time
 }
 
-func (s *State) SetUpdated(b bool) {
-	s.Updated = b
-}
-
 func (s *State) String() string {
 	return s.State.String() + s.reaperTagSeparator + s.Until.Format(s.reaperTagTimeFormat)
 }
@@ -56,7 +53,7 @@ func (s *State) String() string {
 func NewState() *State {
 	// default
 	return &State{
-		State:               FirstState,
+		State:               InitialState,
 		Until:               time.Now(),
 		reaperTagSeparator:  "|",
 		reaperTagTimeFormat: "2006-01-02 03:04PM MST",
@@ -66,7 +63,7 @@ func NewState() *State {
 func NewStateWithUntil(until time.Time) *State {
 	// default
 	return &State{
-		State:               FirstState,
+		State:               InitialState,
 		Until:               until,
 		reaperTagSeparator:  "|",
 		reaperTagTimeFormat: "2006-01-02 03:04PM MST",

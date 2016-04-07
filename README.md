@@ -97,3 +97,4 @@ Reaper configuration files should be in toml format. See `config/default.toml` f
     - Cloudformations (under `[Cloudformations]`)
     - AutoScalingGroups (under `[AutoScalingGroups]`)
     - Instances (under `[Instances]`)
+    - Volumes (under `[Volumes]`)

@@ -1,7 +1,6 @@
 package reaperlog
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/op/go-logging"
@@ -41,7 +40,7 @@ func AddLogFile(filename string) {
 		// create it if it doesn't exist
 		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664)
 		if err != nil {
-			log.Error(fmt.Sprintf("Unable to open logfile '%s'", filename))
+			log.Error("Unable to open logfile '%s'", filename)
 		} else {
 			// if the file was successfully opened
 			log.Info("Logging to %s", filename)
@@ -59,41 +58,33 @@ func AddLogFile(filename string) {
 }
 
 func Debug(format string, args ...interface{}) {
-	log.Debug(format, args...)
+	log.Debugf(format, args...)
 }
 
 func Info(format string, args ...interface{}) {
-	log.Info(format, args...)
+	log.Infof(format, args...)
 }
 
 func Warning(format string, args ...interface{}) {
-	log.Warning(format, args...)
+	log.Warningf(format, args...)
 }
 
 func Critical(format string, args ...interface{}) {
-	log.Critical(format, args...)
+	log.Criticalf(format, args...)
 }
 
-func Fatal(args ...interface{}) {
-	log.Fatal(args...)
+func Fatal(format string, args ...interface{}) {
+	log.Fatalf(format, args...)
 }
 
-func Fatalf(format string, args ...interface{}) {
-	log.Panicf(format, args...)
-}
-
-func Panic(args ...interface{}) {
-	log.Panic(args...)
-}
-
-func Panicf(format string, args ...interface{}) {
+func Panic(format string, args ...interface{}) {
 	log.Panicf(format, args...)
 }
 
 func Error(format string, args ...interface{}) {
-	log.Error(format, args...)
+	log.Errorf(format, args...)
 }
 
 func Notice(format string, args ...interface{}) {
-	log.Notice(format, args...)
+	log.Noticef(format, args...)
 }

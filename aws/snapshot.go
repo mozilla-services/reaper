@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -11,7 +10,7 @@ import (
 )
 
 type Snapshot struct {
-	AWSResource
+	Resource
 	SizeGB        int64
 	SnapshotState string
 	VolumeID      reapable.ID
@@ -20,7 +19,7 @@ type Snapshot struct {
 
 func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	snap := Snapshot{
-		AWSResource: AWSResource{
+		Resource: Resource{
 			ID:     reapable.ID(*s.SnapshotID),
 			Region: reapable.Region(region),
 			Tags:   make(map[string]string),
@@ -43,7 +42,7 @@ func (s *Snapshot) Filter(filter filters.Filter) bool {
 	// map function names to function calls
 	switch filter.Function {
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Snapshots.", filter.Function))
+		log.Error("No function %s could be found for filtering Snapshots.", filter.Function)
 	}
 	return matched
 }

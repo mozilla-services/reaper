@@ -1,0 +1,29 @@
+package: .
+import:
+- package: github.com/BurntSushi/toml
+  version: 056c9bc7be7190eaa7715723883caffa5f8fa3e4
+- package: github.com/PagerDuty/godspeed
+  version: 079d1fb267ad66b7a3bd42c24013cbeb29698c3d
+- package: github.com/aws/aws-sdk-go
+  version: 5fa0a7e63b3d9f094d7e8549ce483a190587398f
+  subpackages:
+  - aws
+  - internal/apierr
+  - internal/endpoints
+  - internal/protocol/ec2query
+  - internal/protocol/query
+  - internal/protocol/rest
+  - internal/protocol/xml/xmlutil
+  - internal/signer/v4
+  - service/autoscaling
+  - service/cloudformation
+  - service/ec2
+- package: github.com/op/go-logging
+  version: ~1.x
+- package: github.com/vaughan0/go-ini
+  version: a98ad7ee00ec53921f08832bc06ecf7fd600e6a1
+- package: golang.org/x/crypto
+  version: 4d48e5fa3d62b5e6e71260571bf76c767198ca02
+  subpackages:
+  - pbkdf2
+  - scrypt

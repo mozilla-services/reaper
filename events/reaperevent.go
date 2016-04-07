@@ -6,7 +6,7 @@ import (
 
 // ReaperEventConfig is the configuration for a ReaperEvent
 type ReaperEventConfig struct {
-	eventReporterConfig
+	*eventReporterConfig
 
 	Mode string
 }

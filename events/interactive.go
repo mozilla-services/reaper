@@ -9,7 +9,7 @@ import (
 
 // InteractiveEventConfig is the configuration for an InteractiveEvent
 type InteractiveEventConfig struct {
-	eventReporterConfig
+	*eventReporterConfig
 }
 
 // InteractiveEvent implements ReapableEventReporter, offers choices

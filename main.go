@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 
@@ -36,7 +35,7 @@ func init() {
 		// catches panics loading config
 		defer func() {
 			if r := recover(); r != nil {
-				log.Errorf("Invalid config, %s", r)
+				log.Error("Invalid config, %s", r)
 				os.Exit(1)
 			}
 		}()
@@ -148,7 +147,7 @@ func main() {
 		// waiting for an Interrupt or Kill signal
 		// this channel blocks until it receives one
 		sig := <-c
-		log.Noticef("Got signal %s, stopping services", sig.String())
+		log.Notice("Got signal %s, stopping services", sig.String())
 		log.Notice("Stopping HTTP")
 		api.Stop()
 		log.Notice("Stopping reaper runner")

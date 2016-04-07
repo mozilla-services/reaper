@@ -273,7 +273,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Errorf("No function %s could be found for filtering Cloudformations.", filter.Function)
+		log.Error("No function %s could be found for filtering Cloudformations.", filter.Function)
 	}
 	return matched
 }
@@ -284,7 +284,7 @@ func (a *Cloudformation) AWSConsoleURL() *url.URL {
 	// setting RawQuery because QueryEscape messes with the "/"s in the url
 	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region.String(), a.ID.String())
 	if err != nil {
-		log.Errorf("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -301,7 +301,7 @@ func (a *Cloudformation) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteStack(input)
 	if err != nil {
-		log.Errorf("could not delete Cloudformation %s", a.ReapableDescriptionTiny())
+		log.Error("could not delete Cloudformation %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return false, nil

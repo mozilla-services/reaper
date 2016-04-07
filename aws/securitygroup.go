@@ -219,7 +219,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Errorf("No function %s could be found for filtering SecurityGroups.", filter.Function)
+		log.Error("No function %s could be found for filtering SecurityGroups.", filter.Function)
 	}
 	return matched
 }
@@ -229,7 +229,7 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
-		log.Errorf("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -247,7 +247,7 @@ func (a *SecurityGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteSecurityGroup(input)
 	if err != nil {
-		log.Errorf("could not delete SecurityGroup %s", a.ReapableDescriptionTiny())
+		log.Error("could not delete SecurityGroup %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return false, nil

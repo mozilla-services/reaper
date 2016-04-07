@@ -40,7 +40,7 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 		case "Terminate":
 			_, err = r.Terminate()
 		default:
-			log.Errorf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode)
+			log.Error("Invalid %s Mode %s", e.Config.Name, e.Config.Mode)
 		}
 		if err != nil {
 			return err

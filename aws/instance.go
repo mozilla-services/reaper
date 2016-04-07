@@ -52,7 +52,7 @@ func (s *instanceScalingSchedule) setSchedule(tag string) {
 	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 2 {
-		log.Errorf("Invalid Instance Tag format %s", tag)
+		log.Error("Invalid Instance Tag format %s", tag)
 	} else {
 		s.ScaleDownString = splitTag[0]
 		s.ScaleUpString = splitTag[1]
@@ -331,7 +331,7 @@ func (a *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
-		log.Errorf("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
@@ -454,7 +454,7 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Errorf("No function %s could be found for filtering Instances.", filter.Function)
+		log.Error("No function %s could be found for filtering Instances.", filter.Function)
 	}
 	return matched
 }

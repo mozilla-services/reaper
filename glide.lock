@@ -1,5 +1,5 @@
-hash: 671c1a5f3ff8c38424e8a7630b81dacdf18ba12b198969859e5ce0ac8bdfbcd5
-updated: 2016-04-07T09:48:53.446693003-07:00
+hash: 4ff417af612518d064514a5a8b8a964bd864f055bab1f7eda555da274cc4b4fe
+updated: 2016-04-07T10:00:36.208640648-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 5fa0a7e63b3d9f094d7e8549ce483a190587398f
@@ -24,7 +24,7 @@ imports:
 - name: github.com/jordan-wright/email
   version: fd703108daeb23d77c124d12978e9b6c4f28f034
 - name: github.com/op/go-logging
-  version: e8d5414f0947014548c2334044a0fac13187dfee
+  version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/PagerDuty/godspeed
   version: 079d1fb267ad66b7a3bd42c24013cbeb29698c3d
 - name: github.com/robfig/cron

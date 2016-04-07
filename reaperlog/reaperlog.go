@@ -70,7 +70,7 @@ func Warning(format string, args ...interface{}) {
 }
 
 func Critical(format string, args ...interface{}) {
-	log.Criticalf(format, args...)
+	log.Critical(format, args...)
 }
 
 func Fatal(format string, args ...interface{}) {

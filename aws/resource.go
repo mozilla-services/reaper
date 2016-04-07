@@ -62,6 +62,10 @@ func (a *Resource) SetReaperState(newState *state.State) {
 	a.reaperState = newState
 }
 
+func (a *Resource) SetUpdated(b bool) {
+	a.reaperState.Updated = b
+}
+
 // Owner extracts useful information out of the Owner tag which should
 // be parsable by mail.ParseAddress
 func (a *Resource) Owner() *mail.Address {
@@ -91,7 +95,8 @@ func (a *Resource) IncrementState() (updated bool) {
 	until := time.Now()
 	switch a.reaperState.State {
 	default:
-		// shouldn't ever be hit, but if it is
+		fallthrough
+	case state.InitialState:
 		// set state to the FirstState
 		newState = state.FirstState
 		until = until.Add(config.Notifications.FirstStateDuration.Duration)
@@ -116,10 +121,9 @@ func (a *Resource) IncrementState() (updated bool) {
 
 	if newState != a.reaperState.State {
 		updated = true
+		a.reaperState = state.NewStateWithUntilAndState(until, newState)
 		log.Notice("Updating state for %s. New state: %s.", a.ReapableDescriptionTiny(), newState.String())
 	}
-
-	a.reaperState = state.NewStateWithUntilAndState(until, newState)
 
 	return updated
 }

@@ -746,7 +746,7 @@ func reapSecurityGroup(s *reaperaws.SecurityGroup) {
 	// update the internal state
 	if time.Now().After(s.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		s.ReaperState().SetUpdated(s.IncrementState())
+		s.SetUpdated(s.IncrementState())
 	}
 	log.Notice("Reapable SecurityGroup discovered: %s.", s.ReapableDescription())
 	reapables.Put(s.Region, s.ID, s)
@@ -756,7 +756,7 @@ func reapCloudformation(c *reaperaws.Cloudformation) {
 	// update the internal state
 	if time.Now().After(c.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		c.ReaperState().SetUpdated(c.IncrementState())
+		c.SetUpdated(c.IncrementState())
 	}
 	log.Notice("Reapable Cloudformation discovered: %s.", c.ReapableDescription())
 	reapables.Put(c.Region, c.ID, c)
@@ -766,7 +766,7 @@ func reapVolume(v *reaperaws.Volume) {
 	// update the internal state
 	if time.Now().After(v.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		v.ReaperState().SetUpdated(v.IncrementState())
+		v.SetUpdated(v.IncrementState())
 	}
 	log.Notice("Reapable Volume discovered: %s.", v.ReapableDescription())
 	reapables.Put(v.Region, v.ID, v)
@@ -776,7 +776,7 @@ func reapInstance(i *reaperaws.Instance) {
 	// update the internal state
 	if time.Now().After(i.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		i.ReaperState().SetUpdated(i.IncrementState())
+		i.SetUpdated(i.IncrementState())
 	}
 	log.Notice("Reapable Instance discovered: %s.", i.ReapableDescription())
 	reapables.Put(i.Region, i.ID, i)
@@ -786,7 +786,7 @@ func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 	// update the internal state
 	if time.Now().After(a.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
-		a.ReaperState().SetUpdated(a.IncrementState())
+		a.SetUpdated(a.IncrementState())
 	}
 	log.Notice("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription())
 	reapables.Put(a.Region, a.ID, a)

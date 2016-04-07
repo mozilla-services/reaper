@@ -106,9 +106,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		a.reaperState = state.NewStateWithTag(a.Tag(reaperTag))
 	} else {
 		// initial state
-		a.reaperState = state.NewStateWithUntilAndState(
-			time.Now().Add(config.Notifications.FirstStateDuration.Duration),
-			state.FirstState)
+		a.reaperState = state.NewState()
 	}
 
 	return &a
@@ -336,67 +334,32 @@ func (a *Instance) AWSConsoleURL() *url.URL {
 	return url
 }
 
-// Filter is part of the filter.Filterable interface
 func (a *Instance) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
 	switch filter.Function {
-	case "Pending":
-		// Pending returns whether an instance's State is Pending
-		if b, err := filter.BoolValue(0); err == nil && a.Pending() == b {
-			// Pending returns whether an instance's State is Pending
-			matched = true
-			// Pending returns whether an instance's State is Pending
-		}
-		// Pending returns whether an instance's State is Pending
-	case "Running":
-		// Pending returns whether an instance's State is Pending
-		if b, err := filter.BoolValue(0); err == nil && a.Running() == b {
-			// Pending returns whether an instance's State is Pending
-			matched = true
-		}
-	case "ShuttingDown":
-		if b, err := filter.BoolValue(0); err == nil && a.ShuttingDown() == b {
-			matched = true
-		}
-	case "Terminated":
-		if b, err := filter.BoolValue(0); err == nil && a.Terminated() == b {
-			matched = true
-		}
-	case "Stopping":
-		if b, err := filter.BoolValue(0); err == nil && a.Stopping() == b {
-			matched = true
-		}
-	case "Stopped":
-		if b, err := filter.BoolValue(0); err == nil && a.Stopped() == b {
+	case "State":
+		if a.State != nil && *a.State.Name == filter.Arguments[0] {
 			matched = true
 		}
 	case "InstanceType":
 		if a.InstanceType != nil && *a.InstanceType == filter.Arguments[0] {
 			matched = true
 		}
-	case "Tagged":
-		if a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotTagged":
-		if !a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "Tag":
-		if a.Tag(filter.Arguments[0]) == filter.Arguments[1] {
-			matched = true
-		}
-	case "TagNotEqual":
-		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
-			matched = true
-		}
 	case "HasPublicIPAddress":
-		if a.PublicIPAddress != nil {
+		if b, err := filter.BoolValue(0); err == nil && b == (a.PublicIPAddress != nil) {
 			matched = true
 		}
 	case "PublicIPAddress":
 		if a.PublicIPAddress != nil && *a.PublicIPAddress == filter.Arguments[0] {
+			matched = true
+		}
+	case "InCloudformation":
+		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
+			matched = true
+		}
+	case "AutoScaled":
+		if b, err := filter.BoolValue(0); err == nil && a.AutoScaled == b {
 			matched = true
 		}
 	// uses RFC3339 format
@@ -422,27 +385,48 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	case "Region":
-		for region := range filter.Arguments {
+		for _, region := range filter.Arguments {
 			if a.Region == reapable.Region(region) {
 				matched = true
 			}
 		}
 	case "NotRegion":
-		for region := range filter.Arguments {
+		// was this resource's region one of those in the NOT list
+		regionSpecified := false
+		for _, region := range filter.Arguments {
 			if a.Region == reapable.Region(region) {
-				matched = false
+				regionSpecified = true
 			}
+		}
+		if !regionSpecified {
+			matched = true
+		}
+	case "Tagged":
+		if a.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotTagged":
+		if !a.Tagged(filter.Arguments[0]) {
+			matched = true
+		}
+	case "TagNotEqual":
+		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
+			matched = true
 		}
 	case "ReaperState":
 		if a.reaperState.State.String() == filter.Arguments[0] {
 			matched = true
 		}
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
+	case "NotReaperState":
+		if a.reaperState.State.String() != filter.Arguments[0] {
 			matched = true
 		}
-	case "AutoScaled":
-		if b, err := filter.BoolValue(0); err == nil && a.AutoScaled == b {
+	case "Named":
+		if a.Name == filter.Arguments[0] {
+			matched = true
+		}
+	case "NotNamed":
+		if a.Name != filter.Arguments[0] {
 			matched = true
 		}
 	case "IsDependency":
@@ -451,6 +435,10 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 		}
 	case "NameContains":
 		if strings.Contains(a.Name, filter.Arguments[0]) {
+			matched = true
+		}
+	case "NotNameContains":
+		if !strings.Contains(a.Name, filter.Arguments[0]) {
 			matched = true
 		}
 	default:

@@ -28,7 +28,7 @@ func LoadConfig(path string) (*Config, error) {
 		},
 	}
 	conf := Config{
-		AWS: reaperaws.AWSConfig{
+		AWS: reaperaws.Config{
 			HTTP:          httpconfig,
 			Notifications: notifications,
 		},
@@ -79,9 +79,9 @@ func LoadConfig(path string) (*Config, error) {
 // Global reaper config
 type Config struct {
 	HTTP reaperevents.HTTPConfig
+	SMTP reaperevents.MailerConfig
+	AWS  reaperaws.Config
 
-	AWS           reaperaws.AWSConfig
-	SMTP          reaperevents.MailerConfig
 	Notifications reaperevents.NotificationsConfig
 	Logging       log.LogConfig
 	States        state.StatesConfig
@@ -100,6 +100,7 @@ type Config struct {
 	Snapshots         ResourceConfig
 	Cloudformations   ResourceConfig
 	SecurityGroups    ResourceConfig
+	Volumes           ResourceConfig
 
 	DryRun            bool
 	Interactive       bool

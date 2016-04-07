@@ -3,12 +3,10 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
-	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,74 +18,80 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-type AutoScalingGroupScalingSchedule struct {
-	enabled           bool
-	scaleDownString   string
-	scaleUpString     string
+type autoScalingGroupScalingSchedule struct {
+	Enabled           bool
+	ScaleDownString   string
+	ScaleUpString     string
 	previousScaleSize int64
 	previousMinSize   int64
 }
 
-func (s *AutoScalingGroupScalingSchedule) setSchedule(tag string) {
+func (s *autoScalingGroupScalingSchedule) setSchedule(tag string) {
 	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 4 {
 		log.Error("Invalid Autoscaler Tag format %s", tag)
-	} else {
-		prev, err := strconv.ParseInt(splitTag[2], 0, 64)
-		if err != nil {
-			log.Error("Invalid Autoscaler Tag format %s", tag)
-			log.Error(err.Error())
-			return
-		}
-		min, err := strconv.ParseInt(splitTag[3], 0, 64)
-		if err != nil {
-			log.Error("Invalid Autoscaler Tag format %s", tag)
-			log.Error(err.Error())
-			return
-		}
-		s.scaleDownString = splitTag[0]
-		s.scaleUpString = splitTag[1]
-		s.previousScaleSize = prev
-		s.previousMinSize = min
-		s.enabled = true
+		return
 	}
+	prev, err := strconv.ParseInt(splitTag[2], 0, 64)
+	if err != nil {
+		log.Error("Invalid Autoscaler Tag format %s", tag)
+		log.Error(err.Error())
+		return
+	}
+	min, err := strconv.ParseInt(splitTag[3], 0, 64)
+	if err != nil {
+		log.Error("Invalid Autoscaler Tag format %s", tag)
+		log.Error(err.Error())
+		return
+	}
+	s.ScaleDownString = splitTag[0]
+	s.ScaleUpString = splitTag[1]
+	s.previousScaleSize = prev
+	s.previousMinSize = min
+	s.Enabled = true
 }
 
+// SaveSchedule is a method of the Scaler interface
 func (a *AutoScalingGroup) SaveSchedule() {
 	tagAutoScalingGroup(a.Region, a.ID, scalerTag, a.Scheduling.scheduleTag())
 }
 
+// SetScaleDownString is a method of the Scaler interface
 func (a *AutoScalingGroup) SetScaleDownString(s string) {
-	a.Scheduling.scaleDownString = s
+	a.Scheduling.ScaleDownString = s
 }
 
+// SetScaleUpString is a method of the Scaler interface
 func (a *AutoScalingGroup) SetScaleUpString(s string) {
-	a.Scheduling.scaleUpString = s
+	a.Scheduling.ScaleUpString = s
 }
 
-func (s *AutoScalingGroupScalingSchedule) scheduleTag() string {
+func (s *autoScalingGroupScalingSchedule) scheduleTag() string {
 	return strings.Join([]string{
 		// keep the same schedules
-		s.scaleDownString,
-		s.scaleUpString,
+		s.ScaleDownString,
+		s.ScaleUpString,
 		strconv.FormatInt(s.previousScaleSize, 10),
 		strconv.FormatInt(s.previousMinSize, 10),
 	}, ",")
 }
 
+// AutoScalingGroup is a Reapable, Filterable
+// embeds AWS API's autoscaling.Group
 type AutoScalingGroup struct {
-	AWSResource
+	Resource
 	autoscaling.Group
 
-	Scheduling AutoScalingGroupScalingSchedule
+	Scheduling autoScalingGroupScalingSchedule
 	// autoscaling.Instance exposes minimal info
 	Instances []reapable.ID
 }
 
+// NewAutoScalingGroup creates an AutoScalingGroup from the AWS API's autoscaling.Group
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
-		AWSResource: AWSResource{
+		Resource: Resource{
 			Region: reapable.Region(region),
 			ID:     reapable.ID(*asg.AutoScalingGroupName),
 			Name:   *asg.AutoScalingGroupName,
@@ -96,12 +100,12 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 		Group: *asg,
 	}
 
-	for i := 0; i < len(asg.Instances); i++ {
-		a.Instances = append(a.Instances, reapable.ID(*asg.Instances[i].InstanceID))
+	for _, instance := range asg.Instances {
+		a.Instances = append(a.Instances, reapable.ID(*instance.InstanceID))
 	}
 
-	for i := 0; i < len(asg.Tags); i++ {
-		a.AWSResource.Tags[*asg.Tags[i].Key] = *asg.Tags[i].Value
+	for _, tag := range asg.Tags {
+		a.Resource.Tags[*tag.Key] = *tag.Value
 	}
 
 	// autoscaler boilerplate
@@ -120,41 +124,17 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	return &a
 }
 
-func (a *AutoScalingGroup) reapableEventHTML(text string) *bytes.Buffer {
-	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
+// ReapableEventText is part of the events.Reapable interface
+func (a *AutoScalingGroup) ReapableEventText() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableASGEventText)
 }
 
-func (a *AutoScalingGroup) reapableEventText(text string) *bytes.Buffer {
-	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		log.Error(fmt.Sprintf("%s", err.Error()))
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Debug(fmt.Sprintf("Template generation error: %s", err))
-	}
-	return buf
+// ReapableEventTextShort is part of the events.Reapable interface
+func (a *AutoScalingGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
+	return reapableEventText(a, reapableASGEventTextShort)
 }
 
-func (a *AutoScalingGroup) ReapableEventText() *bytes.Buffer {
-	return a.reapableEventText(reapableASGEventText)
-}
-
-func (a *AutoScalingGroup) ReapableEventTextShort() *bytes.Buffer {
-	return a.reapableEventText(reapableASGEventTextShort)
-}
-
+// ReapableEventEmail is part of the events.Reapable interface
 func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
@@ -164,10 +144,11 @@ func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject str
 
 	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableASGEventHTML)
+	body, err = reapableEventHTML(a, reapableASGEventHTML)
 	return
 }
 
+// ReapableEventEmailShort is part of the events.Reapable interface
 func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
@@ -175,12 +156,12 @@ func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *
 		return
 	}
 	owner = *a.Owner()
-	body = a.reapableEventHTML(reapableASGEventHTMLShort)
+	body, err = reapableEventHTML(a, reapableASGEventHTMLShort)
 	return
 }
 
-type AutoScalingGroupEventData struct {
-	Config                           *AWSConfig
+type autoScalingGroupEventData struct {
+	Config                           *Config
 	AutoScalingGroup                 *AutoScalingGroup
 	TerminateLink                    string
 	StopLink                         string
@@ -194,49 +175,49 @@ type AutoScalingGroupEventData struct {
 	ScheduleCESTBusinessHoursLink    string
 }
 
-func (a *AutoScalingGroup) getTemplateData() (*AutoScalingGroupEventData, error) {
-	ignore1, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+func (a *AutoScalingGroup) getTemplateData() (interface{}, error) {
+	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := MakeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := MakeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	terminate, err := makeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := MakeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := makeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := MakeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	forcestop, err := makeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	whitelist, err := MakeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := makeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	schedulePacific, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
+	schedulePacific, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleEastern, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
+	scheduleEastern, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleCEST, err := MakeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
+	scheduleCEST, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}
 
-	return &AutoScalingGroupEventData{
+	return &autoScalingGroupEventData{
 		Config:                           config,
 		AutoScalingGroup:                 a,
 		TerminateLink:                    terminate,
@@ -288,14 +269,14 @@ const reapableASGEventHTMLShort = `
 <body>
 	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }}</a> in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
 		<br />
-		Schedule it to scale up and down with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>, 
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or 
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours, 
-		<a href="{{ .TerminateLink }}">Terminate</a>, 
-		<a href="{{ .StopLink }}">Stop</a>, 
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>, 
-		<a href="{{ .IgnoreLink3 }}">3 days</a>, 
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, 
+		Schedule it to scale up and down with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>,
+		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or
+		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours,
+		<a href="{{ .TerminateLink }}">Terminate</a>,
+		<a href="{{ .StopLink }}">Stop</a>,
+		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
+		<a href="{{ .IgnoreLink3 }}">3 days</a>,
+		<a href="{{ .IgnoreLink7}}"> 7 days</a>,
 		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
 	</p>
 </body>
@@ -355,12 +336,12 @@ func (a *AutoScalingGroup) sizeGreaterThan(size int64) bool {
 	return false
 }
 
-// method for reapable -> overrides promoted AWSResource method of same name?
+// Save is part of reapable.Saveable, which embedded in reapable.Reapable
 func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
 	return tagAutoScalingGroup(a.Region, a.ID, reaperTag, a.reaperState.String())
 }
 
-// method for reapable -> overrides promoted AWSResource method of same name?
+// Unsave is part of reapable.Saveable, which embedded in reapable.Reapable
 func (a *AutoScalingGroup) Unsave() (bool, error) {
 	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
 	return untagAutoScalingGroup(a.Region, a.ID, reaperTag)
@@ -409,6 +390,7 @@ func tagAutoScalingGroup(region reapable.Region, id reapable.ID, key, value stri
 	return true, nil
 }
 
+// Filter is part of the filter.Filterable interface
 func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 	matched := false
 	// map function names to function calls
@@ -505,33 +487,22 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
+		log.Error("No function %s could be found for filtering AutoScalingGroups.", filter.Function)
 	}
 	return matched
 }
 
+// AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
 		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error generating AWSConsoleURL. %s", err))
+		log.Error("Error generating AWSConsoleURL. %s", err)
 	}
 	return url
 }
 
-// Scaler interface
-func (a *AutoScalingGroup) SchedulingEnabled() bool {
-	return a.Scheduling.enabled
-}
-
-func (a *AutoScalingGroup) ScaleDownSchedule() string {
-	return a.Scheduling.scaleDownString
-}
-
-func (a *AutoScalingGroup) ScaleUpSchedule() string {
-	return a.Scheduling.scaleUpString
-}
-
+// ScaleDown scales an AutoScalingGroup's DesiredCapacity down
 func (a *AutoScalingGroup) ScaleDown() {
 	// default = 0
 	var size int64
@@ -547,6 +518,7 @@ func (a *AutoScalingGroup) ScaleDown() {
 	}
 }
 
+// ScaleUp scales an AutoScalingGroup's DesiredCapacity up
 func (a *AutoScalingGroup) ScaleUp() {
 	if a.Scheduling.previousScaleSize > *a.DesiredCapacity {
 		// change desired and min to previous values
@@ -571,12 +543,13 @@ func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) 
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not update AutoScalingGroup %s", a.ReapableDescriptionTiny()))
+		log.Error("could not update AutoScalingGroup %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil
 }
 
+// Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Terminate() (bool, error) {
 	log.Notice("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
 	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
@@ -586,12 +559,13 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
-		log.Error(fmt.Sprintf("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny()))
+		log.Error("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny())
 		return false, err
 	}
-	return false, nil
+	return true, nil
 }
 
+// Whitelist is a method of reapable.Whitelistable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Whitelist() (bool, error) {
 	log.Notice("Whitelisting AutoScalingGroup %s", a.ReapableDescriptionTiny())
 	api := autoscaling.New(&aws.Config{Region: string(a.Region)})
@@ -610,12 +584,14 @@ func (a *AutoScalingGroup) Whitelist() (bool, error) {
 	return err == nil, err
 }
 
+// Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // Stop scales ASGs to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
 	// use existing min size
 	return a.scaleToSize(0, *a.MinSize)
 }
 
+// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // ForceStop force scales ASGs to 0
 func (a *AutoScalingGroup) ForceStop() (bool, error) {
 	// also set minsize to 0

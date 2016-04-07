@@ -138,9 +138,13 @@ func (e *Datadog) NewCountStatistic(name string, tags []string) error {
 // NewReapableEvent is shorthand for a NewEvent about a reapable resource
 func (e *Datadog) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
-		err := e.NewEvent("Reapable resource discovered", string(r.ReapableEventText().Bytes()), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
+		text, err := r.ReapableEventText()
 		if err != nil {
-			return fmt.Errorf("Error reporting Reapable event for %s", r.ReapableDescriptionTiny())
+			return err
+		}
+		err = e.NewEvent("Reapable resource discovered", text.String(), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
+		if err != nil {
+			return fmt.Errorf("Error reporting Reapable event for %s: %s", r.ReapableDescriptionTiny(), err.Error())
 		}
 	}
 	return nil
@@ -166,7 +170,10 @@ func (e *Datadog) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 		var written int64
 		buffer := *bytes.NewBuffer(nil)
 		for moveOn := false; j < len(triggering) && !moveOn; {
-			text := triggering[j].ReapableEventTextShort()
+			text, err := triggering[j].ReapableEventTextShort()
+			if err != nil {
+				return err
+			}
 			size := int64(text.Len())
 
 			// if there is room

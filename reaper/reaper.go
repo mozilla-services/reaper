@@ -114,7 +114,7 @@ func (r *Reaper) SaveState(stateFile string) {
 	// open file RW, create it if it doesn't exist
 	s, err := os.OpenFile(stateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
 	if err != nil {
-		log.Error(fmt.Sprintf("Unable to create StateFile '%s'", stateFile))
+		log.Error("Unable to create StateFile '%s'", stateFile)
 		return
 	}
 	defer s.Close()
@@ -122,7 +122,7 @@ func (r *Reaper) SaveState(stateFile string) {
 	for r := range reapables.Iter() {
 		_, err := s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", r.Region, r.ID, r.ReaperState().String())))
 		if err != nil {
-			log.Error(fmt.Sprintf("Error writing to %s", stateFile))
+			log.Error("Error writing to %s", stateFile)
 		}
 	}
 	log.Info("States saved to %s", stateFile)
@@ -145,7 +145,7 @@ func (r *Reaper) LoadState(stateFile string) {
 		line := strings.Split(scanner.Text(), ",")
 		// there should be 3 sections in a saved state line
 		if len(line) != 3 {
-			log.Error(fmt.Sprintf("Malformed saved state %s", scanner.Text()))
+			log.Error("Malformed saved state %s", scanner.Text())
 			continue
 		}
 		region := reapable.Region(line[0])
@@ -155,7 +155,7 @@ func (r *Reaper) LoadState(stateFile string) {
 		savedstates[region][id] = savedState
 	}
 	if err != nil {
-		log.Error(fmt.Sprintf("Unable to open StateFile '%s'", stateFile))
+		log.Error("Unable to open StateFile '%s'", stateFile)
 	} else {
 		log.Info("States loaded from %s", stateFile)
 	}
@@ -198,6 +198,7 @@ func (r *Reaper) reap() {
 	filteredASGSums := make(map[reapable.Region]int)
 	filteredSecurityGroupSums := make(map[reapable.Region]int)
 	filteredCloudformationSums := make(map[reapable.Region]int)
+	filteredVolumeSums := make(map[reapable.Region]int)
 
 	// filtered has _all_ resources post filtering
 	for _, f := range filtered {
@@ -214,6 +215,9 @@ func (r *Reaper) reap() {
 		case *reaperaws.Cloudformation:
 			filteredCloudformationSums[t.Region]++
 			reapCloudformation(t)
+		case *reaperaws.Volume:
+			filteredVolumeSums[t.Region]++
+			reapVolume(t)
 		default:
 			log.Error("Reap default case.")
 		}
@@ -246,25 +250,25 @@ func (r *Reaper) reap() {
 			for region, sum := range filteredInstanceSums {
 				err := e.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
+					log.Error("%s", err.Error())
 				}
 			}
 			for region, sum := range filteredASGSums {
 				err := e.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
+					log.Error("%s", err.Error())
 				}
 			}
 			for region, sum := range filteredCloudformationSums {
 				err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
+					log.Error("%s", err.Error())
 				}
 			}
 			for region, sum := range filteredSecurityGroupSums {
 				err := e.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error(fmt.Sprintf("%s", err.Error()))
+					log.Error("%s", err.Error())
 				}
 			}
 		}
@@ -287,14 +291,58 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 		}
 
 		for region, sum := range regionSums {
-			log.Info(fmt.Sprintf("Found %d total SecurityGroups in %s", sum, region))
+			log.Info("Found %d total SecurityGroups in %s", sum, region)
 		}
 		go func() {
 			for _, e := range eventReporters {
 				for region, regionSum := range regionSums {
 					err := e.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 					if err != nil {
-						log.Error(fmt.Sprintf("%s", err.Error()))
+						log.Error("%s", err.Error())
+					}
+				}
+			}
+		}()
+		close(ch)
+	}()
+	return ch
+}
+
+func getVolumes() chan *reaperaws.Volume {
+	ch := make(chan *reaperaws.Volume)
+	go func() {
+		volumeCh := reaperaws.AllVolumes()
+		regionSums := make(map[reapable.Region]int)
+		volumeSizeSums := make(map[reapable.Region]map[int64]int)
+		for volume := range volumeCh {
+			// restore saved state from file
+			savedstate, ok := savedstates[volume.Region][volume.ID]
+			if ok {
+				volume.SetReaperState(savedstate)
+			}
+
+			// make the map if it is not initialized
+			if volumeSizeSums[volume.Region] == nil {
+				volumeSizeSums[volume.Region] = make(map[int64]int)
+			}
+
+			regionSums[volume.Region]++
+			volumeSizeSums[volume.Region][*volume.Size]++
+			ch <- volume
+		}
+
+		for region, sum := range regionSums {
+			log.Info("Found %d total volumes in %s", sum, region)
+		}
+
+		go func() {
+			for _, e := range eventReporters {
+				for region, regionMap := range volumeSizeSums {
+					for volumeType, volumeSizeSum := range regionMap {
+						err := e.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%s", region, volumeType)})
+						if err != nil {
+							log.Error("%s", err.Error())
+						}
 					}
 				}
 			}
@@ -335,11 +383,11 @@ func getInstances() chan *reaperaws.Instance {
 		// default behavior returns an empty map if no filename is supplied
 		pricesMap, err := prices.GetPricesMapFromFile(config.PricesFile)
 		if err != nil {
-			log.Error(fmt.Sprintf("Error getting prices: %s", err.Error()))
+			log.Error("Error getting prices: %s", err.Error())
 		}
 
 		for region, sum := range regionSums {
-			log.Info(fmt.Sprintf("Found %d total Instances in %s", sum, region))
+			log.Info("Found %d total Instances in %s", sum, region)
 		}
 
 		go func() {
@@ -351,17 +399,17 @@ func getInstances() chan *reaperaws.Instance {
 							if ok {
 								err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
 								if err != nil {
-									log.Error(fmt.Sprintf("%s", err.Error()))
+									log.Error("%s", err.Error())
 								}
 							} else {
 								// some instance types are priceless
-								log.Error(fmt.Sprintf("No price for %s", instanceType))
+								log.Error("No price for %s", instanceType)
 
 							}
 						}
 						err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
 						if err != nil {
-							log.Error(fmt.Sprintf("%s", err.Error()))
+							log.Error("%s", err.Error())
 						}
 					}
 				}
@@ -388,14 +436,14 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 			ch <- cf
 		}
 		for region, sum := range regionSums {
-			log.Info(fmt.Sprintf("Found %d total Cloudformation Stacks in %s", sum, region))
+			log.Info("Found %d total Cloudformation Stacks in %s", sum, region)
 		}
 		go func() {
 			for _, e := range eventReporters {
 				for region, regionSum := range regionSums {
 					err := e.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 					if err != nil {
-						log.Error(fmt.Sprintf("%s", err.Error()))
+						log.Error("%s", err.Error())
 					}
 				}
 			}
@@ -430,7 +478,7 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			ch <- asg
 		}
 		for region, sum := range regionSums {
-			log.Info(fmt.Sprintf("Found %d total AutoScalingGroups in %s", sum, region))
+			log.Info("Found %d total AutoScalingGroups in %s", sum, region)
 		}
 		go func() {
 			for _, e := range eventReporters {
@@ -438,13 +486,13 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 					for asgSize, asgSizeSum := range regionMap {
 						err := e.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
 						if err != nil {
-							log.Error(fmt.Sprintf("%s", err.Error()))
+							log.Error("%s", err.Error())
 						}
 					}
 					for region, regionSum := range regionSums {
 						err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 						if err != nil {
-							log.Error(fmt.Sprintf("%s", err.Error()))
+							log.Error("%s", err.Error())
 						}
 					}
 				}
@@ -510,16 +558,16 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			a.Dependency = true
 		}
 
-		if a.SchedulingEnabled() {
+		if a.Scheduling.Enabled {
 			if log.Extras() {
-				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.ScaleDownSchedule(), a.ScaleUpSchedule())
+				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.Scheduling.ScaleDownString, a.Scheduling.ScaleUpString)
 			}
-			schedule.AddFunc(a.ScaleDownSchedule(), a.ScaleDown)
-			schedule.AddFunc(a.ScaleUpSchedule(), a.ScaleUp)
+			schedule.AddFunc(a.Scheduling.ScaleDownString, a.ScaleDown)
+			schedule.AddFunc(a.Scheduling.ScaleUpString, a.ScaleUp)
 		}
 
 		// identify instances in an ASG
-		instanceIDsInASGs := reaperaws.ASGInstanceIDs(a)
+		instanceIDsInASGs := reaperaws.AutoScalingGroupInstanceIDs(a)
 		for region := range instanceIDsInASGs {
 			for instanceID := range instanceIDsInASGs[region] {
 				instancesInASGs[region][instanceID] = true
@@ -556,12 +604,12 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			i.AutoScaled = true
 		}
 
-		if i.SchedulingEnabled() {
+		if i.Scheduling.Enabled {
 			if log.Extras() {
-				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.ScaleDownSchedule(), i.ScaleUpSchedule())
+				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.Scheduling.ScaleDownString, i.Scheduling.ScaleUpString)
 			}
-			schedule.AddFunc(i.ScaleDownSchedule(), i.ScaleDown)
-			schedule.AddFunc(i.ScaleUpSchedule(), i.ScaleUp)
+			schedule.AddFunc(i.Scheduling.ScaleDownString, i.ScaleDown)
+			schedule.AddFunc(i.Scheduling.ScaleUpString, i.ScaleUp)
 		}
 
 		// group instances by owner
@@ -595,6 +643,31 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			}
 		}
 	}
+
+	// get all the volumes
+	for v := range getVolumes() {
+		// if the volume is in use, it isn't reapable
+		// names and IDs are used interchangeably by different parts of the API
+
+		// sort of doesn't make sense for volume
+		if isInCloudformation[v.Region][v.ID] {
+			v.IsInCloudformation = true
+		}
+
+		// if it is a dependency or is attached to an instance
+		if dependency[v.Region][v.ID] || len(v.AttachedInstanceIDs) > 0 {
+			v.Dependency = true
+		}
+		if config.Volumes.Enabled {
+			// group instances by owner
+			if v.Owner() != nil {
+				owned[v.Owner().Address] = append(owned[v.Owner().Address], v)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, v)
+			}
+		}
+	}
 	return owned, unowned
 }
 
@@ -605,7 +678,7 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 	// recover from potential panics caused by malformed filters
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error(fmt.Sprintf("Recovered in applyFilters with panic: %s", r))
+			log.Error("Recovered in applyFilters with panic: %s", r)
 		}
 	}()
 
@@ -621,6 +694,8 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 			groups = config.Cloudformations.FilterGroups
 		case *reaperaws.SecurityGroup:
 			groups = config.SecurityGroups.FilterGroups
+		case *reaperaws.Volume:
+			groups = config.Volumes.FilterGroups
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
 			return []reaperevents.Reapable{}
@@ -673,7 +748,7 @@ func reapSecurityGroup(s *reaperaws.SecurityGroup) {
 		// if we updated the state, mark it as having been updated
 		s.SetUpdated(s.IncrementState())
 	}
-	log.Notice(fmt.Sprintf("Reapable SecurityGroup discovered: %s.", s.ReapableDescription()))
+	log.Notice("Reapable SecurityGroup discovered: %s.", s.ReapableDescription())
 	reapables.Put(s.Region, s.ID, s)
 }
 
@@ -683,8 +758,18 @@ func reapCloudformation(c *reaperaws.Cloudformation) {
 		// if we updated the state, mark it as having been updated
 		c.SetUpdated(c.IncrementState())
 	}
-	log.Notice(fmt.Sprintf("Reapable Cloudformation discovered: %s.", c.ReapableDescription()))
+	log.Notice("Reapable Cloudformation discovered: %s.", c.ReapableDescription())
 	reapables.Put(c.Region, c.ID, c)
+}
+
+func reapVolume(v *reaperaws.Volume) {
+	// update the internal state
+	if time.Now().After(v.ReaperState().Until) {
+		// if we updated the state, mark it as having been updated
+		v.SetUpdated(v.IncrementState())
+	}
+	log.Notice("Reapable Volume discovered: %s.", v.ReapableDescription())
+	reapables.Put(v.Region, v.ID, v)
 }
 
 func reapInstance(i *reaperaws.Instance) {
@@ -693,7 +778,7 @@ func reapInstance(i *reaperaws.Instance) {
 		// if we updated the state, mark it as having been updated
 		i.SetUpdated(i.IncrementState())
 	}
-	log.Notice(fmt.Sprintf("Reapable Instance discovered: %s.", i.ReapableDescription()))
+	log.Notice("Reapable Instance discovered: %s.", i.ReapableDescription())
 	reapables.Put(i.Region, i.ID, i)
 }
 
@@ -703,7 +788,7 @@ func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 		// if we updated the state, mark it as having been updated
 		a.SetUpdated(a.IncrementState())
 	}
-	log.Notice(fmt.Sprintf("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription()))
+	log.Notice("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription())
 	reapables.Put(a.Region, a.ID, a)
 }
 
@@ -715,8 +800,8 @@ func Terminate(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.Terminate()
 	if err != nil {
-		log.Error(fmt.Sprintf("Could not terminate resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error()))
+		log.Error("Could not terminate resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error())
 		return err
 	}
 	log.Debug("Terminate %s", reapable.ReapableDescriptionShort())
@@ -732,8 +817,8 @@ func ForceStop(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.ForceStop()
 	if err != nil {
-		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error()))
+		log.Error("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error())
 		return err
 	}
 	log.Debug("ForceStop %s", reapable.ReapableDescriptionShort())
@@ -749,8 +834,8 @@ func Stop(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.Stop()
 	if err != nil {
-		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error()))
+		log.Error("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error())
 		return err
 	}
 	log.Debug("Stop %s", reapable.ReapableDescriptionShort())

@@ -1,8 +1,6 @@
 package events
 
 import (
-	"fmt"
-
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
@@ -42,7 +40,7 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 		case "Terminate":
 			_, err = r.Terminate()
 		default:
-			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
+			log.Error("Invalid %s Mode %s", e.Config.Name, e.Config.Mode)
 		}
 		if err != nil {
 			return err

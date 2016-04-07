@@ -46,12 +46,12 @@ EventTag = "env:default"
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
     [Events.DataDog]
-        Enabled = false
-        Triggers = []
+        # Enabled = false
+        # Triggers = []
 
     [Events.Email]
-        Enabled = false
-        Triggers = []
+        # Enabled = false
+        # Triggers = []
 
         Host = ""
         AuthType = "plain"
@@ -72,16 +72,16 @@ EventTag = "env:default"
         # Port = 587
 
     [Events.Tagger]
-        Enabled = false
-        Triggers = []
+        # Enabled = false
+        # Triggers = []
 
     [Events.Reaper]
-        Enabled = false
-        Triggers = []
+        # Enabled = false
+        # Triggers = []
         Mode = "Stop"
 
     [Events.Interactive]
-        Triggers = ["first", "second", "third", "final"]
+        # Triggers = ["first", "second", "third", "final"]
 
 [AWS]
     # what regions the reaper will look for ec2 servers in
@@ -164,3 +164,18 @@ EventTag = "env:default"
             [Cloudformations.FilterGroups.2.1]
                 function = "Tagged"
                 arguments = ["REAP_ME"]
+
+[Volumes]
+    Enabled = true
+
+    [Volumes.FilterGroups]
+        [Volumes.FilterGroups.1]
+            [Volumes.FilterGroups.1.1]
+                function = "IsDependency"
+                arguments = ["false"]
+            [Volumes.FilterGroups.1.2]
+                function = "State"
+                arguments = ["available"]
+            [Volumes.FilterGroups.1.3]
+                function = "AttachmentState"
+                arguments = ["detached"]

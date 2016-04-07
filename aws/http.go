@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"fmt"
 	"net/url"
 	"time"
 
@@ -10,7 +9,8 @@ import (
 	"github.com/mozilla-services/reaper/token"
 )
 
-func MakeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL, scaleDownSchedule, scaleUpSchedule string) (string, error) {
+// MakeScheduleLink creates a tokenized link scheduling a resource
+func makeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL, scaleDownSchedule, scaleUpSchedule string) (string, error) {
 	sched, err := token.Tokenize(tokenSecret,
 		token.NewScheduleJob(region.String(), id.String(), scaleDownSchedule, scaleUpSchedule))
 
@@ -21,7 +21,8 @@ func MakeScheduleLink(region reapable.Region, id reapable.ID, tokenSecret, apiUR
 	return makeURL(apiURL, "schedule", sched), nil
 }
 
-func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+// MakeTerminateLink creates a tokenized link scheduling a resource
+func makeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	term, err := token.Tokenize(tokenSecret,
 		token.NewTerminateJob(region.String(), id.String()))
 
@@ -32,7 +33,8 @@ func MakeTerminateLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 	return makeURL(apiURL, "terminate", term), nil
 }
 
-func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string,
+// MakeIgnoreLink creates a tokenized link scheduling a resource
+func makeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string,
 	duration time.Duration) (string, error) {
 	delay, err := token.Tokenize(tokenSecret,
 		token.NewDelayJob(region.String(), id.String(),
@@ -47,33 +49,36 @@ func MakeIgnoreLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL 
 
 }
 
-func MakeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+// MakeWhitelistLink creates a tokenized link scheduling a resource
+func makeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	whitelist, err := token.Tokenize(tokenSecret,
 		token.NewWhitelistJob(region.String(), id.String()))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error creating whitelist link: %s", err))
+		log.Error("Error creating whitelist link: %s", err)
 		return "", err
 	}
 
 	return makeURL(apiURL, "whitelist", whitelist), nil
 }
 
-func MakeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+// MakeStopLink creates a tokenized link scheduling a resource
+func makeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewStopJob(region.String(), id.String()))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error creating ScaleToZero link: %s", err))
+		log.Error("Error creating ScaleToZero link: %s", err)
 		return "", err
 	}
 
 	return makeURL(apiURL, "stop", stop), nil
 }
 
-func MakeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
+// MakeForceStopLink creates a tokenized link scheduling a resource
+func makeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL string) (string, error) {
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewForceStopJob(region.String(), id.String()))
 	if err != nil {
-		log.Error(fmt.Sprintf("Error creating ScaleToZero link: %s", err))
+		log.Error("Error creating ScaleToZero link: %s", err)
 		return "", err
 	}
 
@@ -94,7 +99,6 @@ func makeURL(host, action, token string) string {
 
 	if host[len(host)-1:] == "/" {
 		return host + "?" + vals.Encode()
-	} else {
-		return host + "/?" + vals.Encode()
 	}
+	return host + "/?" + vals.Encode()
 }

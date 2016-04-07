@@ -17,9 +17,8 @@ Reaper workflow:
 * it's maintained by an intern
 
 ## Building
-* install godep (`go get github.com/tools/godep` if you have a proper $GOPATH)
-* checkout repo
 * install glide per `https://github.com/Masterminds/glide`
+* checkout repo
 * install dependencies: `glide install`
 * build binary: `go build main.go`
 * run binary: `./reaper -config config/default.toml`

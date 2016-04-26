@@ -46,12 +46,12 @@ EventTag = "env:default"
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
     [Events.DataDog]
-        # Enabled = false
-        # Triggers = []
+        Enabled = false
+        Triggers = []
 
     [Events.Email]
-        # Enabled = false
-        # Triggers = []
+        Enabled = false
+        Triggers = []
 
         Host = ""
         AuthType = "plain"
@@ -72,12 +72,12 @@ EventTag = "env:default"
         # Port = 587
 
     [Events.Tagger]
-        # Enabled = false
-        # Triggers = []
+        Enabled = false
+        Triggers = []
 
     [Events.Reaper]
-        # Enabled = false
-        # Triggers = []
+        Enabled = false
+        Triggers = []
         Mode = "Stop"
 
     [Events.Interactive]

@@ -4,7 +4,7 @@ import log "github.com/mozilla-services/reaper/reaperlog"
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {
-	eventReporterConfig
+	*eventReporterConfig
 }
 
 // Tagger is an ReapableEventReporter that tags AWS Resources

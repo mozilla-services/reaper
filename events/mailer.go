@@ -31,7 +31,7 @@ type HTTPConfig struct {
 // MailerConfig is the configuration for a Mailer
 type MailerConfig struct {
 	HTTPConfig
-	eventReporterConfig
+	*eventReporterConfig
 
 	CopyEmailAddresses []string
 

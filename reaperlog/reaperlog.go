@@ -28,7 +28,7 @@ func SetConfig(c *LogConfig) {
 func init() {
 	// set up logging
 	log = logging.MustGetLogger("Reaper")
-	backend := logging.NewLogBackend(os.Stderr, "", 0)
+	backend := logging.NewLogBackend(os.Stdout, "", 0)
 	format := logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} ▶%{color:reset} %{message}")
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backendFormatter)
@@ -49,7 +49,7 @@ func AddLogFile(filename string) {
 			logFileBackend := logging.NewLogBackend(f, "", 0)
 			logFileBackendFormatter := logging.NewBackendFormatter(logFileBackend, logFileFormat)
 
-			backend := logging.NewLogBackend(os.Stderr, "", 0)
+			backend := logging.NewLogBackend(os.Stdout, "", 0)
 			format := logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} ▶%{color:reset} %{message}")
 			backendFormatter := logging.NewBackendFormatter(backend, format)
 			logging.SetBackend(backendFormatter, logFileBackendFormatter)

@@ -90,8 +90,8 @@ func init() {
 	// if a WhitelistTag is set
 	if config.WhitelistTag == "" {
 		// set the config's WhitelistTag
-		log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
-		config.WhitelistTag = "REAPER_SPARE_ME"
+		log.Error("WhitelistTag is empty, exiting")
+		os.Exit(1)
 	} else {
 		// else use the default
 		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)

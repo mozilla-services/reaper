@@ -206,7 +206,7 @@ func (a *Cloudformation) Save(s *state.State) (bool, error) {
 // Unsave is part of reapable.Saveable, which embedded in reapable.Reapable
 // no op because we cannot tag cloudformations without updating the stack
 func (a *Cloudformation) Unsave() (bool, error) {
-	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
+	log.Info("Unsaving %s", a.ReapableDescriptionTiny())
 	return false, nil
 }
 
@@ -326,7 +326,7 @@ func (a *Cloudformation) AWSConsoleURL() *url.URL {
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Cloudformation) Terminate() (bool, error) {
-	log.Notice("Terminating Cloudformation %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating Cloudformation %s", a.ReapableDescriptionTiny())
 	as := cloudformation.New(&aws.Config{Region: string(a.Region)})
 
 	stringID := string(a.ID)

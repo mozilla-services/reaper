@@ -263,7 +263,7 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *SecurityGroup) Terminate() (bool, error) {
-	log.Notice("Terminating SecurityGroup %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating SecurityGroup %s", a.ReapableDescriptionTiny())
 	as := ec2.New(&aws.Config{Region: string(a.Region)})
 
 	// ugh this is stupid

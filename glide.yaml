@@ -1,4 +1,4 @@
-package: .
+package: github.com/mozilla-services/reaper
 import:
 - package: github.com/BurntSushi/toml
   version: 056c9bc7be7190eaa7715723883caffa5f8fa3e4
@@ -18,8 +18,6 @@ import:
   - service/autoscaling
   - service/cloudformation
   - service/ec2
-- package: github.com/op/go-logging
-  version: ~1.x
 - package: github.com/vaughan0/go-ini
   version: a98ad7ee00ec53921f08832bc06ecf7fd600e6a1
 - package: golang.org/x/crypto
@@ -27,3 +25,5 @@ import:
   subpackages:
   - pbkdf2
   - scrypt
+- package: github.com/mozilla-services/go-mozlog
+- package: github.com/rifflock/lfshook

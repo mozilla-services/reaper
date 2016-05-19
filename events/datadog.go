@@ -82,7 +82,7 @@ func (e *Datadog) godspeed() (*godspeed.Godspeed, error) {
 func (e *Datadog) NewEvent(title string, text string, fields map[string]string, tags []string) error {
 	if e.Config.DryRun {
 		if log.Extras() {
-			log.Notice("DryRun: Not reporting %s", title)
+			log.Info("DryRun: Not reporting %s", title)
 		}
 		return nil
 	}
@@ -103,7 +103,7 @@ func (e *Datadog) NewEvent(title string, text string, fields map[string]string, 
 func (e *Datadog) NewStatistic(name string, value float64, tags []string) error {
 	if e.Config.DryRun {
 		if log.Extras() {
-			log.Notice("DryRun: Not reporting %s", name)
+			log.Info("DryRun: Not reporting %s", name)
 		}
 		return nil
 	}
@@ -121,7 +121,7 @@ func (e *Datadog) NewStatistic(name string, value float64, tags []string) error 
 func (e *Datadog) NewCountStatistic(name string, tags []string) error {
 	if e.Config.DryRun {
 		if log.Extras() {
-			log.Notice("DryRun: Not reporting %s", name)
+			log.Info("DryRun: Not reporting %s", name)
 		}
 		return nil
 	}

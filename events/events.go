@@ -66,7 +66,7 @@ func (e *eventReporterConfig) shouldTriggerFor(r Reapable) bool {
 
 	if e.DryRun {
 		if log.Extras() {
-			log.Notice("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
+			log.Info("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
 		}
 		return false
 	}

@@ -37,7 +37,7 @@ func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 
 	var err error
 	if e.Config.shouldTriggerFor(r) {
-		log.Notice("Choose one of the actions below for %s. All other input is ignored:\nT to terminate\nS to stop\nF to ForceStop\nW to whitelist\nI to increment state\nU to unsave state\n", r.ReapableDescriptionShort())
+		log.Info("Choose one of the actions below for %s. All other input is ignored:\nT to terminate\nS to stop\nF to ForceStop\nW to whitelist\nI to increment state\nU to unsave state\n", r.ReapableDescriptionShort())
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {

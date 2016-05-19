@@ -87,7 +87,7 @@ func makeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 
 func makeURL(host, action, token string) string {
 	if host == "" {
-		log.Critical("makeURL: host is empty")
+		log.Error("makeURL: host is empty")
 	}
 
 	action = url.QueryEscape(action)

@@ -122,7 +122,7 @@ func (a *Resource) IncrementState() (updated bool) {
 	if newState != a.reaperState.State {
 		updated = true
 		a.reaperState = state.NewStateWithUntilAndState(until, newState)
-		log.Notice("Updating state for %s. New state: %s.", a.ReapableDescriptionTiny(), newState.String())
+		log.Info("Updating state for %s. New state: %s.", a.ReapableDescriptionTiny(), newState.String())
 	}
 
 	return updated
@@ -206,14 +206,14 @@ func (a *Resource) Whitelist() (bool, error) {
 // Save is a method of reapable.Saveable, which is embedded in reapable.Reapable
 // Save tags a Resource's reaperTag
 func (a *Resource) Save(reaperState *state.State) (bool, error) {
-	log.Notice("Saving %s", a.ReapableDescriptionTiny())
+	log.Info("Saving %s", a.ReapableDescriptionTiny())
 	return tag(string(a.Region), string(a.ID), reaperTag, reaperState.String())
 }
 
 // Unsave is a method of reapable.Saveable, which is embedded in reapable.Reapable
 // Unsave untags a Resource's reaperTag
 func (a *Resource) Unsave() (bool, error) {
-	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
+	log.Info("Unsaving %s", a.ReapableDescriptionTiny())
 	return untag(string(a.Region), string(a.ID), reaperTag)
 }
 

@@ -343,7 +343,7 @@ func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
 
 // Unsave is part of reapable.Saveable, which embedded in reapable.Reapable
 func (a *AutoScalingGroup) Unsave() (bool, error) {
-	log.Notice("Unsaving %s", a.ReapableDescriptionTiny())
+	log.Info("Unsaving %s", a.ReapableDescriptionTiny())
 	return untagAutoScalingGroup(a.Region, a.ID, reaperTag)
 }
 
@@ -532,7 +532,7 @@ func (a *AutoScalingGroup) ScaleUp() {
 }
 
 func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) {
-	log.Notice("Scaling AutoScalingGroup %s to size %d.", a.ReapableDescriptionTiny(), size)
+	log.Info("Scaling AutoScalingGroup %s to size %d.", a.ReapableDescriptionTiny(), size)
 	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
 	idString := a.ID.String()
 	input := &autoscaling.UpdateAutoScalingGroupInput{
@@ -551,7 +551,7 @@ func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) 
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Terminate() (bool, error) {
-	log.Notice("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
 	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
 	idString := a.ID.String()
 	input := &autoscaling.DeleteAutoScalingGroupInput{
@@ -567,7 +567,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 
 // Whitelist is a method of reapable.Whitelistable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Whitelist() (bool, error) {
-	log.Notice("Whitelisting AutoScalingGroup %s", a.ReapableDescriptionTiny())
+	log.Info("Whitelisting AutoScalingGroup %s", a.ReapableDescriptionTiny())
 	api := autoscaling.New(&aws.Config{Region: string(a.Region)})
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{

@@ -25,7 +25,7 @@ test:
 
     # build a static binary and package it into a busybox image
     # used by deployment below
-    - docker run -it -v "$PWD:/go/src/$IMPORT_PATH" -w "/go/src/$IMPORT_PATH" golang:1.6 go build --ldflags '-extldflags "-static"' . -o reaper.exe
+    - docker run -it -v "$PWD:/go/src/$IMPORT_PATH" -w "/go/src/$IMPORT_PATH" golang:1.6 go build --ldflags '-extldflags "-static"' -o reaper.exe .
 
     # put these here since the build is shared by all deployments
     - docker build -t "app:build" .

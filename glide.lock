@@ -1,5 +1,5 @@
-hash: 4ff417af612518d064514a5a8b8a964bd864f055bab1f7eda555da274cc4b4fe
-updated: 2016-04-07T10:00:36.208640648-07:00
+hash: e18a3c854e7bbc6d3d159caa3920f99c984aead7b3fe203adc165f3decadc597
+updated: 2016-05-19T12:12:08.317185558-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 5fa0a7e63b3d9f094d7e8549ce483a190587398f
@@ -23,12 +23,16 @@ imports:
   version: 056c9bc7be7190eaa7715723883caffa5f8fa3e4
 - name: github.com/jordan-wright/email
   version: fd703108daeb23d77c124d12978e9b6c4f28f034
-- name: github.com/op/go-logging
-  version: b2cb9fa56473e98db8caba80237377e83fe44db5
+- name: github.com/mozilla-services/go-mozlog
+  version: 91fc45d5b72dabefd827193b72a22b15ea7d828f
 - name: github.com/PagerDuty/godspeed
   version: 079d1fb267ad66b7a3bd42c24013cbeb29698c3d
+- name: github.com/rifflock/lfshook
+  version: 05a24e24fa8d3a2eca8c2baf23aa2d5a2c51490c
 - name: github.com/robfig/cron
-  version: 0f39cf7ebc65a602f45692f9894bd6a193faf8fa
+  version: 8dc4916d418b9d0b2e23c9c1e68351dc9a1d6573
+- name: github.com/Sirupsen/logrus
+  version: cd7d1bbe41066b6c1f19780f895901052150a575
 - name: github.com/vaughan0/go-ini
   version: a98ad7ee00ec53921f08832bc06ecf7fd600e6a1
 - name: golang.org/x/crypto
@@ -36,4 +40,8 @@ imports:
   subpackages:
   - pbkdf2
   - scrypt
+- name: golang.org/x/sys
+  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
+  subpackages:
+  - unix
 devImports: []

@@ -107,7 +107,7 @@ func (r *Reaper) Run() {
 	}
 
 	// this is no longer true, but is roughly accurate
-	log.Notice("Sleeping for %s", config.Notifications.Interval.Duration.String())
+	log.Info("Sleeping for %s", config.Notifications.Interval.Duration.String())
 }
 
 func (r *Reaper) SaveState(stateFile string) {
@@ -748,7 +748,7 @@ func reapSecurityGroup(s *reaperaws.SecurityGroup) {
 		// if we updated the state, mark it as having been updated
 		s.SetUpdated(s.IncrementState())
 	}
-	log.Notice("Reapable SecurityGroup discovered: %s.", s.ReapableDescription())
+	log.Info("Reapable SecurityGroup discovered: %s.", s.ReapableDescription())
 	reapables.Put(s.Region, s.ID, s)
 }
 
@@ -758,7 +758,7 @@ func reapCloudformation(c *reaperaws.Cloudformation) {
 		// if we updated the state, mark it as having been updated
 		c.SetUpdated(c.IncrementState())
 	}
-	log.Notice("Reapable Cloudformation discovered: %s.", c.ReapableDescription())
+	log.Info("Reapable Cloudformation discovered: %s.", c.ReapableDescription())
 	reapables.Put(c.Region, c.ID, c)
 }
 
@@ -768,7 +768,7 @@ func reapVolume(v *reaperaws.Volume) {
 		// if we updated the state, mark it as having been updated
 		v.SetUpdated(v.IncrementState())
 	}
-	log.Notice("Reapable Volume discovered: %s.", v.ReapableDescription())
+	log.Info("Reapable Volume discovered: %s.", v.ReapableDescription())
 	reapables.Put(v.Region, v.ID, v)
 }
 
@@ -778,7 +778,7 @@ func reapInstance(i *reaperaws.Instance) {
 		// if we updated the state, mark it as having been updated
 		i.SetUpdated(i.IncrementState())
 	}
-	log.Notice("Reapable Instance discovered: %s.", i.ReapableDescription())
+	log.Info("Reapable Instance discovered: %s.", i.ReapableDescription())
 	reapables.Put(i.Region, i.ID, i)
 }
 
@@ -788,7 +788,7 @@ func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 		// if we updated the state, mark it as having been updated
 		a.SetUpdated(a.IncrementState())
 	}
-	log.Notice("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription())
+	log.Info("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription())
 	reapables.Put(a.Region, a.ID, a)
 }
 

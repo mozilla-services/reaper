@@ -359,7 +359,7 @@ func (a *Volume) AWSConsoleURL() *url.URL {
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Volume) Terminate() (bool, error) {
-	log.Notice("Terminating Volume %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating Volume %s", a.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: a.Region.String()})
 	idString := a.ID.String()
 	input := &ec2.DeleteVolumeInput{

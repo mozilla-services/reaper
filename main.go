@@ -83,15 +83,15 @@ func init() {
 	// TODO: interactive mode config flag does nothing
 	config.Interactive = *interactive
 	if *interactive {
-		log.Notice("Interactive mode enabled, you will be prompted to handle reapables. All other EventReporters are disabled.")
+		log.Info("Interactive mode enabled, you will be prompted to handle reapables. All other EventReporters are disabled.")
 		eventReporters = []reaperevents.ReapableEventReporter{reaperevents.NewInteractiveEvent(&config.Events.Interactive)}
 	}
 
 	// if a WhitelistTag is set
 	if config.WhitelistTag == "" {
 		// set the config's WhitelistTag
-		log.Warning("WhitelistTag is empty, using 'REAPER_SPARE_ME'")
-		config.WhitelistTag = "REAPER_SPARE_ME"
+		log.Error("WhitelistTag is empty, exiting")
+		os.Exit(1)
 	} else {
 		// else use the default
 		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
@@ -99,7 +99,7 @@ func init() {
 
 	config.DryRun = *dryRun
 	if *dryRun {
-		log.Notice("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
+		log.Info("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
 		for _, eventReporter := range eventReporters {
 			eventReporter.SetDryRun(true)
 		}
@@ -111,7 +111,7 @@ func init() {
 
 	if *loadFromStateFile && config.StateFile != "" {
 		config.LoadFromStateFile = *loadFromStateFile
-		log.Notice("State will be loaded from %s", config.StateFile)
+		log.Info("State will be loaded from %s", config.StateFile)
 	}
 }
 
@@ -147,10 +147,10 @@ func main() {
 		// waiting for an Interrupt or Kill signal
 		// this channel blocks until it receives one
 		sig := <-c
-		log.Notice("Got signal %s, stopping services", sig.String())
-		log.Notice("Stopping HTTP")
+		log.Info("Got signal %s, stopping services", sig.String())
+		log.Info("Stopping HTTP")
 		api.Stop()
-		log.Notice("Stopping reaper runner")
+		log.Info("Stopping reaper runner")
 		reapRunner.Stop()
 	}
 }

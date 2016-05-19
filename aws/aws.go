@@ -147,7 +147,7 @@ func cloudformationResources(region, id string) chan *cloudformation.StackResour
 			didRetry = true
 		}
 		if didRetry && log.Extras() {
-			log.Notice("Retry succeeded for %s!", id)
+			log.Info("Retry succeeded for %s!", id)
 		}
 		for _, resource := range resp.StackResources {
 			ch <- resource

@@ -449,7 +449,7 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Instance) Terminate() (bool, error) {
-	log.Notice("Terminating Instance %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating Instance %s", a.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: string(a.Region)})
 	req := &ec2.TerminateInstancesInput{
 		InstanceIDs: []*string{aws.String(string(a.ID))},
@@ -475,7 +475,7 @@ func (a *Instance) ForceStop() (bool, error) {
 
 // Start starts an instance
 func (a *Instance) Start() (bool, error) {
-	log.Notice("Starting Instance %s", a.ReapableDescriptionTiny())
+	log.Info("Starting Instance %s", a.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: string(a.Region)})
 	req := &ec2.StartInstancesInput{
 		InstanceIDs: []*string{aws.String(string(a.ID))},
@@ -496,7 +496,7 @@ func (a *Instance) Start() (bool, error) {
 
 // Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 func (a *Instance) Stop() (bool, error) {
-	log.Notice("Stopping Instance %s", a.ReapableDescriptionTiny())
+	log.Info("Stopping Instance %s", a.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: string(a.Region)})
 	req := &ec2.StopInstancesInput{
 		InstanceIDs: []*string{aws.String(string(a.ID))},

@@ -27,3 +27,4 @@ import:
   - scrypt
 - package: github.com/mozilla-services/go-mozlog
 - package: github.com/rifflock/lfshook
+- package: github.com/Sirupsen/logrus

@@ -33,16 +33,17 @@ test:
 
 deployment:
   # this is just for dev, uncomment for testing circleci building
-  #hub_all:
-  #  branch: /.*/
-  #  commands:
-  #    - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-  #    - cp reaper $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
-  #    - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
+  hub_all:
+   branch: /.*/
+   commands:
+      - "[ ! -z $DOCKERHUB_REPO ]"
+      - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
+      - cp ./bin/reaper $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
+      - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
 
-  #    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-  #    - docker tag app:build ${DOCKERHUB_REPO}:unstable
-  #    - docker push ${DOCKERHUB_REPO}:unstable
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker tag app:build ${DOCKERHUB_REPO}:latest
+      - docker push ${DOCKERHUB_REPO}:latest
 
   hub_latest:
     branch: master

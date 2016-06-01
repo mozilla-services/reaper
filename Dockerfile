@@ -7,6 +7,6 @@ RUN addgroup -g 10001 app && \
     adduser -G app -u 10001 -D -h /app -s /sbin/nologin app
 
 COPY version.json /app/version.json
-COPY bin/reaper /app/reaper
+COPY bin/reaper.exe /app/reaper
 
 USER app

@@ -25,7 +25,7 @@ test:
 
     # build a static binary and package it into a busybox image
     # used by deployment below
-    - ./circle_build.sh
+    - docker run -it -v "$PWD:/go/src/$IMPORT_PATH" -w "/go/src/$IMPORT_PATH" golang:1.6 go build --ldflags '-extldflags "-static"' -o reaper.exe .
 
     # put these here since the build is shared by all deployments
     - docker build -t "app:build" .
@@ -38,19 +38,19 @@ deployment:
    commands:
       - "[ ! -z $DOCKERHUB_REPO ]"
       - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-      - cp ./bin/reaper $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
+      - cp reaper.exe $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
       - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
 
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker tag app:build ${DOCKERHUB_REPO}:latest
-      - docker push ${DOCKERHUB_REPO}:latest
+      - docker tag app:build ${DOCKERHUB_REPO}:unstable
+      - docker push ${DOCKERHUB_REPO}:unstable
 
   hub_latest:
     branch: master
     commands:
       - "[ ! -z $DOCKERHUB_REPO ]"
       - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-      - cp ./bin/reaper $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
+      - cp reaper.exe $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
       - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
 
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
@@ -61,7 +61,7 @@ deployment:
     tag: /.*/
     commands:
       - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-      - cp ./bin/reaper "$CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG"
+      - cp reaper.exe "$CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG"
       - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG-shasum256.txt
 
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS

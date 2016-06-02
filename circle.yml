@@ -4,7 +4,7 @@ machine:
     # GWS should already exists on the ubuntu trusty build image
     GWS: "$HOME/.go_workspace"
     PROJECT_USERNAME: "$GWS/src/github.com/$CIRCLE_PROJECT_USERNAME"
-    PROJECT: "$A/$CIRCLE_PROJECT_REPONAME"
+    PROJECT: "$PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
 
   services:
     - docker

@@ -15,7 +15,7 @@ dependencies:
     # put the source in $GOPATH
     - export GOPATH=$GWS
     - mkdir -p $GWS/pkg $GWS/bin $PROJECT_USERNAME
-    - ln -fs $HOME/$CIRCLE_PROJECT_REPONAME $PROJECT
+    - ln -fs $HOME/$CIRCLE_PROJECT_REPONAME $PROJECT_USERNAME
 
     # create a version.json
     - >

@@ -6,7 +6,7 @@ ENTRYPOINT ["/app/reaper"]
 RUN addgroup -g 10001 app && \
     adduser -G app -u 10001 -D -h /app -s /sbin/nologin app
 
-COPY version.json /app/version.json
-COPY bin/reaper.exe /app/reaper
+COPY $HOME/version.json /app/version.json
+COPY $HOME/reaper.exe /app/reaper
 
 USER app

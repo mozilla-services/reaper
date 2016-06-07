@@ -31,7 +31,8 @@ dependencies:
     - echo 'export GOPATH=$GWS' >> ~/.circlerc
 
     # build a static binary
-    - cd "$PROJECT" && go build --ldflags '-extldflags "-static"' -o $PROJECT/reaper.exe .
+    - cd "$PROJECT"
+    - CGO_ENABLED=0 go build --ldflags '-extldflags "-static"' -o $PROJECT/reaper.exe .
 
     # build image and put its sha256 into artifacts to aid verification
     - docker build -t "app:build" .

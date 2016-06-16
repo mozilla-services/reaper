@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/antonholmquist/jason"
-	"github.com/labstack/gommon/log"
+	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
 const Ec2PricingUrl = "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json"

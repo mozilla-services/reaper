@@ -1,4 +1,4 @@
-package mozlog
+package mozlog // import "go.mozilla.org/mozlog"
 
 import (
 	"bytes"

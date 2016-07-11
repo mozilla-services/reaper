@@ -2,8 +2,8 @@ package reaperlog
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/mozilla-services/go-mozlog"
 	"github.com/rifflock/lfshook"
+	"go.mozilla.org/mozlogrus"
 )
 
 var config LogConfig
@@ -37,7 +37,7 @@ func AddLogFile(filename string) {
 
 func init() {
 	// set up logging
-	mozlog.SetFormatterName("Reaper")
+	mozlogrus.SetFormatterName("Reaper")
 }
 
 func Debug(format string, args ...interface{}) {

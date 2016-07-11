@@ -1,5 +1,5 @@
-hash: 172524392cd05f06ba1f7244b59d85422af4f8856f7ee8602985e59a2d023540
-updated: 2016-06-16T22:49:03.125146035+01:00
+hash: 98abaf9cb55869327c03b297da2ca41bcc92040ff9f5d00306e0ddb1f2e8d4d6
+updated: 2016-07-11T10:02:27.140339773-07:00
 imports:
 - name: github.com/antonholmquist/jason
   version: 423803175a265e07c3f35cd8faf009eac345efb8
@@ -25,8 +25,6 @@ imports:
   version: 056c9bc7be7190eaa7715723883caffa5f8fa3e4
 - name: github.com/jordan-wright/email
   version: fd703108daeb23d77c124d12978e9b6c4f28f034
-- name: github.com/mozilla-services/go-mozlog
-  version: f4350d8f1cad600a1200703365a185c2009bf5e1
 - name: github.com/PagerDuty/godspeed
   version: 079d1fb267ad66b7a3bd42c24013cbeb29698c3d
 - name: github.com/rifflock/lfshook
@@ -37,13 +35,17 @@ imports:
   version: f3cfb454f4c209e6668c95216c4744b8fddb2356
 - name: github.com/vaughan0/go-ini
   version: a98ad7ee00ec53921f08832bc06ecf7fd600e6a1
+- name: go.mozilla.org/mozlog
+  version: f4350d8f1cad600a1200703365a185c2009bf5e1
+- name: go.mozilla.org/mozlogrus
+  version: 15663a6924e5a6e1ef2df799d0ddfe61ed58a1aa
 - name: golang.org/x/crypto
   version: 4d48e5fa3d62b5e6e71260571bf76c767198ca02
   subpackages:
   - pbkdf2
   - scrypt
 - name: golang.org/x/sys
-  version: 62bee037599929a6e9146f29d10dd5208c43507d
+  version: a408501be4d17ee978c04a618e7a1b22af058c0e
   subpackages:
   - unix
 devImports: []

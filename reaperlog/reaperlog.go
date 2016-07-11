@@ -37,7 +37,7 @@ func AddLogFile(filename string) {
 
 func init() {
 	// set up logging
-	mozlogrus.SetFormatterName("Reaper")
+	mozlogrus.Enable("Reaper")
 }
 
 func Debug(format string, args ...interface{}) {

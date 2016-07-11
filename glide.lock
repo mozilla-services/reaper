@@ -1,5 +1,5 @@
 hash: 98abaf9cb55869327c03b297da2ca41bcc92040ff9f5d00306e0ddb1f2e8d4d6
-updated: 2016-07-11T10:02:27.140339773-07:00
+updated: 2016-07-11T10:16:28.103974446-07:00
 imports:
 - name: github.com/antonholmquist/jason
   version: 423803175a265e07c3f35cd8faf009eac345efb8
@@ -38,7 +38,7 @@ imports:
 - name: go.mozilla.org/mozlog
   version: f4350d8f1cad600a1200703365a185c2009bf5e1
 - name: go.mozilla.org/mozlogrus
-  version: 15663a6924e5a6e1ef2df799d0ddfe61ed58a1aa
+  version: 011a6e72803ac0c0e4222c15de09ed6218bcda5b
 - name: golang.org/x/crypto
   version: 4d48e5fa3d62b5e6e71260571bf76c767198ca02
   subpackages:

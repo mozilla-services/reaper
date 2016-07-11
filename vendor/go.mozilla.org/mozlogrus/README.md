@@ -6,6 +6,6 @@ A logging library which conforms to Mozilla's logging standard for [logrus](http
 import "go.mozilla.org/mozlogrus"
 
 func init() {
-    mozlogrus.SetFormatterName("ApplicationName")
+    mozlogrus.Enable("ApplicationName")
 }
 ```

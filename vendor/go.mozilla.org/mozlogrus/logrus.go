@@ -10,9 +10,10 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-func init() {
+// Enable enables mozlogrus
+func Enable(loggerName string) {
 	logrus.SetFormatter(&MozLogFormatter{
-		LoggerName: "MozLog",
+		LoggerName: loggerName,
 	})
 
 	logrus.SetOutput(os.Stdout)

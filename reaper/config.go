@@ -1,6 +1,7 @@
 package reaper
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -55,7 +56,7 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	if len(md.Undecoded()) > 0 {
-		log.Error("Undecoded configuration keys: %q\nExiting!", md.Undecoded())
+		log.Error(fmt.Sprintf("Undecoded configuration keys: %q\nExiting!", md.Undecoded()))
 		os.Exit(1)
 	}
 

@@ -114,7 +114,7 @@ func (r *Reaper) SaveState(stateFile string) {
 	// open file RW, create it if it doesn't exist
 	s, err := os.OpenFile(stateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
 	if err != nil {
-		log.Error("Unable to create StateFile '%s'", stateFile)
+		log.Error("Unable to create StateFile ", stateFile)
 		return
 	}
 	defer s.Close()
@@ -122,7 +122,7 @@ func (r *Reaper) SaveState(stateFile string) {
 	for r := range reapables.Iter() {
 		_, err := s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", r.Region, r.ID, r.ReaperState().String())))
 		if err != nil {
-			log.Error("Error writing to %s", stateFile)
+			log.Error("Error writing to", stateFile)
 		}
 	}
 	log.Info("States saved to %s", stateFile)
@@ -145,7 +145,7 @@ func (r *Reaper) LoadState(stateFile string) {
 		line := strings.Split(scanner.Text(), ",")
 		// there should be 3 sections in a saved state line
 		if len(line) != 3 {
-			log.Error("Malformed saved state %s", scanner.Text())
+			log.Error("Malformed saved state ", scanner.Text())
 			continue
 		}
 		region := reapable.Region(line[0])
@@ -155,7 +155,7 @@ func (r *Reaper) LoadState(stateFile string) {
 		savedstates[region][id] = savedState
 	}
 	if err != nil {
-		log.Error("Unable to open StateFile '%s'", stateFile)
+		log.Error("Unable to open StateFile ", stateFile)
 	} else {
 		log.Info("States loaded from %s", stateFile)
 	}
@@ -250,25 +250,25 @@ func (r *Reaper) reap() {
 			for region, sum := range filteredInstanceSums {
 				err := e.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error("%s", err.Error())
+					log.Error(err.Error())
 				}
 			}
 			for region, sum := range filteredASGSums {
 				err := e.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error("%s", err.Error())
+					log.Error(err.Error())
 				}
 			}
 			for region, sum := range filteredCloudformationSums {
 				err := e.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error("%s", err.Error())
+					log.Error(err.Error())
 				}
 			}
 			for region, sum := range filteredSecurityGroupSums {
 				err := e.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
-					log.Error("%s", err.Error())
+					log.Error(err.Error())
 				}
 			}
 		}
@@ -298,7 +298,7 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 				for region, regionSum := range regionSums {
 					err := e.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 					if err != nil {
-						log.Error("%s", err.Error())
+						log.Error(err.Error())
 					}
 				}
 			}
@@ -339,9 +339,9 @@ func getVolumes() chan *reaperaws.Volume {
 			for _, e := range eventReporters {
 				for region, regionMap := range volumeSizeSums {
 					for volumeType, volumeSizeSum := range regionMap {
-						err := e.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%s", region, volumeType)})
+						err := e.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
 						if err != nil {
-							log.Error("%s", err.Error())
+							log.Error(err.Error())
 						}
 					}
 				}
@@ -443,7 +443,7 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 				for region, regionSum := range regionSums {
 					err := e.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 					if err != nil {
-						log.Error("%s", err.Error())
+						log.Error(err.Error())
 					}
 				}
 			}
@@ -486,13 +486,13 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 					for asgSize, asgSizeSum := range regionMap {
 						err := e.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
 						if err != nil {
-							log.Error("%s", err.Error())
+							log.Error(err.Error())
 						}
 					}
 					for region, regionSum := range regionSums {
 						err := e.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 						if err != nil {
-							log.Error("%s", err.Error())
+							log.Error(err.Error())
 						}
 					}
 				}
@@ -678,7 +678,7 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 	// recover from potential panics caused by malformed filters
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Recovered in applyFilters with panic: %s", r)
+			log.Error("Recovered in applyFilters with panic: ", r)
 		}
 	}()
 
@@ -800,8 +800,8 @@ func Terminate(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.Terminate()
 	if err != nil {
-		log.Error("Could not terminate resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error())
+		log.Error(fmt.Sprintf("Could not terminate resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
 		return err
 	}
 	log.Debug("Terminate %s", reapable.ReapableDescriptionShort())
@@ -817,8 +817,8 @@ func ForceStop(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.ForceStop()
 	if err != nil {
-		log.Error("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error())
+		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
 		return err
 	}
 	log.Debug("ForceStop %s", reapable.ReapableDescriptionShort())
@@ -834,11 +834,11 @@ func Stop(region reapable.Region, id reapable.ID) error {
 	}
 	_, err = reapable.Stop()
 	if err != nil {
-		log.Error("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error())
+		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
 		return err
 	}
-	log.Debug("Stop %s", reapable.ReapableDescriptionShort())
+	log.Debug("Stop ", reapable.ReapableDescriptionShort())
 
 	return nil
 }

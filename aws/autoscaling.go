@@ -30,18 +30,18 @@ func (s *autoScalingGroupScalingSchedule) setSchedule(tag string) {
 	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
 	splitTag := strings.Split(tag, ",")
 	if len(splitTag) != 4 {
-		log.Error("Invalid Autoscaler Tag format %s", tag)
+		log.Error("Invalid Autoscaler Tag format ", tag)
 		return
 	}
 	prev, err := strconv.ParseInt(splitTag[2], 0, 64)
 	if err != nil {
-		log.Error("Invalid Autoscaler Tag format %s", tag)
+		log.Error("Invalid Autoscaler Tag format ", tag)
 		log.Error(err.Error())
 		return
 	}
 	min, err := strconv.ParseInt(splitTag[3], 0, 64)
 	if err != nil {
-		log.Error("Invalid Autoscaler Tag format %s", tag)
+		log.Error("Invalid Autoscaler Tag format ", tag)
 		log.Error(err.Error())
 		return
 	}
@@ -138,7 +138,7 @@ func (a *AutoScalingGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
 func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 
@@ -152,7 +152,7 @@ func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject str
 func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
@@ -487,7 +487,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering AutoScalingGroups.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering AutoScalingGroups.", filter.Function))
 	}
 	return matched
 }
@@ -497,7 +497,7 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
 		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
 	if err != nil {
-		log.Error("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. ", err)
 	}
 	return url
 }
@@ -543,7 +543,7 @@ func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) 
 
 	_, err := as.UpdateAutoScalingGroup(input)
 	if err != nil {
-		log.Error("could not update AutoScalingGroup %s", a.ReapableDescriptionTiny())
+		log.Error("could not update AutoScalingGroup ", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil
@@ -559,7 +559,7 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
-		log.Error("could not delete AutoScalingGroup %s", a.ReapableDescriptionTiny())
+		log.Error("could not delete AutoScalingGroup ", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil

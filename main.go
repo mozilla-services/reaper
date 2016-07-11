@@ -35,12 +35,12 @@ func init() {
 		// catches panics loading config
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error("Invalid config, %s", r)
+				log.Error("Invalid config ", r)
 				os.Exit(1)
 			}
 		}()
 		config = *c
-		log.Info("Configuration loaded from %s", *configFile)
+		log.Info("Configuration loaded from ", *configFile)
 	} else {
 		// config not successfully loaded -> exit with error
 		log.Error("toml", err)

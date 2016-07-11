@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"sync"
@@ -135,7 +136,7 @@ func cloudformationResources(region, id string) chan *cloudformation.StackResour
 					log.Warning("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second)
 				} else if strings.Split(err.Error(), ":")[0] != "Throttling" {
 					// any other errors
-					log.Error("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second)
+					log.Error(fmt.Sprintf("StackResources: %s (retrying %s after %ds)", err.Error(), id, sleepTime*1.0/time.Second))
 				}
 			}
 

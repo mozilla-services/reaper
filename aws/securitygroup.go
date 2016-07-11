@@ -64,7 +64,7 @@ func (a *SecurityGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
 func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 
@@ -78,7 +78,7 @@ func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string
 func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
@@ -246,7 +246,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering SecurityGroups.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering SecurityGroups.", filter.Function))
 	}
 	return matched
 }
@@ -256,14 +256,14 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
 		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
 	if err != nil {
-		log.Error("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. ", err)
 	}
 	return url
 }
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *SecurityGroup) Terminate() (bool, error) {
-	log.Info("Terminating SecurityGroup %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating SecurityGroup ", a.ReapableDescriptionTiny())
 	as := ec2.New(&aws.Config{Region: string(a.Region)})
 
 	// ugh this is stupid
@@ -274,7 +274,7 @@ func (a *SecurityGroup) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteSecurityGroup(input)
 	if err != nil {
-		log.Error("could not delete SecurityGroup %s", a.ReapableDescriptionTiny())
+		log.Error("could not delete SecurityGroup ", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return false, nil

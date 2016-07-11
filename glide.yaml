@@ -25,6 +25,7 @@ import:
   subpackages:
   - pbkdf2
   - scrypt
-- package: github.com/mozilla-services/go-mozlog
+- package: go.mozilla.org/mozlogrus
 - package: github.com/rifflock/lfshook
 - package: github.com/Sirupsen/logrus
+- package: github.com/antonholmquist/jason

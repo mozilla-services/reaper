@@ -54,7 +54,7 @@ func makeWhitelistLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 	whitelist, err := token.Tokenize(tokenSecret,
 		token.NewWhitelistJob(region.String(), id.String()))
 	if err != nil {
-		log.Error("Error creating whitelist link: %s", err)
+		log.Error("Error creating whitelist link: ", err)
 		return "", err
 	}
 
@@ -66,7 +66,7 @@ func makeStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiURL st
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewStopJob(region.String(), id.String()))
 	if err != nil {
-		log.Error("Error creating ScaleToZero link: %s", err)
+		log.Error("Error creating ScaleToZero link: ", err)
 		return "", err
 	}
 
@@ -78,7 +78,7 @@ func makeForceStopLink(region reapable.Region, id reapable.ID, tokenSecret, apiU
 	stop, err := token.Tokenize(tokenSecret,
 		token.NewForceStopJob(region.String(), id.String()))
 	if err != nil {
-		log.Error("Error creating ScaleToZero link: %s", err)
+		log.Error("Error creating ScaleToZero link: ", err)
 		return "", err
 	}
 

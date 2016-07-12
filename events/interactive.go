@@ -41,7 +41,7 @@ func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			log.Error("%s", err.Error())
+			log.Error(err.Error())
 		}
 		inputChar := input[0]
 		switch inputChar {

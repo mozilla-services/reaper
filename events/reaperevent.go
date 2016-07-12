@@ -1,6 +1,8 @@
 package events
 
 import (
+	"fmt"
+
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
@@ -31,7 +33,7 @@ func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		if log.Extras() {
-			log.Error("Triggering ReaperEvent for %s", r.ReaperState().String())
+			log.Error("Triggering ReaperEvent for ", r.ReaperState().String())
 		}
 		var err error
 		switch e.Config.Mode {
@@ -40,7 +42,7 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 		case "Terminate":
 			_, err = r.Terminate()
 		default:
-			log.Error("Invalid %s Mode %s", e.Config.Name, e.Config.Mode)
+			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
 		}
 		if err != nil {
 			return err

@@ -75,7 +75,7 @@ func (a *Volume) ReapableEventTextShort() (*bytes.Buffer, error) {
 func (a *Volume) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 
@@ -89,7 +89,7 @@ func (a *Volume) ReapableEventEmail() (owner mail.Address, subject string, body 
 func (a *Volume) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
@@ -342,7 +342,7 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering Volumes.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering Volumes.", filter.Function))
 	}
 	return matched
 }
@@ -352,14 +352,14 @@ func (a *Volume) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Volumes:volumeId=%s",
 		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
 	if err != nil {
-		log.Error("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. ", err)
 	}
 	return url
 }
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Volume) Terminate() (bool, error) {
-	log.Info("Terminating Volume %s", a.ReapableDescriptionTiny())
+	log.Info("Terminating Volume ", a.ReapableDescriptionTiny())
 	api := ec2.New(&aws.Config{Region: a.Region.String()})
 	idString := a.ID.String()
 	input := &ec2.DeleteVolumeInput{
@@ -367,7 +367,7 @@ func (a *Volume) Terminate() (bool, error) {
 	}
 	_, err := api.DeleteVolume(input)
 	if err != nil {
-		log.Error("could not delete Volume %s", a.ReapableDescriptionTiny())
+		log.Error("could not delete Volume ", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return true, nil

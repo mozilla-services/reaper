@@ -82,7 +82,7 @@ func (a *Cloudformation) ReapableEventTextShort() (*bytes.Buffer, error) {
 func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 
@@ -96,7 +96,7 @@ func (a *Cloudformation) ReapableEventEmail() (owner mail.Address, subject strin
 func (a *Cloudformation) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
 	// if unowned, return unowned error
 	if !a.Owned() {
-		err = reapable.UnownedError{fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
+		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
 		return
 	}
 	owner = *a.Owner()
@@ -308,7 +308,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 			matched = true
 		}
 	default:
-		log.Error("No function %s could be found for filtering Cloudformations.", filter.Function)
+		log.Error(fmt.Sprintf("No function %s could be found for filtering Cloudformations.", filter.Function))
 	}
 	return matched
 }
@@ -319,7 +319,7 @@ func (a *Cloudformation) AWSConsoleURL() *url.URL {
 	// setting RawQuery because QueryEscape messes with the "/"s in the url
 	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region.String(), a.ID.String())
 	if err != nil {
-		log.Error("Error generating AWSConsoleURL. %s", err)
+		log.Error("Error generating AWSConsoleURL. ", err)
 	}
 	return url
 }
@@ -336,7 +336,7 @@ func (a *Cloudformation) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteStack(input)
 	if err != nil {
-		log.Error("could not delete Cloudformation %s", a.ReapableDescriptionTiny())
+		log.Error("could not delete Cloudformation ", a.ReapableDescriptionTiny())
 		return false, err
 	}
 	return false, nil

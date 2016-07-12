@@ -32,6 +32,7 @@ func (h *HTTPApi) Serve() (e error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", processToken(h))
 	mux.HandleFunc("/__heartbeat__", heartbeat(h))
+	mux.HandleFunc("/__lbheartbeat__", heartbeat(h))
 	h.server = &http.Server{Handler: mux}
 
 	log.Debug("Starting HTTP server: %s", h.conf.Listen)

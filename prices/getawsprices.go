@@ -99,12 +99,12 @@ func GetPricesMapFromFile(filename string) (PricesMap, error) {
 
 func DownloadPricesMap(url string) (PricesMap, error) {
 	if url == "" {
-		return PricesMap{}, nil
+		return PricesMap{}, fmt.Errorf("Invalid price url")
 	}
 
 	res, err := http.Get(url)
 	if err != nil {
-		return PricesMap{}, nil
+		return PricesMap{}, err
 	}
 	defer res.Body.Close()
 	return populatePricesMap(res.Body)

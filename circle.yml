@@ -41,12 +41,7 @@ dependencies:
 
     - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
     - cp $PROJECT/reaper.exe $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
-    - >
-        sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 |
-        awk '{print $1}' |
-        tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
 
-    - docker pull mozilla/reaper:latest
 test:
   override:
     - echo 'todo'

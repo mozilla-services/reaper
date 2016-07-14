@@ -1,5 +1,7 @@
 FROM alpine:latest
 
+EXPOSE 8000
+
 WORKDIR /app
 ENTRYPOINT ["/app/reaper"]
 CMD ["-config" "/app/config.toml"]

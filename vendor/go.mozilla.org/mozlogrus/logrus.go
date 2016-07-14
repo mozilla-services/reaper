@@ -1,16 +1,19 @@
-package mozlog
+package mozlogrus
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 
+	"go.mozilla.org/mozlog"
+
 	"github.com/Sirupsen/logrus"
 )
 
-func init() {
+// Enable enables mozlogrus
+func Enable(loggerName string) {
 	logrus.SetFormatter(&MozLogFormatter{
-		LoggerName: "MozLog",
+		LoggerName: loggerName,
 	})
 
 	logrus.SetOutput(os.Stdout)
@@ -36,11 +39,11 @@ type MozLogFormatter struct {
 }
 
 func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	appLog := &AppLog{
+	appLog := &mozlog.AppLog{
 		Timestamp:  entry.Time.UnixNano(),
 		Type:       "app.log",
 		Logger:     m.LoggerName,
-		Hostname:   hostname,
+		Hostname:   mozlog.Hostname(),
 		EnvVersion: "2.0",
 		Pid:        os.Getpid(),
 		Severity:   int(entry.Level),

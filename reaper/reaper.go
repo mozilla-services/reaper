@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,11 +25,13 @@ var (
 	reapableEventReporters *[]reaperevents.ReapableEventReporter
 	eventReporters         []reaperevents.EventReporter
 	schedule               *cron.Cron
+	pricesMap              prices.PricesMap
 )
 
 func SetConfig(c *Config) {
 	config = c
 }
+
 func SetEvents(e *[]reaperevents.ReapableEventReporter) {
 	reapableEventReporters = e
 	for _, rer := range *e {
@@ -66,11 +69,26 @@ func NewReaper() *Reaper {
 	}
 }
 
+func GetPrices() {
+	// prevent shadowing
+	var err error
+	log.Info("Downloading prices")
+	pricesMap, err = prices.DownloadPricesMap(prices.Ec2PricingUrl)
+	if err != nil {
+		log.Error(fmt.Sprintf("Error getting prices: %s", err.Error()))
+		return
+	}
+	log.Info("Successfully downloaded prices")
+}
+
 // Start begins Reaper's schedule
 func (r *Reaper) Start() {
 	// adding as a job runs r.Run() every interval
 	r.Cron.Schedule(cron.Every(config.Notifications.Interval.Duration), r)
 	r.Cron.Start()
+
+	// initial prices download, synchronous
+	GetPrices()
 
 	// initial run
 	go r.Run()
@@ -99,6 +117,7 @@ func (r *Reaper) Stop() {
 // conforms to the cron.Job interface
 func (r *Reaper) Run() {
 	schedule = cron.New()
+	schedule.AddFunc("@weekly", GetPrices)
 	schedule.Start()
 	r.reap()
 
@@ -380,12 +399,6 @@ func getInstances() chan *reaperaws.Instance {
 			ch <- instance
 		}
 
-		// default behavior returns an empty map if no filename is supplied
-		pricesMap, err := prices.GetPricesMapFromFile(config.PricesFile)
-		if err != nil {
-			log.Error("Error getting prices: %s", err.Error())
-		}
-
 		for region, sum := range regionSums {
 			log.Info("Found %d total Instances in %s", sum, region)
 		}
@@ -397,19 +410,22 @@ func getInstances() chan *reaperaws.Instance {
 						if pricesMap != nil && config.PricesFile != "" {
 							price, ok := pricesMap[string(region)][instanceType]
 							if ok {
-								err := e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*price, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+								priceFloat, err := strconv.ParseFloat(price, 64)
 								if err != nil {
-									log.Error("%s", err.Error())
+									log.Error(err.Error())
+								}
+								err = e.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*priceFloat, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+								if err != nil {
+									log.Error(err.Error())
 								}
 							} else {
 								// some instance types are priceless
-								log.Error("No price for %s", instanceType)
-
+								log.Error(fmt.Sprintf("No price for %s", instanceType))
 							}
 						}
 						err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
 						if err != nil {
-							log.Error("%s", err.Error())
+							log.Error(err.Error())
 						}
 					}
 				}

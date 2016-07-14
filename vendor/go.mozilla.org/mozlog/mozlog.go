@@ -1,4 +1,4 @@
-package mozlog
+package mozlog // import "go.mozilla.org/mozlog"
 
 import (
 	"bytes"
@@ -16,6 +16,10 @@ var Logger = &MozLogger{
 }
 
 var hostname string
+
+func Hostname() string {
+	return hostname
+}
 
 // MozLogger implements the io.Writer interface
 type MozLogger struct {

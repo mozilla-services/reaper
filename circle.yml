@@ -1,57 +1,65 @@
+
 machine:
   environment:
-    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    # make some env vars to save typing
+    # GWS should already exists on the ubuntu trusty build image
+    GWS: "$HOME/.go_workspace"
+    PROJECT_USERNAME: "$GWS/src/github.com/$CIRCLE_PROJECT_USERNAME"
+    PROJECT: "$PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
 
   services:
     - docker
 
 dependencies:
-  #cache_directories:
-  #  - "~/docker"
-
   override:
-    - docker info
-
-    # our build container
-    - docker pull golang:1.6
+    # ported from https://discuss.circleci.com/t/overriding-go-inference-in-the-dependencies-phase/660
+    # put the source in $GOPATH
+    - export GOPATH=$GWS
+    - mkdir -p $GWS/pkg $GWS/bin $PROJECT_USERNAME
+    - ln -fs $HOME/$CIRCLE_PROJECT_REPONAME $PROJECT_USERNAME
 
     # create a version.json
-    - printf '{"commit":"%s","version":"%s","source":"https://github.com/%s/%s","build":"%s"}\n' "$CIRCLE_SHA1" "$CIRCLE_TAG" "$CIRCLE_PROJECT_USERNAME" "$CIRCLE_PROJECT_REPONAME" "$CIRCLE_BUILD_URL" > version.json
-    - cp version.json $CIRCLE_ARTIFACTS
+    - >
+        printf '{"commit":"%s","version":"%s","source":"https://github.com/%s/%s","build":"%s"}\n'
+        "$CIRCLE_SHA1"
+        "$CIRCLE_TAG"
+        "$CIRCLE_PROJECT_USERNAME"
+        "$CIRCLE_PROJECT_REPONAME"
+        "$CIRCLE_BUILD_URL" > $PROJECT/version.json
+    - cp $PROJECT/version.json $CIRCLE_ARTIFACTS
 
-test:
-  override:
-    # - docker run -it -v "$PWD:/go/src/$IMPORT_PATH" -w "/go/src/$IMPORT_PATH" golang:1.6 go test -v .
+    # make it *only* $GWS, dunno why there's two defaults in there
+    - echo 'export GOPATH=$GWS' >> ~/.circlerc
 
-    # build a static binary and package it into a busybox image
-    # used by deployment below
-    - ./circle_build.sh
+    # build a static binary
+    - cd "$PROJECT"
+    - CGO_ENABLED=0 go build --ldflags '-extldflags "-static"' -o $PROJECT/reaper.exe .
 
-    # put these here since the build is shared by all deployments
+    # build image and put its sha256 into artifacts to aid verification
     - docker build -t "app:build" .
     - docker images --no-trunc | awk '/^app/ {print $3}' | tee $CIRCLE_ARTIFACTS/docker-image-shasum256.txt
 
+    - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
+    - cp $PROJECT/reaper.exe $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
+
+test:
+  override:
+    - echo 'todo'
+
 deployment:
   # this is just for dev, uncomment for testing circleci building
-  #hub_all:
-  #  branch: /.*/
-  #  commands:
-  #    - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-  #    - cp reaper $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
-  #    - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
-
-  #    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-  #    - docker tag app:build ${DOCKERHUB_REPO}:unstable
-  #    - docker push ${DOCKERHUB_REPO}:unstable
+  hub_all:
+   branch: /.*/
+   commands:
+      - "[ ! -z $DOCKERHUB_REPO ]"
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker tag app:build ${DOCKERHUB_REPO}:unstable
+      - docker push ${DOCKERHUB_REPO}:unstable
 
   hub_latest:
     branch: master
     commands:
       - "[ ! -z $DOCKERHUB_REPO ]"
-      - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-      - cp reaper.exe $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1
-      - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1 | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_SHA1-shasum256.txt
-
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker tag app:build ${DOCKERHUB_REPO}:latest
       - docker push ${DOCKERHUB_REPO}:latest
@@ -59,10 +67,7 @@ deployment:
   hub_releases:
     tag: /.*/
     commands:
-      - test -e $CIRCLE_ARTIFACTS/bin || mkdir -p $CIRCLE_ARTIFACTS/bin
-      - cp reaper.exe "$CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG"
-      - sha256sum $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG | awk '{print $1}' | tee $CIRCLE_ARTIFACTS/bin/reaper-linux-amd64-$CIRCLE_TAG-shasum256.txt
-
+      - "[ ! -z $DOCKERHUB_REPO ]"
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker tag app:build ${DOCKERHUB_REPO}:${CIRCLE_TAG}
       - docker push ${DOCKERHUB_REPO}:${CIRCLE_TAG}

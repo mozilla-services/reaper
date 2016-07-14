@@ -15,10 +15,10 @@ EventTag = "env:default"
     # this is used to generate the link back to the reaper's http
     # service. Do not add a trailing slash, just include
     # <scheme>://<host:port>
-    ApiURL = "http://localhost:9000"
+    ApiURL = "http://localhost:8000"
 
     # this is where the web server will listen for requests
-    Listen = "localhost:9000"
+    Listen = "localhost:8000"
 
     Token = "t"
     Action = "a"

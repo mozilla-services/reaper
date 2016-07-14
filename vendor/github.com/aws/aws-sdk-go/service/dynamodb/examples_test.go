@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
@@ -17,28 +16,28 @@ var _ time.Duration
 var _ bytes.Buffer
 
 func ExampleDynamoDB_BatchGetItem() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.BatchGetItemInput{
 		RequestItems: map[string]*dynamodb.KeysAndAttributes{ // Required
-			"Key": &dynamodb.KeysAndAttributes{ // Required
+			"Key": { // Required
 				Keys: []map[string]*dynamodb.AttributeValue{ // Required
-					map[string]*dynamodb.AttributeValue{ // Required
-						"Key": &dynamodb.AttributeValue{ // Required
+					{ // Required
+						"Key": { // Required
 							B:    []byte("PAYLOAD"),
-							BOOL: aws.Boolean(true),
+							BOOL: aws.Bool(true),
 							BS: [][]byte{
 								[]byte("PAYLOAD"), // Required
 								// More values...
 							},
 							L: []*dynamodb.AttributeValue{
-								&dynamodb.AttributeValue{ // Required
+								{ // Required
 								// Recursive values...
 								},
 								// More values...
 							},
 							M: map[string]*dynamodb.AttributeValue{
-								"Key": &dynamodb.AttributeValue{ // Required
+								"Key": { // Required
 								// Recursive values...
 								},
 								// More values...
@@ -48,7 +47,7 @@ func ExampleDynamoDB_BatchGetItem() {
 								aws.String("NumberAttributeValue"), // Required
 								// More values...
 							},
-							NULL: aws.Boolean(true),
+							NULL: aws.Bool(true),
 							S:    aws.String("StringAttributeValue"),
 							SS: []*string{
 								aws.String("StringAttributeValue"), // Required
@@ -63,7 +62,7 @@ func ExampleDynamoDB_BatchGetItem() {
 					aws.String("AttributeName"), // Required
 					// More values...
 				},
-				ConsistentRead: aws.Boolean(true),
+				ConsistentRead: aws.Bool(true),
 				ExpressionAttributeNames: map[string]*string{
 					"Key": aws.String("AttributeName"), // Required
 					// More values...
@@ -77,48 +76,40 @@ func ExampleDynamoDB_BatchGetItem() {
 	resp, err := svc.BatchGetItem(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_BatchWriteItem() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]*dynamodb.WriteRequest{ // Required
-			"Key": []*dynamodb.WriteRequest{ // Required
-				&dynamodb.WriteRequest{ // Required
+			"Key": { // Required
+				{ // Required
 					DeleteRequest: &dynamodb.DeleteRequest{
 						Key: map[string]*dynamodb.AttributeValue{ // Required
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 								B:    []byte("PAYLOAD"),
-								BOOL: aws.Boolean(true),
+								BOOL: aws.Bool(true),
 								BS: [][]byte{
 									[]byte("PAYLOAD"), // Required
 									// More values...
 								},
 								L: []*dynamodb.AttributeValue{
-									&dynamodb.AttributeValue{ // Required
+									{ // Required
 									// Recursive values...
 									},
 									// More values...
 								},
 								M: map[string]*dynamodb.AttributeValue{
-									"Key": &dynamodb.AttributeValue{ // Required
+									"Key": { // Required
 									// Recursive values...
 									},
 									// More values...
@@ -128,7 +119,7 @@ func ExampleDynamoDB_BatchWriteItem() {
 									aws.String("NumberAttributeValue"), // Required
 									// More values...
 								},
-								NULL: aws.Boolean(true),
+								NULL: aws.Bool(true),
 								S:    aws.String("StringAttributeValue"),
 								SS: []*string{
 									aws.String("StringAttributeValue"), // Required
@@ -140,21 +131,21 @@ func ExampleDynamoDB_BatchWriteItem() {
 					},
 					PutRequest: &dynamodb.PutRequest{
 						Item: map[string]*dynamodb.AttributeValue{ // Required
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 								B:    []byte("PAYLOAD"),
-								BOOL: aws.Boolean(true),
+								BOOL: aws.Bool(true),
 								BS: [][]byte{
 									[]byte("PAYLOAD"), // Required
 									// More values...
 								},
 								L: []*dynamodb.AttributeValue{
-									&dynamodb.AttributeValue{ // Required
+									{ // Required
 									// Recursive values...
 									},
 									// More values...
 								},
 								M: map[string]*dynamodb.AttributeValue{
-									"Key": &dynamodb.AttributeValue{ // Required
+									"Key": { // Required
 									// Recursive values...
 									},
 									// More values...
@@ -164,7 +155,7 @@ func ExampleDynamoDB_BatchWriteItem() {
 									aws.String("NumberAttributeValue"), // Required
 									// More values...
 								},
-								NULL: aws.Boolean(true),
+								NULL: aws.Bool(true),
 								S:    aws.String("StringAttributeValue"),
 								SS: []*string{
 									aws.String("StringAttributeValue"), // Required
@@ -185,52 +176,44 @@ func ExampleDynamoDB_BatchWriteItem() {
 	resp, err := svc.BatchWriteItem(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_CreateTable() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{ // Required
-			&dynamodb.AttributeDefinition{ // Required
+			{ // Required
 				AttributeName: aws.String("KeySchemaAttributeName"), // Required
 				AttributeType: aws.String("ScalarAttributeType"),    // Required
 			},
 			// More values...
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{ // Required
-			&dynamodb.KeySchemaElement{ // Required
+			{ // Required
 				AttributeName: aws.String("KeySchemaAttributeName"), // Required
 				KeyType:       aws.String("KeyType"),                // Required
 			},
 			// More values...
 		},
 		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{ // Required
-			ReadCapacityUnits:  aws.Long(1), // Required
-			WriteCapacityUnits: aws.Long(1), // Required
+			ReadCapacityUnits:  aws.Int64(1), // Required
+			WriteCapacityUnits: aws.Int64(1), // Required
 		},
 		TableName: aws.String("TableName"), // Required
 		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
-			&dynamodb.GlobalSecondaryIndex{ // Required
+			{ // Required
 				IndexName: aws.String("IndexName"), // Required
 				KeySchema: []*dynamodb.KeySchemaElement{ // Required
-					&dynamodb.KeySchemaElement{ // Required
+					{ // Required
 						AttributeName: aws.String("KeySchemaAttributeName"), // Required
 						KeyType:       aws.String("KeyType"),                // Required
 					},
@@ -244,17 +227,17 @@ func ExampleDynamoDB_CreateTable() {
 					ProjectionType: aws.String("ProjectionType"),
 				},
 				ProvisionedThroughput: &dynamodb.ProvisionedThroughput{ // Required
-					ReadCapacityUnits:  aws.Long(1), // Required
-					WriteCapacityUnits: aws.Long(1), // Required
+					ReadCapacityUnits:  aws.Int64(1), // Required
+					WriteCapacityUnits: aws.Int64(1), // Required
 				},
 			},
 			// More values...
 		},
 		LocalSecondaryIndexes: []*dynamodb.LocalSecondaryIndex{
-			&dynamodb.LocalSecondaryIndex{ // Required
+			{ // Required
 				IndexName: aws.String("IndexName"), // Required
 				KeySchema: []*dynamodb.KeySchemaElement{ // Required
-					&dynamodb.KeySchemaElement{ // Required
+					{ // Required
 						AttributeName: aws.String("KeySchemaAttributeName"), // Required
 						KeyType:       aws.String("KeyType"),                // Required
 					},
@@ -270,48 +253,44 @@ func ExampleDynamoDB_CreateTable() {
 			},
 			// More values...
 		},
+		StreamSpecification: &dynamodb.StreamSpecification{
+			StreamEnabled:  aws.Bool(true),
+			StreamViewType: aws.String("StreamViewType"),
+		},
 	}
 	resp, err := svc.CreateTable(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_DeleteItem() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{ // Required
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -321,7 +300,7 @@ func ExampleDynamoDB_DeleteItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -334,23 +313,23 @@ func ExampleDynamoDB_DeleteItem() {
 		ConditionExpression: aws.String("ConditionExpression"),
 		ConditionalOperator: aws.String("ConditionalOperator"),
 		Expected: map[string]*dynamodb.ExpectedAttributeValue{
-			"Key": &dynamodb.ExpectedAttributeValue{ // Required
+			"Key": { // Required
 				AttributeValueList: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 						B:    []byte("PAYLOAD"),
-						BOOL: aws.Boolean(true),
+						BOOL: aws.Bool(true),
 						BS: [][]byte{
 							[]byte("PAYLOAD"), // Required
 							// More values...
 						},
 						L: []*dynamodb.AttributeValue{
-							&dynamodb.AttributeValue{ // Required
+							{ // Required
 							// Recursive values...
 							},
 							// More values...
 						},
 						M: map[string]*dynamodb.AttributeValue{
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 							// Recursive values...
 							},
 							// More values...
@@ -360,7 +339,7 @@ func ExampleDynamoDB_DeleteItem() {
 							aws.String("NumberAttributeValue"), // Required
 							// More values...
 						},
-						NULL: aws.Boolean(true),
+						NULL: aws.Bool(true),
 						S:    aws.String("StringAttributeValue"),
 						SS: []*string{
 							aws.String("StringAttributeValue"), // Required
@@ -370,22 +349,22 @@ func ExampleDynamoDB_DeleteItem() {
 					// More values...
 				},
 				ComparisonOperator: aws.String("ComparisonOperator"),
-				Exists:             aws.Boolean(true),
+				Exists:             aws.Bool(true),
 				Value: &dynamodb.AttributeValue{
 					B:    []byte("PAYLOAD"),
-					BOOL: aws.Boolean(true),
+					BOOL: aws.Bool(true),
 					BS: [][]byte{
 						[]byte("PAYLOAD"), // Required
 						// More values...
 					},
 					L: []*dynamodb.AttributeValue{
-						&dynamodb.AttributeValue{ // Required
+						{ // Required
 						// Recursive values...
 						},
 						// More values...
 					},
 					M: map[string]*dynamodb.AttributeValue{
-						"Key": &dynamodb.AttributeValue{ // Required
+						"Key": { // Required
 						// Recursive values...
 						},
 						// More values...
@@ -395,7 +374,7 @@ func ExampleDynamoDB_DeleteItem() {
 						aws.String("NumberAttributeValue"), // Required
 						// More values...
 					},
-					NULL: aws.Boolean(true),
+					NULL: aws.Bool(true),
 					S:    aws.String("StringAttributeValue"),
 					SS: []*string{
 						aws.String("StringAttributeValue"), // Required
@@ -410,21 +389,21 @@ func ExampleDynamoDB_DeleteItem() {
 			// More values...
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -434,7 +413,7 @@ func ExampleDynamoDB_DeleteItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -450,26 +429,18 @@ func ExampleDynamoDB_DeleteItem() {
 	resp, err := svc.DeleteItem(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_DeleteTable() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.DeleteTableInput{
 		TableName: aws.String("TableName"), // Required
@@ -477,26 +448,35 @@ func ExampleDynamoDB_DeleteTable() {
 	resp, err := svc.DeleteTable(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
+}
+
+func ExampleDynamoDB_DescribeLimits() {
+	svc := dynamodb.New(session.New())
+
+	var params *dynamodb.DescribeLimitsInput
+	resp, err := svc.DescribeLimits(params)
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
+	}
+
+	// Pretty-print the response data.
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_DescribeTable() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.DescribeTableInput{
 		TableName: aws.String("TableName"), // Required
@@ -504,44 +484,36 @@ func ExampleDynamoDB_DescribeTable() {
 	resp, err := svc.DescribeTable(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_GetItem() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{ // Required
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -551,7 +523,7 @@ func ExampleDynamoDB_GetItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -565,7 +537,7 @@ func ExampleDynamoDB_GetItem() {
 			aws.String("AttributeName"), // Required
 			// More values...
 		},
-		ConsistentRead: aws.Boolean(true),
+		ConsistentRead: aws.Bool(true),
 		ExpressionAttributeNames: map[string]*string{
 			"Key": aws.String("AttributeName"), // Required
 			// More values...
@@ -576,72 +548,56 @@ func ExampleDynamoDB_GetItem() {
 	resp, err := svc.GetItem(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_ListTables() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.ListTablesInput{
 		ExclusiveStartTableName: aws.String("TableName"),
-		Limit: aws.Long(1),
+		Limit: aws.Int64(1),
 	}
 	resp, err := svc.ListTables(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_PutItem() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.PutItemInput{
 		Item: map[string]*dynamodb.AttributeValue{ // Required
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -651,7 +607,7 @@ func ExampleDynamoDB_PutItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -664,23 +620,23 @@ func ExampleDynamoDB_PutItem() {
 		ConditionExpression: aws.String("ConditionExpression"),
 		ConditionalOperator: aws.String("ConditionalOperator"),
 		Expected: map[string]*dynamodb.ExpectedAttributeValue{
-			"Key": &dynamodb.ExpectedAttributeValue{ // Required
+			"Key": { // Required
 				AttributeValueList: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 						B:    []byte("PAYLOAD"),
-						BOOL: aws.Boolean(true),
+						BOOL: aws.Bool(true),
 						BS: [][]byte{
 							[]byte("PAYLOAD"), // Required
 							// More values...
 						},
 						L: []*dynamodb.AttributeValue{
-							&dynamodb.AttributeValue{ // Required
+							{ // Required
 							// Recursive values...
 							},
 							// More values...
 						},
 						M: map[string]*dynamodb.AttributeValue{
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 							// Recursive values...
 							},
 							// More values...
@@ -690,7 +646,7 @@ func ExampleDynamoDB_PutItem() {
 							aws.String("NumberAttributeValue"), // Required
 							// More values...
 						},
-						NULL: aws.Boolean(true),
+						NULL: aws.Bool(true),
 						S:    aws.String("StringAttributeValue"),
 						SS: []*string{
 							aws.String("StringAttributeValue"), // Required
@@ -700,22 +656,22 @@ func ExampleDynamoDB_PutItem() {
 					// More values...
 				},
 				ComparisonOperator: aws.String("ComparisonOperator"),
-				Exists:             aws.Boolean(true),
+				Exists:             aws.Bool(true),
 				Value: &dynamodb.AttributeValue{
 					B:    []byte("PAYLOAD"),
-					BOOL: aws.Boolean(true),
+					BOOL: aws.Bool(true),
 					BS: [][]byte{
 						[]byte("PAYLOAD"), // Required
 						// More values...
 					},
 					L: []*dynamodb.AttributeValue{
-						&dynamodb.AttributeValue{ // Required
+						{ // Required
 						// Recursive values...
 						},
 						// More values...
 					},
 					M: map[string]*dynamodb.AttributeValue{
-						"Key": &dynamodb.AttributeValue{ // Required
+						"Key": { // Required
 						// Recursive values...
 						},
 						// More values...
@@ -725,7 +681,7 @@ func ExampleDynamoDB_PutItem() {
 						aws.String("NumberAttributeValue"), // Required
 						// More values...
 					},
-					NULL: aws.Boolean(true),
+					NULL: aws.Bool(true),
 					S:    aws.String("StringAttributeValue"),
 					SS: []*string{
 						aws.String("StringAttributeValue"), // Required
@@ -740,21 +696,21 @@ func ExampleDynamoDB_PutItem() {
 			// More values...
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -764,7 +720,7 @@ func ExampleDynamoDB_PutItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -780,26 +736,18 @@ func ExampleDynamoDB_PutItem() {
 	resp, err := svc.PutItem(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_Query() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.QueryInput{
 		TableName: aws.String("TableName"), // Required
@@ -808,23 +756,23 @@ func ExampleDynamoDB_Query() {
 			// More values...
 		},
 		ConditionalOperator: aws.String("ConditionalOperator"),
-		ConsistentRead:      aws.Boolean(true),
+		ConsistentRead:      aws.Bool(true),
 		ExclusiveStartKey: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -834,7 +782,7 @@ func ExampleDynamoDB_Query() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -848,21 +796,21 @@ func ExampleDynamoDB_Query() {
 			// More values...
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -872,7 +820,7 @@ func ExampleDynamoDB_Query() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -885,24 +833,24 @@ func ExampleDynamoDB_Query() {
 		IndexName:              aws.String("IndexName"),
 		KeyConditionExpression: aws.String("KeyExpression"),
 		KeyConditions: map[string]*dynamodb.Condition{
-			"Key": &dynamodb.Condition{ // Required
+			"Key": { // Required
 				ComparisonOperator: aws.String("ComparisonOperator"), // Required
 				AttributeValueList: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 						B:    []byte("PAYLOAD"),
-						BOOL: aws.Boolean(true),
+						BOOL: aws.Bool(true),
 						BS: [][]byte{
 							[]byte("PAYLOAD"), // Required
 							// More values...
 						},
 						L: []*dynamodb.AttributeValue{
-							&dynamodb.AttributeValue{ // Required
+							{ // Required
 							// Recursive values...
 							},
 							// More values...
 						},
 						M: map[string]*dynamodb.AttributeValue{
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 							// Recursive values...
 							},
 							// More values...
@@ -912,7 +860,7 @@ func ExampleDynamoDB_Query() {
 							aws.String("NumberAttributeValue"), // Required
 							// More values...
 						},
-						NULL: aws.Boolean(true),
+						NULL: aws.Bool(true),
 						S:    aws.String("StringAttributeValue"),
 						SS: []*string{
 							aws.String("StringAttributeValue"), // Required
@@ -924,27 +872,27 @@ func ExampleDynamoDB_Query() {
 			},
 			// More values...
 		},
-		Limit:                aws.Long(1),
+		Limit:                aws.Int64(1),
 		ProjectionExpression: aws.String("ProjectionExpression"),
 		QueryFilter: map[string]*dynamodb.Condition{
-			"Key": &dynamodb.Condition{ // Required
+			"Key": { // Required
 				ComparisonOperator: aws.String("ComparisonOperator"), // Required
 				AttributeValueList: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 						B:    []byte("PAYLOAD"),
-						BOOL: aws.Boolean(true),
+						BOOL: aws.Bool(true),
 						BS: [][]byte{
 							[]byte("PAYLOAD"), // Required
 							// More values...
 						},
 						L: []*dynamodb.AttributeValue{
-							&dynamodb.AttributeValue{ // Required
+							{ // Required
 							// Recursive values...
 							},
 							// More values...
 						},
 						M: map[string]*dynamodb.AttributeValue{
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 							// Recursive values...
 							},
 							// More values...
@@ -954,7 +902,7 @@ func ExampleDynamoDB_Query() {
 							aws.String("NumberAttributeValue"), // Required
 							// More values...
 						},
-						NULL: aws.Boolean(true),
+						NULL: aws.Bool(true),
 						S:    aws.String("StringAttributeValue"),
 						SS: []*string{
 							aws.String("StringAttributeValue"), // Required
@@ -967,32 +915,24 @@ func ExampleDynamoDB_Query() {
 			// More values...
 		},
 		ReturnConsumedCapacity: aws.String("ReturnConsumedCapacity"),
-		ScanIndexForward:       aws.Boolean(true),
+		ScanIndexForward:       aws.Bool(true),
 		Select:                 aws.String("Select"),
 	}
 	resp, err := svc.Query(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_Scan() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.ScanInput{
 		TableName: aws.String("TableName"), // Required
@@ -1001,22 +941,23 @@ func ExampleDynamoDB_Scan() {
 			// More values...
 		},
 		ConditionalOperator: aws.String("ConditionalOperator"),
+		ConsistentRead:      aws.Bool(true),
 		ExclusiveStartKey: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -1026,7 +967,7 @@ func ExampleDynamoDB_Scan() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -1040,21 +981,21 @@ func ExampleDynamoDB_Scan() {
 			// More values...
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -1064,7 +1005,7 @@ func ExampleDynamoDB_Scan() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -1075,28 +1016,28 @@ func ExampleDynamoDB_Scan() {
 		},
 		FilterExpression:       aws.String("ConditionExpression"),
 		IndexName:              aws.String("IndexName"),
-		Limit:                  aws.Long(1),
+		Limit:                  aws.Int64(1),
 		ProjectionExpression:   aws.String("ProjectionExpression"),
 		ReturnConsumedCapacity: aws.String("ReturnConsumedCapacity"),
 		ScanFilter: map[string]*dynamodb.Condition{
-			"Key": &dynamodb.Condition{ // Required
+			"Key": { // Required
 				ComparisonOperator: aws.String("ComparisonOperator"), // Required
 				AttributeValueList: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 						B:    []byte("PAYLOAD"),
-						BOOL: aws.Boolean(true),
+						BOOL: aws.Bool(true),
 						BS: [][]byte{
 							[]byte("PAYLOAD"), // Required
 							// More values...
 						},
 						L: []*dynamodb.AttributeValue{
-							&dynamodb.AttributeValue{ // Required
+							{ // Required
 							// Recursive values...
 							},
 							// More values...
 						},
 						M: map[string]*dynamodb.AttributeValue{
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 							// Recursive values...
 							},
 							// More values...
@@ -1106,7 +1047,7 @@ func ExampleDynamoDB_Scan() {
 							aws.String("NumberAttributeValue"), // Required
 							// More values...
 						},
-						NULL: aws.Boolean(true),
+						NULL: aws.Bool(true),
 						S:    aws.String("StringAttributeValue"),
 						SS: []*string{
 							aws.String("StringAttributeValue"), // Required
@@ -1118,51 +1059,43 @@ func ExampleDynamoDB_Scan() {
 			},
 			// More values...
 		},
-		Segment:       aws.Long(1),
+		Segment:       aws.Int64(1),
 		Select:        aws.String("Select"),
-		TotalSegments: aws.Long(1),
+		TotalSegments: aws.Int64(1),
 	}
 	resp, err := svc.Scan(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_UpdateItem() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.UpdateItemInput{
 		Key: map[string]*dynamodb.AttributeValue{ // Required
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -1172,7 +1105,7 @@ func ExampleDynamoDB_UpdateItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -1183,23 +1116,23 @@ func ExampleDynamoDB_UpdateItem() {
 		},
 		TableName: aws.String("TableName"), // Required
 		AttributeUpdates: map[string]*dynamodb.AttributeValueUpdate{
-			"Key": &dynamodb.AttributeValueUpdate{ // Required
+			"Key": { // Required
 				Action: aws.String("AttributeAction"),
 				Value: &dynamodb.AttributeValue{
 					B:    []byte("PAYLOAD"),
-					BOOL: aws.Boolean(true),
+					BOOL: aws.Bool(true),
 					BS: [][]byte{
 						[]byte("PAYLOAD"), // Required
 						// More values...
 					},
 					L: []*dynamodb.AttributeValue{
-						&dynamodb.AttributeValue{ // Required
+						{ // Required
 						// Recursive values...
 						},
 						// More values...
 					},
 					M: map[string]*dynamodb.AttributeValue{
-						"Key": &dynamodb.AttributeValue{ // Required
+						"Key": { // Required
 						// Recursive values...
 						},
 						// More values...
@@ -1209,7 +1142,7 @@ func ExampleDynamoDB_UpdateItem() {
 						aws.String("NumberAttributeValue"), // Required
 						// More values...
 					},
-					NULL: aws.Boolean(true),
+					NULL: aws.Bool(true),
 					S:    aws.String("StringAttributeValue"),
 					SS: []*string{
 						aws.String("StringAttributeValue"), // Required
@@ -1222,23 +1155,23 @@ func ExampleDynamoDB_UpdateItem() {
 		ConditionExpression: aws.String("ConditionExpression"),
 		ConditionalOperator: aws.String("ConditionalOperator"),
 		Expected: map[string]*dynamodb.ExpectedAttributeValue{
-			"Key": &dynamodb.ExpectedAttributeValue{ // Required
+			"Key": { // Required
 				AttributeValueList: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 						B:    []byte("PAYLOAD"),
-						BOOL: aws.Boolean(true),
+						BOOL: aws.Bool(true),
 						BS: [][]byte{
 							[]byte("PAYLOAD"), // Required
 							// More values...
 						},
 						L: []*dynamodb.AttributeValue{
-							&dynamodb.AttributeValue{ // Required
+							{ // Required
 							// Recursive values...
 							},
 							// More values...
 						},
 						M: map[string]*dynamodb.AttributeValue{
-							"Key": &dynamodb.AttributeValue{ // Required
+							"Key": { // Required
 							// Recursive values...
 							},
 							// More values...
@@ -1248,7 +1181,7 @@ func ExampleDynamoDB_UpdateItem() {
 							aws.String("NumberAttributeValue"), // Required
 							// More values...
 						},
-						NULL: aws.Boolean(true),
+						NULL: aws.Bool(true),
 						S:    aws.String("StringAttributeValue"),
 						SS: []*string{
 							aws.String("StringAttributeValue"), // Required
@@ -1258,22 +1191,22 @@ func ExampleDynamoDB_UpdateItem() {
 					// More values...
 				},
 				ComparisonOperator: aws.String("ComparisonOperator"),
-				Exists:             aws.Boolean(true),
+				Exists:             aws.Bool(true),
 				Value: &dynamodb.AttributeValue{
 					B:    []byte("PAYLOAD"),
-					BOOL: aws.Boolean(true),
+					BOOL: aws.Bool(true),
 					BS: [][]byte{
 						[]byte("PAYLOAD"), // Required
 						// More values...
 					},
 					L: []*dynamodb.AttributeValue{
-						&dynamodb.AttributeValue{ // Required
+						{ // Required
 						// Recursive values...
 						},
 						// More values...
 					},
 					M: map[string]*dynamodb.AttributeValue{
-						"Key": &dynamodb.AttributeValue{ // Required
+						"Key": { // Required
 						// Recursive values...
 						},
 						// More values...
@@ -1283,7 +1216,7 @@ func ExampleDynamoDB_UpdateItem() {
 						aws.String("NumberAttributeValue"), // Required
 						// More values...
 					},
-					NULL: aws.Boolean(true),
+					NULL: aws.Bool(true),
 					S:    aws.String("StringAttributeValue"),
 					SS: []*string{
 						aws.String("StringAttributeValue"), // Required
@@ -1298,21 +1231,21 @@ func ExampleDynamoDB_UpdateItem() {
 			// More values...
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			"Key": &dynamodb.AttributeValue{ // Required
+			"Key": { // Required
 				B:    []byte("PAYLOAD"),
-				BOOL: aws.Boolean(true),
+				BOOL: aws.Bool(true),
 				BS: [][]byte{
 					[]byte("PAYLOAD"), // Required
 					// More values...
 				},
 				L: []*dynamodb.AttributeValue{
-					&dynamodb.AttributeValue{ // Required
+					{ // Required
 					// Recursive values...
 					},
 					// More values...
 				},
 				M: map[string]*dynamodb.AttributeValue{
-					"Key": &dynamodb.AttributeValue{ // Required
+					"Key": { // Required
 					// Recursive values...
 					},
 					// More values...
@@ -1322,7 +1255,7 @@ func ExampleDynamoDB_UpdateItem() {
 					aws.String("NumberAttributeValue"), // Required
 					// More values...
 				},
-				NULL: aws.Boolean(true),
+				NULL: aws.Bool(true),
 				S:    aws.String("StringAttributeValue"),
 				SS: []*string{
 					aws.String("StringAttributeValue"), // Required
@@ -1339,42 +1272,34 @@ func ExampleDynamoDB_UpdateItem() {
 	resp, err := svc.UpdateItem(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }
 
 func ExampleDynamoDB_UpdateTable() {
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	params := &dynamodb.UpdateTableInput{
 		TableName: aws.String("TableName"), // Required
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
-			&dynamodb.AttributeDefinition{ // Required
+			{ // Required
 				AttributeName: aws.String("KeySchemaAttributeName"), // Required
 				AttributeType: aws.String("ScalarAttributeType"),    // Required
 			},
 			// More values...
 		},
 		GlobalSecondaryIndexUpdates: []*dynamodb.GlobalSecondaryIndexUpdate{
-			&dynamodb.GlobalSecondaryIndexUpdate{ // Required
+			{ // Required
 				Create: &dynamodb.CreateGlobalSecondaryIndexAction{
 					IndexName: aws.String("IndexName"), // Required
 					KeySchema: []*dynamodb.KeySchemaElement{ // Required
-						&dynamodb.KeySchemaElement{ // Required
+						{ // Required
 							AttributeName: aws.String("KeySchemaAttributeName"), // Required
 							KeyType:       aws.String("KeyType"),                // Required
 						},
@@ -1388,8 +1313,8 @@ func ExampleDynamoDB_UpdateTable() {
 						ProjectionType: aws.String("ProjectionType"),
 					},
 					ProvisionedThroughput: &dynamodb.ProvisionedThroughput{ // Required
-						ReadCapacityUnits:  aws.Long(1), // Required
-						WriteCapacityUnits: aws.Long(1), // Required
+						ReadCapacityUnits:  aws.Int64(1), // Required
+						WriteCapacityUnits: aws.Int64(1), // Required
 					},
 				},
 				Delete: &dynamodb.DeleteGlobalSecondaryIndexAction{
@@ -1398,35 +1323,31 @@ func ExampleDynamoDB_UpdateTable() {
 				Update: &dynamodb.UpdateGlobalSecondaryIndexAction{
 					IndexName: aws.String("IndexName"), // Required
 					ProvisionedThroughput: &dynamodb.ProvisionedThroughput{ // Required
-						ReadCapacityUnits:  aws.Long(1), // Required
-						WriteCapacityUnits: aws.Long(1), // Required
+						ReadCapacityUnits:  aws.Int64(1), // Required
+						WriteCapacityUnits: aws.Int64(1), // Required
 					},
 				},
 			},
 			// More values...
 		},
 		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Long(1), // Required
-			WriteCapacityUnits: aws.Long(1), // Required
+			ReadCapacityUnits:  aws.Int64(1), // Required
+			WriteCapacityUnits: aws.Int64(1), // Required
+		},
+		StreamSpecification: &dynamodb.StreamSpecification{
+			StreamEnabled:  aws.Bool(true),
+			StreamViewType: aws.String("StreamViewType"),
 		},
 	}
 	resp, err := svc.UpdateTable(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/internal/apierr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,6 +15,7 @@ type stubProvider struct {
 
 func (s *stubProvider) Retrieve() (Value, error) {
 	s.expired = false
+	s.creds.ProviderName = "stubProvider"
 	return s.creds, s.err
 }
 func (s *stubProvider) IsExpired() bool {
@@ -40,7 +40,7 @@ func TestCredentialsGet(t *testing.T) {
 }
 
 func TestCredentialsGetWithError(t *testing.T) {
-	c := NewCredentials(&stubProvider{err: apierr.New("provider error", "", nil), expired: true})
+	c := NewCredentials(&stubProvider{err: awserr.New("provider error", "", nil), expired: true})
 
 	_, err := c.Get()
 	assert.Equal(t, "provider error", err.(awserr.Error).Code(), "Expected provider error")
@@ -60,4 +60,14 @@ func TestCredentialsExpire(t *testing.T) {
 
 	stub.expired = true
 	assert.True(t, c.IsExpired(), "Expected to be expired")
+}
+
+func TestCredentialsGetWithProviderName(t *testing.T) {
+	stub := &stubProvider{}
+
+	c := NewCredentials(stub)
+
+	creds, err := c.Get()
+	assert.Nil(t, err, "Expected no error")
+	assert.Equal(t, creds.ProviderName, "stubProvider", "Expected provider name to match")
 }

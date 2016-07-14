@@ -1,15 +1,20 @@
 package credentials
 
 import (
-	"github.com/aws/aws-sdk-go/internal/apierr"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 )
+
+// StaticProviderName provides a name of Static provider
+const StaticProviderName = "StaticProvider"
 
 var (
 	// ErrStaticCredentialsEmpty is emitted when static credentials are empty.
-	ErrStaticCredentialsEmpty = apierr.New("EmptyStaticCreds", "static credentials are empty", nil)
+	//
+	// @readonly
+	ErrStaticCredentialsEmpty = awserr.New("EmptyStaticCreds", "static credentials are empty", nil)
 )
 
-// A StaticProvider is a set of credentials which are set pragmatically,
+// A StaticProvider is a set of credentials which are set programmatically,
 // and will never expire.
 type StaticProvider struct {
 	Value
@@ -28,9 +33,10 @@ func NewStaticCredentials(id, secret, token string) *Credentials {
 // Retrieve returns the credentials or error if the credentials are invalid.
 func (s *StaticProvider) Retrieve() (Value, error) {
 	if s.AccessKeyID == "" || s.SecretAccessKey == "" {
-		return Value{}, ErrStaticCredentialsEmpty
+		return Value{ProviderName: StaticProviderName}, ErrStaticCredentialsEmpty
 	}
 
+	s.Value.ProviderName = StaticProviderName
 	return s.Value, nil
 }
 

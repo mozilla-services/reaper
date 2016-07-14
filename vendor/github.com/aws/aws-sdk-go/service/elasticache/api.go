@@ -4,32 +4,50 @@
 package elasticache
 
 import (
-	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/query"
 )
 
-var oprw sync.Mutex
+const opAddTagsToResource = "AddTagsToResource"
 
-// AddTagsToResourceRequest generates a request for the AddTagsToResource operation.
-func (c *ElastiCache) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *aws.Request, output *TagListMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opAddTagsToResource == nil {
-		opAddTagsToResource = &aws.Operation{
-			Name:       "AddTagsToResource",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// AddTagsToResourceRequest generates a "aws/request.Request" representing the
+// client's request for the AddTagsToResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the AddTagsToResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the AddTagsToResourceRequest method.
+//    req, resp := client.AddTagsToResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *request.Request, output *TagListMessage) {
+	op := &request.Operation{
+		Name:       opAddTagsToResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &AddTagsToResourceInput{}
 	}
 
-	req = c.newRequest(opAddTagsToResource, input, output)
+	req = c.newRequest(op, input, output)
 	output = &TagListMessage{}
 	req.Data = output
 	return
@@ -45,33 +63,50 @@ func (c *ElastiCache) AddTagsToResourceRequest(input *AddTagsToResourceInput) (r
 // costs aggregated by your tags. You can apply tags that represent business
 // categories (such as cost centers, application names, or owners) to organize
 // your costs across multiple services. For more information, see Using Cost
-// Allocation Tags in Amazon ElastiCache (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Tagging.html).
+// Allocation Tags in Amazon ElastiCache (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Tagging.html)
+// in the ElastiCache User Guide.
 func (c *ElastiCache) AddTagsToResource(input *AddTagsToResourceInput) (*TagListMessage, error) {
 	req, out := c.AddTagsToResourceRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opAddTagsToResource *aws.Operation
+const opAuthorizeCacheSecurityGroupIngress = "AuthorizeCacheSecurityGroupIngress"
 
-// AuthorizeCacheSecurityGroupIngressRequest generates a request for the AuthorizeCacheSecurityGroupIngress operation.
-func (c *ElastiCache) AuthorizeCacheSecurityGroupIngressRequest(input *AuthorizeCacheSecurityGroupIngressInput) (req *aws.Request, output *AuthorizeCacheSecurityGroupIngressOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opAuthorizeCacheSecurityGroupIngress == nil {
-		opAuthorizeCacheSecurityGroupIngress = &aws.Operation{
-			Name:       "AuthorizeCacheSecurityGroupIngress",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// AuthorizeCacheSecurityGroupIngressRequest generates a "aws/request.Request" representing the
+// client's request for the AuthorizeCacheSecurityGroupIngress operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the AuthorizeCacheSecurityGroupIngress method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the AuthorizeCacheSecurityGroupIngressRequest method.
+//    req, resp := client.AuthorizeCacheSecurityGroupIngressRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) AuthorizeCacheSecurityGroupIngressRequest(input *AuthorizeCacheSecurityGroupIngressInput) (req *request.Request, output *AuthorizeCacheSecurityGroupIngressOutput) {
+	op := &request.Operation{
+		Name:       opAuthorizeCacheSecurityGroupIngress,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &AuthorizeCacheSecurityGroupIngressInput{}
 	}
 
-	req = c.newRequest(opAuthorizeCacheSecurityGroupIngress, input, output)
+	req = c.newRequest(op, input, output)
 	output = &AuthorizeCacheSecurityGroupIngressOutput{}
 	req.Data = output
 	return
@@ -81,7 +116,7 @@ func (c *ElastiCache) AuthorizeCacheSecurityGroupIngressRequest(input *Authorize
 // cache security group. Applications using ElastiCache must be running on Amazon
 // EC2, and Amazon EC2 security groups are used as the authorization mechanism.
 //
-// You cannot authorize ingress from an Amazon EC2 security group in one region
+//  You cannot authorize ingress from an Amazon EC2 security group in one region
 // to an ElastiCache cluster in another region.
 func (c *ElastiCache) AuthorizeCacheSecurityGroupIngress(input *AuthorizeCacheSecurityGroupIngressInput) (*AuthorizeCacheSecurityGroupIngressOutput, error) {
 	req, out := c.AuthorizeCacheSecurityGroupIngressRequest(input)
@@ -89,58 +124,102 @@ func (c *ElastiCache) AuthorizeCacheSecurityGroupIngress(input *AuthorizeCacheSe
 	return out, err
 }
 
-var opAuthorizeCacheSecurityGroupIngress *aws.Operation
+const opCopySnapshot = "CopySnapshot"
 
-// CopySnapshotRequest generates a request for the CopySnapshot operation.
-func (c *ElastiCache) CopySnapshotRequest(input *CopySnapshotInput) (req *aws.Request, output *CopySnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCopySnapshot == nil {
-		opCopySnapshot = &aws.Operation{
-			Name:       "CopySnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CopySnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the CopySnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CopySnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CopySnapshotRequest method.
+//    req, resp := client.CopySnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CopySnapshotRequest(input *CopySnapshotInput) (req *request.Request, output *CopySnapshotOutput) {
+	op := &request.Operation{
+		Name:       opCopySnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CopySnapshotInput{}
 	}
 
-	req = c.newRequest(opCopySnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CopySnapshotOutput{}
 	req.Data = output
 	return
 }
 
 // The CopySnapshot action makes a copy of an existing snapshot.
+//
+//  Users or groups that have permissions to use the CopySnapshot API can create
+// their own Amazon S3 buckets and copy snapshots to it. To control access to
+// your snapshots, use an IAM policy to control who has the ability to use the
+// CopySnapshot API. For more information about using IAM to control the use
+// of ElastiCache APIs, see Exporting Snapshots (http://docs.aws.amazon.com/ElastiCache/latest/Snapshots.Exporting.html)
+// and Authentication & Access Control (http://docs.aws.amazon.com/ElastiCache/latest/IAM.html).
+//
+//   Erorr Message:     Error Message: The authenticated user does not have
+// sufficient permissions to perform the desired activity.
+//
+//  Solution: Contact your system administrator to get the needed permissions.
 func (c *ElastiCache) CopySnapshot(input *CopySnapshotInput) (*CopySnapshotOutput, error) {
 	req, out := c.CopySnapshotRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCopySnapshot *aws.Operation
+const opCreateCacheCluster = "CreateCacheCluster"
 
-// CreateCacheClusterRequest generates a request for the CreateCacheCluster operation.
-func (c *ElastiCache) CreateCacheClusterRequest(input *CreateCacheClusterInput) (req *aws.Request, output *CreateCacheClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateCacheCluster == nil {
-		opCreateCacheCluster = &aws.Operation{
-			Name:       "CreateCacheCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateCacheClusterRequest generates a "aws/request.Request" representing the
+// client's request for the CreateCacheCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateCacheCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateCacheClusterRequest method.
+//    req, resp := client.CreateCacheClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CreateCacheClusterRequest(input *CreateCacheClusterInput) (req *request.Request, output *CreateCacheClusterOutput) {
+	op := &request.Operation{
+		Name:       opCreateCacheCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateCacheClusterInput{}
 	}
 
-	req = c.newRequest(opCreateCacheCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateCacheClusterOutput{}
 	req.Data = output
 	return
@@ -155,26 +234,42 @@ func (c *ElastiCache) CreateCacheCluster(input *CreateCacheClusterInput) (*Creat
 	return out, err
 }
 
-var opCreateCacheCluster *aws.Operation
+const opCreateCacheParameterGroup = "CreateCacheParameterGroup"
 
-// CreateCacheParameterGroupRequest generates a request for the CreateCacheParameterGroup operation.
-func (c *ElastiCache) CreateCacheParameterGroupRequest(input *CreateCacheParameterGroupInput) (req *aws.Request, output *CreateCacheParameterGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateCacheParameterGroup == nil {
-		opCreateCacheParameterGroup = &aws.Operation{
-			Name:       "CreateCacheParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateCacheParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateCacheParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateCacheParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateCacheParameterGroupRequest method.
+//    req, resp := client.CreateCacheParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CreateCacheParameterGroupRequest(input *CreateCacheParameterGroupInput) (req *request.Request, output *CreateCacheParameterGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateCacheParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateCacheParameterGroupInput{}
 	}
 
-	req = c.newRequest(opCreateCacheParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateCacheParameterGroupOutput{}
 	req.Data = output
 	return
@@ -189,26 +284,42 @@ func (c *ElastiCache) CreateCacheParameterGroup(input *CreateCacheParameterGroup
 	return out, err
 }
 
-var opCreateCacheParameterGroup *aws.Operation
+const opCreateCacheSecurityGroup = "CreateCacheSecurityGroup"
 
-// CreateCacheSecurityGroupRequest generates a request for the CreateCacheSecurityGroup operation.
-func (c *ElastiCache) CreateCacheSecurityGroupRequest(input *CreateCacheSecurityGroupInput) (req *aws.Request, output *CreateCacheSecurityGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateCacheSecurityGroup == nil {
-		opCreateCacheSecurityGroup = &aws.Operation{
-			Name:       "CreateCacheSecurityGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateCacheSecurityGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateCacheSecurityGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateCacheSecurityGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateCacheSecurityGroupRequest method.
+//    req, resp := client.CreateCacheSecurityGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CreateCacheSecurityGroupRequest(input *CreateCacheSecurityGroupInput) (req *request.Request, output *CreateCacheSecurityGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateCacheSecurityGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateCacheSecurityGroupInput{}
 	}
 
-	req = c.newRequest(opCreateCacheSecurityGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateCacheSecurityGroupOutput{}
 	req.Data = output
 	return
@@ -227,26 +338,42 @@ func (c *ElastiCache) CreateCacheSecurityGroup(input *CreateCacheSecurityGroupIn
 	return out, err
 }
 
-var opCreateCacheSecurityGroup *aws.Operation
+const opCreateCacheSubnetGroup = "CreateCacheSubnetGroup"
 
-// CreateCacheSubnetGroupRequest generates a request for the CreateCacheSubnetGroup operation.
-func (c *ElastiCache) CreateCacheSubnetGroupRequest(input *CreateCacheSubnetGroupInput) (req *aws.Request, output *CreateCacheSubnetGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateCacheSubnetGroup == nil {
-		opCreateCacheSubnetGroup = &aws.Operation{
-			Name:       "CreateCacheSubnetGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateCacheSubnetGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateCacheSubnetGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateCacheSubnetGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateCacheSubnetGroupRequest method.
+//    req, resp := client.CreateCacheSubnetGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CreateCacheSubnetGroupRequest(input *CreateCacheSubnetGroupInput) (req *request.Request, output *CreateCacheSubnetGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateCacheSubnetGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateCacheSubnetGroupInput{}
 	}
 
-	req = c.newRequest(opCreateCacheSubnetGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateCacheSubnetGroupOutput{}
 	req.Data = output
 	return
@@ -262,26 +389,42 @@ func (c *ElastiCache) CreateCacheSubnetGroup(input *CreateCacheSubnetGroupInput)
 	return out, err
 }
 
-var opCreateCacheSubnetGroup *aws.Operation
+const opCreateReplicationGroup = "CreateReplicationGroup"
 
-// CreateReplicationGroupRequest generates a request for the CreateReplicationGroup operation.
-func (c *ElastiCache) CreateReplicationGroupRequest(input *CreateReplicationGroupInput) (req *aws.Request, output *CreateReplicationGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateReplicationGroup == nil {
-		opCreateReplicationGroup = &aws.Operation{
-			Name:       "CreateReplicationGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateReplicationGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateReplicationGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateReplicationGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateReplicationGroupRequest method.
+//    req, resp := client.CreateReplicationGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CreateReplicationGroupRequest(input *CreateReplicationGroupInput) (req *request.Request, output *CreateReplicationGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateReplicationGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateReplicationGroupInput{}
 	}
 
-	req = c.newRequest(opCreateReplicationGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateReplicationGroupOutput{}
 	req.Data = output
 	return
@@ -297,33 +440,49 @@ func (c *ElastiCache) CreateReplicationGroupRequest(input *CreateReplicationGrou
 // successfully created, you can add one or more read replica replicas to it,
 // up to a total of five read replicas.
 //
-// Note: This action is valid only for Redis.
+//  This action is valid only for Redis.
 func (c *ElastiCache) CreateReplicationGroup(input *CreateReplicationGroupInput) (*CreateReplicationGroupOutput, error) {
 	req, out := c.CreateReplicationGroupRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCreateReplicationGroup *aws.Operation
+const opCreateSnapshot = "CreateSnapshot"
 
-// CreateSnapshotRequest generates a request for the CreateSnapshot operation.
-func (c *ElastiCache) CreateSnapshotRequest(input *CreateSnapshotInput) (req *aws.Request, output *CreateSnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateSnapshot == nil {
-		opCreateSnapshot = &aws.Operation{
-			Name:       "CreateSnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the CreateSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateSnapshotRequest method.
+//    req, resp := client.CreateSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) CreateSnapshotRequest(input *CreateSnapshotInput) (req *request.Request, output *CreateSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opCreateSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateSnapshotInput{}
 	}
 
-	req = c.newRequest(opCreateSnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateSnapshotOutput{}
 	req.Data = output
 	return
@@ -337,26 +496,42 @@ func (c *ElastiCache) CreateSnapshot(input *CreateSnapshotInput) (*CreateSnapsho
 	return out, err
 }
 
-var opCreateSnapshot *aws.Operation
+const opDeleteCacheCluster = "DeleteCacheCluster"
 
-// DeleteCacheClusterRequest generates a request for the DeleteCacheCluster operation.
-func (c *ElastiCache) DeleteCacheClusterRequest(input *DeleteCacheClusterInput) (req *aws.Request, output *DeleteCacheClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteCacheCluster == nil {
-		opDeleteCacheCluster = &aws.Operation{
-			Name:       "DeleteCacheCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteCacheClusterRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteCacheCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteCacheCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteCacheClusterRequest method.
+//    req, resp := client.DeleteCacheClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DeleteCacheClusterRequest(input *DeleteCacheClusterInput) (req *request.Request, output *DeleteCacheClusterOutput) {
+	op := &request.Operation{
+		Name:       opDeleteCacheCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteCacheClusterInput{}
 	}
 
-	req = c.newRequest(opDeleteCacheCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteCacheClusterOutput{}
 	req.Data = output
 	return
@@ -376,26 +551,44 @@ func (c *ElastiCache) DeleteCacheCluster(input *DeleteCacheClusterInput) (*Delet
 	return out, err
 }
 
-var opDeleteCacheCluster *aws.Operation
+const opDeleteCacheParameterGroup = "DeleteCacheParameterGroup"
 
-// DeleteCacheParameterGroupRequest generates a request for the DeleteCacheParameterGroup operation.
-func (c *ElastiCache) DeleteCacheParameterGroupRequest(input *DeleteCacheParameterGroupInput) (req *aws.Request, output *DeleteCacheParameterGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteCacheParameterGroup == nil {
-		opDeleteCacheParameterGroup = &aws.Operation{
-			Name:       "DeleteCacheParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteCacheParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteCacheParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteCacheParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteCacheParameterGroupRequest method.
+//    req, resp := client.DeleteCacheParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DeleteCacheParameterGroupRequest(input *DeleteCacheParameterGroupInput) (req *request.Request, output *DeleteCacheParameterGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteCacheParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteCacheParameterGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteCacheParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteCacheParameterGroupOutput{}
 	req.Data = output
 	return
@@ -410,26 +603,44 @@ func (c *ElastiCache) DeleteCacheParameterGroup(input *DeleteCacheParameterGroup
 	return out, err
 }
 
-var opDeleteCacheParameterGroup *aws.Operation
+const opDeleteCacheSecurityGroup = "DeleteCacheSecurityGroup"
 
-// DeleteCacheSecurityGroupRequest generates a request for the DeleteCacheSecurityGroup operation.
-func (c *ElastiCache) DeleteCacheSecurityGroupRequest(input *DeleteCacheSecurityGroupInput) (req *aws.Request, output *DeleteCacheSecurityGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteCacheSecurityGroup == nil {
-		opDeleteCacheSecurityGroup = &aws.Operation{
-			Name:       "DeleteCacheSecurityGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteCacheSecurityGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteCacheSecurityGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteCacheSecurityGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteCacheSecurityGroupRequest method.
+//    req, resp := client.DeleteCacheSecurityGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DeleteCacheSecurityGroupRequest(input *DeleteCacheSecurityGroupInput) (req *request.Request, output *DeleteCacheSecurityGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteCacheSecurityGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteCacheSecurityGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteCacheSecurityGroup, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteCacheSecurityGroupOutput{}
 	req.Data = output
 	return
@@ -437,7 +648,7 @@ func (c *ElastiCache) DeleteCacheSecurityGroupRequest(input *DeleteCacheSecurity
 
 // The DeleteCacheSecurityGroup action deletes a cache security group.
 //
-// You cannot delete a cache security group if it is associated with any cache
+//  You cannot delete a cache security group if it is associated with any cache
 // clusters.
 func (c *ElastiCache) DeleteCacheSecurityGroup(input *DeleteCacheSecurityGroupInput) (*DeleteCacheSecurityGroupOutput, error) {
 	req, out := c.DeleteCacheSecurityGroupRequest(input)
@@ -445,26 +656,44 @@ func (c *ElastiCache) DeleteCacheSecurityGroup(input *DeleteCacheSecurityGroupIn
 	return out, err
 }
 
-var opDeleteCacheSecurityGroup *aws.Operation
+const opDeleteCacheSubnetGroup = "DeleteCacheSubnetGroup"
 
-// DeleteCacheSubnetGroupRequest generates a request for the DeleteCacheSubnetGroup operation.
-func (c *ElastiCache) DeleteCacheSubnetGroupRequest(input *DeleteCacheSubnetGroupInput) (req *aws.Request, output *DeleteCacheSubnetGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteCacheSubnetGroup == nil {
-		opDeleteCacheSubnetGroup = &aws.Operation{
-			Name:       "DeleteCacheSubnetGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteCacheSubnetGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteCacheSubnetGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteCacheSubnetGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteCacheSubnetGroupRequest method.
+//    req, resp := client.DeleteCacheSubnetGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DeleteCacheSubnetGroupRequest(input *DeleteCacheSubnetGroupInput) (req *request.Request, output *DeleteCacheSubnetGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteCacheSubnetGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteCacheSubnetGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteCacheSubnetGroup, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteCacheSubnetGroupOutput{}
 	req.Data = output
 	return
@@ -472,7 +701,7 @@ func (c *ElastiCache) DeleteCacheSubnetGroupRequest(input *DeleteCacheSubnetGrou
 
 // The DeleteCacheSubnetGroup action deletes a cache subnet group.
 //
-// You cannot delete a cache subnet group if it is associated with any cache
+//  You cannot delete a cache subnet group if it is associated with any cache
 // clusters.
 func (c *ElastiCache) DeleteCacheSubnetGroup(input *DeleteCacheSubnetGroupInput) (*DeleteCacheSubnetGroupOutput, error) {
 	req, out := c.DeleteCacheSubnetGroupRequest(input)
@@ -480,26 +709,42 @@ func (c *ElastiCache) DeleteCacheSubnetGroup(input *DeleteCacheSubnetGroupInput)
 	return out, err
 }
 
-var opDeleteCacheSubnetGroup *aws.Operation
+const opDeleteReplicationGroup = "DeleteReplicationGroup"
 
-// DeleteReplicationGroupRequest generates a request for the DeleteReplicationGroup operation.
-func (c *ElastiCache) DeleteReplicationGroupRequest(input *DeleteReplicationGroupInput) (req *aws.Request, output *DeleteReplicationGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteReplicationGroup == nil {
-		opDeleteReplicationGroup = &aws.Operation{
-			Name:       "DeleteReplicationGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteReplicationGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteReplicationGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteReplicationGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteReplicationGroupRequest method.
+//    req, resp := client.DeleteReplicationGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DeleteReplicationGroupRequest(input *DeleteReplicationGroupInput) (req *request.Request, output *DeleteReplicationGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteReplicationGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteReplicationGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteReplicationGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteReplicationGroupOutput{}
 	req.Data = output
 	return
@@ -519,26 +764,42 @@ func (c *ElastiCache) DeleteReplicationGroup(input *DeleteReplicationGroupInput)
 	return out, err
 }
 
-var opDeleteReplicationGroup *aws.Operation
+const opDeleteSnapshot = "DeleteSnapshot"
 
-// DeleteSnapshotRequest generates a request for the DeleteSnapshot operation.
-func (c *ElastiCache) DeleteSnapshotRequest(input *DeleteSnapshotInput) (req *aws.Request, output *DeleteSnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteSnapshot == nil {
-		opDeleteSnapshot = &aws.Operation{
-			Name:       "DeleteSnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteSnapshotRequest method.
+//    req, resp := client.DeleteSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DeleteSnapshotRequest(input *DeleteSnapshotInput) (req *request.Request, output *DeleteSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opDeleteSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteSnapshotInput{}
 	}
 
-	req = c.newRequest(opDeleteSnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteSnapshotOutput{}
 	req.Data = output
 	return
@@ -553,32 +814,48 @@ func (c *ElastiCache) DeleteSnapshot(input *DeleteSnapshotInput) (*DeleteSnapsho
 	return out, err
 }
 
-var opDeleteSnapshot *aws.Operation
+const opDescribeCacheClusters = "DescribeCacheClusters"
 
-// DescribeCacheClustersRequest generates a request for the DescribeCacheClusters operation.
-func (c *ElastiCache) DescribeCacheClustersRequest(input *DescribeCacheClustersInput) (req *aws.Request, output *DescribeCacheClustersOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeCacheClusters == nil {
-		opDescribeCacheClusters = &aws.Operation{
-			Name:       "DescribeCacheClusters",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeCacheClustersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCacheClusters operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeCacheClusters method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeCacheClustersRequest method.
+//    req, resp := client.DescribeCacheClustersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeCacheClustersRequest(input *DescribeCacheClustersInput) (req *request.Request, output *DescribeCacheClustersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCacheClusters,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeCacheClustersInput{}
 	}
 
-	req = c.newRequest(opDescribeCacheClusters, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeCacheClustersOutput{}
 	req.Data = output
 	return
@@ -612,39 +889,73 @@ func (c *ElastiCache) DescribeCacheClusters(input *DescribeCacheClustersInput) (
 	return out, err
 }
 
+// DescribeCacheClustersPages iterates over the pages of a DescribeCacheClusters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCacheClusters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCacheClusters operation.
+//    pageNum := 0
+//    err := client.DescribeCacheClustersPages(params,
+//        func(page *DescribeCacheClustersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeCacheClustersPages(input *DescribeCacheClustersInput, fn func(p *DescribeCacheClustersOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeCacheClustersRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeCacheClustersOutput), lastPage)
 	})
 }
 
-var opDescribeCacheClusters *aws.Operation
+const opDescribeCacheEngineVersions = "DescribeCacheEngineVersions"
 
-// DescribeCacheEngineVersionsRequest generates a request for the DescribeCacheEngineVersions operation.
-func (c *ElastiCache) DescribeCacheEngineVersionsRequest(input *DescribeCacheEngineVersionsInput) (req *aws.Request, output *DescribeCacheEngineVersionsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeCacheEngineVersions == nil {
-		opDescribeCacheEngineVersions = &aws.Operation{
-			Name:       "DescribeCacheEngineVersions",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeCacheEngineVersionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCacheEngineVersions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeCacheEngineVersions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeCacheEngineVersionsRequest method.
+//    req, resp := client.DescribeCacheEngineVersionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeCacheEngineVersionsRequest(input *DescribeCacheEngineVersionsInput) (req *request.Request, output *DescribeCacheEngineVersionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCacheEngineVersions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeCacheEngineVersionsInput{}
 	}
 
-	req = c.newRequest(opDescribeCacheEngineVersions, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeCacheEngineVersionsOutput{}
 	req.Data = output
 	return
@@ -658,39 +969,73 @@ func (c *ElastiCache) DescribeCacheEngineVersions(input *DescribeCacheEngineVers
 	return out, err
 }
 
+// DescribeCacheEngineVersionsPages iterates over the pages of a DescribeCacheEngineVersions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCacheEngineVersions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCacheEngineVersions operation.
+//    pageNum := 0
+//    err := client.DescribeCacheEngineVersionsPages(params,
+//        func(page *DescribeCacheEngineVersionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeCacheEngineVersionsPages(input *DescribeCacheEngineVersionsInput, fn func(p *DescribeCacheEngineVersionsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeCacheEngineVersionsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeCacheEngineVersionsOutput), lastPage)
 	})
 }
 
-var opDescribeCacheEngineVersions *aws.Operation
+const opDescribeCacheParameterGroups = "DescribeCacheParameterGroups"
 
-// DescribeCacheParameterGroupsRequest generates a request for the DescribeCacheParameterGroups operation.
-func (c *ElastiCache) DescribeCacheParameterGroupsRequest(input *DescribeCacheParameterGroupsInput) (req *aws.Request, output *DescribeCacheParameterGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeCacheParameterGroups == nil {
-		opDescribeCacheParameterGroups = &aws.Operation{
-			Name:       "DescribeCacheParameterGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeCacheParameterGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCacheParameterGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeCacheParameterGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeCacheParameterGroupsRequest method.
+//    req, resp := client.DescribeCacheParameterGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeCacheParameterGroupsRequest(input *DescribeCacheParameterGroupsInput) (req *request.Request, output *DescribeCacheParameterGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCacheParameterGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeCacheParameterGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeCacheParameterGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeCacheParameterGroupsOutput{}
 	req.Data = output
 	return
@@ -705,39 +1050,73 @@ func (c *ElastiCache) DescribeCacheParameterGroups(input *DescribeCacheParameter
 	return out, err
 }
 
+// DescribeCacheParameterGroupsPages iterates over the pages of a DescribeCacheParameterGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCacheParameterGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCacheParameterGroups operation.
+//    pageNum := 0
+//    err := client.DescribeCacheParameterGroupsPages(params,
+//        func(page *DescribeCacheParameterGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeCacheParameterGroupsPages(input *DescribeCacheParameterGroupsInput, fn func(p *DescribeCacheParameterGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeCacheParameterGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeCacheParameterGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeCacheParameterGroups *aws.Operation
+const opDescribeCacheParameters = "DescribeCacheParameters"
 
-// DescribeCacheParametersRequest generates a request for the DescribeCacheParameters operation.
-func (c *ElastiCache) DescribeCacheParametersRequest(input *DescribeCacheParametersInput) (req *aws.Request, output *DescribeCacheParametersOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeCacheParameters == nil {
-		opDescribeCacheParameters = &aws.Operation{
-			Name:       "DescribeCacheParameters",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeCacheParametersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCacheParameters operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeCacheParameters method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeCacheParametersRequest method.
+//    req, resp := client.DescribeCacheParametersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeCacheParametersRequest(input *DescribeCacheParametersInput) (req *request.Request, output *DescribeCacheParametersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCacheParameters,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeCacheParametersInput{}
 	}
 
-	req = c.newRequest(opDescribeCacheParameters, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeCacheParametersOutput{}
 	req.Data = output
 	return
@@ -751,39 +1130,73 @@ func (c *ElastiCache) DescribeCacheParameters(input *DescribeCacheParametersInpu
 	return out, err
 }
 
+// DescribeCacheParametersPages iterates over the pages of a DescribeCacheParameters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCacheParameters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCacheParameters operation.
+//    pageNum := 0
+//    err := client.DescribeCacheParametersPages(params,
+//        func(page *DescribeCacheParametersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeCacheParametersPages(input *DescribeCacheParametersInput, fn func(p *DescribeCacheParametersOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeCacheParametersRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeCacheParametersOutput), lastPage)
 	})
 }
 
-var opDescribeCacheParameters *aws.Operation
+const opDescribeCacheSecurityGroups = "DescribeCacheSecurityGroups"
 
-// DescribeCacheSecurityGroupsRequest generates a request for the DescribeCacheSecurityGroups operation.
-func (c *ElastiCache) DescribeCacheSecurityGroupsRequest(input *DescribeCacheSecurityGroupsInput) (req *aws.Request, output *DescribeCacheSecurityGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeCacheSecurityGroups == nil {
-		opDescribeCacheSecurityGroups = &aws.Operation{
-			Name:       "DescribeCacheSecurityGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeCacheSecurityGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCacheSecurityGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeCacheSecurityGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeCacheSecurityGroupsRequest method.
+//    req, resp := client.DescribeCacheSecurityGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeCacheSecurityGroupsRequest(input *DescribeCacheSecurityGroupsInput) (req *request.Request, output *DescribeCacheSecurityGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCacheSecurityGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeCacheSecurityGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeCacheSecurityGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeCacheSecurityGroupsOutput{}
 	req.Data = output
 	return
@@ -798,39 +1211,73 @@ func (c *ElastiCache) DescribeCacheSecurityGroups(input *DescribeCacheSecurityGr
 	return out, err
 }
 
+// DescribeCacheSecurityGroupsPages iterates over the pages of a DescribeCacheSecurityGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCacheSecurityGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCacheSecurityGroups operation.
+//    pageNum := 0
+//    err := client.DescribeCacheSecurityGroupsPages(params,
+//        func(page *DescribeCacheSecurityGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeCacheSecurityGroupsPages(input *DescribeCacheSecurityGroupsInput, fn func(p *DescribeCacheSecurityGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeCacheSecurityGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeCacheSecurityGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeCacheSecurityGroups *aws.Operation
+const opDescribeCacheSubnetGroups = "DescribeCacheSubnetGroups"
 
-// DescribeCacheSubnetGroupsRequest generates a request for the DescribeCacheSubnetGroups operation.
-func (c *ElastiCache) DescribeCacheSubnetGroupsRequest(input *DescribeCacheSubnetGroupsInput) (req *aws.Request, output *DescribeCacheSubnetGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeCacheSubnetGroups == nil {
-		opDescribeCacheSubnetGroups = &aws.Operation{
-			Name:       "DescribeCacheSubnetGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeCacheSubnetGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCacheSubnetGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeCacheSubnetGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeCacheSubnetGroupsRequest method.
+//    req, resp := client.DescribeCacheSubnetGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeCacheSubnetGroupsRequest(input *DescribeCacheSubnetGroupsInput) (req *request.Request, output *DescribeCacheSubnetGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCacheSubnetGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeCacheSubnetGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeCacheSubnetGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeCacheSubnetGroupsOutput{}
 	req.Data = output
 	return
@@ -845,39 +1292,73 @@ func (c *ElastiCache) DescribeCacheSubnetGroups(input *DescribeCacheSubnetGroups
 	return out, err
 }
 
+// DescribeCacheSubnetGroupsPages iterates over the pages of a DescribeCacheSubnetGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCacheSubnetGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCacheSubnetGroups operation.
+//    pageNum := 0
+//    err := client.DescribeCacheSubnetGroupsPages(params,
+//        func(page *DescribeCacheSubnetGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeCacheSubnetGroupsPages(input *DescribeCacheSubnetGroupsInput, fn func(p *DescribeCacheSubnetGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeCacheSubnetGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeCacheSubnetGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeCacheSubnetGroups *aws.Operation
+const opDescribeEngineDefaultParameters = "DescribeEngineDefaultParameters"
 
-// DescribeEngineDefaultParametersRequest generates a request for the DescribeEngineDefaultParameters operation.
-func (c *ElastiCache) DescribeEngineDefaultParametersRequest(input *DescribeEngineDefaultParametersInput) (req *aws.Request, output *DescribeEngineDefaultParametersOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeEngineDefaultParameters == nil {
-		opDescribeEngineDefaultParameters = &aws.Operation{
-			Name:       "DescribeEngineDefaultParameters",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"EngineDefaults.Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeEngineDefaultParametersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEngineDefaultParameters operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEngineDefaultParameters method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEngineDefaultParametersRequest method.
+//    req, resp := client.DescribeEngineDefaultParametersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeEngineDefaultParametersRequest(input *DescribeEngineDefaultParametersInput) (req *request.Request, output *DescribeEngineDefaultParametersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEngineDefaultParameters,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"EngineDefaults.Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeEngineDefaultParametersInput{}
 	}
 
-	req = c.newRequest(opDescribeEngineDefaultParameters, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeEngineDefaultParametersOutput{}
 	req.Data = output
 	return
@@ -891,39 +1372,73 @@ func (c *ElastiCache) DescribeEngineDefaultParameters(input *DescribeEngineDefau
 	return out, err
 }
 
+// DescribeEngineDefaultParametersPages iterates over the pages of a DescribeEngineDefaultParameters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEngineDefaultParameters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEngineDefaultParameters operation.
+//    pageNum := 0
+//    err := client.DescribeEngineDefaultParametersPages(params,
+//        func(page *DescribeEngineDefaultParametersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeEngineDefaultParametersPages(input *DescribeEngineDefaultParametersInput, fn func(p *DescribeEngineDefaultParametersOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeEngineDefaultParametersRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeEngineDefaultParametersOutput), lastPage)
 	})
 }
 
-var opDescribeEngineDefaultParameters *aws.Operation
+const opDescribeEvents = "DescribeEvents"
 
-// DescribeEventsRequest generates a request for the DescribeEvents operation.
-func (c *ElastiCache) DescribeEventsRequest(input *DescribeEventsInput) (req *aws.Request, output *DescribeEventsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeEvents == nil {
-		opDescribeEvents = &aws.Operation{
-			Name:       "DescribeEvents",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeEventsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEvents operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEvents method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventsRequest method.
+//    req, resp := client.DescribeEventsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeEventsRequest(input *DescribeEventsInput) (req *request.Request, output *DescribeEventsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEvents,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeEventsInput{}
 	}
 
-	req = c.newRequest(opDescribeEvents, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeEventsOutput{}
 	req.Data = output
 	return
@@ -942,39 +1457,73 @@ func (c *ElastiCache) DescribeEvents(input *DescribeEventsInput) (*DescribeEvent
 	return out, err
 }
 
+// DescribeEventsPages iterates over the pages of a DescribeEvents operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEvents method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEvents operation.
+//    pageNum := 0
+//    err := client.DescribeEventsPages(params,
+//        func(page *DescribeEventsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeEventsPages(input *DescribeEventsInput, fn func(p *DescribeEventsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeEventsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeEventsOutput), lastPage)
 	})
 }
 
-var opDescribeEvents *aws.Operation
+const opDescribeReplicationGroups = "DescribeReplicationGroups"
 
-// DescribeReplicationGroupsRequest generates a request for the DescribeReplicationGroups operation.
-func (c *ElastiCache) DescribeReplicationGroupsRequest(input *DescribeReplicationGroupsInput) (req *aws.Request, output *DescribeReplicationGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeReplicationGroups == nil {
-		opDescribeReplicationGroups = &aws.Operation{
-			Name:       "DescribeReplicationGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeReplicationGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeReplicationGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeReplicationGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeReplicationGroupsRequest method.
+//    req, resp := client.DescribeReplicationGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeReplicationGroupsRequest(input *DescribeReplicationGroupsInput) (req *request.Request, output *DescribeReplicationGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeReplicationGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeReplicationGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeReplicationGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeReplicationGroupsOutput{}
 	req.Data = output
 	return
@@ -989,39 +1538,73 @@ func (c *ElastiCache) DescribeReplicationGroups(input *DescribeReplicationGroups
 	return out, err
 }
 
+// DescribeReplicationGroupsPages iterates over the pages of a DescribeReplicationGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReplicationGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReplicationGroups operation.
+//    pageNum := 0
+//    err := client.DescribeReplicationGroupsPages(params,
+//        func(page *DescribeReplicationGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeReplicationGroupsPages(input *DescribeReplicationGroupsInput, fn func(p *DescribeReplicationGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReplicationGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReplicationGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeReplicationGroups *aws.Operation
+const opDescribeReservedCacheNodes = "DescribeReservedCacheNodes"
 
-// DescribeReservedCacheNodesRequest generates a request for the DescribeReservedCacheNodes operation.
-func (c *ElastiCache) DescribeReservedCacheNodesRequest(input *DescribeReservedCacheNodesInput) (req *aws.Request, output *DescribeReservedCacheNodesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeReservedCacheNodes == nil {
-		opDescribeReservedCacheNodes = &aws.Operation{
-			Name:       "DescribeReservedCacheNodes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeReservedCacheNodesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeReservedCacheNodes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeReservedCacheNodes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeReservedCacheNodesRequest method.
+//    req, resp := client.DescribeReservedCacheNodesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeReservedCacheNodesRequest(input *DescribeReservedCacheNodesInput) (req *request.Request, output *DescribeReservedCacheNodesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeReservedCacheNodes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeReservedCacheNodesInput{}
 	}
 
-	req = c.newRequest(opDescribeReservedCacheNodes, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeReservedCacheNodesOutput{}
 	req.Data = output
 	return
@@ -1035,39 +1618,73 @@ func (c *ElastiCache) DescribeReservedCacheNodes(input *DescribeReservedCacheNod
 	return out, err
 }
 
+// DescribeReservedCacheNodesPages iterates over the pages of a DescribeReservedCacheNodes operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReservedCacheNodes method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReservedCacheNodes operation.
+//    pageNum := 0
+//    err := client.DescribeReservedCacheNodesPages(params,
+//        func(page *DescribeReservedCacheNodesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeReservedCacheNodesPages(input *DescribeReservedCacheNodesInput, fn func(p *DescribeReservedCacheNodesOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReservedCacheNodesRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReservedCacheNodesOutput), lastPage)
 	})
 }
 
-var opDescribeReservedCacheNodes *aws.Operation
+const opDescribeReservedCacheNodesOfferings = "DescribeReservedCacheNodesOfferings"
 
-// DescribeReservedCacheNodesOfferingsRequest generates a request for the DescribeReservedCacheNodesOfferings operation.
-func (c *ElastiCache) DescribeReservedCacheNodesOfferingsRequest(input *DescribeReservedCacheNodesOfferingsInput) (req *aws.Request, output *DescribeReservedCacheNodesOfferingsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeReservedCacheNodesOfferings == nil {
-		opDescribeReservedCacheNodesOfferings = &aws.Operation{
-			Name:       "DescribeReservedCacheNodesOfferings",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeReservedCacheNodesOfferingsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeReservedCacheNodesOfferings operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeReservedCacheNodesOfferings method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeReservedCacheNodesOfferingsRequest method.
+//    req, resp := client.DescribeReservedCacheNodesOfferingsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeReservedCacheNodesOfferingsRequest(input *DescribeReservedCacheNodesOfferingsInput) (req *request.Request, output *DescribeReservedCacheNodesOfferingsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeReservedCacheNodesOfferings,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeReservedCacheNodesOfferingsInput{}
 	}
 
-	req = c.newRequest(opDescribeReservedCacheNodesOfferings, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeReservedCacheNodesOfferingsOutput{}
 	req.Data = output
 	return
@@ -1081,39 +1698,73 @@ func (c *ElastiCache) DescribeReservedCacheNodesOfferings(input *DescribeReserve
 	return out, err
 }
 
+// DescribeReservedCacheNodesOfferingsPages iterates over the pages of a DescribeReservedCacheNodesOfferings operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReservedCacheNodesOfferings method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReservedCacheNodesOfferings operation.
+//    pageNum := 0
+//    err := client.DescribeReservedCacheNodesOfferingsPages(params,
+//        func(page *DescribeReservedCacheNodesOfferingsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeReservedCacheNodesOfferingsPages(input *DescribeReservedCacheNodesOfferingsInput, fn func(p *DescribeReservedCacheNodesOfferingsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReservedCacheNodesOfferingsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReservedCacheNodesOfferingsOutput), lastPage)
 	})
 }
 
-var opDescribeReservedCacheNodesOfferings *aws.Operation
+const opDescribeSnapshots = "DescribeSnapshots"
 
-// DescribeSnapshotsRequest generates a request for the DescribeSnapshots operation.
-func (c *ElastiCache) DescribeSnapshotsRequest(input *DescribeSnapshotsInput) (req *aws.Request, output *DescribeSnapshotsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeSnapshots == nil {
-		opDescribeSnapshots = &aws.Operation{
-			Name:       "DescribeSnapshots",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeSnapshotsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeSnapshots operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeSnapshots method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeSnapshotsRequest method.
+//    req, resp := client.DescribeSnapshotsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) DescribeSnapshotsRequest(input *DescribeSnapshotsInput) (req *request.Request, output *DescribeSnapshotsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeSnapshots,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeSnapshotsInput{}
 	}
 
-	req = c.newRequest(opDescribeSnapshots, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeSnapshotsOutput{}
 	req.Data = output
 	return
@@ -1129,33 +1780,121 @@ func (c *ElastiCache) DescribeSnapshots(input *DescribeSnapshotsInput) (*Describ
 	return out, err
 }
 
+// DescribeSnapshotsPages iterates over the pages of a DescribeSnapshots operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeSnapshots method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeSnapshots operation.
+//    pageNum := 0
+//    err := client.DescribeSnapshotsPages(params,
+//        func(page *DescribeSnapshotsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *ElastiCache) DescribeSnapshotsPages(input *DescribeSnapshotsInput, fn func(p *DescribeSnapshotsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeSnapshotsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeSnapshotsOutput), lastPage)
 	})
 }
 
-var opDescribeSnapshots *aws.Operation
+const opListAllowedNodeTypeModifications = "ListAllowedNodeTypeModifications"
 
-// ListTagsForResourceRequest generates a request for the ListTagsForResource operation.
-func (c *ElastiCache) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *aws.Request, output *TagListMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// ListAllowedNodeTypeModificationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListAllowedNodeTypeModifications operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListAllowedNodeTypeModifications method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListAllowedNodeTypeModificationsRequest method.
+//    req, resp := client.ListAllowedNodeTypeModificationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ListAllowedNodeTypeModificationsRequest(input *ListAllowedNodeTypeModificationsInput) (req *request.Request, output *ListAllowedNodeTypeModificationsOutput) {
+	op := &request.Operation{
+		Name:       opListAllowedNodeTypeModifications,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opListTagsForResource == nil {
-		opListTagsForResource = &aws.Operation{
-			Name:       "ListTagsForResource",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &ListAllowedNodeTypeModificationsInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ListAllowedNodeTypeModificationsOutput{}
+	req.Data = output
+	return
+}
+
+// The ListAllowedNodeTypeModifications action lists all available node types
+// that you can scale your Redis cluster's or replication group's current node
+// type up to.
+//
+// When you use the ModifyCacheCluster or ModifyReplicationGroup APIs to scale
+// up your cluster or replication group, the value of the CacheNodeType parameter
+// must be one of the node types returned by this action.
+func (c *ElastiCache) ListAllowedNodeTypeModifications(input *ListAllowedNodeTypeModificationsInput) (*ListAllowedNodeTypeModificationsOutput, error) {
+	req, out := c.ListAllowedNodeTypeModificationsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opListTagsForResource = "ListTagsForResource"
+
+// ListTagsForResourceRequest generates a "aws/request.Request" representing the
+// client's request for the ListTagsForResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListTagsForResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListTagsForResourceRequest method.
+//    req, resp := client.ListTagsForResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *TagListMessage) {
+	op := &request.Operation{
+		Name:       opListTagsForResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ListTagsForResourceInput{}
 	}
 
-	req = c.newRequest(opListTagsForResource, input, output)
+	req = c.newRequest(op, input, output)
 	output = &TagListMessage{}
 	req.Data = output
 	return
@@ -1175,26 +1914,42 @@ func (c *ElastiCache) ListTagsForResource(input *ListTagsForResourceInput) (*Tag
 	return out, err
 }
 
-var opListTagsForResource *aws.Operation
+const opModifyCacheCluster = "ModifyCacheCluster"
 
-// ModifyCacheClusterRequest generates a request for the ModifyCacheCluster operation.
-func (c *ElastiCache) ModifyCacheClusterRequest(input *ModifyCacheClusterInput) (req *aws.Request, output *ModifyCacheClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyCacheCluster == nil {
-		opModifyCacheCluster = &aws.Operation{
-			Name:       "ModifyCacheCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyCacheClusterRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyCacheCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyCacheCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyCacheClusterRequest method.
+//    req, resp := client.ModifyCacheClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ModifyCacheClusterRequest(input *ModifyCacheClusterInput) (req *request.Request, output *ModifyCacheClusterOutput) {
+	op := &request.Operation{
+		Name:       opModifyCacheCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyCacheClusterInput{}
 	}
 
-	req = c.newRequest(opModifyCacheCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyCacheClusterOutput{}
 	req.Data = output
 	return
@@ -1209,26 +1964,42 @@ func (c *ElastiCache) ModifyCacheCluster(input *ModifyCacheClusterInput) (*Modif
 	return out, err
 }
 
-var opModifyCacheCluster *aws.Operation
+const opModifyCacheParameterGroup = "ModifyCacheParameterGroup"
 
-// ModifyCacheParameterGroupRequest generates a request for the ModifyCacheParameterGroup operation.
-func (c *ElastiCache) ModifyCacheParameterGroupRequest(input *ModifyCacheParameterGroupInput) (req *aws.Request, output *CacheParameterGroupNameMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyCacheParameterGroup == nil {
-		opModifyCacheParameterGroup = &aws.Operation{
-			Name:       "ModifyCacheParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyCacheParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyCacheParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyCacheParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyCacheParameterGroupRequest method.
+//    req, resp := client.ModifyCacheParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ModifyCacheParameterGroupRequest(input *ModifyCacheParameterGroupInput) (req *request.Request, output *CacheParameterGroupNameMessage) {
+	op := &request.Operation{
+		Name:       opModifyCacheParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyCacheParameterGroupInput{}
 	}
 
-	req = c.newRequest(opModifyCacheParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CacheParameterGroupNameMessage{}
 	req.Data = output
 	return
@@ -1243,26 +2014,42 @@ func (c *ElastiCache) ModifyCacheParameterGroup(input *ModifyCacheParameterGroup
 	return out, err
 }
 
-var opModifyCacheParameterGroup *aws.Operation
+const opModifyCacheSubnetGroup = "ModifyCacheSubnetGroup"
 
-// ModifyCacheSubnetGroupRequest generates a request for the ModifyCacheSubnetGroup operation.
-func (c *ElastiCache) ModifyCacheSubnetGroupRequest(input *ModifyCacheSubnetGroupInput) (req *aws.Request, output *ModifyCacheSubnetGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyCacheSubnetGroup == nil {
-		opModifyCacheSubnetGroup = &aws.Operation{
-			Name:       "ModifyCacheSubnetGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyCacheSubnetGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyCacheSubnetGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyCacheSubnetGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyCacheSubnetGroupRequest method.
+//    req, resp := client.ModifyCacheSubnetGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ModifyCacheSubnetGroupRequest(input *ModifyCacheSubnetGroupInput) (req *request.Request, output *ModifyCacheSubnetGroupOutput) {
+	op := &request.Operation{
+		Name:       opModifyCacheSubnetGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyCacheSubnetGroupInput{}
 	}
 
-	req = c.newRequest(opModifyCacheSubnetGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyCacheSubnetGroupOutput{}
 	req.Data = output
 	return
@@ -1275,26 +2062,42 @@ func (c *ElastiCache) ModifyCacheSubnetGroup(input *ModifyCacheSubnetGroupInput)
 	return out, err
 }
 
-var opModifyCacheSubnetGroup *aws.Operation
+const opModifyReplicationGroup = "ModifyReplicationGroup"
 
-// ModifyReplicationGroupRequest generates a request for the ModifyReplicationGroup operation.
-func (c *ElastiCache) ModifyReplicationGroupRequest(input *ModifyReplicationGroupInput) (req *aws.Request, output *ModifyReplicationGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyReplicationGroup == nil {
-		opModifyReplicationGroup = &aws.Operation{
-			Name:       "ModifyReplicationGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyReplicationGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyReplicationGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyReplicationGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyReplicationGroupRequest method.
+//    req, resp := client.ModifyReplicationGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ModifyReplicationGroupRequest(input *ModifyReplicationGroupInput) (req *request.Request, output *ModifyReplicationGroupOutput) {
+	op := &request.Operation{
+		Name:       opModifyReplicationGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyReplicationGroupInput{}
 	}
 
-	req = c.newRequest(opModifyReplicationGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyReplicationGroupOutput{}
 	req.Data = output
 	return
@@ -1308,26 +2111,42 @@ func (c *ElastiCache) ModifyReplicationGroup(input *ModifyReplicationGroupInput)
 	return out, err
 }
 
-var opModifyReplicationGroup *aws.Operation
+const opPurchaseReservedCacheNodesOffering = "PurchaseReservedCacheNodesOffering"
 
-// PurchaseReservedCacheNodesOfferingRequest generates a request for the PurchaseReservedCacheNodesOffering operation.
-func (c *ElastiCache) PurchaseReservedCacheNodesOfferingRequest(input *PurchaseReservedCacheNodesOfferingInput) (req *aws.Request, output *PurchaseReservedCacheNodesOfferingOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opPurchaseReservedCacheNodesOffering == nil {
-		opPurchaseReservedCacheNodesOffering = &aws.Operation{
-			Name:       "PurchaseReservedCacheNodesOffering",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// PurchaseReservedCacheNodesOfferingRequest generates a "aws/request.Request" representing the
+// client's request for the PurchaseReservedCacheNodesOffering operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PurchaseReservedCacheNodesOffering method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PurchaseReservedCacheNodesOfferingRequest method.
+//    req, resp := client.PurchaseReservedCacheNodesOfferingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) PurchaseReservedCacheNodesOfferingRequest(input *PurchaseReservedCacheNodesOfferingInput) (req *request.Request, output *PurchaseReservedCacheNodesOfferingOutput) {
+	op := &request.Operation{
+		Name:       opPurchaseReservedCacheNodesOffering,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &PurchaseReservedCacheNodesOfferingInput{}
 	}
 
-	req = c.newRequest(opPurchaseReservedCacheNodesOffering, input, output)
+	req = c.newRequest(op, input, output)
 	output = &PurchaseReservedCacheNodesOfferingOutput{}
 	req.Data = output
 	return
@@ -1341,26 +2160,42 @@ func (c *ElastiCache) PurchaseReservedCacheNodesOffering(input *PurchaseReserved
 	return out, err
 }
 
-var opPurchaseReservedCacheNodesOffering *aws.Operation
+const opRebootCacheCluster = "RebootCacheCluster"
 
-// RebootCacheClusterRequest generates a request for the RebootCacheCluster operation.
-func (c *ElastiCache) RebootCacheClusterRequest(input *RebootCacheClusterInput) (req *aws.Request, output *RebootCacheClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRebootCacheCluster == nil {
-		opRebootCacheCluster = &aws.Operation{
-			Name:       "RebootCacheCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RebootCacheClusterRequest generates a "aws/request.Request" representing the
+// client's request for the RebootCacheCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RebootCacheCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RebootCacheClusterRequest method.
+//    req, resp := client.RebootCacheClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) RebootCacheClusterRequest(input *RebootCacheClusterInput) (req *request.Request, output *RebootCacheClusterOutput) {
+	op := &request.Operation{
+		Name:       opRebootCacheCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RebootCacheClusterInput{}
 	}
 
-	req = c.newRequest(opRebootCacheCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RebootCacheClusterOutput{}
 	req.Data = output
 	return
@@ -1382,26 +2217,42 @@ func (c *ElastiCache) RebootCacheCluster(input *RebootCacheClusterInput) (*Reboo
 	return out, err
 }
 
-var opRebootCacheCluster *aws.Operation
+const opRemoveTagsFromResource = "RemoveTagsFromResource"
 
-// RemoveTagsFromResourceRequest generates a request for the RemoveTagsFromResource operation.
-func (c *ElastiCache) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput) (req *aws.Request, output *TagListMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRemoveTagsFromResource == nil {
-		opRemoveTagsFromResource = &aws.Operation{
-			Name:       "RemoveTagsFromResource",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RemoveTagsFromResourceRequest generates a "aws/request.Request" representing the
+// client's request for the RemoveTagsFromResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RemoveTagsFromResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RemoveTagsFromResourceRequest method.
+//    req, resp := client.RemoveTagsFromResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput) (req *request.Request, output *TagListMessage) {
+	op := &request.Operation{
+		Name:       opRemoveTagsFromResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RemoveTagsFromResourceInput{}
 	}
 
-	req = c.newRequest(opRemoveTagsFromResource, input, output)
+	req = c.newRequest(op, input, output)
 	output = &TagListMessage{}
 	req.Data = output
 	return
@@ -1415,26 +2266,42 @@ func (c *ElastiCache) RemoveTagsFromResource(input *RemoveTagsFromResourceInput)
 	return out, err
 }
 
-var opRemoveTagsFromResource *aws.Operation
+const opResetCacheParameterGroup = "ResetCacheParameterGroup"
 
-// ResetCacheParameterGroupRequest generates a request for the ResetCacheParameterGroup operation.
-func (c *ElastiCache) ResetCacheParameterGroupRequest(input *ResetCacheParameterGroupInput) (req *aws.Request, output *CacheParameterGroupNameMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opResetCacheParameterGroup == nil {
-		opResetCacheParameterGroup = &aws.Operation{
-			Name:       "ResetCacheParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ResetCacheParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ResetCacheParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ResetCacheParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ResetCacheParameterGroupRequest method.
+//    req, resp := client.ResetCacheParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) ResetCacheParameterGroupRequest(input *ResetCacheParameterGroupInput) (req *request.Request, output *CacheParameterGroupNameMessage) {
+	op := &request.Operation{
+		Name:       opResetCacheParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ResetCacheParameterGroupInput{}
 	}
 
-	req = c.newRequest(opResetCacheParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CacheParameterGroupNameMessage{}
 	req.Data = output
 	return
@@ -1450,26 +2317,42 @@ func (c *ElastiCache) ResetCacheParameterGroup(input *ResetCacheParameterGroupIn
 	return out, err
 }
 
-var opResetCacheParameterGroup *aws.Operation
+const opRevokeCacheSecurityGroupIngress = "RevokeCacheSecurityGroupIngress"
 
-// RevokeCacheSecurityGroupIngressRequest generates a request for the RevokeCacheSecurityGroupIngress operation.
-func (c *ElastiCache) RevokeCacheSecurityGroupIngressRequest(input *RevokeCacheSecurityGroupIngressInput) (req *aws.Request, output *RevokeCacheSecurityGroupIngressOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRevokeCacheSecurityGroupIngress == nil {
-		opRevokeCacheSecurityGroupIngress = &aws.Operation{
-			Name:       "RevokeCacheSecurityGroupIngress",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RevokeCacheSecurityGroupIngressRequest generates a "aws/request.Request" representing the
+// client's request for the RevokeCacheSecurityGroupIngress operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RevokeCacheSecurityGroupIngress method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RevokeCacheSecurityGroupIngressRequest method.
+//    req, resp := client.RevokeCacheSecurityGroupIngressRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *ElastiCache) RevokeCacheSecurityGroupIngressRequest(input *RevokeCacheSecurityGroupIngressInput) (req *request.Request, output *RevokeCacheSecurityGroupIngressOutput) {
+	op := &request.Operation{
+		Name:       opRevokeCacheSecurityGroupIngress,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RevokeCacheSecurityGroupIngressInput{}
 	}
 
-	req = c.newRequest(opRevokeCacheSecurityGroupIngress, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RevokeCacheSecurityGroupIngressOutput{}
 	req.Data = output
 	return
@@ -1484,26 +2367,53 @@ func (c *ElastiCache) RevokeCacheSecurityGroupIngress(input *RevokeCacheSecurity
 	return out, err
 }
 
-var opRevokeCacheSecurityGroupIngress *aws.Operation
-
 // Represents the input of an AddTagsToResource action.
 type AddTagsToResourceInput struct {
-	// The name of the resource to which the tags are to be added, for example arn:aws:elasticache:us-west-2:0123456789:cluster:myCluster.
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the resource to which the tags are to be
+	// added, for example arn:aws:elasticache:us-west-2:0123456789:cluster:myCluster
+	// or arn:aws:elasticache:us-west-2:0123456789:snapshot:mySnapshot.
+	//
+	// For more information on ARNs, go to Amazon Resource Names (ARNs) and AWS
+	// Service Namespaces (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	ResourceName *string `type:"string" required:"true"`
 
 	// A list of cost allocation tags to be added to this resource. A tag is a key-value
 	// pair. A tag key must be accompanied by a tag value.
 	Tags []*Tag `locationNameList:"Tag" type:"list" required:"true"`
-
-	metadataAddTagsToResourceInput `json:"-" xml:"-"`
 }
 
-type metadataAddTagsToResourceInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AddTagsToResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddTagsToResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AddTagsToResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AddTagsToResourceInput"}
+	if s.ResourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Represents the input of an AuthorizeCacheSecurityGroupIngress action.
 type AuthorizeCacheSecurityGroupIngressInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cache security group which will allow network ingress.
 	CacheSecurityGroupName *string `type:"string" required:"true"`
 
@@ -1514,42 +2424,83 @@ type AuthorizeCacheSecurityGroupIngressInput struct {
 	// The AWS account number of the Amazon EC2 security group owner. Note that
 	// this is not the same thing as an AWS access key ID - you must provide a valid
 	// AWS account number for this parameter.
-	EC2SecurityGroupOwnerID *string `locationName:"EC2SecurityGroupOwnerId" type:"string" required:"true"`
-
-	metadataAuthorizeCacheSecurityGroupIngressInput `json:"-" xml:"-"`
+	EC2SecurityGroupOwnerId *string `type:"string" required:"true"`
 }
 
-type metadataAuthorizeCacheSecurityGroupIngressInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AuthorizeCacheSecurityGroupIngressInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AuthorizeCacheSecurityGroupIngressInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AuthorizeCacheSecurityGroupIngressInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AuthorizeCacheSecurityGroupIngressInput"}
+	if s.CacheSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSecurityGroupName"))
+	}
+	if s.EC2SecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EC2SecurityGroupName"))
+	}
+	if s.EC2SecurityGroupOwnerId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EC2SecurityGroupOwnerId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type AuthorizeCacheSecurityGroupIngressOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of one of the following actions:
 	//
-	//   AuthorizeCacheSecurityGroupIngress   CreateCacheSecurityGroup   RevokeCacheSecurityGroupIngress
+	//    AuthorizeCacheSecurityGroupIngress
+	//
+	//    CreateCacheSecurityGroup
+	//
+	//    RevokeCacheSecurityGroupIngress
 	CacheSecurityGroup *CacheSecurityGroup `type:"structure"`
-
-	metadataAuthorizeCacheSecurityGroupIngressOutput `json:"-" xml:"-"`
 }
 
-type metadataAuthorizeCacheSecurityGroupIngressOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AuthorizeCacheSecurityGroupIngressOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AuthorizeCacheSecurityGroupIngressOutput) GoString() string {
+	return s.String()
 }
 
 // Describes an Availability Zone in which the cache cluster is launched.
 type AvailabilityZone struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the Availability Zone.
 	Name *string `type:"string"`
-
-	metadataAvailabilityZone `json:"-" xml:"-"`
 }
 
-type metadataAvailabilityZone struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AvailabilityZone) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AvailabilityZone) GoString() string {
+	return s.String()
 }
 
 // Contains all of the attributes of a specific cache cluster.
 type CacheCluster struct {
+	_ struct{} `type:"structure"`
+
 	// This parameter is currently disabled.
 	AutoMinorVersionUpgrade *bool `type:"boolean"`
 
@@ -1558,7 +2509,7 @@ type CacheCluster struct {
 
 	// The user-supplied identifier of the cache cluster. This identifier is a unique
 	// key that identifies a cache cluster.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string"`
+	CacheClusterId *string `type:"string"`
 
 	// The current state of this cache cluster, one of the following values: available,
 	// creating, deleted, deleting, incompatible-network, modifying, rebooting cache
@@ -1569,19 +2520,34 @@ type CacheCluster struct {
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -1610,7 +2576,7 @@ type CacheCluster struct {
 	// cluster.
 	Engine *string `type:"string"`
 
-	// The version of the cache engine version that is used in this cache cluster.
+	// The version of the cache engine that is used in this cache cluster.
 	EngineVersion *string `type:"string"`
 
 	// Describes a notification topic and its status. Notification topics are used
@@ -1637,12 +2603,26 @@ type CacheCluster struct {
 	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
 	// values for ddd are:
 	//
-	//  sun mon tue wed thu fri sat  Example: sun:05:00-sun:09:00
+	//    sun
+	//
+	//    mon
+	//
+	//    tue
+	//
+	//    wed
+	//
+	//    thu
+	//
+	//    fri
+	//
+	//    sat
+	//
+	//   Example: sun:05:00-sun:09:00
 	PreferredMaintenanceWindow *string `type:"string"`
 
 	// The replication group to which this cache cluster belongs. If this field
 	// is empty, the cache cluster is not associated with any replication group.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string"`
+	ReplicationGroupId *string `type:"string"`
 
 	// A list of VPC Security Groups associated with the cache cluster.
 	SecurityGroups []*SecurityGroupMembership `type:"list"`
@@ -1652,8 +2632,8 @@ type CacheCluster struct {
 	// to 5, then a snapshot that was taken today will be retained for 5 days before
 	// being deleted.
 	//
-	// ImportantIf the value of SnapshotRetentionLimit is set to zero (0), backups
-	// are turned off.
+	//   If the value of SnapshotRetentionLimit is set to zero (0), backups are
+	// turned off.
 	SnapshotRetentionLimit *int64 `type:"integer"`
 
 	// The daily time range (in UTC) during which ElastiCache will begin taking
@@ -1661,16 +2641,22 @@ type CacheCluster struct {
 	//
 	// Example: 05:00-09:00
 	SnapshotWindow *string `type:"string"`
-
-	metadataCacheCluster `json:"-" xml:"-"`
 }
 
-type metadataCacheCluster struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheCluster) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheCluster) GoString() string {
+	return s.String()
 }
 
 // Provides all of the details about a particular cache engine version.
 type CacheEngineVersion struct {
+	_ struct{} `type:"structure"`
+
 	// The description of the cache engine.
 	CacheEngineDescription *string `type:"string"`
 
@@ -1685,12 +2671,16 @@ type CacheEngineVersion struct {
 
 	// The version number of the cache engine.
 	EngineVersion *string `type:"string"`
-
-	metadataCacheEngineVersion `json:"-" xml:"-"`
 }
 
-type metadataCacheEngineVersion struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheEngineVersion) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheEngineVersion) GoString() string {
+	return s.String()
 }
 
 // Represents an individual cache node within a cache cluster. Each cache node
@@ -1699,29 +2689,46 @@ type metadataCacheEngineVersion struct {
 //
 // Valid node types are as follows:
 //
-//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-// cache.m2.4xlarge   Notes:
+//   General purpose:
 //
-//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-// Redis backup/restore is not supported for t2 instances. Redis Append-only
-// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-// complete listing of cache node types and specifications, see Amazon ElastiCache
-// Product Features and Details (http://aws.amazon.com/elasticache/details)
-// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
+//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+//
+//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+// cache.m1.large, cache.m1.xlarge
+//
+//     Compute optimized: cache.c1.xlarge
+//
+//   Memory optimized:
+//
+//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+// cache.r3.4xlarge, cache.r3.8xlarge
+//
+//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+//
+//      Notes:
+//
+//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+//
+//   Redis backup/restore is not supported for t2 instances.
+//
+//   Redis Append-only files (AOF) functionality is not supported for t1 or
+// t2 instances.
+//
+//   For a complete listing of cache node types and specifications, see Amazon
+// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
+// and either Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 // or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 type CacheNode struct {
+	_ struct{} `type:"structure"`
+
 	// The date and time when the cache node was created.
 	CacheNodeCreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// The cache node identifier. A node ID is a numeric identifier (0001, 0002,
 	// etc.). The combination of cluster ID and node ID uniquely identifies every
 	// cache node used in a customer's AWS account.
-	CacheNodeID *string `locationName:"CacheNodeId" type:"string"`
+	CacheNodeId *string `type:"string"`
 
 	// The current state of this cache node.
 	CacheNodeStatus *string `type:"string"`
@@ -1738,24 +2745,36 @@ type CacheNode struct {
 	// The ID of the primary node to which this read replica node is synchronized.
 	// If this field is empty, then this node is not associated with a primary cache
 	// cluster.
-	SourceCacheNodeID *string `locationName:"SourceCacheNodeId" type:"string"`
-
-	metadataCacheNode `json:"-" xml:"-"`
+	SourceCacheNodeId *string `type:"string"`
 }
 
-type metadataCacheNode struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheNode) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheNode) GoString() string {
+	return s.String()
 }
 
 // A parameter that has a different value for each cache node type it is applied
 // to. For example, in a Redis cache cluster, a cache.m1.large cache node type
 // would have a larger maxmemory value than a cache.m1.small type.
 type CacheNodeTypeSpecificParameter struct {
+	_ struct{} `type:"structure"`
+
 	// The valid range of values for the parameter.
 	AllowedValues *string `type:"string"`
 
 	// A list of cache node types and their corresponding values for this parameter.
 	CacheNodeTypeSpecificValues []*CacheNodeTypeSpecificValue `locationNameList:"CacheNodeTypeSpecificValue" type:"list"`
+
+	// ChangeType indicates whether a change to the parameter will be applied immediately
+	// or requires a reboot for the change to be applied. You can force a reboot
+	// or wait until the next maintenance window's reboot. For more information,
+	// see Rebooting a Cluster (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Clusters.Rebooting.html).
+	ChangeType *string `type:"string" enum:"ChangeType"`
 
 	// The valid data type for the parameter.
 	DataType *string `type:"string"`
@@ -1776,31 +2795,43 @@ type CacheNodeTypeSpecificParameter struct {
 
 	// The source of the parameter value.
 	Source *string `type:"string"`
-
-	metadataCacheNodeTypeSpecificParameter `json:"-" xml:"-"`
 }
 
-type metadataCacheNodeTypeSpecificParameter struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheNodeTypeSpecificParameter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheNodeTypeSpecificParameter) GoString() string {
+	return s.String()
 }
 
 // A value that applies only to a certain cache node type.
 type CacheNodeTypeSpecificValue struct {
+	_ struct{} `type:"structure"`
+
 	// The cache node type for which this value applies.
 	CacheNodeType *string `type:"string"`
 
 	// The value for the cache node type.
 	Value *string `type:"string"`
-
-	metadataCacheNodeTypeSpecificValue `json:"-" xml:"-"`
 }
 
-type metadataCacheNodeTypeSpecificValue struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheNodeTypeSpecificValue) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheNodeTypeSpecificValue) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a CreateCacheParameterGroup action.
 type CacheParameterGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group family that this cache parameter group
 	// is compatible with.
 	CacheParameterGroupFamily *string `type:"string"`
@@ -1810,51 +2841,75 @@ type CacheParameterGroup struct {
 
 	// The description for this cache parameter group.
 	Description *string `type:"string"`
-
-	metadataCacheParameterGroup `json:"-" xml:"-"`
 }
 
-type metadataCacheParameterGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheParameterGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheParameterGroup) GoString() string {
+	return s.String()
 }
 
 // Represents the output of one of the following actions:
 //
-//   ModifyCacheParameterGroup   ResetCacheParameterGroup
+//    ModifyCacheParameterGroup
+//
+//    ResetCacheParameterGroup
 type CacheParameterGroupNameMessage struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group.
 	CacheParameterGroupName *string `type:"string"`
-
-	metadataCacheParameterGroupNameMessage `json:"-" xml:"-"`
 }
 
-type metadataCacheParameterGroupNameMessage struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheParameterGroupNameMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheParameterGroupNameMessage) GoString() string {
+	return s.String()
 }
 
 // The status of the cache parameter group.
 type CacheParameterGroupStatus struct {
+	_ struct{} `type:"structure"`
+
 	// A list of the cache node IDs which need to be rebooted for parameter changes
 	// to be applied. A node ID is a numeric identifier (0001, 0002, etc.).
-	CacheNodeIDsToReboot []*string `locationName:"CacheNodeIdsToReboot" locationNameList:"CacheNodeId" type:"list"`
+	CacheNodeIdsToReboot []*string `locationNameList:"CacheNodeId" type:"list"`
 
 	// The name of the cache parameter group.
 	CacheParameterGroupName *string `type:"string"`
 
 	// The status of parameter updates.
 	ParameterApplyStatus *string `type:"string"`
-
-	metadataCacheParameterGroupStatus `json:"-" xml:"-"`
 }
 
-type metadataCacheParameterGroupStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheParameterGroupStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheParameterGroupStatus) GoString() string {
+	return s.String()
 }
 
 // Represents the output of one of the following actions:
 //
-//   AuthorizeCacheSecurityGroupIngress   CreateCacheSecurityGroup   RevokeCacheSecurityGroupIngress
+//    AuthorizeCacheSecurityGroupIngress
+//
+//    CreateCacheSecurityGroup
+//
+//    RevokeCacheSecurityGroupIngress
 type CacheSecurityGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache security group.
 	CacheSecurityGroupName *string `type:"string"`
 
@@ -1866,17 +2921,23 @@ type CacheSecurityGroup struct {
 	EC2SecurityGroups []*EC2SecurityGroup `locationNameList:"EC2SecurityGroup" type:"list"`
 
 	// The AWS account ID of the cache security group owner.
-	OwnerID *string `locationName:"OwnerId" type:"string"`
-
-	metadataCacheSecurityGroup `json:"-" xml:"-"`
+	OwnerId *string `type:"string"`
 }
 
-type metadataCacheSecurityGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheSecurityGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheSecurityGroup) GoString() string {
+	return s.String()
 }
 
 // Represents a cache cluster's status within a particular cache security group.
 type CacheSecurityGroupMembership struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache security group.
 	CacheSecurityGroupName *string `type:"string"`
 
@@ -1884,18 +2945,26 @@ type CacheSecurityGroupMembership struct {
 	// a cache security group is modified, or when the cache security groups assigned
 	// to a cache cluster are modified.
 	Status *string `type:"string"`
-
-	metadataCacheSecurityGroupMembership `json:"-" xml:"-"`
 }
 
-type metadataCacheSecurityGroupMembership struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheSecurityGroupMembership) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheSecurityGroupMembership) GoString() string {
+	return s.String()
 }
 
 // Represents the output of one of the following actions:
 //
-//   CreateCacheSubnetGroup   ModifyCacheSubnetGroup
+//    CreateCacheSubnetGroup
+//
+//    ModifyCacheSubnetGroup
 type CacheSubnetGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The description of the cache subnet group.
 	CacheSubnetGroupDescription *string `type:"string"`
 
@@ -1907,44 +2976,139 @@ type CacheSubnetGroup struct {
 
 	// The Amazon Virtual Private Cloud identifier (VPC ID) of the cache subnet
 	// group.
-	VPCID *string `locationName:"VpcId" type:"string"`
-
-	metadataCacheSubnetGroup `json:"-" xml:"-"`
+	VpcId *string `type:"string"`
 }
 
-type metadataCacheSubnetGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CacheSubnetGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CacheSubnetGroup) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CopySnapshotMessage action.
 type CopySnapshotInput struct {
-	// The name of an existing snapshot from which to copy.
+	_ struct{} `type:"structure"`
+
+	// The name of an existing snapshot from which to make a copy.
 	SourceSnapshotName *string `type:"string" required:"true"`
 
-	// A name for the copied snapshot.
-	TargetSnapshotName *string `type:"string" required:"true"`
+	// The Amazon S3 bucket to which the snapshot will be exported. This parameter
+	// is used only when exporting a snapshot for external access.
+	//
+	// When using this parameter to export a snapshot, be sure Amazon ElastiCache
+	// has the needed permissions to this S3 bucket. For more information, see Step
+	// 2: Grant ElastiCache Access to Your Amazon S3 Bucket (http://docs.aws.amazon.com/AmazonElastiCache/AmazonElastiCache/latest/UserGuide/Snapshots.Exporting.html#Snapshots.Exporting.GrantAccess)
+	// in the Amazon ElastiCache User Guide.
+	//
+	//  Error Messages:
+	//
+	// You could receive one of the following error messages.
+	//
+	//  Erorr Messages     Error Message:  ElastiCache has not been granted READ
+	// permissions %s on the S3 Bucket.
+	//
+	//  Solution: Add List and Read permissions on the bucket.
+	//
+	//    Error Message:  ElastiCache has not been granted WRITE permissions %s
+	// on the S3 Bucket.
+	//
+	//  Solution: Add Upload/Delete permissions on the bucket.
+	//
+	//    Error Message:  ElastiCache has not been granted READ_ACP permissions
+	// %s on the S3 Bucket.
+	//
+	//  Solution: Add View Permissions permissions on the bucket.
+	//
+	//    Error Message: The S3 bucket %s is outside of the region.
+	//
+	//  Solution: Before exporting your snapshot, create a new Amazon S3 bucket
+	// in the same region as your snapshot. For more information, see Step 1: Create
+	// an Amazon S3 Bucket (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Snapshots.Exporting.html#Snapshots.Exporting.CreateBucket).
+	//
+	//    Error Message: The S3 bucket %s does not exist.
+	//
+	//  Solution: Create an Amazon S3 bucket in the same region as your snapshot.
+	// For more information, see Step 1: Create an Amazon S3 Bucket (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Snapshots.Exporting.html#Snapshots.Exporting.CreateBucket).
+	//
+	//    Error Message: The S3 bucket %s is not owned by the authenticated user.
+	//
+	//  Solution: Create an Amazon S3 bucket in the same region as your snapshot.
+	// For more information, see Step 1: Create an Amazon S3 Bucket (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Snapshots.Exporting.html#Snapshots.Exporting.CreateBucket).
+	//
+	//    Error Message: The authenticated user does not have sufficient permissions
+	// to perform the desired activity.
+	//
+	//  Solution: Contact your system administrator to get the needed permissions.
+	//
+	//   For more information, see Exporting a Snapshot (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Snapshots.Exporting.html)
+	// in the Amazon ElastiCache User Guide.
+	TargetBucket *string `type:"string"`
 
-	metadataCopySnapshotInput `json:"-" xml:"-"`
+	// A name for the snapshot copy. ElastiCache does not permit overwriting a snapshot,
+	// therefore this name must be unique within its context - ElastiCache or an
+	// Amazon S3 bucket if exporting.
+	//
+	//  Error Message     Error Message: The S3 bucket %s already contains an object
+	// with key %s.
+	//
+	//  Solution: Give the TargetSnapshotName a new and unique value. If exporting
+	// a snapshot, you could alternatively create a new Amazon S3 bucket and use
+	// this same value for TargetSnapshotName.
+	TargetSnapshotName *string `type:"string" required:"true"`
 }
 
-type metadataCopySnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CopySnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CopySnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CopySnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CopySnapshotInput"}
+	if s.SourceSnapshotName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceSnapshotName"))
+	}
+	if s.TargetSnapshotName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetSnapshotName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CopySnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents a copy of an entire cache cluster as of the time when the snapshot
 	// was taken.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataCopySnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataCopySnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CopySnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CopySnapshotOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CreateCacheCluster action.
 type CreateCacheClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// Specifies whether the nodes in this Memcached node group are created in a
 	// single Availability Zone or created across multiple Availability Zones in
 	// the cluster's region.
@@ -1953,37 +3117,54 @@ type CreateCacheClusterInput struct {
 	//
 	// If the AZMode and PreferredAvailabilityZones are not specified, ElastiCache
 	// assumes single-az mode.
-	AZMode *string `type:"string"`
+	AZMode *string `type:"string" enum:"AZMode"`
 
 	// This parameter is currently disabled.
 	AutoMinorVersionUpgrade *bool `type:"boolean"`
 
 	// The node group identifier. This parameter is stored as a lowercase string.
 	//
-	// Constraints:
+	//  Constraints:
 	//
-	//  A name must contain from 1 to 20 alphanumeric characters or hyphens. The
-	// first character must be a letter. A name cannot end with a hyphen or contain
-	// two consecutive hyphens.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string" required:"true"`
+	//   A name must contain from 1 to 20 alphanumeric characters or hyphens.
+	//
+	//   The first character must be a letter.
+	//
+	//   A name cannot end with a hyphen or contain two consecutive hyphens.
+	CacheClusterId *string `type:"string" required:"true"`
 
 	// The compute and memory capacity of the nodes in the node group.
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -2009,19 +3190,25 @@ type CreateCacheClusterInput struct {
 	//
 	// Valid values for this parameter are:
 	//
-	// memcached | redis
+	//  memcached | redis
 	Engine *string `type:"string"`
 
 	// The version number of the cache engine to be used for this cache cluster.
 	// To view the supported cache engine versions, use the DescribeCacheEngineVersions
 	// action.
+	//
+	//  Important: You can upgrade to a newer engine version (see Selecting a Cache
+	// Engine and Version (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/SelectEngine.html#VersionManagement)),
+	// but you cannot downgrade to an earlier engine version. If you want to use
+	// an earlier engine version, you must delete the existing cache cluster or
+	// replication group and create it anew with the earlier engine version.
 	EngineVersion *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the Amazon Simple Notification Service
 	// (SNS) topic to which notifications will be sent.
 	//
-	// The Amazon SNS topic owner must be the same as the cache cluster owner.
-	NotificationTopicARN *string `locationName:"NotificationTopicArn" type:"string"`
+	//  The Amazon SNS topic owner must be the same as the cache cluster owner.
+	NotificationTopicArn *string `type:"string"`
 
 	// The initial number of cache nodes that the cache cluster will have.
 	//
@@ -2062,9 +3249,9 @@ type CreateCacheClusterInput struct {
 	// Default: System chosen Availability Zones.
 	//
 	// Example: One Memcached node in each of three different Availability Zones:
-	// PreferredAvailabilityZones.member.1=us-west-2a&PreferredAvailabilityZones.member.2=us-west-2b&PreferredAvailabilityZones.member.3=us-west-2c
+	// PreferredAvailabilityZones.member.1=us-west-2a&amp;PreferredAvailabilityZones.member.2=us-west-2b&amp;PreferredAvailabilityZones.member.3=us-west-2c
 	//
-	// Example: All three Memcached nodes in one Availability Zone: PreferredAvailabilityZones.member.1=us-west-2a&PreferredAvailabilityZones.member.2=us-west-2a&PreferredAvailabilityZones.member.3=us-west-2a
+	// Example: All three Memcached nodes in one Availability Zone: PreferredAvailabilityZones.member.1=us-west-2a&amp;PreferredAvailabilityZones.member.2=us-west-2a&amp;PreferredAvailabilityZones.member.3=us-west-2a
 	PreferredAvailabilityZones []*string `locationNameList:"PreferredAvailabilityZone" type:"list"`
 
 	// Specifies the weekly time range during which maintenance on the cache cluster
@@ -2072,7 +3259,21 @@ type CreateCacheClusterInput struct {
 	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
 	// values for ddd are:
 	//
-	//  sun mon tue wed thu fri sat  Example: sun:05:00-sun:09:00
+	//    sun
+	//
+	//    mon
+	//
+	//    tue
+	//
+	//    wed
+	//
+	//    thu
+	//
+	//    fri
+	//
+	//    sat
+	//
+	//   Example: sun:05:00-sun:09:00
 	PreferredMaintenanceWindow *string `type:"string"`
 
 	// The ID of the replication group to which this cache cluster should belong.
@@ -2084,30 +3285,30 @@ type CreateCacheClusterInput struct {
 	// zone is not specified, the cache cluster will be created in availability
 	// zones that provide the best spread of read replicas across availability zones.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string"`
+	//  This parameter is only valid if the Engine parameter is redis.
+	ReplicationGroupId *string `type:"string"`
 
 	// One or more VPC security groups associated with the cache cluster.
 	//
 	// Use this parameter only when you are creating a cache cluster in an Amazon
 	// Virtual Private Cloud (VPC).
-	SecurityGroupIDs []*string `locationName:"SecurityGroupIds" locationNameList:"SecurityGroupId" type:"list"`
+	SecurityGroupIds []*string `locationNameList:"SecurityGroupId" type:"list"`
 
 	// A single-element string list containing an Amazon Resource Name (ARN) that
 	// uniquely identifies a Redis RDB snapshot file stored in Amazon S3. The snapshot
 	// file will be used to populate the node group. The Amazon S3 object name in
 	// the ARN cannot contain any commas.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	//
-	// Example of an Amazon S3 ARN: arn:aws:s3:::my_bucket/snapshot1.rdb
-	SnapshotARNs []*string `locationName:"SnapshotArns" locationNameList:"SnapshotArn" type:"list"`
+	//  Example of an Amazon S3 ARN: arn:aws:s3:::my_bucket/snapshot1.rdb
+	SnapshotArns []*string `locationNameList:"SnapshotArn" type:"list"`
 
 	// The name of a snapshot from which to restore data into the new node group.
 	// The snapshot status changes to restoring while the new node group is being
 	// created.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	SnapshotName *string `type:"string"`
 
 	// The number of days for which ElastiCache will retain automatic snapshots
@@ -2115,9 +3316,9 @@ type CreateCacheClusterInput struct {
 	// then a snapshot that was taken today will be retained for 5 days before being
 	// deleted.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	//
-	// Default: 0 (i.e., automatic backups are disabled for this cache cluster).
+	//  Default: 0 (i.e., automatic backups are disabled for this cache cluster).
 	SnapshotRetentionLimit *int64 `type:"integer"`
 
 	// The daily time range (in UTC) during which ElastiCache will begin taking
@@ -2128,33 +3329,58 @@ type CreateCacheClusterInput struct {
 	// If you do not specify this parameter, then ElastiCache will automatically
 	// choose an appropriate time range.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  Note: This parameter is only valid if the Engine parameter is redis.
 	SnapshotWindow *string `type:"string"`
 
 	// A list of cost allocation tags to be added to this resource. A tag is a key-value
 	// pair. A tag key must be accompanied by a tag value.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateCacheClusterInput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateCacheClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateCacheClusterInput"}
+	if s.CacheClusterId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheClusterId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateCacheClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific cache cluster.
 	CacheCluster *CacheCluster `type:"structure"`
-
-	metadataCreateCacheClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheClusterOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CreateCacheParameterGroup action.
 type CreateCacheParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group family the cache parameter group can
 	// be used with.
 	//
@@ -2166,27 +3392,58 @@ type CreateCacheParameterGroupInput struct {
 
 	// A user-specified description for the cache parameter group.
 	Description *string `type:"string" required:"true"`
-
-	metadataCreateCacheParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateCacheParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateCacheParameterGroupInput"}
+	if s.CacheParameterGroupFamily == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupFamily"))
+	}
+	if s.CacheParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupName"))
+	}
+	if s.Description == nil {
+		invalidParams.Add(request.NewErrParamRequired("Description"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateCacheParameterGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of a CreateCacheParameterGroup action.
 	CacheParameterGroup *CacheParameterGroup `type:"structure"`
-
-	metadataCreateCacheParameterGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheParameterGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheParameterGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheParameterGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CreateCacheSecurityGroup action.
 type CreateCacheSecurityGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// A name for the cache security group. This value is stored as a lowercase
 	// string.
 	//
@@ -2198,29 +3455,61 @@ type CreateCacheSecurityGroupInput struct {
 
 	// A description for the cache security group.
 	Description *string `type:"string" required:"true"`
-
-	metadataCreateCacheSecurityGroupInput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheSecurityGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheSecurityGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheSecurityGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateCacheSecurityGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateCacheSecurityGroupInput"}
+	if s.CacheSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSecurityGroupName"))
+	}
+	if s.Description == nil {
+		invalidParams.Add(request.NewErrParamRequired("Description"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateCacheSecurityGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of one of the following actions:
 	//
-	//   AuthorizeCacheSecurityGroupIngress   CreateCacheSecurityGroup   RevokeCacheSecurityGroupIngress
+	//    AuthorizeCacheSecurityGroupIngress
+	//
+	//    CreateCacheSecurityGroup
+	//
+	//    RevokeCacheSecurityGroupIngress
 	CacheSecurityGroup *CacheSecurityGroup `type:"structure"`
-
-	metadataCreateCacheSecurityGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheSecurityGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheSecurityGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheSecurityGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CreateCacheSubnetGroup action.
 type CreateCacheSubnetGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// A description for the cache subnet group.
 	CacheSubnetGroupDescription *string `type:"string" required:"true"`
 
@@ -2232,30 +3521,63 @@ type CreateCacheSubnetGroupInput struct {
 	CacheSubnetGroupName *string `type:"string" required:"true"`
 
 	// A list of VPC subnet IDs for the cache subnet group.
-	SubnetIDs []*string `locationName:"SubnetIds" locationNameList:"SubnetIdentifier" type:"list" required:"true"`
-
-	metadataCreateCacheSubnetGroupInput `json:"-" xml:"-"`
+	SubnetIds []*string `locationNameList:"SubnetIdentifier" type:"list" required:"true"`
 }
 
-type metadataCreateCacheSubnetGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheSubnetGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheSubnetGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateCacheSubnetGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateCacheSubnetGroupInput"}
+	if s.CacheSubnetGroupDescription == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSubnetGroupDescription"))
+	}
+	if s.CacheSubnetGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSubnetGroupName"))
+	}
+	if s.SubnetIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateCacheSubnetGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of one of the following actions:
 	//
-	//   CreateCacheSubnetGroup   ModifyCacheSubnetGroup
+	//    CreateCacheSubnetGroup
+	//
+	//    ModifyCacheSubnetGroup
 	CacheSubnetGroup *CacheSubnetGroup `type:"structure"`
-
-	metadataCreateCacheSubnetGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateCacheSubnetGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateCacheSubnetGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateCacheSubnetGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CreateReplicationGroup action.
 type CreateReplicationGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// This parameter is currently disabled.
 	AutoMinorVersionUpgrade *bool `type:"boolean"`
 
@@ -2267,28 +3589,45 @@ type CreateReplicationGroupInput struct {
 	//
 	// Default: false
 	//
-	// ElastiCache Multi-AZ replication groups is not supported on:
+	//  ElastiCache Multi-AZ replication groups is not supported on:
 	//
-	//  Redis versions earlier than 2.8.6. T1 and T2 cache node types.
+	//   Redis versions earlier than 2.8.6.
+	//
+	//   T1 and T2 cache node types.
 	AutomaticFailoverEnabled *bool `type:"boolean"`
 
 	// The compute and memory capacity of the nodes in the node group.
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -2313,13 +3652,20 @@ type CreateReplicationGroupInput struct {
 	// The version number of the cache engine to be used for the cache clusters
 	// in this replication group. To view the supported cache engine versions, use
 	// the DescribeCacheEngineVersions action.
+	//
+	//  Important: You can upgrade to a newer engine version (see Selecting a Cache
+	// Engine and Version (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/SelectEngine.html#VersionManagement))
+	// in the ElastiCache User Guide, but you cannot downgrade to an earlier engine
+	// version. If you want to use an earlier engine version, you must delete the
+	// existing cache cluster or replication group and create it anew with the earlier
+	// engine version.
 	EngineVersion *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the Amazon Simple Notification Service
 	// (SNS) topic to which notifications will be sent.
 	//
-	// The Amazon SNS topic owner must be the same as the cache cluster owner.
-	NotificationTopicARN *string `locationName:"NotificationTopicArn" type:"string"`
+	//  The Amazon SNS topic owner must be the same as the cache cluster owner.
+	NotificationTopicArn *string `type:"string"`
 
 	// The number of cache clusters this replication group will initially have.
 	//
@@ -2338,15 +3684,18 @@ type CreateReplicationGroupInput struct {
 	// A list of EC2 availability zones in which the replication group's cache clusters
 	// will be created. The order of the availability zones in the list is not important.
 	//
-	// If you are creating your replication group in an Amazon VPC (recommended),
+	//  If you are creating your replication group in an Amazon VPC (recommended),
 	// you can only locate cache clusters in availability zones associated with
-	// the subnets in the selected subnet group. The number of availability zones
-	// listed must equal the value of NumCacheClusters.
+	// the subnets in the selected subnet group.
 	//
-	// Default: system chosen availability zones.
+	// The number of availability zones listed must equal the value of NumCacheClusters.
 	//
-	// Example: One Redis cache cluster in each of three availability zones. PreferredAvailabilityZones.member.1=us-west-2a
-	// PreferredAvailabilityZones.member.2=us-west-2c PreferredAvailabilityZones.member.3=us-west-2c
+	//  Default: system chosen availability zones.
+	//
+	// Example: One Redis cache cluster in each of three availability zones.
+	//
+	//  PreferredAvailabilityZones.member.1=us-west-2a PreferredAvailabilityZones.member.2=us-west-2c
+	// PreferredAvailabilityZones.member.3=us-west-2c
 	PreferredCacheClusterAZs []*string `locationNameList:"AvailabilityZone" type:"list"`
 
 	// Specifies the weekly time range during which maintenance on the cache cluster
@@ -2354,7 +3703,21 @@ type CreateReplicationGroupInput struct {
 	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
 	// values for ddd are:
 	//
-	//  sun mon tue wed thu fri sat  Example: sun:05:00-sun:09:00
+	//    sun
+	//
+	//    mon
+	//
+	//    tue
+	//
+	//    wed
+	//
+	//    thu
+	//
+	//    fri
+	//
+	//    sat
+	//
+	//   Example: sun:05:00-sun:09:00
 	PreferredMaintenanceWindow *string `type:"string"`
 
 	// The identifier of the cache cluster that will serve as the primary for this
@@ -2362,7 +3725,7 @@ type CreateReplicationGroupInput struct {
 	// of available.
 	//
 	// This parameter is not required if NumCacheClusters is specified.
-	PrimaryClusterID *string `locationName:"PrimaryClusterId" type:"string"`
+	PrimaryClusterId *string `type:"string"`
 
 	// A user-created description for the replication group.
 	ReplicationGroupDescription *string `type:"string" required:"true"`
@@ -2372,32 +3735,34 @@ type CreateReplicationGroupInput struct {
 	//
 	// Constraints:
 	//
-	//  A name must contain from 1 to 20 alphanumeric characters or hyphens. The
-	// first character must be a letter. A name cannot end with a hyphen or contain
-	// two consecutive hyphens.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string" required:"true"`
+	//   A name must contain from 1 to 20 alphanumeric characters or hyphens.
+	//
+	//   The first character must be a letter.
+	//
+	//   A name cannot end with a hyphen or contain two consecutive hyphens.
+	ReplicationGroupId *string `type:"string" required:"true"`
 
 	// One or more Amazon VPC security groups associated with this replication group.
 	//
 	// Use this parameter only when you are creating a replication group in an
 	// Amazon Virtual Private Cloud (VPC).
-	SecurityGroupIDs []*string `locationName:"SecurityGroupIds" locationNameList:"SecurityGroupId" type:"list"`
+	SecurityGroupIds []*string `locationNameList:"SecurityGroupId" type:"list"`
 
 	// A single-element string list containing an Amazon Resource Name (ARN) that
 	// uniquely identifies a Redis RDB snapshot file stored in Amazon S3. The snapshot
 	// file will be used to populate the node group. The Amazon S3 object name in
 	// the ARN cannot contain any commas.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	//
-	// Example of an Amazon S3 ARN: arn:aws:s3:::my_bucket/snapshot1.rdb
-	SnapshotARNs []*string `locationName:"SnapshotArns" locationNameList:"SnapshotArn" type:"list"`
+	//  Example of an Amazon S3 ARN: arn:aws:s3:::my_bucket/snapshot1.rdb
+	SnapshotArns []*string `locationNameList:"SnapshotArn" type:"list"`
 
 	// The name of a snapshot from which to restore data into the new node group.
 	// The snapshot status changes to restoring while the new node group is being
 	// created.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	SnapshotName *string `type:"string"`
 
 	// The number of days for which ElastiCache will retain automatic snapshots
@@ -2405,9 +3770,9 @@ type CreateReplicationGroupInput struct {
 	// then a snapshot that was taken today will be retained for 5 days before being
 	// deleted.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	//
-	// Default: 0 (i.e., automatic backups are disabled for this cache cluster).
+	//  Default: 0 (i.e., automatic backups are disabled for this cache cluster).
 	SnapshotRetentionLimit *int64 `type:"integer"`
 
 	// The daily time range (in UTC) during which ElastiCache will begin taking
@@ -2418,157 +3783,313 @@ type CreateReplicationGroupInput struct {
 	// If you do not specify this parameter, then ElastiCache will automatically
 	// choose an appropriate time range.
 	//
-	// Note: This parameter is only valid if the Engine parameter is redis.
+	//  This parameter is only valid if the Engine parameter is redis.
 	SnapshotWindow *string `type:"string"`
 
 	// A list of cost allocation tags to be added to this resource. A tag is a key-value
 	// pair. A tag key must be accompanied by a tag value.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateReplicationGroupInput `json:"-" xml:"-"`
 }
 
-type metadataCreateReplicationGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateReplicationGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateReplicationGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateReplicationGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateReplicationGroupInput"}
+	if s.ReplicationGroupDescription == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReplicationGroupDescription"))
+	}
+	if s.ReplicationGroupId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReplicationGroupId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateReplicationGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific replication group.
 	ReplicationGroup *ReplicationGroup `type:"structure"`
-
-	metadataCreateReplicationGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateReplicationGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateReplicationGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateReplicationGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a CreateSnapshot action.
 type CreateSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of an existing cache cluster. The snapshot will be created
 	// from this cache cluster.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string" required:"true"`
+	CacheClusterId *string `type:"string" required:"true"`
 
 	// A name for the snapshot being created.
 	SnapshotName *string `type:"string" required:"true"`
-
-	metadataCreateSnapshotInput `json:"-" xml:"-"`
 }
 
-type metadataCreateSnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateSnapshotInput"}
+	if s.CacheClusterId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheClusterId"))
+	}
+	if s.SnapshotName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents a copy of an entire cache cluster as of the time when the snapshot
 	// was taken.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataCreateSnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateSnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateSnapshotOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DeleteCacheCluster action.
 type DeleteCacheClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cache cluster identifier for the cluster to be deleted. This parameter
 	// is not case sensitive.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string" required:"true"`
+	CacheClusterId *string `type:"string" required:"true"`
 
 	// The user-supplied name of a final cache cluster snapshot. This is the unique
 	// name that identifies the snapshot. ElastiCache creates the snapshot, and
 	// then deletes the cache cluster immediately afterward.
 	FinalSnapshotIdentifier *string `type:"string"`
-
-	metadataDeleteCacheClusterInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteCacheClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteCacheClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteCacheClusterInput"}
+	if s.CacheClusterId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheClusterId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteCacheClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific cache cluster.
 	CacheCluster *CacheCluster `type:"structure"`
-
-	metadataDeleteCacheClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteCacheClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheClusterOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DeleteCacheParameterGroup action.
 type DeleteCacheParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group to delete.
 	//
-	// The specified cache security group must not be associated with any cache
+	//  The specified cache security group must not be associated with any cache
 	// clusters.
 	CacheParameterGroupName *string `type:"string" required:"true"`
-
-	metadataDeleteCacheParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteCacheParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteCacheParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteCacheParameterGroupInput"}
+	if s.CacheParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteCacheParameterGroupOutput struct {
-	metadataDeleteCacheParameterGroupOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteCacheParameterGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheParameterGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheParameterGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DeleteCacheSecurityGroup action.
 type DeleteCacheSecurityGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache security group to delete.
 	//
-	// You cannot delete the default security group.
+	//  You cannot delete the default security group.
 	CacheSecurityGroupName *string `type:"string" required:"true"`
-
-	metadataDeleteCacheSecurityGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteCacheSecurityGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheSecurityGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheSecurityGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteCacheSecurityGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteCacheSecurityGroupInput"}
+	if s.CacheSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSecurityGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteCacheSecurityGroupOutput struct {
-	metadataDeleteCacheSecurityGroupOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteCacheSecurityGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheSecurityGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheSecurityGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DeleteCacheSubnetGroup action.
 type DeleteCacheSubnetGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache subnet group to delete.
 	//
 	// Constraints: Must contain no more than 255 alphanumeric characters or hyphens.
 	CacheSubnetGroupName *string `type:"string" required:"true"`
-
-	metadataDeleteCacheSubnetGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteCacheSubnetGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheSubnetGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheSubnetGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteCacheSubnetGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteCacheSubnetGroupInput"}
+	if s.CacheSubnetGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSubnetGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteCacheSubnetGroupOutput struct {
-	metadataDeleteCacheSubnetGroupOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteCacheSubnetGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteCacheSubnetGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteCacheSubnetGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DeleteReplicationGroup action.
 type DeleteReplicationGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of a final node group snapshot. ElastiCache creates the snapshot
 	// from the primary node in the cluster, rather than one of the replicas; this
 	// is to ensure that it captures the freshest data. After the final snapshot
@@ -2577,60 +4098,110 @@ type DeleteReplicationGroupInput struct {
 
 	// The identifier for the cluster to be deleted. This parameter is not case
 	// sensitive.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string" required:"true"`
+	ReplicationGroupId *string `type:"string" required:"true"`
 
 	// If set to true, all of the read replicas will be deleted, but the primary
 	// node will be retained.
 	RetainPrimaryCluster *bool `type:"boolean"`
-
-	metadataDeleteReplicationGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteReplicationGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteReplicationGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteReplicationGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteReplicationGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteReplicationGroupInput"}
+	if s.ReplicationGroupId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReplicationGroupId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteReplicationGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific replication group.
 	ReplicationGroup *ReplicationGroup `type:"structure"`
-
-	metadataDeleteReplicationGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteReplicationGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteReplicationGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteReplicationGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DeleteSnapshot action.
 type DeleteSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the snapshot to be deleted.
 	SnapshotName *string `type:"string" required:"true"`
-
-	metadataDeleteSnapshotInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteSnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteSnapshotInput"}
+	if s.SnapshotName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents a copy of an entire cache cluster as of the time when the snapshot
 	// was taken.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataDeleteSnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteSnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSnapshotOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeCacheClusters action.
 type DescribeCacheClustersInput struct {
+	_ struct{} `type:"structure"`
+
 	// The user-supplied cluster identifier. If this parameter is specified, only
 	// information about that specific cache cluster is returned. This parameter
 	// isn't case sensitive.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string"`
+	CacheClusterId *string `type:"string"`
 
 	// An optional marker returned from a prior request. Use this marker for pagination
 	// of results from this action. If this parameter is specified, the response
@@ -2649,38 +4220,53 @@ type DescribeCacheClustersInput struct {
 	// An optional flag that can be included in the DescribeCacheCluster request
 	// to retrieve information about the individual cache nodes.
 	ShowCacheNodeInfo *bool `type:"boolean"`
-
-	metadataDescribeCacheClustersInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheClustersInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheClustersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheClustersInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeCacheClusters action.
 type DescribeCacheClustersOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cache clusters. Each item in the list contains detailed information
 	// about one cache cluster.
 	CacheClusters []*CacheCluster `locationNameList:"CacheCluster" type:"list"`
 
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
-
-	metadataDescribeCacheClustersOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheClustersOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheClustersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheClustersOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeCacheEngineVersions action.
 type DescribeCacheEngineVersionsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of a specific cache parameter group family to return details for.
 	//
 	// Constraints:
 	//
-	//  Must be 1 to 255 alphanumeric characters First character must be a letter
-	// Cannot end with a hyphen or contain two consecutive hyphens
+	//   Must be 1 to 255 alphanumeric characters
+	//
+	//   First character must be a letter
+	//
+	//   Cannot end with a hyphen or contain two consecutive hyphens
 	CacheParameterGroupFamily *string `type:"string"`
 
 	// If true, specifies that only the default version of the specified engine
@@ -2708,32 +4294,44 @@ type DescribeCacheEngineVersionsInput struct {
 	//
 	// Constraints: minimum 20; maximum 100.
 	MaxRecords *int64 `type:"integer"`
-
-	metadataDescribeCacheEngineVersionsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheEngineVersionsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheEngineVersionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheEngineVersionsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeCacheEngineVersions action.
 type DescribeCacheEngineVersionsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cache engine version details. Each element in the list contains
 	// detailed information about one cache engine version.
 	CacheEngineVersions []*CacheEngineVersion `locationNameList:"CacheEngineVersion" type:"list"`
 
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
-
-	metadataDescribeCacheEngineVersionsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheEngineVersionsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheEngineVersionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheEngineVersionsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeCacheParameterGroups action.
 type DescribeCacheParameterGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of a specific cache parameter group to return details for.
 	CacheParameterGroupName *string `type:"string"`
 
@@ -2750,32 +4348,44 @@ type DescribeCacheParameterGroupsInput struct {
 	//
 	// Constraints: minimum 20; maximum 100.
 	MaxRecords *int64 `type:"integer"`
-
-	metadataDescribeCacheParameterGroupsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheParameterGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheParameterGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheParameterGroupsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeCacheParameterGroups action.
 type DescribeCacheParameterGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cache parameter groups. Each element in the list contains detailed
 	// information about one cache parameter group.
 	CacheParameterGroups []*CacheParameterGroup `locationNameList:"CacheParameterGroup" type:"list"`
 
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
-
-	metadataDescribeCacheParameterGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheParameterGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheParameterGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheParameterGroupsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeCacheParameters action.
 type DescribeCacheParametersInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of a specific cache parameter group to return details for.
 	CacheParameterGroupName *string `type:"string" required:"true"`
 
@@ -2784,7 +4394,7 @@ type DescribeCacheParametersInput struct {
 	// includes only records beyond the marker, up to the value specified by MaxRecords.
 	Marker *string `type:"string"`
 
-	// The maximum number of records to include in the response. If more records
+	// The maximum number of brecords to include in the response. If more records
 	// exist than the specified MaxRecords value, a marker is included in the response
 	// so that the remaining results can be retrieved.
 	//
@@ -2797,16 +4407,35 @@ type DescribeCacheParametersInput struct {
 	//
 	// Valid values: user | system | engine-default
 	Source *string `type:"string"`
-
-	metadataDescribeCacheParametersInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheParametersInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheParametersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheParametersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeCacheParametersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeCacheParametersInput"}
+	if s.CacheParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Represents the output of a DescribeCacheParameters action.
 type DescribeCacheParametersOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of parameters specific to a particular cache node type. Each element
 	// in the list contains detailed information about one parameter.
 	CacheNodeTypeSpecificParameters []*CacheNodeTypeSpecificParameter `locationNameList:"CacheNodeTypeSpecificParameter" type:"list"`
@@ -2816,16 +4445,22 @@ type DescribeCacheParametersOutput struct {
 
 	// A list of Parameter instances.
 	Parameters []*Parameter `locationNameList:"Parameter" type:"list"`
-
-	metadataDescribeCacheParametersOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheParametersOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheParametersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheParametersOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeCacheSecurityGroups action.
 type DescribeCacheSecurityGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache security group to return details for.
 	CacheSecurityGroupName *string `type:"string"`
 
@@ -2842,32 +4477,44 @@ type DescribeCacheSecurityGroupsInput struct {
 	//
 	// Constraints: minimum 20; maximum 100.
 	MaxRecords *int64 `type:"integer"`
-
-	metadataDescribeCacheSecurityGroupsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheSecurityGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheSecurityGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheSecurityGroupsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeCacheSecurityGroups action.
 type DescribeCacheSecurityGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cache security groups. Each element in the list contains detailed
 	// information about one group.
 	CacheSecurityGroups []*CacheSecurityGroup `locationNameList:"CacheSecurityGroup" type:"list"`
 
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
-
-	metadataDescribeCacheSecurityGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheSecurityGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheSecurityGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheSecurityGroupsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeCacheSubnetGroups action.
 type DescribeCacheSubnetGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache subnet group to return details for.
 	CacheSubnetGroupName *string `type:"string"`
 
@@ -2884,32 +4531,44 @@ type DescribeCacheSubnetGroupsInput struct {
 	//
 	// Constraints: minimum 20; maximum 100.
 	MaxRecords *int64 `type:"integer"`
-
-	metadataDescribeCacheSubnetGroupsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheSubnetGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheSubnetGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheSubnetGroupsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeCacheSubnetGroups action.
 type DescribeCacheSubnetGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cache subnet groups. Each element in the list contains detailed
 	// information about one group.
 	CacheSubnetGroups []*CacheSubnetGroup `locationNameList:"CacheSubnetGroup" type:"list"`
 
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
-
-	metadataDescribeCacheSubnetGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeCacheSubnetGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeCacheSubnetGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCacheSubnetGroupsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeEngineDefaultParameters action.
 type DescribeEngineDefaultParametersInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group family. Valid values are: memcached1.4
 	// | redis2.6 | redis2.8
 	CacheParameterGroupFamily *string `type:"string" required:"true"`
@@ -2927,27 +4586,52 @@ type DescribeEngineDefaultParametersInput struct {
 	//
 	// Constraints: minimum 20; maximum 100.
 	MaxRecords *int64 `type:"integer"`
-
-	metadataDescribeEngineDefaultParametersInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEngineDefaultParametersInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEngineDefaultParametersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEngineDefaultParametersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeEngineDefaultParametersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeEngineDefaultParametersInput"}
+	if s.CacheParameterGroupFamily == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupFamily"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DescribeEngineDefaultParametersOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of a DescribeEngineDefaultParameters action.
 	EngineDefaults *EngineDefaults `type:"structure"`
-
-	metadataDescribeEngineDefaultParametersOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEngineDefaultParametersOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEngineDefaultParametersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEngineDefaultParametersOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeEvents action.
 type DescribeEventsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The number of minutes' worth of events to retrieve.
 	Duration *int64 `type:"integer"`
 
@@ -2978,37 +4662,49 @@ type DescribeEventsInput struct {
 	//
 	// Valid values are: cache-cluster | cache-parameter-group | cache-security-group
 	// | cache-subnet-group
-	SourceType *string `type:"string"`
+	SourceType *string `type:"string" enum:"SourceType"`
 
 	// The beginning of the time interval to retrieve events for, specified in ISO
 	// 8601 format.
 	StartTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
-
-	metadataDescribeEventsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeEvents action.
 type DescribeEventsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of events. Each element in the list contains detailed information
 	// about one event.
 	Events []*Event `locationNameList:"Event" type:"list"`
 
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
-
-	metadataDescribeEventsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeReplicationGroups action.
 type DescribeReplicationGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional marker returned from a prior request. Use this marker for pagination
 	// of results from this action. If this parameter is specified, the response
 	// includes only records beyond the marker, up to the value specified by MaxRecords.
@@ -3028,51 +4724,78 @@ type DescribeReplicationGroupsInput struct {
 	//
 	// If you do not specify this parameter, information about all replication
 	// groups is returned.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string"`
-
-	metadataDescribeReplicationGroupsInput `json:"-" xml:"-"`
+	ReplicationGroupId *string `type:"string"`
 }
 
-type metadataDescribeReplicationGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReplicationGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReplicationGroupsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeReplicationGroups action.
 type DescribeReplicationGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
 
 	// A list of replication groups. Each item in the list contains detailed information
 	// about one replication group.
 	ReplicationGroups []*ReplicationGroup `locationNameList:"ReplicationGroup" type:"list"`
-
-	metadataDescribeReplicationGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeReplicationGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReplicationGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReplicationGroupsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeReservedCacheNodes action.
 type DescribeReservedCacheNodesInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cache node type filter value. Use this parameter to show only those reservations
 	// matching the specified cache node type.
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -3109,39 +4832,60 @@ type DescribeReservedCacheNodesInput struct {
 
 	// The reserved cache node identifier filter value. Use this parameter to show
 	// only the reservation that matches the specified reservation ID.
-	ReservedCacheNodeID *string `locationName:"ReservedCacheNodeId" type:"string"`
+	ReservedCacheNodeId *string `type:"string"`
 
 	// The offering identifier filter value. Use this parameter to show only purchased
 	// reservations matching the specified offering identifier.
-	ReservedCacheNodesOfferingID *string `locationName:"ReservedCacheNodesOfferingId" type:"string"`
-
-	metadataDescribeReservedCacheNodesInput `json:"-" xml:"-"`
+	ReservedCacheNodesOfferingId *string `type:"string"`
 }
 
-type metadataDescribeReservedCacheNodesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedCacheNodesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReservedCacheNodesInput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeReservedCacheNodesOfferings action.
 type DescribeReservedCacheNodesOfferingsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cache node type filter value. Use this parameter to show only the available
 	// offerings matching the specified cache node type.
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -3180,52 +4924,70 @@ type DescribeReservedCacheNodesOfferingsInput struct {
 	// available offering that matches the specified reservation identifier.
 	//
 	// Example: 438012d3-4052-4cc7-b2e3-8d3372e0e706
-	ReservedCacheNodesOfferingID *string `locationName:"ReservedCacheNodesOfferingId" type:"string"`
-
-	metadataDescribeReservedCacheNodesOfferingsInput `json:"-" xml:"-"`
+	ReservedCacheNodesOfferingId *string `type:"string"`
 }
 
-type metadataDescribeReservedCacheNodesOfferingsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedCacheNodesOfferingsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReservedCacheNodesOfferingsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeReservedCacheNodesOfferings action.
 type DescribeReservedCacheNodesOfferingsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
 
 	// A list of reserved cache node offerings. Each element in the list contains
 	// detailed information about one offering.
 	ReservedCacheNodesOfferings []*ReservedCacheNodesOffering `locationNameList:"ReservedCacheNodesOffering" type:"list"`
-
-	metadataDescribeReservedCacheNodesOfferingsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeReservedCacheNodesOfferingsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedCacheNodesOfferingsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReservedCacheNodesOfferingsOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeReservedCacheNodes action.
 type DescribeReservedCacheNodesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Provides an identifier to allow retrieval of paginated results.
 	Marker *string `type:"string"`
 
 	// A list of reserved cache nodes. Each element in the list contains detailed
 	// information about one node.
 	ReservedCacheNodes []*ReservedCacheNode `locationNameList:"ReservedCacheNode" type:"list"`
-
-	metadataDescribeReservedCacheNodesOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeReservedCacheNodesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedCacheNodesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReservedCacheNodesOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a DescribeSnapshotsMessage action.
 type DescribeSnapshotsInput struct {
+	_ struct{} `type:"structure"`
+
 	// A user-supplied cluster identifier. If this parameter is specified, only
 	// snapshots associated with that specific cache cluster will be described.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string"`
+	CacheClusterId *string `type:"string"`
 
 	// An optional marker returned from a prior request. Use this marker for pagination
 	// of results from this action. If this parameter is specified, the response
@@ -3250,16 +5012,22 @@ type DescribeSnapshotsInput struct {
 	// created. If omitted, the output shows both automatically and manually created
 	// snapshots.
 	SnapshotSource *string `type:"string"`
-
-	metadataDescribeSnapshotsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeSnapshotsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeSnapshotsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeSnapshotsInput) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeSnapshots action.
 type DescribeSnapshotsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional marker returned from a prior request. Use this marker for pagination
 	// of results from this action. If this parameter is specified, the response
 	// includes only records beyond the marker, up to the value specified by MaxRecords.
@@ -3268,50 +5036,68 @@ type DescribeSnapshotsOutput struct {
 	// A list of snapshots. Each item in the list contains detailed information
 	// about one snapshot.
 	Snapshots []*Snapshot `locationNameList:"Snapshot" type:"list"`
-
-	metadataDescribeSnapshotsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeSnapshotsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeSnapshotsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeSnapshotsOutput) GoString() string {
+	return s.String()
 }
 
 // Provides ownership and status information for an Amazon EC2 security group.
 type EC2SecurityGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the Amazon EC2 security group.
 	EC2SecurityGroupName *string `type:"string"`
 
 	// The AWS account ID of the Amazon EC2 security group owner.
-	EC2SecurityGroupOwnerID *string `locationName:"EC2SecurityGroupOwnerId" type:"string"`
+	EC2SecurityGroupOwnerId *string `type:"string"`
 
 	// The status of the Amazon EC2 security group.
 	Status *string `type:"string"`
-
-	metadataEC2SecurityGroup `json:"-" xml:"-"`
 }
 
-type metadataEC2SecurityGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EC2SecurityGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EC2SecurityGroup) GoString() string {
+	return s.String()
 }
 
 // Represents the information required for client programs to connect to a cache
 // node.
 type Endpoint struct {
+	_ struct{} `type:"structure"`
+
 	// The DNS hostname of the cache node.
 	Address *string `type:"string"`
 
 	// The port number that the cache engine is listening on.
 	Port *int64 `type:"integer"`
-
-	metadataEndpoint `json:"-" xml:"-"`
 }
 
-type metadataEndpoint struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Endpoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Endpoint) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a DescribeEngineDefaultParameters action.
 type EngineDefaults struct {
+	_ struct{} `type:"structure"`
+
 	// A list of parameters specific to a particular cache node type. Each element
 	// in the list contains detailed information about one parameter.
 	CacheNodeTypeSpecificParameters []*CacheNodeTypeSpecificParameter `locationNameList:"CacheNodeTypeSpecificParameter" type:"list"`
@@ -3325,18 +5111,24 @@ type EngineDefaults struct {
 
 	// Contains a list of engine default parameters.
 	Parameters []*Parameter `locationNameList:"Parameter" type:"list"`
-
-	metadataEngineDefaults `json:"-" xml:"-"`
 }
 
-type metadataEngineDefaults struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EngineDefaults) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EngineDefaults) GoString() string {
+	return s.String()
 }
 
 // Represents a single occurrence of something interesting within the system.
 // Some examples of events are creating a cache cluster, adding or removing
 // a cache node, or rebooting a node.
 type Event struct {
+	_ struct{} `type:"structure"`
+
 	// The date and time when the event occurred.
 	Date *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
@@ -3350,30 +5142,114 @@ type Event struct {
 
 	// Specifies the origin of this event - a cache cluster, a parameter group,
 	// a security group, etc.
-	SourceType *string `type:"string"`
-
-	metadataEvent `json:"-" xml:"-"`
+	SourceType *string `type:"string" enum:"SourceType"`
 }
 
-type metadataEvent struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Event) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Event) GoString() string {
+	return s.String()
+}
+
+// The input parameters for the ListAllowedNodeTypeModifications action.
+type ListAllowedNodeTypeModificationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the cache cluster you want to scale up to a larger node instanced
+	// type. ElastiCache uses the cluster id to identify the current node type of
+	// this cluster and from that to to create a list of node types you can scale
+	// up to.
+	//
+	//  You must provide a value for either the CacheClusterId or the ReplicationGroupId.
+	CacheClusterId *string `type:"string"`
+
+	// The name of the replication group want to scale up to a larger node type.
+	// ElastiCache uses the replication group id to identify the current node type
+	// being used by this replication group, and from that to create a list of node
+	// types you can scale up to.
+	//
+	//  You must provide a value for either the CacheClusterId or the ReplicationGroupId.
+	ReplicationGroupId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListAllowedNodeTypeModificationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListAllowedNodeTypeModificationsInput) GoString() string {
+	return s.String()
+}
+
+// Represents the allowed node types you can use to modify your cache cluster
+// or replication group.
+type ListAllowedNodeTypeModificationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A string list, each element of which specifies a cache node type which you
+	// can use to scale your cache cluster or replication group.
+	//
+	// When scaling up a Redis cluster or replication group using ModifyCacheCluster
+	// or ModifyReplicationGroup, use a value from this list for the CacheNodeType
+	// parameter.
+	ScaleUpModifications []*string `type:"list"`
+}
+
+// String returns the string representation
+func (s ListAllowedNodeTypeModificationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListAllowedNodeTypeModificationsOutput) GoString() string {
+	return s.String()
 }
 
 // The input parameters for the ListTagsForResource action.
 type ListTagsForResourceInput struct {
-	// The name of the resource for which you want the list of tags, for example
-	// arn:aws:elasticache:us-west-2:0123456789:cluster:myCluster.
-	ResourceName *string `type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataListTagsForResourceInput `json:"-" xml:"-"`
+	// The Amazon Resource Name (ARN) of the resource for which you want the list
+	// of tags, for example arn:aws:elasticache:us-west-2:0123456789:cluster:myCluster
+	// or arn:aws:elasticache:us-west-2:0123456789:snapshot:mySnapshot.
+	//
+	// For more information on ARNs, go to Amazon Resource Names (ARNs) and AWS
+	// Service Namespaces (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
+	ResourceName *string `type:"string" required:"true"`
 }
 
-type metadataListTagsForResourceInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListTagsForResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTagsForResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTagsForResourceInput"}
+	if s.ResourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Represents the input of a ModifyCacheCluster action.
 type ModifyCacheClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// Specifies whether the new nodes in this Memcached cache cluster are all created
 	// in a single Availability Zone or created across multiple Availability Zones.
 	//
@@ -3381,7 +5257,7 @@ type ModifyCacheClusterInput struct {
 	//
 	// This option is only supported for Memcached cache clusters.
 	//
-	// You cannot specify single-az if the Memcached cache cluster already has
+	//  You cannot specify single-az if the Memcached cache cluster already has
 	// cache nodes in different Availability Zones. If cross-az is specified, existing
 	// Memcached nodes remain in their current Availability Zone.
 	//
@@ -3389,7 +5265,7 @@ type ModifyCacheClusterInput struct {
 	// For instructions on how to move existing Memcached nodes to different Availability
 	// Zones, see the Availability Zone Considerations section of Cache Node Considerations
 	// for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheNode.Memcached.html).
-	AZMode *string `type:"string"`
+	AZMode *string `type:"string" enum:"AZMode"`
 
 	// If true, this parameter causes the modifications in this request and any
 	// pending modifications to be applied, asynchronously and as soon as possible,
@@ -3398,9 +5274,10 @@ type ModifyCacheClusterInput struct {
 	// If false, then changes to the cache cluster are applied on the next maintenance
 	// reboot, or the next failure reboot, whichever occurs first.
 	//
-	// If you perform a ModifyCacheCluster before a pending modification is applied,
-	// the pending modification is replaced by the newer modification. Valid values:
-	// true | false
+	//  If you perform a ModifyCacheCluster before a pending modification is applied,
+	// the pending modification is replaced by the newer modification.
+	//
+	//  Valid values: true | false
 	//
 	// Default: false
 	ApplyImmediately *bool `type:"boolean"`
@@ -3409,7 +5286,7 @@ type ModifyCacheClusterInput struct {
 	AutoMinorVersionUpgrade *bool `type:"boolean"`
 
 	// The cache cluster identifier. This value is stored as a lowercase string.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string" required:"true"`
+	CacheClusterId *string `type:"string" required:"true"`
 
 	// A list of cache node IDs to be removed. A node ID is a numeric identifier
 	// (0001, 0002, etc.). This parameter is only valid when NumCacheNodes is less
@@ -3421,7 +5298,12 @@ type ModifyCacheClusterInput struct {
 	// For example: If you have 3 active cache nodes, 7 pending cache nodes, and
 	// the number of cache nodes in this ModifyCacheCluser call is 5, you must list
 	// 2 (7 - 5) cache node IDs to remove.
-	CacheNodeIDsToRemove []*string `locationName:"CacheNodeIdsToRemove" locationNameList:"CacheNodeId" type:"list"`
+	CacheNodeIdsToRemove []*string `locationNameList:"CacheNodeId" type:"list"`
+
+	// A valid cache node type that you want to scale this cache cluster to. The
+	// value of this parameter must be one of the ScaleUpModifications values returned
+	// by the ListAllowedCacheNodeTypeModification action.
+	CacheNodeType *string `type:"string"`
 
 	// The name of the cache parameter group to apply to this cache cluster. This
 	// change is asynchronously applied as soon as possible for parameters when
@@ -3439,6 +5321,12 @@ type ModifyCacheClusterInput struct {
 	CacheSecurityGroupNames []*string `locationNameList:"CacheSecurityGroupName" type:"list"`
 
 	// The upgraded version of the cache engine to be run on the cache nodes.
+	//
+	//  Important: You can upgrade to a newer engine version (see Selecting a Cache
+	// Engine and Version (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/SelectEngine.html#VersionManagement)),
+	// but you cannot downgrade to an earlier engine version. If you want to use
+	// an earlier engine version, you must delete the existing cache cluster and
+	// create it anew with the earlier engine version.
 	EngineVersion *string `type:"string"`
 
 	// The list of Availability Zones where the new Memcached cache nodes will be
@@ -3451,15 +5339,20 @@ type ModifyCacheClusterInput struct {
 	//
 	// This option is only supported on Memcached clusters.
 	//
-	// Scenarios:   Scenario 1: You have 3 active nodes and wish to add 2 nodes.
-	// Specify NumCacheNodes=5 (3 + 2) and optionally specify two Availability Zones
-	// for the two new nodes.  Scenario 2: You have 3 active nodes and 2 nodes pending
-	// creation (from the scenario 1 call) and want to add 1 more node. Specify
-	// NumCacheNodes=6 ((3 + 2) + 1) and optionally specify an Availability Zone
-	// for the new node.  Scenario 3: You want to cancel all pending actions. Specify
-	// NumCacheNodes=3 to cancel all pending actions.
+	// Scenarios:
 	//
-	// The Availability Zone placement of nodes pending creation cannot be modified.
+	//    Scenario 1: You have 3 active nodes and wish to add 2 nodes. Specify
+	// NumCacheNodes=5 (3 + 2) and optionally specify two Availability Zones for
+	// the two new nodes.
+	//
+	//    Scenario 2: You have 3 active nodes and 2 nodes pending creation (from
+	// the scenario 1 call) and want to add 1 more node. Specify NumCacheNodes=6
+	// ((3 + 2) + 1) and optionally specify an Availability Zone for the new node.
+	//
+	//    Scenario 3: You want to cancel all pending actions. Specify NumCacheNodes=3
+	// to cancel all pending actions.
+	//
+	//   The Availability Zone placement of nodes pending creation cannot be modified.
 	// If you wish to cancel any nodes pending creation, add 0 nodes by setting
 	// NumCacheNodes to the number of current nodes.
 	//
@@ -3469,23 +5362,54 @@ type ModifyCacheClusterInput struct {
 	// Availability Zones, see the Availability Zone Considerations section of Cache
 	// Node Considerations for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheNode.Memcached.html).
 	//
-	// Impact of new add/remove requests upon pending requests
+	//  Impact of new add/remove requests upon pending requests
 	//
-	//   Scenarios Pending action New Request Results   Scenario-1 Delete Delete
-	// The new delete, pending or immediate, replaces the pending delete.   Scenario-2
-	// Delete Create The new create, pending or immediate, replaces the pending
-	// delete.   Scenario-3 Create Delete The new delete, pending or immediate,
-	// replaces the pending create.   Scenario-4 Create Create The new create is
-	// added to the pending create. Important:If the new create request is Apply
-	// Immediately - Yes, all creates are performed immediately. If the new create
-	// request is Apply Immediately - No, all creates are pending.   Example: NewAvailabilityZones.member.1=us-west-2a&NewAvailabilityZones.member.2=us-west-2b&NewAvailabilityZones.member.3=us-west-2c
+	//   Scenario-1
+	//
+	//   Pending Action: Delete
+	//
+	//   New Request: Delete
+	//
+	//   Result: The new delete, pending or immediate, replaces the pending delete.
+	//
+	//     Scenario-2
+	//
+	//   Pending Action: Delete
+	//
+	//   New Request: Create
+	//
+	//   Result: The new create, pending or immediate, replaces the pending delete.
+	//
+	//     Scenario-3
+	//
+	//   Pending Action: Create
+	//
+	//   New Request: Delete
+	//
+	//   Result: The new delete, pending or immediate, replaces the pending create.
+	//
+	//     Scenario-4
+	//
+	//   Pending Action: Create
+	//
+	//   New Request: Create
+	//
+	//   Result: The new create is added to the pending create.
+	//
+	//   Important: If the new create request is Apply Immediately - Yes, all creates
+	// are performed immediately. If the new create request is Apply Immediately
+	// - No, all creates are pending.
+	//
+	//      Example:
+	//
+	//  NewAvailabilityZones.member.1=us-west-2a&amp;NewAvailabilityZones.member.2=us-west-2b&amp;NewAvailabilityZones.member.3=us-west-2c
 	NewAvailabilityZones []*string `locationNameList:"PreferredAvailabilityZone" type:"list"`
 
 	// The Amazon Resource Name (ARN) of the Amazon SNS topic to which notifications
 	// will be sent.
 	//
-	// The Amazon SNS topic owner must be same as the cache cluster owner.
-	NotificationTopicARN *string `locationName:"NotificationTopicArn" type:"string"`
+	//  The Amazon SNS topic owner must be same as the cache cluster owner.
+	NotificationTopicArn *string `type:"string"`
 
 	// The status of the Amazon SNS notification topic. Notifications are sent only
 	// if the status is active.
@@ -3506,23 +5430,24 @@ type ModifyCacheClusterInput struct {
 	// For clusters running Redis, this value must be 1. For clusters running Memcached,
 	// this value must be between 1 and 20.
 	//
-	// Note:Adding or removing Memcached cache nodes can be applied immediately
-	// or as a pending action. See ApplyImmediately. A pending action to modify
-	// the number of cache nodes in a cluster during its maintenance window, whether
-	// by adding or removing nodes in accordance with the scale out architecture,
-	// is not queued. The customer's latest request to add or remove nodes to the
-	// cluster overrides any previous pending actions to modify the number of cache
-	// nodes in the cluster. For example, a request to remove 2 nodes would override
-	// a previous pending action to remove 3 nodes. Similarly, a request to add
-	// 2 nodes would override a previous pending action to remove 3 nodes and vice
-	// versa. As Memcached cache nodes may now be provisioned in different Availability
-	// Zones with flexible cache node placement, a request to add nodes does not
-	// automatically override a previous pending action to add nodes. The customer
-	// can modify the previous pending action to add more nodes or explicitly cancel
-	// the pending request and retry the new request. To cancel pending actions
-	// to modify the number of cache nodes in a cluster, use the ModifyCacheCluster
-	// request and set NumCacheNodes equal to the number of cache nodes currently
-	// in the cache cluster.
+	//  Adding or removing Memcached cache nodes can be applied immediately or
+	// as a pending action. See ApplyImmediately.
+	//
+	// A pending action to modify the number of cache nodes in a cluster during
+	// its maintenance window, whether by adding or removing nodes in accordance
+	// with the scale out architecture, is not queued. The customer's latest request
+	// to add or remove nodes to the cluster overrides any previous pending actions
+	// to modify the number of cache nodes in the cluster. For example, a request
+	// to remove 2 nodes would override a previous pending action to remove 3 nodes.
+	// Similarly, a request to add 2 nodes would override a previous pending action
+	// to remove 3 nodes and vice versa. As Memcached cache nodes may now be provisioned
+	// in different Availability Zones with flexible cache node placement, a request
+	// to add nodes does not automatically override a previous pending action to
+	// add nodes. The customer can modify the previous pending action to add more
+	// nodes or explicitly cancel the pending request and retry the new request.
+	// To cancel pending actions to modify the number of cache nodes in a cluster,
+	// use the ModifyCacheCluster request and set NumCacheNodes equal to the number
+	// of cache nodes currently in the cache cluster.
 	NumCacheNodes *int64 `type:"integer"`
 
 	// Specifies the weekly time range during which maintenance on the cache cluster
@@ -3530,48 +5455,87 @@ type ModifyCacheClusterInput struct {
 	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
 	// values for ddd are:
 	//
-	//  sun mon tue wed thu fri sat  Example: sun:05:00-sun:09:00
+	//    sun
+	//
+	//    mon
+	//
+	//    tue
+	//
+	//    wed
+	//
+	//    thu
+	//
+	//    fri
+	//
+	//    sat
+	//
+	//   Example: sun:05:00-sun:09:00
 	PreferredMaintenanceWindow *string `type:"string"`
 
 	// Specifies the VPC Security Groups associated with the cache cluster.
 	//
 	// This parameter can be used only with clusters that are created in an Amazon
 	// Virtual Private Cloud (VPC).
-	SecurityGroupIDs []*string `locationName:"SecurityGroupIds" locationNameList:"SecurityGroupId" type:"list"`
+	SecurityGroupIds []*string `locationNameList:"SecurityGroupId" type:"list"`
 
 	// The number of days for which ElastiCache will retain automatic cache cluster
 	// snapshots before deleting them. For example, if you set SnapshotRetentionLimit
 	// to 5, then a snapshot that was taken today will be retained for 5 days before
 	// being deleted.
 	//
-	// ImportantIf the value of SnapshotRetentionLimit is set to zero (0), backups
-	// are turned off.
+	//  If the value of SnapshotRetentionLimit is set to zero (0), backups are
+	// turned off.
 	SnapshotRetentionLimit *int64 `type:"integer"`
 
 	// The daily time range (in UTC) during which ElastiCache will begin taking
 	// a daily snapshot of your cache cluster.
 	SnapshotWindow *string `type:"string"`
-
-	metadataModifyCacheClusterInput `json:"-" xml:"-"`
 }
 
-type metadataModifyCacheClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyCacheClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyCacheClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyCacheClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyCacheClusterInput"}
+	if s.CacheClusterId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheClusterId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyCacheClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific cache cluster.
 	CacheCluster *CacheCluster `type:"structure"`
-
-	metadataModifyCacheClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataModifyCacheClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyCacheClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyCacheClusterOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a ModifyCacheParameterGroup action.
 type ModifyCacheParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group to modify.
 	CacheParameterGroupName *string `type:"string" required:"true"`
 
@@ -3579,16 +5543,38 @@ type ModifyCacheParameterGroupInput struct {
 	// supply at least one parameter name and value; subsequent arguments are optional.
 	// A maximum of 20 parameters may be modified per request.
 	ParameterNameValues []*ParameterNameValue `locationNameList:"ParameterNameValue" type:"list" required:"true"`
-
-	metadataModifyCacheParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataModifyCacheParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyCacheParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyCacheParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyCacheParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyCacheParameterGroupInput"}
+	if s.CacheParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupName"))
+	}
+	if s.ParameterNameValues == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterNameValues"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Represents the input of a ModifyCacheSubnetGroup action.
 type ModifyCacheSubnetGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// A description for the cache subnet group.
 	CacheSubnetGroupDescription *string `type:"string"`
 
@@ -3601,30 +5587,57 @@ type ModifyCacheSubnetGroupInput struct {
 	CacheSubnetGroupName *string `type:"string" required:"true"`
 
 	// The EC2 subnet IDs for the cache subnet group.
-	SubnetIDs []*string `locationName:"SubnetIds" locationNameList:"SubnetIdentifier" type:"list"`
-
-	metadataModifyCacheSubnetGroupInput `json:"-" xml:"-"`
+	SubnetIds []*string `locationNameList:"SubnetIdentifier" type:"list"`
 }
 
-type metadataModifyCacheSubnetGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyCacheSubnetGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyCacheSubnetGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyCacheSubnetGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyCacheSubnetGroupInput"}
+	if s.CacheSubnetGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSubnetGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyCacheSubnetGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of one of the following actions:
 	//
-	//   CreateCacheSubnetGroup   ModifyCacheSubnetGroup
+	//    CreateCacheSubnetGroup
+	//
+	//    ModifyCacheSubnetGroup
 	CacheSubnetGroup *CacheSubnetGroup `type:"structure"`
-
-	metadataModifyCacheSubnetGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataModifyCacheSubnetGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyCacheSubnetGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyCacheSubnetGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a ModifyReplicationGroups action.
 type ModifyReplicationGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// If true, this parameter causes the modifications in this request and any
 	// pending modifications to be applied, asynchronously and as soon as possible,
 	// regardless of the PreferredMaintenanceWindow setting for the replication
@@ -3647,10 +5660,17 @@ type ModifyReplicationGroupInput struct {
 	//
 	// Valid values: true | false
 	//
-	// ElastiCache Multi-AZ replication groups are not supported on:
+	//  ElastiCache Multi-AZ replication groups are not supported on:
 	//
-	//  Redis versions earlier than 2.8.6. T1 and T2 cache node types.
+	//   Redis versions earlier than 2.8.6.
+	//
+	//   T1 and T2 cache node types.
 	AutomaticFailoverEnabled *bool `type:"boolean"`
+
+	// A valid cache node type that you want to scale this replication group to.
+	// The value of this parameter must be one of the ScaleUpModifications values
+	// returned by the ListAllowedCacheNodeTypeModification action.
+	CacheNodeType *string `type:"string"`
 
 	// The name of the cache parameter group to apply to all of the clusters in
 	// this replication group. This change is asynchronously applied as soon as
@@ -3670,13 +5690,19 @@ type ModifyReplicationGroupInput struct {
 
 	// The upgraded version of the cache engine to be run on the cache clusters
 	// in the replication group.
+	//
+	//  Important: You can upgrade to a newer engine version (see Selecting a Cache
+	// Engine and Version (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/SelectEngine.html#VersionManagement)),
+	// but you cannot downgrade to an earlier engine version. If you want to use
+	// an earlier engine version, you must delete the existing replication group
+	// and create it anew with the earlier engine version.
 	EngineVersion *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the Amazon SNS topic to which notifications
 	// will be sent.
 	//
-	// The Amazon SNS topic owner must be same as the replication group owner.
-	NotificationTopicARN *string `locationName:"NotificationTopicArn" type:"string"`
+	//  The Amazon SNS topic owner must be same as the replication group owner.
+	NotificationTopicArn *string `type:"string"`
 
 	// The status of the Amazon SNS notification topic for the replication group.
 	// Notifications are sent only if the status is active.
@@ -3689,33 +5715,47 @@ type ModifyReplicationGroupInput struct {
 	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
 	// values for ddd are:
 	//
-	//  sun mon tue wed thu fri sat  Example: sun:05:00-sun:09:00
+	//    sun
+	//
+	//    mon
+	//
+	//    tue
+	//
+	//    wed
+	//
+	//    thu
+	//
+	//    fri
+	//
+	//    sat
+	//
+	//   Example: sun:05:00-sun:09:00
 	PreferredMaintenanceWindow *string `type:"string"`
 
-	// If this parameter is specified, ElastiCache will promote each of the cache
-	// clusters in the specified replication group to the primary role. The nodes
-	// of all other cache clusters in the replication group will be read replicas.
-	PrimaryClusterID *string `locationName:"PrimaryClusterId" type:"string"`
+	// If this parameter is specified, ElastiCache will promote the specified cluster
+	// in the specified replication group to the primary role. The nodes of all
+	// other clusters in the replication group will be read replicas.
+	PrimaryClusterId *string `type:"string"`
 
 	// A description for the replication group. Maximum length is 255 characters.
 	ReplicationGroupDescription *string `type:"string"`
 
 	// The identifier of the replication group to modify.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string" required:"true"`
+	ReplicationGroupId *string `type:"string" required:"true"`
 
 	// Specifies the VPC Security Groups associated with the cache clusters in the
 	// replication group.
 	//
 	// This parameter can be used only with replication group containing cache
 	// clusters running in an Amazon Virtual Private Cloud (VPC).
-	SecurityGroupIDs []*string `locationName:"SecurityGroupIds" locationNameList:"SecurityGroupId" type:"list"`
+	SecurityGroupIds []*string `locationNameList:"SecurityGroupId" type:"list"`
 
 	// The number of days for which ElastiCache will retain automatic node group
 	// snapshots before deleting them. For example, if you set SnapshotRetentionLimit
 	// to 5, then a snapshot that was taken today will be retained for 5 days before
 	// being deleted.
 	//
-	// ImportantIf the value of SnapshotRetentionLimit is set to zero (0), backups
+	//  Important If the value of SnapshotRetentionLimit is set to zero (0), backups
 	// are turned off.
 	SnapshotRetentionLimit *int64 `type:"integer"`
 
@@ -3730,31 +5770,56 @@ type ModifyReplicationGroupInput struct {
 
 	// The cache cluster ID that will be used as the daily snapshot source for the
 	// replication group.
-	SnapshottingClusterID *string `locationName:"SnapshottingClusterId" type:"string"`
-
-	metadataModifyReplicationGroupInput `json:"-" xml:"-"`
+	SnapshottingClusterId *string `type:"string"`
 }
 
-type metadataModifyReplicationGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyReplicationGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyReplicationGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyReplicationGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyReplicationGroupInput"}
+	if s.ReplicationGroupId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReplicationGroupId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyReplicationGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific replication group.
 	ReplicationGroup *ReplicationGroup `type:"structure"`
-
-	metadataModifyReplicationGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataModifyReplicationGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyReplicationGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyReplicationGroupOutput) GoString() string {
+	return s.String()
 }
 
 // Represents a collection of cache nodes in a replication group.
 type NodeGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier for the node group. A replication group contains only one
 	// node group; therefore, the node group ID is 0001.
-	NodeGroupID *string `locationName:"NodeGroupId" type:"string"`
+	NodeGroupId *string `type:"string"`
 
 	// A list containing information about individual nodes within the node group.
 	NodeGroupMembers []*NodeGroupMember `locationNameList:"NodeGroupMember" type:"list"`
@@ -3765,22 +5830,28 @@ type NodeGroup struct {
 
 	// The current state of this replication group - creating, available, etc.
 	Status *string `type:"string"`
-
-	metadataNodeGroup `json:"-" xml:"-"`
 }
 
-type metadataNodeGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s NodeGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NodeGroup) GoString() string {
+	return s.String()
 }
 
 // Represents a single node within a node group.
 type NodeGroupMember struct {
+	_ struct{} `type:"structure"`
+
 	// The ID of the cache cluster to which the node belongs.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string"`
+	CacheClusterId *string `type:"string"`
 
 	// The ID of the node within its cache cluster. A node ID is a numeric identifier
 	// (0001, 0002, etc.).
-	CacheNodeID *string `locationName:"CacheNodeId" type:"string"`
+	CacheNodeId *string `type:"string"`
 
 	// The role that is currently assigned to the node - primary or replica.
 	CurrentRole *string `type:"string"`
@@ -3791,21 +5862,27 @@ type NodeGroupMember struct {
 	// Represents the information required for client programs to connect to a cache
 	// node.
 	ReadEndpoint *Endpoint `type:"structure"`
-
-	metadataNodeGroupMember `json:"-" xml:"-"`
 }
 
-type metadataNodeGroupMember struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s NodeGroupMember) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NodeGroupMember) GoString() string {
+	return s.String()
 }
 
 // Represents an individual cache node in a snapshot of a cache cluster.
 type NodeSnapshot struct {
+	_ struct{} `type:"structure"`
+
 	// The date and time when the cache node was created in the source cache cluster.
 	CacheNodeCreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// The cache node identifier for the node in the source cache cluster.
-	CacheNodeID *string `locationName:"CacheNodeId" type:"string"`
+	CacheNodeId *string `type:"string"`
 
 	// The size of the cache on the source cache node.
 	CacheSize *string `type:"string"`
@@ -3813,36 +5890,54 @@ type NodeSnapshot struct {
 	// The date and time when the source node's metadata and cache data set was
 	// obtained for the snapshot.
 	SnapshotCreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
-
-	metadataNodeSnapshot `json:"-" xml:"-"`
 }
 
-type metadataNodeSnapshot struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s NodeSnapshot) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NodeSnapshot) GoString() string {
+	return s.String()
 }
 
 // Describes a notification topic and its status. Notification topics are used
 // for publishing ElastiCache events to subscribers using Amazon Simple Notification
 // Service (SNS).
 type NotificationConfiguration struct {
+	_ struct{} `type:"structure"`
+
 	// The Amazon Resource Name (ARN) that identifies the topic.
-	TopicARN *string `locationName:"TopicArn" type:"string"`
+	TopicArn *string `type:"string"`
 
 	// The current state of the topic.
 	TopicStatus *string `type:"string"`
-
-	metadataNotificationConfiguration `json:"-" xml:"-"`
 }
 
-type metadataNotificationConfiguration struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s NotificationConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NotificationConfiguration) GoString() string {
+	return s.String()
 }
 
 // Describes an individual setting that controls some aspect of ElastiCache
 // behavior.
 type Parameter struct {
+	_ struct{} `type:"structure"`
+
 	// The valid range of values for the parameter.
 	AllowedValues *string `type:"string"`
+
+	// ChangeType indicates whether a change to the parameter will be applied immediately
+	// or requires a reboot for the change to be applied. You can force a reboot
+	// or wait until the next maintenance window's reboot. For more information,
+	// see Rebooting a Cluster (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Clusters.Rebooting.html).
+	ChangeType *string `type:"string" enum:"ChangeType"`
 
 	// The valid data type for the parameter.
 	DataType *string `type:"string"`
@@ -3866,35 +5961,51 @@ type Parameter struct {
 
 	// The source of the parameter.
 	Source *string `type:"string"`
-
-	metadataParameter `json:"-" xml:"-"`
 }
 
-type metadataParameter struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Parameter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Parameter) GoString() string {
+	return s.String()
 }
 
 // Describes a name-value pair that is used to update the value of a parameter.
 type ParameterNameValue struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the parameter.
 	ParameterName *string `type:"string"`
 
 	// The value of the parameter.
 	ParameterValue *string `type:"string"`
-
-	metadataParameterNameValue `json:"-" xml:"-"`
 }
 
-type metadataParameterNameValue struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ParameterNameValue) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ParameterNameValue) GoString() string {
+	return s.String()
 }
 
 // A group of settings that will be applied to the cache cluster in the future,
 // or that are currently being applied.
 type PendingModifiedValues struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cache node IDs that are being removed (or will be removed) from
 	// the cache cluster. A node ID is a numeric identifier (0001, 0002, etc.).
-	CacheNodeIDsToRemove []*string `locationName:"CacheNodeIdsToRemove" locationNameList:"CacheNodeId" type:"list"`
+	CacheNodeIdsToRemove []*string `locationNameList:"CacheNodeId" type:"list"`
+
+	// The cache node type that this cache cluster or replication group will be
+	// scaled to.
+	CacheNodeType *string `type:"string"`
 
 	// The new cache engine version that the cache cluster will run.
 	EngineVersion *string `type:"string"`
@@ -3904,16 +6015,22 @@ type PendingModifiedValues struct {
 	// For clusters running Redis, this value must be 1. For clusters running Memcached,
 	// this value must be between 1 and 20.
 	NumCacheNodes *int64 `type:"integer"`
-
-	metadataPendingModifiedValues `json:"-" xml:"-"`
 }
 
-type metadataPendingModifiedValues struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PendingModifiedValues) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PendingModifiedValues) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a PurchaseReservedCacheNodesOffering action.
 type PurchaseReservedCacheNodesOfferingInput struct {
+	_ struct{} `type:"structure"`
+
 	// The number of cache node instances to reserve.
 	//
 	// Default: 1
@@ -3921,102 +6038,193 @@ type PurchaseReservedCacheNodesOfferingInput struct {
 
 	// A customer-specified identifier to track this reservation.
 	//
-	// Example: myreservationID
-	ReservedCacheNodeID *string `locationName:"ReservedCacheNodeId" type:"string"`
+	//  The Reserved Cache Node ID is an unique customer-specified identifier to
+	// track this reservation. If this parameter is not specified, ElastiCache automatically
+	// generates an identifier for the reservation.
+	//
+	//  Example: myreservationID
+	ReservedCacheNodeId *string `type:"string"`
 
 	// The ID of the reserved cache node offering to purchase.
 	//
 	// Example: 438012d3-4052-4cc7-b2e3-8d3372e0e706
-	ReservedCacheNodesOfferingID *string `locationName:"ReservedCacheNodesOfferingId" type:"string" required:"true"`
-
-	metadataPurchaseReservedCacheNodesOfferingInput `json:"-" xml:"-"`
+	ReservedCacheNodesOfferingId *string `type:"string" required:"true"`
 }
 
-type metadataPurchaseReservedCacheNodesOfferingInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PurchaseReservedCacheNodesOfferingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PurchaseReservedCacheNodesOfferingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PurchaseReservedCacheNodesOfferingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PurchaseReservedCacheNodesOfferingInput"}
+	if s.ReservedCacheNodesOfferingId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReservedCacheNodesOfferingId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type PurchaseReservedCacheNodesOfferingOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of a PurchaseReservedCacheNodesOffering action.
 	ReservedCacheNode *ReservedCacheNode `type:"structure"`
-
-	metadataPurchaseReservedCacheNodesOfferingOutput `json:"-" xml:"-"`
 }
 
-type metadataPurchaseReservedCacheNodesOfferingOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PurchaseReservedCacheNodesOfferingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PurchaseReservedCacheNodesOfferingOutput) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a RebootCacheCluster action.
 type RebootCacheClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cache cluster identifier. This parameter is stored as a lowercase string.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string" required:"true"`
+	CacheClusterId *string `type:"string" required:"true"`
 
 	// A list of cache node IDs to reboot. A node ID is a numeric identifier (0001,
 	// 0002, etc.). To reboot an entire cache cluster, specify all of the cache
 	// node IDs.
-	CacheNodeIDsToReboot []*string `locationName:"CacheNodeIdsToReboot" locationNameList:"CacheNodeId" type:"list" required:"true"`
-
-	metadataRebootCacheClusterInput `json:"-" xml:"-"`
+	CacheNodeIdsToReboot []*string `locationNameList:"CacheNodeId" type:"list" required:"true"`
 }
 
-type metadataRebootCacheClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RebootCacheClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RebootCacheClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RebootCacheClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RebootCacheClusterInput"}
+	if s.CacheClusterId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheClusterId"))
+	}
+	if s.CacheNodeIdsToReboot == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheNodeIdsToReboot"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RebootCacheClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Contains all of the attributes of a specific cache cluster.
 	CacheCluster *CacheCluster `type:"structure"`
-
-	metadataRebootCacheClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataRebootCacheClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RebootCacheClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RebootCacheClusterOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the specific price and frequency of a recurring charges for a reserved
 // cache node, or for a reserved cache node offering.
 type RecurringCharge struct {
+	_ struct{} `type:"structure"`
+
 	// The monetary amount of the recurring charge.
 	RecurringChargeAmount *float64 `type:"double"`
 
 	// The frequency of the recurring charge.
 	RecurringChargeFrequency *string `type:"string"`
-
-	metadataRecurringCharge `json:"-" xml:"-"`
 }
 
-type metadataRecurringCharge struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RecurringCharge) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RecurringCharge) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a RemoveTagsFromResource action.
 type RemoveTagsFromResourceInput struct {
-	// The name of the ElastiCache resource from which you want the listed tags
-	// removed, for example arn:aws:elasticache:us-west-2:0123456789:cluster:myCluster.
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the resource from which you want the tags
+	// removed, for example arn:aws:elasticache:us-west-2:0123456789:cluster:myCluster
+	// or arn:aws:elasticache:us-west-2:0123456789:snapshot:mySnapshot.
+	//
+	// For more information on ARNs, go to Amazon Resource Names (ARNs) and AWS
+	// Service Namespaces (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	ResourceName *string `type:"string" required:"true"`
 
 	// A list of TagKeys identifying the tags you want removed from the named resource.
 	// For example, TagKeys.member.1=Region removes the cost allocation tag with
 	// the key name Region from the resource named by the ResourceName parameter.
 	TagKeys []*string `type:"list" required:"true"`
-
-	metadataRemoveTagsFromResourceInput `json:"-" xml:"-"`
 }
 
-type metadataRemoveTagsFromResourceInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RemoveTagsFromResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemoveTagsFromResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RemoveTagsFromResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RemoveTagsFromResourceInput"}
+	if s.ResourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
+	}
+	if s.TagKeys == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Contains all of the attributes of a specific replication group.
 type ReplicationGroup struct {
+	_ struct{} `type:"structure"`
+
 	// Indicates the status of Multi-AZ for this replication group.
 	//
-	// ElastiCache Multi-AZ replication groups are not supported on:
+	//  ElastiCache Multi-AZ replication groups are not supported on:
 	//
-	//  Redis versions earlier than 2.8.6. T1 and T2 cache node types.
-	AutomaticFailover *string `type:"string"`
+	//   Redis versions earlier than 2.8.6.
+	//
+	//   T1 and T2 cache node types.
+	AutomaticFailover *string `type:"string" enum:"AutomaticFailoverStatus"`
 
 	// The description of the replication group.
 	Description *string `type:"string"`
@@ -4033,45 +6241,59 @@ type ReplicationGroup struct {
 	PendingModifiedValues *ReplicationGroupPendingModifiedValues `type:"structure"`
 
 	// The identifier for the replication group.
-	ReplicationGroupID *string `locationName:"ReplicationGroupId" type:"string"`
+	ReplicationGroupId *string `type:"string"`
 
 	// The cache cluster ID that is used as the daily snapshot source for the replication
 	// group.
-	SnapshottingClusterID *string `locationName:"SnapshottingClusterId" type:"string"`
+	SnapshottingClusterId *string `type:"string"`
 
 	// The current state of this replication group - creating, available, etc.
 	Status *string `type:"string"`
-
-	metadataReplicationGroup `json:"-" xml:"-"`
 }
 
-type metadataReplicationGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ReplicationGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReplicationGroup) GoString() string {
+	return s.String()
 }
 
 // The settings to be applied to the replication group, either immediately or
 // during the next maintenance window.
 type ReplicationGroupPendingModifiedValues struct {
+	_ struct{} `type:"structure"`
+
 	// Indicates the status of Multi-AZ for this replication group.
 	//
-	// ElastiCache Multi-AZ replication groups are not supported on:
+	//  ElastiCache Multi-AZ replication groups are not supported on:
 	//
-	//  Redis versions earlier than 2.8.6. T1 and T2 cache node types.
-	AutomaticFailoverStatus *string `type:"string"`
+	//   Redis versions earlier than 2.8.6.
+	//
+	//   T1 and T2 cache node types.
+	AutomaticFailoverStatus *string `type:"string" enum:"PendingAutomaticFailoverStatus"`
 
 	// The primary cluster ID which will be applied immediately (if --apply-immediately
 	// was specified), or during the next maintenance window.
-	PrimaryClusterID *string `locationName:"PrimaryClusterId" type:"string"`
-
-	metadataReplicationGroupPendingModifiedValues `json:"-" xml:"-"`
+	PrimaryClusterId *string `type:"string"`
 }
 
-type metadataReplicationGroupPendingModifiedValues struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ReplicationGroupPendingModifiedValues) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReplicationGroupPendingModifiedValues) GoString() string {
+	return s.String()
 }
 
 // Represents the output of a PurchaseReservedCacheNodesOffering action.
 type ReservedCacheNode struct {
+	_ struct{} `type:"structure"`
+
 	// The number of cache nodes that have been reserved.
 	CacheNodeCount *int64 `type:"integer"`
 
@@ -4079,19 +6301,34 @@ type ReservedCacheNode struct {
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -4112,10 +6349,10 @@ type ReservedCacheNode struct {
 	RecurringCharges []*RecurringCharge `locationNameList:"RecurringCharge" type:"list"`
 
 	// The unique identifier for the reservation.
-	ReservedCacheNodeID *string `locationName:"ReservedCacheNodeId" type:"string"`
+	ReservedCacheNodeId *string `type:"string"`
 
 	// The offering identifier.
-	ReservedCacheNodesOfferingID *string `locationName:"ReservedCacheNodesOfferingId" type:"string"`
+	ReservedCacheNodesOfferingId *string `type:"string"`
 
 	// The time the reservation started.
 	StartTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
@@ -4125,33 +6362,54 @@ type ReservedCacheNode struct {
 
 	// The hourly price charged for this reserved cache node.
 	UsagePrice *float64 `type:"double"`
-
-	metadataReservedCacheNode `json:"-" xml:"-"`
 }
 
-type metadataReservedCacheNode struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ReservedCacheNode) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservedCacheNode) GoString() string {
+	return s.String()
 }
 
 // Describes all of the attributes of a reserved cache node offering.
 type ReservedCacheNodesOffering struct {
+	_ struct{} `type:"structure"`
+
 	// The cache node type for the reserved cache node.
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -4172,42 +6430,68 @@ type ReservedCacheNodesOffering struct {
 	RecurringCharges []*RecurringCharge `locationNameList:"RecurringCharge" type:"list"`
 
 	// A unique identifier for the reserved cache node offering.
-	ReservedCacheNodesOfferingID *string `locationName:"ReservedCacheNodesOfferingId" type:"string"`
+	ReservedCacheNodesOfferingId *string `type:"string"`
 
 	// The hourly price charged for this offering.
 	UsagePrice *float64 `type:"double"`
-
-	metadataReservedCacheNodesOffering `json:"-" xml:"-"`
 }
 
-type metadataReservedCacheNodesOffering struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ReservedCacheNodesOffering) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservedCacheNodesOffering) GoString() string {
+	return s.String()
 }
 
 // Represents the input of a ResetCacheParameterGroup action.
 type ResetCacheParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache parameter group to reset.
 	CacheParameterGroupName *string `type:"string" required:"true"`
 
-	// An array of parameter names to be reset. If you are not resetting the entire
-	// cache parameter group, you must specify at least one parameter name.
-	ParameterNameValues []*ParameterNameValue `locationNameList:"ParameterNameValue" type:"list" required:"true"`
+	// An array of parameter names to reset to their default values. If ResetAllParameters
+	// is false, you must specify the name of at least one parameter to reset.
+	ParameterNameValues []*ParameterNameValue `locationNameList:"ParameterNameValue" type:"list"`
 
-	// If true, all parameters in the cache parameter group will be reset to default
-	// values. If false, no such action occurs.
+	// If true, all parameters in the cache parameter group will be reset to their
+	// default values. If false, only the parameters listed by ParameterNameValues
+	// are reset to their default values.
 	//
 	// Valid values: true | false
 	ResetAllParameters *bool `type:"boolean"`
-
-	metadataResetCacheParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataResetCacheParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ResetCacheParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ResetCacheParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ResetCacheParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ResetCacheParameterGroupInput"}
+	if s.CacheParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Represents the input of a RevokeCacheSecurityGroupIngress action.
 type RevokeCacheSecurityGroupIngressInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cache security group to revoke ingress from.
 	CacheSecurityGroupName *string `type:"string" required:"true"`
 
@@ -4217,48 +6501,89 @@ type RevokeCacheSecurityGroupIngressInput struct {
 	// The AWS account number of the Amazon EC2 security group owner. Note that
 	// this is not the same thing as an AWS access key ID - you must provide a valid
 	// AWS account number for this parameter.
-	EC2SecurityGroupOwnerID *string `locationName:"EC2SecurityGroupOwnerId" type:"string" required:"true"`
-
-	metadataRevokeCacheSecurityGroupIngressInput `json:"-" xml:"-"`
+	EC2SecurityGroupOwnerId *string `type:"string" required:"true"`
 }
 
-type metadataRevokeCacheSecurityGroupIngressInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RevokeCacheSecurityGroupIngressInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RevokeCacheSecurityGroupIngressInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RevokeCacheSecurityGroupIngressInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RevokeCacheSecurityGroupIngressInput"}
+	if s.CacheSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CacheSecurityGroupName"))
+	}
+	if s.EC2SecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("EC2SecurityGroupName"))
+	}
+	if s.EC2SecurityGroupOwnerId == nil {
+		invalidParams.Add(request.NewErrParamRequired("EC2SecurityGroupOwnerId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RevokeCacheSecurityGroupIngressOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Represents the output of one of the following actions:
 	//
-	//   AuthorizeCacheSecurityGroupIngress   CreateCacheSecurityGroup   RevokeCacheSecurityGroupIngress
+	//    AuthorizeCacheSecurityGroupIngress
+	//
+	//    CreateCacheSecurityGroup
+	//
+	//    RevokeCacheSecurityGroupIngress
 	CacheSecurityGroup *CacheSecurityGroup `type:"structure"`
-
-	metadataRevokeCacheSecurityGroupIngressOutput `json:"-" xml:"-"`
 }
 
-type metadataRevokeCacheSecurityGroupIngressOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RevokeCacheSecurityGroupIngressOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RevokeCacheSecurityGroupIngressOutput) GoString() string {
+	return s.String()
 }
 
 // Represents a single cache security group and its status.
 type SecurityGroupMembership struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the cache security group.
-	SecurityGroupID *string `locationName:"SecurityGroupId" type:"string"`
+	SecurityGroupId *string `type:"string"`
 
 	// The status of the cache security group membership. The status changes whenever
 	// a cache security group is modified, or when the cache security groups assigned
 	// to a cache cluster are modified.
 	Status *string `type:"string"`
-
-	metadataSecurityGroupMembership `json:"-" xml:"-"`
 }
 
-type metadataSecurityGroupMembership struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SecurityGroupMembership) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SecurityGroupMembership) GoString() string {
+	return s.String()
 }
 
 // Represents a copy of an entire cache cluster as of the time when the snapshot
 // was taken.
 type Snapshot struct {
+	_ struct{} `type:"structure"`
+
 	// This parameter is currently disabled.
 	AutoMinorVersionUpgrade *bool `type:"boolean"`
 
@@ -4266,26 +6591,41 @@ type Snapshot struct {
 	CacheClusterCreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// The user-supplied identifier of the source cache cluster.
-	CacheClusterID *string `locationName:"CacheClusterId" type:"string"`
+	CacheClusterId *string `type:"string"`
 
 	// The name of the compute and memory capacity node type for the source cache
 	// cluster.
 	//
 	// Valid node types are as follows:
 	//
-	//  General purpose:  Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium,
-	// cache.m3.medium, cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge Previous
-	// generation: cache.t1.micro, cache.m1.small, cache.m1.medium, cache.m1.large,
-	// cache.m1.xlarge  Compute optimized: cache.c1.xlarge Memory optimized  Current
-	// generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge, cache.r3.4xlarge,
-	// cache.r3.8xlarge Previous generation: cache.m2.xlarge, cache.m2.2xlarge,
-	// cache.m2.4xlarge   Notes:
+	//   General purpose:
 	//
-	//  All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
-	// Redis backup/restore is not supported for t2 instances. Redis Append-only
-	// files (AOF) functionality is not supported for t1 or t2 instances.  For a
-	// complete listing of cache node types and specifications, see Amazon ElastiCache
-	// Product Features and Details (http://aws.amazon.com/elasticache/details)
+	//   Current generation: cache.t2.micro, cache.t2.small, cache.t2.medium, cache.m3.medium,
+	// cache.m3.large, cache.m3.xlarge, cache.m3.2xlarge
+	//
+	//   Previous generation: cache.t1.micro, cache.m1.small, cache.m1.medium,
+	// cache.m1.large, cache.m1.xlarge
+	//
+	//     Compute optimized: cache.c1.xlarge
+	//
+	//   Memory optimized:
+	//
+	//   Current generation: cache.r3.large, cache.r3.xlarge, cache.r3.2xlarge,
+	// cache.r3.4xlarge, cache.r3.8xlarge
+	//
+	//   Previous generation: cache.m2.xlarge, cache.m2.2xlarge, cache.m2.4xlarge
+	//
+	//      Notes:
+	//
+	//   All t2 instances are created in an Amazon Virtual Private Cloud (VPC).
+	//
+	//   Redis backup/restore is not supported for t2 instances.
+	//
+	//   Redis Append-only files (AOF) functionality is not supported for t1 or
+	// t2 instances.
+	//
+	//   For a complete listing of cache node types and specifications, see Amazon
+	// ElastiCache Product Features and Details (http://aws.amazon.com/elasticache/details)
 	// and Cache Node Type-Specific Parameters for Memcached (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Memcached.html#CacheParameterGroups.Memcached.NodeSpecific)
 	// or Cache Node Type-Specific Parameters for Redis (http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheParameterGroups.Redis.html#CacheParameterGroups.Redis.NodeSpecific).
 	CacheNodeType *string `type:"string"`
@@ -4324,7 +6664,21 @@ type Snapshot struct {
 	// (24H Clock UTC). The minimum maintenance window is a 60 minute period. Valid
 	// values for ddd are:
 	//
-	//  sun mon tue wed thu fri sat  Example: sun:05:00-sun:09:00
+	//    sun
+	//
+	//    mon
+	//
+	//    tue
+	//
+	//    wed
+	//
+	//    thu
+	//
+	//    fri
+	//
+	//    sat
+	//
+	//   Example: sun:05:00-sun:09:00
 	PreferredMaintenanceWindow *string `type:"string"`
 
 	// The name of a snapshot. For an automatic snapshot, the name is system-generated;
@@ -4339,7 +6693,7 @@ type Snapshot struct {
 	// ignored: Manual snapshots do not expire, and can only be deleted using the
 	// DeleteSnapshot action.
 	//
-	// ImportantIf the value of SnapshotRetentionLimit is set to zero (0), backups
+	//  Important If the value of SnapshotRetentionLimit is set to zero (0), backups
 	// are turned off.
 	SnapshotRetentionLimit *int64 `type:"integer"`
 
@@ -4357,62 +6711,127 @@ type Snapshot struct {
 
 	// The Amazon Resource Name (ARN) for the topic used by the source cache cluster
 	// for publishing notifications.
-	TopicARN *string `locationName:"TopicArn" type:"string"`
+	TopicArn *string `type:"string"`
 
 	// The Amazon Virtual Private Cloud identifier (VPC ID) of the cache subnet
 	// group for the source cache cluster.
-	VPCID *string `locationName:"VpcId" type:"string"`
-
-	metadataSnapshot `json:"-" xml:"-"`
+	VpcId *string `type:"string"`
 }
 
-type metadataSnapshot struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Snapshot) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Snapshot) GoString() string {
+	return s.String()
 }
 
 // Represents the subnet associated with a cache cluster. This parameter refers
 // to subnets defined in Amazon Virtual Private Cloud (Amazon VPC) and used
 // with ElastiCache.
 type Subnet struct {
+	_ struct{} `type:"structure"`
+
 	// The Availability Zone associated with the subnet.
 	SubnetAvailabilityZone *AvailabilityZone `type:"structure"`
 
 	// The unique identifier for the subnet.
 	SubnetIdentifier *string `type:"string"`
-
-	metadataSubnet `json:"-" xml:"-"`
 }
 
-type metadataSubnet struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Subnet) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Subnet) GoString() string {
+	return s.String()
 }
 
 // A cost allocation Tag that can be added to an ElastiCache cluster or replication
 // group. Tags are composed of a Key/Value pair. A tag with a null Value is
 // permitted.
 type Tag struct {
+	_ struct{} `type:"structure"`
+
 	// The key for the tag.
 	Key *string `type:"string"`
 
 	// The tag's value. May not be null.
 	Value *string `type:"string"`
-
-	metadataTag `json:"-" xml:"-"`
 }
 
-type metadataTag struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Tag) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Tag) GoString() string {
+	return s.String()
 }
 
 // Represents the output from the AddTagsToResource, ListTagsOnResource, and
 // RemoveTagsFromResource actions.
 type TagListMessage struct {
+	_ struct{} `type:"structure"`
+
 	// A list of cost allocation tags as key-value pairs.
 	TagList []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataTagListMessage `json:"-" xml:"-"`
 }
 
-type metadataTagListMessage struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s TagListMessage) String() string {
+	return awsutil.Prettify(s)
 }
+
+// GoString returns the string representation
+func (s TagListMessage) GoString() string {
+	return s.String()
+}
+
+const (
+	// @enum AZMode
+	AZModeSingleAz = "single-az"
+	// @enum AZMode
+	AZModeCrossAz = "cross-az"
+)
+
+const (
+	// @enum AutomaticFailoverStatus
+	AutomaticFailoverStatusEnabled = "enabled"
+	// @enum AutomaticFailoverStatus
+	AutomaticFailoverStatusDisabled = "disabled"
+	// @enum AutomaticFailoverStatus
+	AutomaticFailoverStatusEnabling = "enabling"
+	// @enum AutomaticFailoverStatus
+	AutomaticFailoverStatusDisabling = "disabling"
+)
+
+const (
+	// @enum ChangeType
+	ChangeTypeImmediate = "immediate"
+	// @enum ChangeType
+	ChangeTypeRequiresReboot = "requires-reboot"
+)
+
+const (
+	// @enum PendingAutomaticFailoverStatus
+	PendingAutomaticFailoverStatusEnabled = "enabled"
+	// @enum PendingAutomaticFailoverStatus
+	PendingAutomaticFailoverStatusDisabled = "disabled"
+)
+
+const (
+	// @enum SourceType
+	SourceTypeCacheCluster = "cache-cluster"
+	// @enum SourceType
+	SourceTypeCacheParameterGroup = "cache-parameter-group"
+	// @enum SourceType
+	SourceTypeCacheSecurityGroup = "cache-security-group"
+	// @enum SourceType
+	SourceTypeCacheSubnetGroup = "cache-subnet-group"
+)

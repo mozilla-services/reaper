@@ -5,13 +5,13 @@ import (
 	"encoding/base64"
 	"io"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/internal/apierr"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 )
 
 // contentMD5 computes and sets the HTTP Content-MD5 header for requests that
 // require it.
-func contentMD5(r *aws.Request) {
+func contentMD5(r *request.Request) {
 	h := md5.New()
 
 	// hash the body.  seek back to the first position after reading to reset
@@ -19,12 +19,12 @@ func contentMD5(r *aws.Request) {
 	// body.
 	_, err := io.Copy(h, r.Body)
 	if err != nil {
-		r.Error = apierr.New("ContentMD5", "failed to read body", err)
+		r.Error = awserr.New("ContentMD5", "failed to read body", err)
 		return
 	}
 	_, err = r.Body.Seek(0, 0)
 	if err != nil {
-		r.Error = apierr.New("ContentMD5", "failed to seek body", err)
+		r.Error = awserr.New("ContentMD5", "failed to seek body", err)
 		return
 	}
 

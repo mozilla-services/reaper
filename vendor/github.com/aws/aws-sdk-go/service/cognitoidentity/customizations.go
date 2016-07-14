@@ -1,11 +1,11 @@
 package cognitoidentity
 
-import "github.com/aws/aws-sdk-go/aws"
+import "github.com/aws/aws-sdk-go/aws/request"
 
 func init() {
-	initRequest = func(r *aws.Request) {
-		switch r.Operation {
-		case opGetOpenIDToken, opGetID, opGetCredentialsForIdentity:
+	initRequest = func(r *request.Request) {
+		switch r.Operation.Name {
+		case opGetOpenIdToken, opGetId, opGetCredentialsForIdentity:
 			r.Handlers.Sign.Clear() // these operations are unsigned
 		}
 	}

@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/mobileanalytics"
 )
 
@@ -17,12 +16,12 @@ var _ time.Duration
 var _ bytes.Buffer
 
 func ExampleMobileAnalytics_PutEvents() {
-	svc := mobileanalytics.New(nil)
+	svc := mobileanalytics.New(session.New())
 
 	params := &mobileanalytics.PutEventsInput{
 		ClientContext: aws.String("String"), // Required
 		Events: []*mobileanalytics.Event{ // Required
-			&mobileanalytics.Event{ // Required
+			{ // Required
 				EventType: aws.String("String50Chars"),    // Required
 				Timestamp: aws.String("ISO8601Timestamp"), // Required
 				Attributes: map[string]*string{
@@ -30,12 +29,12 @@ func ExampleMobileAnalytics_PutEvents() {
 					// More values...
 				},
 				Metrics: map[string]*float64{
-					"Key": aws.Double(1.0), // Required
+					"Key": aws.Float64(1.0), // Required
 					// More values...
 				},
 				Session: &mobileanalytics.Session{
-					Duration:       aws.Long(1),
-					ID:             aws.String("String50Chars"),
+					Duration:       aws.Int64(1),
+					Id:             aws.String("String50Chars"),
 					StartTimestamp: aws.String("ISO8601Timestamp"),
 					StopTimestamp:  aws.String("ISO8601Timestamp"),
 				},
@@ -48,20 +47,12 @@ func ExampleMobileAnalytics_PutEvents() {
 	resp, err := svc.PutEvents(params)
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			// Generic AWS Error with Code, Message, and original error (if any)
-			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// A service error occurred
-				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-			}
-		} else {
-			// This case should never be hit, The SDK should alwsy return an
-			// error which satisfies the awserr.Error interface.
-			fmt.Println(err.Error())
-		}
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
 	}
 
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	fmt.Println(resp)
 }

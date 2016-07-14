@@ -4,6 +4,20 @@ sudo: false
 
 go:
   - 1.4
+  - 1.5
+  - 1.6
+  - tip
+    
+# Use Go 1.5's vendoring experiment for 1.5 tests. 1.4 tests will use the tip of the dependencies repo.
+env:
+  - GO15VENDOREXPERIMENT=1
 
-install: "go get -v -t ./... && go get -u github.com/golang/lint/golint"
-script: make unit
+install:
+  - make get-deps
+
+script:
+  - make unit-with-race-cover
+
+matrix:
+  allow_failures:
+    - go: tip

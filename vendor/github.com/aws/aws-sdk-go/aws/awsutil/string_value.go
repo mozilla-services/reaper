@@ -3,7 +3,6 @@ package awsutil
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"reflect"
 	"strings"
 )
@@ -15,8 +14,6 @@ func StringValue(i interface{}) string {
 	return buf.String()
 }
 
-// stringValue will recursively walk value v to build a textual
-// representation of the value.
 func stringValue(v reflect.Value, indent int, buf *bytes.Buffer) {
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -24,15 +21,6 @@ func stringValue(v reflect.Value, indent int, buf *bytes.Buffer) {
 
 	switch v.Kind() {
 	case reflect.Struct:
-		strtype := v.Type().String()
-		if strtype == "time.Time" {
-			fmt.Fprintf(buf, "%s", v.Interface())
-			break
-		} else if strings.HasPrefix(strtype, "io.") {
-			buf.WriteString("<buffer>")
-			break
-		}
-
 		buf.WriteString("{\n")
 
 		names := []string{}
@@ -42,7 +30,7 @@ func stringValue(v reflect.Value, indent int, buf *bytes.Buffer) {
 			if name[0:1] == strings.ToLower(name[0:1]) {
 				continue // ignore unexported fields
 			}
-			if (f.Kind() == reflect.Ptr || f.Kind() == reflect.Slice || f.Kind() == reflect.Map) && f.IsNil() {
+			if (f.Kind() == reflect.Ptr || f.Kind() == reflect.Slice) && f.IsNil() {
 				continue // ignore unset fields
 			}
 			names = append(names, name)
@@ -95,8 +83,6 @@ func stringValue(v reflect.Value, indent int, buf *bytes.Buffer) {
 		switch v.Interface().(type) {
 		case string:
 			format = "%q"
-		case io.ReadSeeker, io.Reader:
-			format = "buffer(%p)"
 		}
 		fmt.Fprintf(buf, format, v.Interface())
 	}

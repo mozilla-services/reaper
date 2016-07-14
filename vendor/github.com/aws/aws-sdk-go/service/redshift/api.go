@@ -4,32 +4,50 @@
 package redshift
 
 import (
-	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/query"
 )
 
-var oprw sync.Mutex
+const opAuthorizeClusterSecurityGroupIngress = "AuthorizeClusterSecurityGroupIngress"
 
-// AuthorizeClusterSecurityGroupIngressRequest generates a request for the AuthorizeClusterSecurityGroupIngress operation.
-func (c *Redshift) AuthorizeClusterSecurityGroupIngressRequest(input *AuthorizeClusterSecurityGroupIngressInput) (req *aws.Request, output *AuthorizeClusterSecurityGroupIngressOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opAuthorizeClusterSecurityGroupIngress == nil {
-		opAuthorizeClusterSecurityGroupIngress = &aws.Operation{
-			Name:       "AuthorizeClusterSecurityGroupIngress",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// AuthorizeClusterSecurityGroupIngressRequest generates a "aws/request.Request" representing the
+// client's request for the AuthorizeClusterSecurityGroupIngress operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the AuthorizeClusterSecurityGroupIngress method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the AuthorizeClusterSecurityGroupIngressRequest method.
+//    req, resp := client.AuthorizeClusterSecurityGroupIngressRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) AuthorizeClusterSecurityGroupIngressRequest(input *AuthorizeClusterSecurityGroupIngressInput) (req *request.Request, output *AuthorizeClusterSecurityGroupIngressOutput) {
+	op := &request.Operation{
+		Name:       opAuthorizeClusterSecurityGroupIngress,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &AuthorizeClusterSecurityGroupIngressInput{}
 	}
 
-	req = c.newRequest(opAuthorizeClusterSecurityGroupIngress, input, output)
+	req = c.newRequest(op, input, output)
 	output = &AuthorizeClusterSecurityGroupIngressOutput{}
 	req.Data = output
 	return
@@ -37,13 +55,18 @@ func (c *Redshift) AuthorizeClusterSecurityGroupIngressRequest(input *AuthorizeC
 
 // Adds an inbound (ingress) rule to an Amazon Redshift security group. Depending
 // on whether the application accessing your cluster is running on the Internet
-// or an EC2 instance, you can authorize inbound access to either a Classless
-// Interdomain Routing (CIDR) IP address range or an EC2 security group. You
-// can add as many as 20 ingress rules to an Amazon Redshift security group.
+// or an Amazon EC2 instance, you can authorize inbound access to either a Classless
+// Interdomain Routing (CIDR)/Internet Protocol (IP) range or to an Amazon EC2
+// security group. You can add as many as 20 ingress rules to an Amazon Redshift
+// security group.
 //
-//  The EC2 security group must be defined in the AWS region where the cluster
-// resides.  For an overview of CIDR blocks, see the Wikipedia article on Classless
-// Inter-Domain Routing (http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
+// If you authorize access to an Amazon EC2 security group, specify EC2SecurityGroupName
+// and EC2SecurityGroupOwnerId. The Amazon EC2 security group and Amazon Redshift
+// cluster must be in the same AWS region.
+//
+//  If you authorize access to a CIDR/IP address range, specify CIDRIP. For
+// an overview of CIDR blocks, see the Wikipedia article on Classless Inter-Domain
+// Routing (http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing).
 //
 //  You must also associate the security group with a cluster so that clients
 // running on these IP addresses or the EC2 instance are authorized to connect
@@ -56,26 +79,42 @@ func (c *Redshift) AuthorizeClusterSecurityGroupIngress(input *AuthorizeClusterS
 	return out, err
 }
 
-var opAuthorizeClusterSecurityGroupIngress *aws.Operation
+const opAuthorizeSnapshotAccess = "AuthorizeSnapshotAccess"
 
-// AuthorizeSnapshotAccessRequest generates a request for the AuthorizeSnapshotAccess operation.
-func (c *Redshift) AuthorizeSnapshotAccessRequest(input *AuthorizeSnapshotAccessInput) (req *aws.Request, output *AuthorizeSnapshotAccessOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opAuthorizeSnapshotAccess == nil {
-		opAuthorizeSnapshotAccess = &aws.Operation{
-			Name:       "AuthorizeSnapshotAccess",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// AuthorizeSnapshotAccessRequest generates a "aws/request.Request" representing the
+// client's request for the AuthorizeSnapshotAccess operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the AuthorizeSnapshotAccess method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the AuthorizeSnapshotAccessRequest method.
+//    req, resp := client.AuthorizeSnapshotAccessRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) AuthorizeSnapshotAccessRequest(input *AuthorizeSnapshotAccessInput) (req *request.Request, output *AuthorizeSnapshotAccessOutput) {
+	op := &request.Operation{
+		Name:       opAuthorizeSnapshotAccess,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &AuthorizeSnapshotAccessInput{}
 	}
 
-	req = c.newRequest(opAuthorizeSnapshotAccess, input, output)
+	req = c.newRequest(op, input, output)
 	output = &AuthorizeSnapshotAccessOutput{}
 	req.Data = output
 	return
@@ -92,26 +131,42 @@ func (c *Redshift) AuthorizeSnapshotAccess(input *AuthorizeSnapshotAccessInput) 
 	return out, err
 }
 
-var opAuthorizeSnapshotAccess *aws.Operation
+const opCopyClusterSnapshot = "CopyClusterSnapshot"
 
-// CopyClusterSnapshotRequest generates a request for the CopyClusterSnapshot operation.
-func (c *Redshift) CopyClusterSnapshotRequest(input *CopyClusterSnapshotInput) (req *aws.Request, output *CopyClusterSnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCopyClusterSnapshot == nil {
-		opCopyClusterSnapshot = &aws.Operation{
-			Name:       "CopyClusterSnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CopyClusterSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the CopyClusterSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CopyClusterSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CopyClusterSnapshotRequest method.
+//    req, resp := client.CopyClusterSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CopyClusterSnapshotRequest(input *CopyClusterSnapshotInput) (req *request.Request, output *CopyClusterSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opCopyClusterSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CopyClusterSnapshotInput{}
 	}
 
-	req = c.newRequest(opCopyClusterSnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CopyClusterSnapshotOutput{}
 	req.Data = output
 	return
@@ -136,26 +191,42 @@ func (c *Redshift) CopyClusterSnapshot(input *CopyClusterSnapshotInput) (*CopyCl
 	return out, err
 }
 
-var opCopyClusterSnapshot *aws.Operation
+const opCreateCluster = "CreateCluster"
 
-// CreateClusterRequest generates a request for the CreateCluster operation.
-func (c *Redshift) CreateClusterRequest(input *CreateClusterInput) (req *aws.Request, output *CreateClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateCluster == nil {
-		opCreateCluster = &aws.Operation{
-			Name:       "CreateCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateClusterRequest generates a "aws/request.Request" representing the
+// client's request for the CreateCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateClusterRequest method.
+//    req, resp := client.CreateClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateClusterRequest(input *CreateClusterInput) (req *request.Request, output *CreateClusterOutput) {
+	op := &request.Operation{
+		Name:       opCreateCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateClusterInput{}
 	}
 
-	req = c.newRequest(opCreateCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateClusterOutput{}
 	req.Data = output
 	return
@@ -174,26 +245,42 @@ func (c *Redshift) CreateCluster(input *CreateClusterInput) (*CreateClusterOutpu
 	return out, err
 }
 
-var opCreateCluster *aws.Operation
+const opCreateClusterParameterGroup = "CreateClusterParameterGroup"
 
-// CreateClusterParameterGroupRequest generates a request for the CreateClusterParameterGroup operation.
-func (c *Redshift) CreateClusterParameterGroupRequest(input *CreateClusterParameterGroupInput) (req *aws.Request, output *CreateClusterParameterGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateClusterParameterGroup == nil {
-		opCreateClusterParameterGroup = &aws.Operation{
-			Name:       "CreateClusterParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateClusterParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateClusterParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateClusterParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateClusterParameterGroupRequest method.
+//    req, resp := client.CreateClusterParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateClusterParameterGroupRequest(input *CreateClusterParameterGroupInput) (req *request.Request, output *CreateClusterParameterGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateClusterParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateClusterParameterGroupInput{}
 	}
 
-	req = c.newRequest(opCreateClusterParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateClusterParameterGroupOutput{}
 	req.Data = output
 	return
@@ -207,8 +294,8 @@ func (c *Redshift) CreateClusterParameterGroupRequest(input *CreateClusterParame
 // created by using ModifyCluster.
 //
 //  Parameters in the parameter group define specific behavior that applies
-// to the databases you create on the cluster. For more information about managing
-// parameter groups, go to Amazon Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+// to the databases you create on the cluster. For more information about parameters
+// and parameter groups, go to Amazon Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
 // in the Amazon Redshift Cluster Management Guide.
 func (c *Redshift) CreateClusterParameterGroup(input *CreateClusterParameterGroupInput) (*CreateClusterParameterGroupOutput, error) {
 	req, out := c.CreateClusterParameterGroupRequest(input)
@@ -216,26 +303,42 @@ func (c *Redshift) CreateClusterParameterGroup(input *CreateClusterParameterGrou
 	return out, err
 }
 
-var opCreateClusterParameterGroup *aws.Operation
+const opCreateClusterSecurityGroup = "CreateClusterSecurityGroup"
 
-// CreateClusterSecurityGroupRequest generates a request for the CreateClusterSecurityGroup operation.
-func (c *Redshift) CreateClusterSecurityGroupRequest(input *CreateClusterSecurityGroupInput) (req *aws.Request, output *CreateClusterSecurityGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateClusterSecurityGroup == nil {
-		opCreateClusterSecurityGroup = &aws.Operation{
-			Name:       "CreateClusterSecurityGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateClusterSecurityGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateClusterSecurityGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateClusterSecurityGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateClusterSecurityGroupRequest method.
+//    req, resp := client.CreateClusterSecurityGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateClusterSecurityGroupRequest(input *CreateClusterSecurityGroupInput) (req *request.Request, output *CreateClusterSecurityGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateClusterSecurityGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateClusterSecurityGroupInput{}
 	}
 
-	req = c.newRequest(opCreateClusterSecurityGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateClusterSecurityGroupOutput{}
 	req.Data = output
 	return
@@ -253,26 +356,42 @@ func (c *Redshift) CreateClusterSecurityGroup(input *CreateClusterSecurityGroupI
 	return out, err
 }
 
-var opCreateClusterSecurityGroup *aws.Operation
+const opCreateClusterSnapshot = "CreateClusterSnapshot"
 
-// CreateClusterSnapshotRequest generates a request for the CreateClusterSnapshot operation.
-func (c *Redshift) CreateClusterSnapshotRequest(input *CreateClusterSnapshotInput) (req *aws.Request, output *CreateClusterSnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateClusterSnapshot == nil {
-		opCreateClusterSnapshot = &aws.Operation{
-			Name:       "CreateClusterSnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateClusterSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the CreateClusterSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateClusterSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateClusterSnapshotRequest method.
+//    req, resp := client.CreateClusterSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateClusterSnapshotRequest(input *CreateClusterSnapshotInput) (req *request.Request, output *CreateClusterSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opCreateClusterSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateClusterSnapshotInput{}
 	}
 
-	req = c.newRequest(opCreateClusterSnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateClusterSnapshotOutput{}
 	req.Data = output
 	return
@@ -290,26 +409,42 @@ func (c *Redshift) CreateClusterSnapshot(input *CreateClusterSnapshotInput) (*Cr
 	return out, err
 }
 
-var opCreateClusterSnapshot *aws.Operation
+const opCreateClusterSubnetGroup = "CreateClusterSubnetGroup"
 
-// CreateClusterSubnetGroupRequest generates a request for the CreateClusterSubnetGroup operation.
-func (c *Redshift) CreateClusterSubnetGroupRequest(input *CreateClusterSubnetGroupInput) (req *aws.Request, output *CreateClusterSubnetGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateClusterSubnetGroup == nil {
-		opCreateClusterSubnetGroup = &aws.Operation{
-			Name:       "CreateClusterSubnetGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateClusterSubnetGroupRequest generates a "aws/request.Request" representing the
+// client's request for the CreateClusterSubnetGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateClusterSubnetGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateClusterSubnetGroupRequest method.
+//    req, resp := client.CreateClusterSubnetGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateClusterSubnetGroupRequest(input *CreateClusterSubnetGroupInput) (req *request.Request, output *CreateClusterSubnetGroupOutput) {
+	op := &request.Operation{
+		Name:       opCreateClusterSubnetGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateClusterSubnetGroupInput{}
 	}
 
-	req = c.newRequest(opCreateClusterSubnetGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateClusterSubnetGroupOutput{}
 	req.Data = output
 	return
@@ -328,26 +463,42 @@ func (c *Redshift) CreateClusterSubnetGroup(input *CreateClusterSubnetGroupInput
 	return out, err
 }
 
-var opCreateClusterSubnetGroup *aws.Operation
+const opCreateEventSubscription = "CreateEventSubscription"
 
-// CreateEventSubscriptionRequest generates a request for the CreateEventSubscription operation.
-func (c *Redshift) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInput) (req *aws.Request, output *CreateEventSubscriptionOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateEventSubscription == nil {
-		opCreateEventSubscription = &aws.Operation{
-			Name:       "CreateEventSubscription",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateEventSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the CreateEventSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateEventSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateEventSubscriptionRequest method.
+//    req, resp := client.CreateEventSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInput) (req *request.Request, output *CreateEventSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opCreateEventSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateEventSubscriptionInput{}
 	}
 
-	req = c.newRequest(opCreateEventSubscription, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateEventSubscriptionOutput{}
 	req.Data = output
 	return
@@ -381,27 +532,43 @@ func (c *Redshift) CreateEventSubscription(input *CreateEventSubscriptionInput) 
 	return out, err
 }
 
-var opCreateEventSubscription *aws.Operation
+const opCreateHsmClientCertificate = "CreateHsmClientCertificate"
 
-// CreateHSMClientCertificateRequest generates a request for the CreateHSMClientCertificate operation.
-func (c *Redshift) CreateHSMClientCertificateRequest(input *CreateHSMClientCertificateInput) (req *aws.Request, output *CreateHSMClientCertificateOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateHSMClientCertificate == nil {
-		opCreateHSMClientCertificate = &aws.Operation{
-			Name:       "CreateHsmClientCertificate",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateHsmClientCertificateRequest generates a "aws/request.Request" representing the
+// client's request for the CreateHsmClientCertificate operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateHsmClientCertificate method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateHsmClientCertificateRequest method.
+//    req, resp := client.CreateHsmClientCertificateRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateHsmClientCertificateRequest(input *CreateHsmClientCertificateInput) (req *request.Request, output *CreateHsmClientCertificateOutput) {
+	op := &request.Operation{
+		Name:       opCreateHsmClientCertificate,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &CreateHSMClientCertificateInput{}
+		input = &CreateHsmClientCertificateInput{}
 	}
 
-	req = c.newRequest(opCreateHSMClientCertificate, input, output)
-	output = &CreateHSMClientCertificateOutput{}
+	req = c.newRequest(op, input, output)
+	output = &CreateHsmClientCertificateOutput{}
 	req.Data = output
 	return
 }
@@ -415,33 +582,49 @@ func (c *Redshift) CreateHSMClientCertificateRequest(input *CreateHSMClientCerti
 // that provides a cluster the information needed to store and use encryption
 // keys in the HSM. For more information, go to Hardware Security Modules (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-HSM.html)
 // in the Amazon Redshift Cluster Management Guide.
-func (c *Redshift) CreateHSMClientCertificate(input *CreateHSMClientCertificateInput) (*CreateHSMClientCertificateOutput, error) {
-	req, out := c.CreateHSMClientCertificateRequest(input)
+func (c *Redshift) CreateHsmClientCertificate(input *CreateHsmClientCertificateInput) (*CreateHsmClientCertificateOutput, error) {
+	req, out := c.CreateHsmClientCertificateRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCreateHSMClientCertificate *aws.Operation
+const opCreateHsmConfiguration = "CreateHsmConfiguration"
 
-// CreateHSMConfigurationRequest generates a request for the CreateHSMConfiguration operation.
-func (c *Redshift) CreateHSMConfigurationRequest(input *CreateHSMConfigurationInput) (req *aws.Request, output *CreateHSMConfigurationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateHSMConfiguration == nil {
-		opCreateHSMConfiguration = &aws.Operation{
-			Name:       "CreateHsmConfiguration",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateHsmConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the CreateHsmConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateHsmConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateHsmConfigurationRequest method.
+//    req, resp := client.CreateHsmConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateHsmConfigurationRequest(input *CreateHsmConfigurationInput) (req *request.Request, output *CreateHsmConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opCreateHsmConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &CreateHSMConfigurationInput{}
+		input = &CreateHsmConfigurationInput{}
 	}
 
-	req = c.newRequest(opCreateHSMConfiguration, input, output)
-	output = &CreateHSMConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	output = &CreateHsmConfigurationOutput{}
 	req.Data = output
 	return
 }
@@ -456,32 +639,104 @@ func (c *Redshift) CreateHSMConfigurationRequest(input *CreateHSMConfigurationIn
 // client certificate. For more information, go to Hardware Security Modules
 // (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-HSM.html) in
 // the Amazon Redshift Cluster Management Guide.
-func (c *Redshift) CreateHSMConfiguration(input *CreateHSMConfigurationInput) (*CreateHSMConfigurationOutput, error) {
-	req, out := c.CreateHSMConfigurationRequest(input)
+func (c *Redshift) CreateHsmConfiguration(input *CreateHsmConfigurationInput) (*CreateHsmConfigurationOutput, error) {
+	req, out := c.CreateHsmConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCreateHSMConfiguration *aws.Operation
+const opCreateSnapshotCopyGrant = "CreateSnapshotCopyGrant"
 
-// CreateTagsRequest generates a request for the CreateTags operation.
-func (c *Redshift) CreateTagsRequest(input *CreateTagsInput) (req *aws.Request, output *CreateTagsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// CreateSnapshotCopyGrantRequest generates a "aws/request.Request" representing the
+// client's request for the CreateSnapshotCopyGrant operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateSnapshotCopyGrant method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateSnapshotCopyGrantRequest method.
+//    req, resp := client.CreateSnapshotCopyGrantRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateSnapshotCopyGrantRequest(input *CreateSnapshotCopyGrantInput) (req *request.Request, output *CreateSnapshotCopyGrantOutput) {
+	op := &request.Operation{
+		Name:       opCreateSnapshotCopyGrant,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opCreateTags == nil {
-		opCreateTags = &aws.Operation{
-			Name:       "CreateTags",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &CreateSnapshotCopyGrantInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &CreateSnapshotCopyGrantOutput{}
+	req.Data = output
+	return
+}
+
+// Creates a snapshot copy grant that permits Amazon Redshift to use a customer
+// master key (CMK) from AWS Key Management Service (AWS KMS) to encrypt copied
+// snapshots in a destination region.
+//
+//  For more information about managing snapshot copy grants, go to Amazon
+// Redshift Database Encryption (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html)
+// in the Amazon Redshift Cluster Management Guide.
+func (c *Redshift) CreateSnapshotCopyGrant(input *CreateSnapshotCopyGrantInput) (*CreateSnapshotCopyGrantOutput, error) {
+	req, out := c.CreateSnapshotCopyGrantRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opCreateTags = "CreateTags"
+
+// CreateTagsRequest generates a "aws/request.Request" representing the
+// client's request for the CreateTags operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateTags method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateTagsRequest method.
+//    req, resp := client.CreateTagsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) CreateTagsRequest(input *CreateTagsInput) (req *request.Request, output *CreateTagsOutput) {
+	op := &request.Operation{
+		Name:       opCreateTags,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateTagsInput{}
 	}
 
-	req = c.newRequest(opCreateTags, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &CreateTagsOutput{}
 	req.Data = output
 	return
@@ -500,26 +755,42 @@ func (c *Redshift) CreateTags(input *CreateTagsInput) (*CreateTagsOutput, error)
 	return out, err
 }
 
-var opCreateTags *aws.Operation
+const opDeleteCluster = "DeleteCluster"
 
-// DeleteClusterRequest generates a request for the DeleteCluster operation.
-func (c *Redshift) DeleteClusterRequest(input *DeleteClusterInput) (req *aws.Request, output *DeleteClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteCluster == nil {
-		opDeleteCluster = &aws.Operation{
-			Name:       "DeleteCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteClusterRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteClusterRequest method.
+//    req, resp := client.DeleteClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteClusterRequest(input *DeleteClusterInput) (req *request.Request, output *DeleteClusterOutput) {
+	op := &request.Operation{
+		Name:       opDeleteCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteClusterInput{}
 	}
 
-	req = c.newRequest(opDeleteCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteClusterOutput{}
 	req.Data = output
 	return
@@ -548,26 +819,44 @@ func (c *Redshift) DeleteCluster(input *DeleteClusterInput) (*DeleteClusterOutpu
 	return out, err
 }
 
-var opDeleteCluster *aws.Operation
+const opDeleteClusterParameterGroup = "DeleteClusterParameterGroup"
 
-// DeleteClusterParameterGroupRequest generates a request for the DeleteClusterParameterGroup operation.
-func (c *Redshift) DeleteClusterParameterGroupRequest(input *DeleteClusterParameterGroupInput) (req *aws.Request, output *DeleteClusterParameterGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteClusterParameterGroup == nil {
-		opDeleteClusterParameterGroup = &aws.Operation{
-			Name:       "DeleteClusterParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteClusterParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteClusterParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteClusterParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteClusterParameterGroupRequest method.
+//    req, resp := client.DeleteClusterParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteClusterParameterGroupRequest(input *DeleteClusterParameterGroupInput) (req *request.Request, output *DeleteClusterParameterGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteClusterParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteClusterParameterGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteClusterParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteClusterParameterGroupOutput{}
 	req.Data = output
 	return
@@ -581,26 +870,44 @@ func (c *Redshift) DeleteClusterParameterGroup(input *DeleteClusterParameterGrou
 	return out, err
 }
 
-var opDeleteClusterParameterGroup *aws.Operation
+const opDeleteClusterSecurityGroup = "DeleteClusterSecurityGroup"
 
-// DeleteClusterSecurityGroupRequest generates a request for the DeleteClusterSecurityGroup operation.
-func (c *Redshift) DeleteClusterSecurityGroupRequest(input *DeleteClusterSecurityGroupInput) (req *aws.Request, output *DeleteClusterSecurityGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteClusterSecurityGroup == nil {
-		opDeleteClusterSecurityGroup = &aws.Operation{
-			Name:       "DeleteClusterSecurityGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteClusterSecurityGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteClusterSecurityGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteClusterSecurityGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteClusterSecurityGroupRequest method.
+//    req, resp := client.DeleteClusterSecurityGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteClusterSecurityGroupRequest(input *DeleteClusterSecurityGroupInput) (req *request.Request, output *DeleteClusterSecurityGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteClusterSecurityGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteClusterSecurityGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteClusterSecurityGroup, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteClusterSecurityGroupOutput{}
 	req.Data = output
 	return
@@ -618,26 +925,42 @@ func (c *Redshift) DeleteClusterSecurityGroup(input *DeleteClusterSecurityGroupI
 	return out, err
 }
 
-var opDeleteClusterSecurityGroup *aws.Operation
+const opDeleteClusterSnapshot = "DeleteClusterSnapshot"
 
-// DeleteClusterSnapshotRequest generates a request for the DeleteClusterSnapshot operation.
-func (c *Redshift) DeleteClusterSnapshotRequest(input *DeleteClusterSnapshotInput) (req *aws.Request, output *DeleteClusterSnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteClusterSnapshot == nil {
-		opDeleteClusterSnapshot = &aws.Operation{
-			Name:       "DeleteClusterSnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteClusterSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteClusterSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteClusterSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteClusterSnapshotRequest method.
+//    req, resp := client.DeleteClusterSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteClusterSnapshotRequest(input *DeleteClusterSnapshotInput) (req *request.Request, output *DeleteClusterSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opDeleteClusterSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteClusterSnapshotInput{}
 	}
 
-	req = c.newRequest(opDeleteClusterSnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteClusterSnapshotOutput{}
 	req.Data = output
 	return
@@ -657,26 +980,44 @@ func (c *Redshift) DeleteClusterSnapshot(input *DeleteClusterSnapshotInput) (*De
 	return out, err
 }
 
-var opDeleteClusterSnapshot *aws.Operation
+const opDeleteClusterSubnetGroup = "DeleteClusterSubnetGroup"
 
-// DeleteClusterSubnetGroupRequest generates a request for the DeleteClusterSubnetGroup operation.
-func (c *Redshift) DeleteClusterSubnetGroupRequest(input *DeleteClusterSubnetGroupInput) (req *aws.Request, output *DeleteClusterSubnetGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteClusterSubnetGroup == nil {
-		opDeleteClusterSubnetGroup = &aws.Operation{
-			Name:       "DeleteClusterSubnetGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteClusterSubnetGroupRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteClusterSubnetGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteClusterSubnetGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteClusterSubnetGroupRequest method.
+//    req, resp := client.DeleteClusterSubnetGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteClusterSubnetGroupRequest(input *DeleteClusterSubnetGroupInput) (req *request.Request, output *DeleteClusterSubnetGroupOutput) {
+	op := &request.Operation{
+		Name:       opDeleteClusterSubnetGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteClusterSubnetGroupInput{}
 	}
 
-	req = c.newRequest(opDeleteClusterSubnetGroup, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteClusterSubnetGroupOutput{}
 	req.Data = output
 	return
@@ -689,26 +1030,44 @@ func (c *Redshift) DeleteClusterSubnetGroup(input *DeleteClusterSubnetGroupInput
 	return out, err
 }
 
-var opDeleteClusterSubnetGroup *aws.Operation
+const opDeleteEventSubscription = "DeleteEventSubscription"
 
-// DeleteEventSubscriptionRequest generates a request for the DeleteEventSubscription operation.
-func (c *Redshift) DeleteEventSubscriptionRequest(input *DeleteEventSubscriptionInput) (req *aws.Request, output *DeleteEventSubscriptionOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteEventSubscription == nil {
-		opDeleteEventSubscription = &aws.Operation{
-			Name:       "DeleteEventSubscription",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteEventSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteEventSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteEventSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteEventSubscriptionRequest method.
+//    req, resp := client.DeleteEventSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteEventSubscriptionRequest(input *DeleteEventSubscriptionInput) (req *request.Request, output *DeleteEventSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteEventSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteEventSubscriptionInput{}
 	}
 
-	req = c.newRequest(opDeleteEventSubscription, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteEventSubscriptionOutput{}
 	req.Data = output
 	return
@@ -721,90 +1080,194 @@ func (c *Redshift) DeleteEventSubscription(input *DeleteEventSubscriptionInput) 
 	return out, err
 }
 
-var opDeleteEventSubscription *aws.Operation
+const opDeleteHsmClientCertificate = "DeleteHsmClientCertificate"
 
-// DeleteHSMClientCertificateRequest generates a request for the DeleteHSMClientCertificate operation.
-func (c *Redshift) DeleteHSMClientCertificateRequest(input *DeleteHSMClientCertificateInput) (req *aws.Request, output *DeleteHSMClientCertificateOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteHSMClientCertificate == nil {
-		opDeleteHSMClientCertificate = &aws.Operation{
-			Name:       "DeleteHsmClientCertificate",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteHsmClientCertificateRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteHsmClientCertificate operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteHsmClientCertificate method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteHsmClientCertificateRequest method.
+//    req, resp := client.DeleteHsmClientCertificateRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteHsmClientCertificateRequest(input *DeleteHsmClientCertificateInput) (req *request.Request, output *DeleteHsmClientCertificateOutput) {
+	op := &request.Operation{
+		Name:       opDeleteHsmClientCertificate,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DeleteHSMClientCertificateInput{}
+		input = &DeleteHsmClientCertificateInput{}
 	}
 
-	req = c.newRequest(opDeleteHSMClientCertificate, input, output)
-	output = &DeleteHSMClientCertificateOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &DeleteHsmClientCertificateOutput{}
 	req.Data = output
 	return
 }
 
 // Deletes the specified HSM client certificate.
-func (c *Redshift) DeleteHSMClientCertificate(input *DeleteHSMClientCertificateInput) (*DeleteHSMClientCertificateOutput, error) {
-	req, out := c.DeleteHSMClientCertificateRequest(input)
+func (c *Redshift) DeleteHsmClientCertificate(input *DeleteHsmClientCertificateInput) (*DeleteHsmClientCertificateOutput, error) {
+	req, out := c.DeleteHsmClientCertificateRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDeleteHSMClientCertificate *aws.Operation
+const opDeleteHsmConfiguration = "DeleteHsmConfiguration"
 
-// DeleteHSMConfigurationRequest generates a request for the DeleteHSMConfiguration operation.
-func (c *Redshift) DeleteHSMConfigurationRequest(input *DeleteHSMConfigurationInput) (req *aws.Request, output *DeleteHSMConfigurationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteHSMConfiguration == nil {
-		opDeleteHSMConfiguration = &aws.Operation{
-			Name:       "DeleteHsmConfiguration",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteHsmConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteHsmConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteHsmConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteHsmConfigurationRequest method.
+//    req, resp := client.DeleteHsmConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteHsmConfigurationRequest(input *DeleteHsmConfigurationInput) (req *request.Request, output *DeleteHsmConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteHsmConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DeleteHSMConfigurationInput{}
+		input = &DeleteHsmConfigurationInput{}
 	}
 
-	req = c.newRequest(opDeleteHSMConfiguration, input, output)
-	output = &DeleteHSMConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &DeleteHsmConfigurationOutput{}
 	req.Data = output
 	return
 }
 
 // Deletes the specified Amazon Redshift HSM configuration.
-func (c *Redshift) DeleteHSMConfiguration(input *DeleteHSMConfigurationInput) (*DeleteHSMConfigurationOutput, error) {
-	req, out := c.DeleteHSMConfigurationRequest(input)
+func (c *Redshift) DeleteHsmConfiguration(input *DeleteHsmConfigurationInput) (*DeleteHsmConfigurationOutput, error) {
+	req, out := c.DeleteHsmConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDeleteHSMConfiguration *aws.Operation
+const opDeleteSnapshotCopyGrant = "DeleteSnapshotCopyGrant"
 
-// DeleteTagsRequest generates a request for the DeleteTags operation.
-func (c *Redshift) DeleteTagsRequest(input *DeleteTagsInput) (req *aws.Request, output *DeleteTagsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// DeleteSnapshotCopyGrantRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteSnapshotCopyGrant operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteSnapshotCopyGrant method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteSnapshotCopyGrantRequest method.
+//    req, resp := client.DeleteSnapshotCopyGrantRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteSnapshotCopyGrantRequest(input *DeleteSnapshotCopyGrantInput) (req *request.Request, output *DeleteSnapshotCopyGrantOutput) {
+	op := &request.Operation{
+		Name:       opDeleteSnapshotCopyGrant,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opDeleteTags == nil {
-		opDeleteTags = &aws.Operation{
-			Name:       "DeleteTags",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &DeleteSnapshotCopyGrantInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &DeleteSnapshotCopyGrantOutput{}
+	req.Data = output
+	return
+}
+
+// Deletes the specified snapshot copy grant.
+func (c *Redshift) DeleteSnapshotCopyGrant(input *DeleteSnapshotCopyGrantInput) (*DeleteSnapshotCopyGrantOutput, error) {
+	req, out := c.DeleteSnapshotCopyGrantRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opDeleteTags = "DeleteTags"
+
+// DeleteTagsRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteTags operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteTags method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteTagsRequest method.
+//    req, resp := client.DeleteTagsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Request, output *DeleteTagsOutput) {
+	op := &request.Operation{
+		Name:       opDeleteTags,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteTagsInput{}
 	}
 
-	req = c.newRequest(opDeleteTags, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteTagsOutput{}
 	req.Data = output
 	return
@@ -818,32 +1281,48 @@ func (c *Redshift) DeleteTags(input *DeleteTagsInput) (*DeleteTagsOutput, error)
 	return out, err
 }
 
-var opDeleteTags *aws.Operation
+const opDescribeClusterParameterGroups = "DescribeClusterParameterGroups"
 
-// DescribeClusterParameterGroupsRequest generates a request for the DescribeClusterParameterGroups operation.
-func (c *Redshift) DescribeClusterParameterGroupsRequest(input *DescribeClusterParameterGroupsInput) (req *aws.Request, output *DescribeClusterParameterGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusterParameterGroups == nil {
-		opDescribeClusterParameterGroups = &aws.Operation{
-			Name:       "DescribeClusterParameterGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClusterParameterGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusterParameterGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusterParameterGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClusterParameterGroupsRequest method.
+//    req, resp := client.DescribeClusterParameterGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClusterParameterGroupsRequest(input *DescribeClusterParameterGroupsInput) (req *request.Request, output *DescribeClusterParameterGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusterParameterGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClusterParameterGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeClusterParameterGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClusterParameterGroupsOutput{}
 	req.Data = output
 	return
@@ -855,8 +1334,8 @@ func (c *Redshift) DescribeClusterParameterGroupsRequest(input *DescribeClusterP
 // family name. You can optionally specify a name to retrieve the description
 // of a specific parameter group.
 //
-//  For more information about managing parameter groups, go to Amazon Redshift
-// Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+//  For more information about parameters and parameter groups, go to Amazon
+// Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
 // in the Amazon Redshift Cluster Management Guide.
 //
 // If you specify both tag keys and tag values in the same request, Amazon
@@ -874,39 +1353,73 @@ func (c *Redshift) DescribeClusterParameterGroups(input *DescribeClusterParamete
 	return out, err
 }
 
+// DescribeClusterParameterGroupsPages iterates over the pages of a DescribeClusterParameterGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterParameterGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterParameterGroups operation.
+//    pageNum := 0
+//    err := client.DescribeClusterParameterGroupsPages(params,
+//        func(page *DescribeClusterParameterGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClusterParameterGroupsPages(input *DescribeClusterParameterGroupsInput, fn func(p *DescribeClusterParameterGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClusterParameterGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClusterParameterGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeClusterParameterGroups *aws.Operation
+const opDescribeClusterParameters = "DescribeClusterParameters"
 
-// DescribeClusterParametersRequest generates a request for the DescribeClusterParameters operation.
-func (c *Redshift) DescribeClusterParametersRequest(input *DescribeClusterParametersInput) (req *aws.Request, output *DescribeClusterParametersOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusterParameters == nil {
-		opDescribeClusterParameters = &aws.Operation{
-			Name:       "DescribeClusterParameters",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClusterParametersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusterParameters operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusterParameters method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClusterParametersRequest method.
+//    req, resp := client.DescribeClusterParametersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClusterParametersRequest(input *DescribeClusterParametersInput) (req *request.Request, output *DescribeClusterParametersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusterParameters,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClusterParametersInput{}
 	}
 
-	req = c.newRequest(opDescribeClusterParameters, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClusterParametersOutput{}
 	req.Data = output
 	return
@@ -921,8 +1434,8 @@ func (c *Redshift) DescribeClusterParametersRequest(input *DescribeClusterParame
 // For example, to retrieve parameters that were modified by a user action such
 // as from ModifyClusterParameterGroup, you can specify source equal to user.
 //
-//  For more information about managing parameter groups, go to Amazon Redshift
-// Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+//  For more information about parameters and parameter groups, go to Amazon
+// Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
 // in the Amazon Redshift Cluster Management Guide.
 func (c *Redshift) DescribeClusterParameters(input *DescribeClusterParametersInput) (*DescribeClusterParametersOutput, error) {
 	req, out := c.DescribeClusterParametersRequest(input)
@@ -930,39 +1443,73 @@ func (c *Redshift) DescribeClusterParameters(input *DescribeClusterParametersInp
 	return out, err
 }
 
+// DescribeClusterParametersPages iterates over the pages of a DescribeClusterParameters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterParameters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterParameters operation.
+//    pageNum := 0
+//    err := client.DescribeClusterParametersPages(params,
+//        func(page *DescribeClusterParametersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClusterParametersPages(input *DescribeClusterParametersInput, fn func(p *DescribeClusterParametersOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClusterParametersRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClusterParametersOutput), lastPage)
 	})
 }
 
-var opDescribeClusterParameters *aws.Operation
+const opDescribeClusterSecurityGroups = "DescribeClusterSecurityGroups"
 
-// DescribeClusterSecurityGroupsRequest generates a request for the DescribeClusterSecurityGroups operation.
-func (c *Redshift) DescribeClusterSecurityGroupsRequest(input *DescribeClusterSecurityGroupsInput) (req *aws.Request, output *DescribeClusterSecurityGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusterSecurityGroups == nil {
-		opDescribeClusterSecurityGroups = &aws.Operation{
-			Name:       "DescribeClusterSecurityGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClusterSecurityGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusterSecurityGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusterSecurityGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClusterSecurityGroupsRequest method.
+//    req, resp := client.DescribeClusterSecurityGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClusterSecurityGroupsRequest(input *DescribeClusterSecurityGroupsInput) (req *request.Request, output *DescribeClusterSecurityGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusterSecurityGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClusterSecurityGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeClusterSecurityGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClusterSecurityGroupsOutput{}
 	req.Data = output
 	return
@@ -991,39 +1538,73 @@ func (c *Redshift) DescribeClusterSecurityGroups(input *DescribeClusterSecurityG
 	return out, err
 }
 
+// DescribeClusterSecurityGroupsPages iterates over the pages of a DescribeClusterSecurityGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterSecurityGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterSecurityGroups operation.
+//    pageNum := 0
+//    err := client.DescribeClusterSecurityGroupsPages(params,
+//        func(page *DescribeClusterSecurityGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClusterSecurityGroupsPages(input *DescribeClusterSecurityGroupsInput, fn func(p *DescribeClusterSecurityGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClusterSecurityGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClusterSecurityGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeClusterSecurityGroups *aws.Operation
+const opDescribeClusterSnapshots = "DescribeClusterSnapshots"
 
-// DescribeClusterSnapshotsRequest generates a request for the DescribeClusterSnapshots operation.
-func (c *Redshift) DescribeClusterSnapshotsRequest(input *DescribeClusterSnapshotsInput) (req *aws.Request, output *DescribeClusterSnapshotsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusterSnapshots == nil {
-		opDescribeClusterSnapshots = &aws.Operation{
-			Name:       "DescribeClusterSnapshots",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClusterSnapshotsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusterSnapshots operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusterSnapshots method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClusterSnapshotsRequest method.
+//    req, resp := client.DescribeClusterSnapshotsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClusterSnapshotsRequest(input *DescribeClusterSnapshotsInput) (req *request.Request, output *DescribeClusterSnapshotsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusterSnapshots,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClusterSnapshotsInput{}
 	}
 
-	req = c.newRequest(opDescribeClusterSnapshots, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClusterSnapshotsOutput{}
 	req.Data = output
 	return
@@ -1051,39 +1632,73 @@ func (c *Redshift) DescribeClusterSnapshots(input *DescribeClusterSnapshotsInput
 	return out, err
 }
 
+// DescribeClusterSnapshotsPages iterates over the pages of a DescribeClusterSnapshots operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterSnapshots method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterSnapshots operation.
+//    pageNum := 0
+//    err := client.DescribeClusterSnapshotsPages(params,
+//        func(page *DescribeClusterSnapshotsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClusterSnapshotsPages(input *DescribeClusterSnapshotsInput, fn func(p *DescribeClusterSnapshotsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClusterSnapshotsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClusterSnapshotsOutput), lastPage)
 	})
 }
 
-var opDescribeClusterSnapshots *aws.Operation
+const opDescribeClusterSubnetGroups = "DescribeClusterSubnetGroups"
 
-// DescribeClusterSubnetGroupsRequest generates a request for the DescribeClusterSubnetGroups operation.
-func (c *Redshift) DescribeClusterSubnetGroupsRequest(input *DescribeClusterSubnetGroupsInput) (req *aws.Request, output *DescribeClusterSubnetGroupsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusterSubnetGroups == nil {
-		opDescribeClusterSubnetGroups = &aws.Operation{
-			Name:       "DescribeClusterSubnetGroups",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClusterSubnetGroupsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusterSubnetGroups operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusterSubnetGroups method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClusterSubnetGroupsRequest method.
+//    req, resp := client.DescribeClusterSubnetGroupsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClusterSubnetGroupsRequest(input *DescribeClusterSubnetGroupsInput) (req *request.Request, output *DescribeClusterSubnetGroupsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusterSubnetGroups,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClusterSubnetGroupsInput{}
 	}
 
-	req = c.newRequest(opDescribeClusterSubnetGroups, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClusterSubnetGroupsOutput{}
 	req.Data = output
 	return
@@ -1108,39 +1723,73 @@ func (c *Redshift) DescribeClusterSubnetGroups(input *DescribeClusterSubnetGroup
 	return out, err
 }
 
+// DescribeClusterSubnetGroupsPages iterates over the pages of a DescribeClusterSubnetGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterSubnetGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterSubnetGroups operation.
+//    pageNum := 0
+//    err := client.DescribeClusterSubnetGroupsPages(params,
+//        func(page *DescribeClusterSubnetGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClusterSubnetGroupsPages(input *DescribeClusterSubnetGroupsInput, fn func(p *DescribeClusterSubnetGroupsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClusterSubnetGroupsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClusterSubnetGroupsOutput), lastPage)
 	})
 }
 
-var opDescribeClusterSubnetGroups *aws.Operation
+const opDescribeClusterVersions = "DescribeClusterVersions"
 
-// DescribeClusterVersionsRequest generates a request for the DescribeClusterVersions operation.
-func (c *Redshift) DescribeClusterVersionsRequest(input *DescribeClusterVersionsInput) (req *aws.Request, output *DescribeClusterVersionsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusterVersions == nil {
-		opDescribeClusterVersions = &aws.Operation{
-			Name:       "DescribeClusterVersions",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClusterVersionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusterVersions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusterVersions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClusterVersionsRequest method.
+//    req, resp := client.DescribeClusterVersionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClusterVersionsRequest(input *DescribeClusterVersionsInput) (req *request.Request, output *DescribeClusterVersionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusterVersions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClusterVersionsInput{}
 	}
 
-	req = c.newRequest(opDescribeClusterVersions, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClusterVersionsOutput{}
 	req.Data = output
 	return
@@ -1157,39 +1806,73 @@ func (c *Redshift) DescribeClusterVersions(input *DescribeClusterVersionsInput) 
 	return out, err
 }
 
+// DescribeClusterVersionsPages iterates over the pages of a DescribeClusterVersions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusterVersions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusterVersions operation.
+//    pageNum := 0
+//    err := client.DescribeClusterVersionsPages(params,
+//        func(page *DescribeClusterVersionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClusterVersionsPages(input *DescribeClusterVersionsInput, fn func(p *DescribeClusterVersionsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClusterVersionsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClusterVersionsOutput), lastPage)
 	})
 }
 
-var opDescribeClusterVersions *aws.Operation
+const opDescribeClusters = "DescribeClusters"
 
-// DescribeClustersRequest generates a request for the DescribeClusters operation.
-func (c *Redshift) DescribeClustersRequest(input *DescribeClustersInput) (req *aws.Request, output *DescribeClustersOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeClusters == nil {
-		opDescribeClusters = &aws.Operation{
-			Name:       "DescribeClusters",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeClustersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeClusters operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeClusters method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeClustersRequest method.
+//    req, resp := client.DescribeClustersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeClustersRequest(input *DescribeClustersInput) (req *request.Request, output *DescribeClustersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeClusters,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeClustersInput{}
 	}
 
-	req = c.newRequest(opDescribeClusters, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeClustersOutput{}
 	req.Data = output
 	return
@@ -1215,39 +1898,73 @@ func (c *Redshift) DescribeClusters(input *DescribeClustersInput) (*DescribeClus
 	return out, err
 }
 
+// DescribeClustersPages iterates over the pages of a DescribeClusters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeClusters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeClusters operation.
+//    pageNum := 0
+//    err := client.DescribeClustersPages(params,
+//        func(page *DescribeClustersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeClustersPages(input *DescribeClustersInput, fn func(p *DescribeClustersOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeClustersRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeClustersOutput), lastPage)
 	})
 }
 
-var opDescribeClusters *aws.Operation
+const opDescribeDefaultClusterParameters = "DescribeDefaultClusterParameters"
 
-// DescribeDefaultClusterParametersRequest generates a request for the DescribeDefaultClusterParameters operation.
-func (c *Redshift) DescribeDefaultClusterParametersRequest(input *DescribeDefaultClusterParametersInput) (req *aws.Request, output *DescribeDefaultClusterParametersOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeDefaultClusterParameters == nil {
-		opDescribeDefaultClusterParameters = &aws.Operation{
-			Name:       "DescribeDefaultClusterParameters",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"DefaultClusterParameters.Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeDefaultClusterParametersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeDefaultClusterParameters operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeDefaultClusterParameters method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeDefaultClusterParametersRequest method.
+//    req, resp := client.DescribeDefaultClusterParametersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeDefaultClusterParametersRequest(input *DescribeDefaultClusterParametersInput) (req *request.Request, output *DescribeDefaultClusterParametersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeDefaultClusterParameters,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"DefaultClusterParameters.Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeDefaultClusterParametersInput{}
 	}
 
-	req = c.newRequest(opDescribeDefaultClusterParameters, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeDefaultClusterParametersOutput{}
 	req.Data = output
 	return
@@ -1255,8 +1972,8 @@ func (c *Redshift) DescribeDefaultClusterParametersRequest(input *DescribeDefaul
 
 // Returns a list of parameter settings for the specified parameter group family.
 //
-//  For more information about managing parameter groups, go to Amazon Redshift
-// Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+//  For more information about parameters and parameter groups, go to Amazon
+// Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
 // in the Amazon Redshift Cluster Management Guide.
 func (c *Redshift) DescribeDefaultClusterParameters(input *DescribeDefaultClusterParametersInput) (*DescribeDefaultClusterParametersOutput, error) {
 	req, out := c.DescribeDefaultClusterParametersRequest(input)
@@ -1264,33 +1981,67 @@ func (c *Redshift) DescribeDefaultClusterParameters(input *DescribeDefaultCluste
 	return out, err
 }
 
+// DescribeDefaultClusterParametersPages iterates over the pages of a DescribeDefaultClusterParameters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeDefaultClusterParameters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeDefaultClusterParameters operation.
+//    pageNum := 0
+//    err := client.DescribeDefaultClusterParametersPages(params,
+//        func(page *DescribeDefaultClusterParametersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeDefaultClusterParametersPages(input *DescribeDefaultClusterParametersInput, fn func(p *DescribeDefaultClusterParametersOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeDefaultClusterParametersRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeDefaultClusterParametersOutput), lastPage)
 	})
 }
 
-var opDescribeDefaultClusterParameters *aws.Operation
+const opDescribeEventCategories = "DescribeEventCategories"
 
-// DescribeEventCategoriesRequest generates a request for the DescribeEventCategories operation.
-func (c *Redshift) DescribeEventCategoriesRequest(input *DescribeEventCategoriesInput) (req *aws.Request, output *DescribeEventCategoriesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeEventCategories == nil {
-		opDescribeEventCategories = &aws.Operation{
-			Name:       "DescribeEventCategories",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DescribeEventCategoriesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEventCategories operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEventCategories method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventCategoriesRequest method.
+//    req, resp := client.DescribeEventCategoriesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeEventCategoriesRequest(input *DescribeEventCategoriesInput) (req *request.Request, output *DescribeEventCategoriesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEventCategories,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DescribeEventCategoriesInput{}
 	}
 
-	req = c.newRequest(opDescribeEventCategories, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeEventCategoriesOutput{}
 	req.Data = output
 	return
@@ -1305,32 +2056,48 @@ func (c *Redshift) DescribeEventCategories(input *DescribeEventCategoriesInput) 
 	return out, err
 }
 
-var opDescribeEventCategories *aws.Operation
+const opDescribeEventSubscriptions = "DescribeEventSubscriptions"
 
-// DescribeEventSubscriptionsRequest generates a request for the DescribeEventSubscriptions operation.
-func (c *Redshift) DescribeEventSubscriptionsRequest(input *DescribeEventSubscriptionsInput) (req *aws.Request, output *DescribeEventSubscriptionsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeEventSubscriptions == nil {
-		opDescribeEventSubscriptions = &aws.Operation{
-			Name:       "DescribeEventSubscriptions",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeEventSubscriptionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEventSubscriptions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEventSubscriptions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventSubscriptionsRequest method.
+//    req, resp := client.DescribeEventSubscriptionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeEventSubscriptionsRequest(input *DescribeEventSubscriptionsInput) (req *request.Request, output *DescribeEventSubscriptionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEventSubscriptions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeEventSubscriptionsInput{}
 	}
 
-	req = c.newRequest(opDescribeEventSubscriptions, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeEventSubscriptionsOutput{}
 	req.Data = output
 	return
@@ -1345,39 +2112,73 @@ func (c *Redshift) DescribeEventSubscriptions(input *DescribeEventSubscriptionsI
 	return out, err
 }
 
+// DescribeEventSubscriptionsPages iterates over the pages of a DescribeEventSubscriptions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEventSubscriptions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEventSubscriptions operation.
+//    pageNum := 0
+//    err := client.DescribeEventSubscriptionsPages(params,
+//        func(page *DescribeEventSubscriptionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeEventSubscriptionsPages(input *DescribeEventSubscriptionsInput, fn func(p *DescribeEventSubscriptionsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeEventSubscriptionsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeEventSubscriptionsOutput), lastPage)
 	})
 }
 
-var opDescribeEventSubscriptions *aws.Operation
+const opDescribeEvents = "DescribeEvents"
 
-// DescribeEventsRequest generates a request for the DescribeEvents operation.
-func (c *Redshift) DescribeEventsRequest(input *DescribeEventsInput) (req *aws.Request, output *DescribeEventsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeEvents == nil {
-		opDescribeEvents = &aws.Operation{
-			Name:       "DescribeEvents",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeEventsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEvents operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEvents method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventsRequest method.
+//    req, resp := client.DescribeEventsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeEventsRequest(input *DescribeEventsInput) (req *request.Request, output *DescribeEventsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEvents,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeEventsInput{}
 	}
 
-	req = c.newRequest(opDescribeEvents, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeEventsOutput{}
 	req.Data = output
 	return
@@ -1393,40 +2194,74 @@ func (c *Redshift) DescribeEvents(input *DescribeEventsInput) (*DescribeEventsOu
 	return out, err
 }
 
+// DescribeEventsPages iterates over the pages of a DescribeEvents operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEvents method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEvents operation.
+//    pageNum := 0
+//    err := client.DescribeEventsPages(params,
+//        func(page *DescribeEventsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeEventsPages(input *DescribeEventsInput, fn func(p *DescribeEventsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeEventsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeEventsOutput), lastPage)
 	})
 }
 
-var opDescribeEvents *aws.Operation
+const opDescribeHsmClientCertificates = "DescribeHsmClientCertificates"
 
-// DescribeHSMClientCertificatesRequest generates a request for the DescribeHSMClientCertificates operation.
-func (c *Redshift) DescribeHSMClientCertificatesRequest(input *DescribeHSMClientCertificatesInput) (req *aws.Request, output *DescribeHSMClientCertificatesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeHSMClientCertificates == nil {
-		opDescribeHSMClientCertificates = &aws.Operation{
-			Name:       "DescribeHsmClientCertificates",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeHsmClientCertificatesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeHsmClientCertificates operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeHsmClientCertificates method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeHsmClientCertificatesRequest method.
+//    req, resp := client.DescribeHsmClientCertificatesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeHsmClientCertificatesRequest(input *DescribeHsmClientCertificatesInput) (req *request.Request, output *DescribeHsmClientCertificatesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeHsmClientCertificates,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
-		input = &DescribeHSMClientCertificatesInput{}
+		input = &DescribeHsmClientCertificatesInput{}
 	}
 
-	req = c.newRequest(opDescribeHSMClientCertificates, input, output)
-	output = &DescribeHSMClientCertificatesOutput{}
+	req = c.newRequest(op, input, output)
+	output = &DescribeHsmClientCertificatesOutput{}
 	req.Data = output
 	return
 }
@@ -1444,46 +2279,80 @@ func (c *Redshift) DescribeHSMClientCertificatesRequest(input *DescribeHSMClient
 // If both tag keys and values are omitted from the request, HSM client certificates
 // are returned regardless of whether they have tag keys or values associated
 // with them.
-func (c *Redshift) DescribeHSMClientCertificates(input *DescribeHSMClientCertificatesInput) (*DescribeHSMClientCertificatesOutput, error) {
-	req, out := c.DescribeHSMClientCertificatesRequest(input)
+func (c *Redshift) DescribeHsmClientCertificates(input *DescribeHsmClientCertificatesInput) (*DescribeHsmClientCertificatesOutput, error) {
+	req, out := c.DescribeHsmClientCertificatesRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-func (c *Redshift) DescribeHSMClientCertificatesPages(input *DescribeHSMClientCertificatesInput, fn func(p *DescribeHSMClientCertificatesOutput, lastPage bool) (shouldContinue bool)) error {
-	page, _ := c.DescribeHSMClientCertificatesRequest(input)
+// DescribeHsmClientCertificatesPages iterates over the pages of a DescribeHsmClientCertificates operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeHsmClientCertificates method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeHsmClientCertificates operation.
+//    pageNum := 0
+//    err := client.DescribeHsmClientCertificatesPages(params,
+//        func(page *DescribeHsmClientCertificatesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeHsmClientCertificatesPages(input *DescribeHsmClientCertificatesInput, fn func(p *DescribeHsmClientCertificatesOutput, lastPage bool) (shouldContinue bool)) error {
+	page, _ := c.DescribeHsmClientCertificatesRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
-		return fn(p.(*DescribeHSMClientCertificatesOutput), lastPage)
+		return fn(p.(*DescribeHsmClientCertificatesOutput), lastPage)
 	})
 }
 
-var opDescribeHSMClientCertificates *aws.Operation
+const opDescribeHsmConfigurations = "DescribeHsmConfigurations"
 
-// DescribeHSMConfigurationsRequest generates a request for the DescribeHSMConfigurations operation.
-func (c *Redshift) DescribeHSMConfigurationsRequest(input *DescribeHSMConfigurationsInput) (req *aws.Request, output *DescribeHSMConfigurationsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeHSMConfigurations == nil {
-		opDescribeHSMConfigurations = &aws.Operation{
-			Name:       "DescribeHsmConfigurations",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeHsmConfigurationsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeHsmConfigurations operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeHsmConfigurations method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeHsmConfigurationsRequest method.
+//    req, resp := client.DescribeHsmConfigurationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeHsmConfigurationsRequest(input *DescribeHsmConfigurationsInput) (req *request.Request, output *DescribeHsmConfigurationsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeHsmConfigurations,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
-		input = &DescribeHSMConfigurationsInput{}
+		input = &DescribeHsmConfigurationsInput{}
 	}
 
-	req = c.newRequest(opDescribeHSMConfigurations, input, output)
-	output = &DescribeHSMConfigurationsOutput{}
+	req = c.newRequest(op, input, output)
+	output = &DescribeHsmConfigurationsOutput{}
 	req.Data = output
 	return
 }
@@ -1501,39 +2370,73 @@ func (c *Redshift) DescribeHSMConfigurationsRequest(input *DescribeHSMConfigurat
 // If both tag keys and values are omitted from the request, HSM connections
 // are returned regardless of whether they have tag keys or values associated
 // with them.
-func (c *Redshift) DescribeHSMConfigurations(input *DescribeHSMConfigurationsInput) (*DescribeHSMConfigurationsOutput, error) {
-	req, out := c.DescribeHSMConfigurationsRequest(input)
+func (c *Redshift) DescribeHsmConfigurations(input *DescribeHsmConfigurationsInput) (*DescribeHsmConfigurationsOutput, error) {
+	req, out := c.DescribeHsmConfigurationsRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-func (c *Redshift) DescribeHSMConfigurationsPages(input *DescribeHSMConfigurationsInput, fn func(p *DescribeHSMConfigurationsOutput, lastPage bool) (shouldContinue bool)) error {
-	page, _ := c.DescribeHSMConfigurationsRequest(input)
+// DescribeHsmConfigurationsPages iterates over the pages of a DescribeHsmConfigurations operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeHsmConfigurations method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeHsmConfigurations operation.
+//    pageNum := 0
+//    err := client.DescribeHsmConfigurationsPages(params,
+//        func(page *DescribeHsmConfigurationsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Redshift) DescribeHsmConfigurationsPages(input *DescribeHsmConfigurationsInput, fn func(p *DescribeHsmConfigurationsOutput, lastPage bool) (shouldContinue bool)) error {
+	page, _ := c.DescribeHsmConfigurationsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
-		return fn(p.(*DescribeHSMConfigurationsOutput), lastPage)
+		return fn(p.(*DescribeHsmConfigurationsOutput), lastPage)
 	})
 }
 
-var opDescribeHSMConfigurations *aws.Operation
+const opDescribeLoggingStatus = "DescribeLoggingStatus"
 
-// DescribeLoggingStatusRequest generates a request for the DescribeLoggingStatus operation.
-func (c *Redshift) DescribeLoggingStatusRequest(input *DescribeLoggingStatusInput) (req *aws.Request, output *LoggingStatus) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeLoggingStatus == nil {
-		opDescribeLoggingStatus = &aws.Operation{
-			Name:       "DescribeLoggingStatus",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DescribeLoggingStatusRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeLoggingStatus operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeLoggingStatus method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeLoggingStatusRequest method.
+//    req, resp := client.DescribeLoggingStatusRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeLoggingStatusRequest(input *DescribeLoggingStatusInput) (req *request.Request, output *LoggingStatus) {
+	op := &request.Operation{
+		Name:       opDescribeLoggingStatus,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DescribeLoggingStatusInput{}
 	}
 
-	req = c.newRequest(opDescribeLoggingStatus, input, output)
+	req = c.newRequest(op, input, output)
 	output = &LoggingStatus{}
 	req.Data = output
 	return
@@ -1547,32 +2450,48 @@ func (c *Redshift) DescribeLoggingStatus(input *DescribeLoggingStatusInput) (*Lo
 	return out, err
 }
 
-var opDescribeLoggingStatus *aws.Operation
+const opDescribeOrderableClusterOptions = "DescribeOrderableClusterOptions"
 
-// DescribeOrderableClusterOptionsRequest generates a request for the DescribeOrderableClusterOptions operation.
-func (c *Redshift) DescribeOrderableClusterOptionsRequest(input *DescribeOrderableClusterOptionsInput) (req *aws.Request, output *DescribeOrderableClusterOptionsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeOrderableClusterOptions == nil {
-		opDescribeOrderableClusterOptions = &aws.Operation{
-			Name:       "DescribeOrderableClusterOptions",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeOrderableClusterOptionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeOrderableClusterOptions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeOrderableClusterOptions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeOrderableClusterOptionsRequest method.
+//    req, resp := client.DescribeOrderableClusterOptionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeOrderableClusterOptionsRequest(input *DescribeOrderableClusterOptionsInput) (req *request.Request, output *DescribeOrderableClusterOptionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeOrderableClusterOptions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeOrderableClusterOptionsInput{}
 	}
 
-	req = c.newRequest(opDescribeOrderableClusterOptions, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeOrderableClusterOptionsOutput{}
 	req.Data = output
 	return
@@ -1593,39 +2512,73 @@ func (c *Redshift) DescribeOrderableClusterOptions(input *DescribeOrderableClust
 	return out, err
 }
 
+// DescribeOrderableClusterOptionsPages iterates over the pages of a DescribeOrderableClusterOptions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeOrderableClusterOptions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeOrderableClusterOptions operation.
+//    pageNum := 0
+//    err := client.DescribeOrderableClusterOptionsPages(params,
+//        func(page *DescribeOrderableClusterOptionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeOrderableClusterOptionsPages(input *DescribeOrderableClusterOptionsInput, fn func(p *DescribeOrderableClusterOptionsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeOrderableClusterOptionsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeOrderableClusterOptionsOutput), lastPage)
 	})
 }
 
-var opDescribeOrderableClusterOptions *aws.Operation
+const opDescribeReservedNodeOfferings = "DescribeReservedNodeOfferings"
 
-// DescribeReservedNodeOfferingsRequest generates a request for the DescribeReservedNodeOfferings operation.
-func (c *Redshift) DescribeReservedNodeOfferingsRequest(input *DescribeReservedNodeOfferingsInput) (req *aws.Request, output *DescribeReservedNodeOfferingsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeReservedNodeOfferings == nil {
-		opDescribeReservedNodeOfferings = &aws.Operation{
-			Name:       "DescribeReservedNodeOfferings",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeReservedNodeOfferingsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeReservedNodeOfferings operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeReservedNodeOfferings method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeReservedNodeOfferingsRequest method.
+//    req, resp := client.DescribeReservedNodeOfferingsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeReservedNodeOfferingsRequest(input *DescribeReservedNodeOfferingsInput) (req *request.Request, output *DescribeReservedNodeOfferingsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeReservedNodeOfferings,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeReservedNodeOfferingsInput{}
 	}
 
-	req = c.newRequest(opDescribeReservedNodeOfferings, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeReservedNodeOfferingsOutput{}
 	req.Data = output
 	return
@@ -1638,8 +2591,8 @@ func (c *Redshift) DescribeReservedNodeOfferingsRequest(input *DescribeReservedN
 // to purchase. You then use the unique offering ID in you call to PurchaseReservedNodeOffering
 // to reserve one or more nodes for your Amazon Redshift cluster.
 //
-//  For more information about managing parameter groups, go to Purchasing
-// Reserved Nodes (http://docs.aws.amazon.com/redshift/latest/mgmt/purchase-reserved-node-instance.html)
+//  For more information about reserved node offerings, go to Purchasing Reserved
+// Nodes (http://docs.aws.amazon.com/redshift/latest/mgmt/purchase-reserved-node-instance.html)
 // in the Amazon Redshift Cluster Management Guide.
 func (c *Redshift) DescribeReservedNodeOfferings(input *DescribeReservedNodeOfferingsInput) (*DescribeReservedNodeOfferingsOutput, error) {
 	req, out := c.DescribeReservedNodeOfferingsRequest(input)
@@ -1647,39 +2600,73 @@ func (c *Redshift) DescribeReservedNodeOfferings(input *DescribeReservedNodeOffe
 	return out, err
 }
 
+// DescribeReservedNodeOfferingsPages iterates over the pages of a DescribeReservedNodeOfferings operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReservedNodeOfferings method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReservedNodeOfferings operation.
+//    pageNum := 0
+//    err := client.DescribeReservedNodeOfferingsPages(params,
+//        func(page *DescribeReservedNodeOfferingsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeReservedNodeOfferingsPages(input *DescribeReservedNodeOfferingsInput, fn func(p *DescribeReservedNodeOfferingsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReservedNodeOfferingsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReservedNodeOfferingsOutput), lastPage)
 	})
 }
 
-var opDescribeReservedNodeOfferings *aws.Operation
+const opDescribeReservedNodes = "DescribeReservedNodes"
 
-// DescribeReservedNodesRequest generates a request for the DescribeReservedNodes operation.
-func (c *Redshift) DescribeReservedNodesRequest(input *DescribeReservedNodesInput) (req *aws.Request, output *DescribeReservedNodesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeReservedNodes == nil {
-		opDescribeReservedNodes = &aws.Operation{
-			Name:       "DescribeReservedNodes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"Marker"},
-				OutputTokens:    []string{"Marker"},
-				LimitToken:      "MaxRecords",
-				TruncationToken: "",
-			},
-		}
+// DescribeReservedNodesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeReservedNodes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeReservedNodes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeReservedNodesRequest method.
+//    req, resp := client.DescribeReservedNodesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeReservedNodesRequest(input *DescribeReservedNodesInput) (req *request.Request, output *DescribeReservedNodesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeReservedNodes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &DescribeReservedNodesInput{}
 	}
 
-	req = c.newRequest(opDescribeReservedNodes, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeReservedNodesOutput{}
 	req.Data = output
 	return
@@ -1692,33 +2679,67 @@ func (c *Redshift) DescribeReservedNodes(input *DescribeReservedNodesInput) (*De
 	return out, err
 }
 
+// DescribeReservedNodesPages iterates over the pages of a DescribeReservedNodes operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReservedNodes method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReservedNodes operation.
+//    pageNum := 0
+//    err := client.DescribeReservedNodesPages(params,
+//        func(page *DescribeReservedNodesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *Redshift) DescribeReservedNodesPages(input *DescribeReservedNodesInput, fn func(p *DescribeReservedNodesOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReservedNodesRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReservedNodesOutput), lastPage)
 	})
 }
 
-var opDescribeReservedNodes *aws.Operation
+const opDescribeResize = "DescribeResize"
 
-// DescribeResizeRequest generates a request for the DescribeResize operation.
-func (c *Redshift) DescribeResizeRequest(input *DescribeResizeInput) (req *aws.Request, output *DescribeResizeOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeResize == nil {
-		opDescribeResize = &aws.Operation{
-			Name:       "DescribeResize",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DescribeResizeRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeResize operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeResize method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeResizeRequest method.
+//    req, resp := client.DescribeResizeRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeResizeRequest(input *DescribeResizeInput) (req *request.Request, output *DescribeResizeOutput) {
+	op := &request.Operation{
+		Name:       opDescribeResize,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DescribeResizeInput{}
 	}
 
-	req = c.newRequest(opDescribeResize, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeResizeOutput{}
 	req.Data = output
 	return
@@ -1737,26 +2758,147 @@ func (c *Redshift) DescribeResize(input *DescribeResizeInput) (*DescribeResizeOu
 	return out, err
 }
 
-var opDescribeResize *aws.Operation
+const opDescribeSnapshotCopyGrants = "DescribeSnapshotCopyGrants"
 
-// DescribeTagsRequest generates a request for the DescribeTags operation.
-func (c *Redshift) DescribeTagsRequest(input *DescribeTagsInput) (req *aws.Request, output *DescribeTagsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// DescribeSnapshotCopyGrantsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeSnapshotCopyGrants operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeSnapshotCopyGrants method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeSnapshotCopyGrantsRequest method.
+//    req, resp := client.DescribeSnapshotCopyGrantsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeSnapshotCopyGrantsRequest(input *DescribeSnapshotCopyGrantsInput) (req *request.Request, output *DescribeSnapshotCopyGrantsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeSnapshotCopyGrants,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opDescribeTags == nil {
-		opDescribeTags = &aws.Operation{
-			Name:       "DescribeTags",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &DescribeSnapshotCopyGrantsInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &DescribeSnapshotCopyGrantsOutput{}
+	req.Data = output
+	return
+}
+
+// Returns a list of snapshot copy grants owned by the AWS account in the destination
+// region.
+//
+//  For more information about managing snapshot copy grants, go to Amazon
+// Redshift Database Encryption (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html)
+// in the Amazon Redshift Cluster Management Guide.
+func (c *Redshift) DescribeSnapshotCopyGrants(input *DescribeSnapshotCopyGrantsInput) (*DescribeSnapshotCopyGrantsOutput, error) {
+	req, out := c.DescribeSnapshotCopyGrantsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opDescribeTableRestoreStatus = "DescribeTableRestoreStatus"
+
+// DescribeTableRestoreStatusRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeTableRestoreStatus operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeTableRestoreStatus method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeTableRestoreStatusRequest method.
+//    req, resp := client.DescribeTableRestoreStatusRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeTableRestoreStatusRequest(input *DescribeTableRestoreStatusInput) (req *request.Request, output *DescribeTableRestoreStatusOutput) {
+	op := &request.Operation{
+		Name:       opDescribeTableRestoreStatus,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeTableRestoreStatusInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &DescribeTableRestoreStatusOutput{}
+	req.Data = output
+	return
+}
+
+// Lists the status of one or more table restore requests made using the RestoreTableFromClusterSnapshot
+// API action. If you don't specify a value for the TableRestoreRequestId parameter,
+// then DescribeTableRestoreStatus returns the status of all table restore requests
+// ordered by the date and time of the request in ascending order. Otherwise
+// DescribeTableRestoreStatus returns the status of the table specified by TableRestoreRequestId.
+func (c *Redshift) DescribeTableRestoreStatus(input *DescribeTableRestoreStatusInput) (*DescribeTableRestoreStatusOutput, error) {
+	req, out := c.DescribeTableRestoreStatusRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opDescribeTags = "DescribeTags"
+
+// DescribeTagsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeTags operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeTags method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeTagsRequest method.
+//    req, resp := client.DescribeTagsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DescribeTagsRequest(input *DescribeTagsInput) (req *request.Request, output *DescribeTagsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeTags,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DescribeTagsInput{}
 	}
 
-	req = c.newRequest(opDescribeTags, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeTagsOutput{}
 	req.Data = output
 	return
@@ -1787,26 +2929,42 @@ func (c *Redshift) DescribeTags(input *DescribeTagsInput) (*DescribeTagsOutput, 
 	return out, err
 }
 
-var opDescribeTags *aws.Operation
+const opDisableLogging = "DisableLogging"
 
-// DisableLoggingRequest generates a request for the DisableLogging operation.
-func (c *Redshift) DisableLoggingRequest(input *DisableLoggingInput) (req *aws.Request, output *LoggingStatus) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDisableLogging == nil {
-		opDisableLogging = &aws.Operation{
-			Name:       "DisableLogging",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DisableLoggingRequest generates a "aws/request.Request" representing the
+// client's request for the DisableLogging operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DisableLogging method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DisableLoggingRequest method.
+//    req, resp := client.DisableLoggingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DisableLoggingRequest(input *DisableLoggingInput) (req *request.Request, output *LoggingStatus) {
+	op := &request.Operation{
+		Name:       opDisableLogging,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DisableLoggingInput{}
 	}
 
-	req = c.newRequest(opDisableLogging, input, output)
+	req = c.newRequest(op, input, output)
 	output = &LoggingStatus{}
 	req.Data = output
 	return
@@ -1820,26 +2978,42 @@ func (c *Redshift) DisableLogging(input *DisableLoggingInput) (*LoggingStatus, e
 	return out, err
 }
 
-var opDisableLogging *aws.Operation
+const opDisableSnapshotCopy = "DisableSnapshotCopy"
 
-// DisableSnapshotCopyRequest generates a request for the DisableSnapshotCopy operation.
-func (c *Redshift) DisableSnapshotCopyRequest(input *DisableSnapshotCopyInput) (req *aws.Request, output *DisableSnapshotCopyOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDisableSnapshotCopy == nil {
-		opDisableSnapshotCopy = &aws.Operation{
-			Name:       "DisableSnapshotCopy",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DisableSnapshotCopyRequest generates a "aws/request.Request" representing the
+// client's request for the DisableSnapshotCopy operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DisableSnapshotCopy method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DisableSnapshotCopyRequest method.
+//    req, resp := client.DisableSnapshotCopyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) DisableSnapshotCopyRequest(input *DisableSnapshotCopyInput) (req *request.Request, output *DisableSnapshotCopyOutput) {
+	op := &request.Operation{
+		Name:       opDisableSnapshotCopy,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DisableSnapshotCopyInput{}
 	}
 
-	req = c.newRequest(opDisableSnapshotCopy, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DisableSnapshotCopyOutput{}
 	req.Data = output
 	return
@@ -1847,32 +3021,52 @@ func (c *Redshift) DisableSnapshotCopyRequest(input *DisableSnapshotCopyInput) (
 
 // Disables the automatic copying of snapshots from one region to another region
 // for a specified cluster.
+//
+// If your cluster and its snapshots are encrypted using a customer master
+// key (CMK) from AWS KMS, use DeleteSnapshotCopyGrant to delete the grant that
+// grants Amazon Redshift permission to the CMK in the destination region.
 func (c *Redshift) DisableSnapshotCopy(input *DisableSnapshotCopyInput) (*DisableSnapshotCopyOutput, error) {
 	req, out := c.DisableSnapshotCopyRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDisableSnapshotCopy *aws.Operation
+const opEnableLogging = "EnableLogging"
 
-// EnableLoggingRequest generates a request for the EnableLogging operation.
-func (c *Redshift) EnableLoggingRequest(input *EnableLoggingInput) (req *aws.Request, output *LoggingStatus) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opEnableLogging == nil {
-		opEnableLogging = &aws.Operation{
-			Name:       "EnableLogging",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// EnableLoggingRequest generates a "aws/request.Request" representing the
+// client's request for the EnableLogging operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the EnableLogging method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the EnableLoggingRequest method.
+//    req, resp := client.EnableLoggingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) EnableLoggingRequest(input *EnableLoggingInput) (req *request.Request, output *LoggingStatus) {
+	op := &request.Operation{
+		Name:       opEnableLogging,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &EnableLoggingInput{}
 	}
 
-	req = c.newRequest(opEnableLogging, input, output)
+	req = c.newRequest(op, input, output)
 	output = &LoggingStatus{}
 	req.Data = output
 	return
@@ -1886,26 +3080,42 @@ func (c *Redshift) EnableLogging(input *EnableLoggingInput) (*LoggingStatus, err
 	return out, err
 }
 
-var opEnableLogging *aws.Operation
+const opEnableSnapshotCopy = "EnableSnapshotCopy"
 
-// EnableSnapshotCopyRequest generates a request for the EnableSnapshotCopy operation.
-func (c *Redshift) EnableSnapshotCopyRequest(input *EnableSnapshotCopyInput) (req *aws.Request, output *EnableSnapshotCopyOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opEnableSnapshotCopy == nil {
-		opEnableSnapshotCopy = &aws.Operation{
-			Name:       "EnableSnapshotCopy",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// EnableSnapshotCopyRequest generates a "aws/request.Request" representing the
+// client's request for the EnableSnapshotCopy operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the EnableSnapshotCopy method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the EnableSnapshotCopyRequest method.
+//    req, resp := client.EnableSnapshotCopyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) EnableSnapshotCopyRequest(input *EnableSnapshotCopyInput) (req *request.Request, output *EnableSnapshotCopyOutput) {
+	op := &request.Operation{
+		Name:       opEnableSnapshotCopy,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &EnableSnapshotCopyInput{}
 	}
 
-	req = c.newRequest(opEnableSnapshotCopy, input, output)
+	req = c.newRequest(op, input, output)
 	output = &EnableSnapshotCopyOutput{}
 	req.Data = output
 	return
@@ -1919,26 +3129,42 @@ func (c *Redshift) EnableSnapshotCopy(input *EnableSnapshotCopyInput) (*EnableSn
 	return out, err
 }
 
-var opEnableSnapshotCopy *aws.Operation
+const opModifyCluster = "ModifyCluster"
 
-// ModifyClusterRequest generates a request for the ModifyCluster operation.
-func (c *Redshift) ModifyClusterRequest(input *ModifyClusterInput) (req *aws.Request, output *ModifyClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyCluster == nil {
-		opModifyCluster = &aws.Operation{
-			Name:       "ModifyCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyClusterRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyClusterRequest method.
+//    req, resp := client.ModifyClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ModifyClusterRequest(input *ModifyClusterInput) (req *request.Request, output *ModifyClusterOutput) {
+	op := &request.Operation{
+		Name:       opModifyCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyClusterInput{}
 	}
 
-	req = c.newRequest(opModifyCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyClusterOutput{}
 	req.Data = output
 	return
@@ -1961,26 +3187,93 @@ func (c *Redshift) ModifyCluster(input *ModifyClusterInput) (*ModifyClusterOutpu
 	return out, err
 }
 
-var opModifyCluster *aws.Operation
+const opModifyClusterIamRoles = "ModifyClusterIamRoles"
 
-// ModifyClusterParameterGroupRequest generates a request for the ModifyClusterParameterGroup operation.
-func (c *Redshift) ModifyClusterParameterGroupRequest(input *ModifyClusterParameterGroupInput) (req *aws.Request, output *ClusterParameterGroupNameMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// ModifyClusterIamRolesRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyClusterIamRoles operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyClusterIamRoles method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyClusterIamRolesRequest method.
+//    req, resp := client.ModifyClusterIamRolesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ModifyClusterIamRolesRequest(input *ModifyClusterIamRolesInput) (req *request.Request, output *ModifyClusterIamRolesOutput) {
+	op := &request.Operation{
+		Name:       opModifyClusterIamRoles,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opModifyClusterParameterGroup == nil {
-		opModifyClusterParameterGroup = &aws.Operation{
-			Name:       "ModifyClusterParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &ModifyClusterIamRolesInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ModifyClusterIamRolesOutput{}
+	req.Data = output
+	return
+}
+
+// Modifies the list of AWS Identity and Access Management (IAM) roles that
+// can be used by the cluster to access other AWS services.
+//
+// A cluster can have up to 10 IAM roles associated at any time.
+func (c *Redshift) ModifyClusterIamRoles(input *ModifyClusterIamRolesInput) (*ModifyClusterIamRolesOutput, error) {
+	req, out := c.ModifyClusterIamRolesRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opModifyClusterParameterGroup = "ModifyClusterParameterGroup"
+
+// ModifyClusterParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyClusterParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyClusterParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyClusterParameterGroupRequest method.
+//    req, resp := client.ModifyClusterParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ModifyClusterParameterGroupRequest(input *ModifyClusterParameterGroupInput) (req *request.Request, output *ClusterParameterGroupNameMessage) {
+	op := &request.Operation{
+		Name:       opModifyClusterParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyClusterParameterGroupInput{}
 	}
 
-	req = c.newRequest(opModifyClusterParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ClusterParameterGroupNameMessage{}
 	req.Data = output
 	return
@@ -1988,8 +3281,8 @@ func (c *Redshift) ModifyClusterParameterGroupRequest(input *ModifyClusterParame
 
 // Modifies the parameters of a parameter group.
 //
-//  For more information about managing parameter groups, go to Amazon Redshift
-// Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+//  For more information about parameters and parameter groups, go to Amazon
+// Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
 // in the Amazon Redshift Cluster Management Guide.
 func (c *Redshift) ModifyClusterParameterGroup(input *ModifyClusterParameterGroupInput) (*ClusterParameterGroupNameMessage, error) {
 	req, out := c.ModifyClusterParameterGroupRequest(input)
@@ -1997,26 +3290,42 @@ func (c *Redshift) ModifyClusterParameterGroup(input *ModifyClusterParameterGrou
 	return out, err
 }
 
-var opModifyClusterParameterGroup *aws.Operation
+const opModifyClusterSubnetGroup = "ModifyClusterSubnetGroup"
 
-// ModifyClusterSubnetGroupRequest generates a request for the ModifyClusterSubnetGroup operation.
-func (c *Redshift) ModifyClusterSubnetGroupRequest(input *ModifyClusterSubnetGroupInput) (req *aws.Request, output *ModifyClusterSubnetGroupOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyClusterSubnetGroup == nil {
-		opModifyClusterSubnetGroup = &aws.Operation{
-			Name:       "ModifyClusterSubnetGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyClusterSubnetGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyClusterSubnetGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyClusterSubnetGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyClusterSubnetGroupRequest method.
+//    req, resp := client.ModifyClusterSubnetGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ModifyClusterSubnetGroupRequest(input *ModifyClusterSubnetGroupInput) (req *request.Request, output *ModifyClusterSubnetGroupOutput) {
+	op := &request.Operation{
+		Name:       opModifyClusterSubnetGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyClusterSubnetGroupInput{}
 	}
 
-	req = c.newRequest(opModifyClusterSubnetGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyClusterSubnetGroupOutput{}
 	req.Data = output
 	return
@@ -2031,26 +3340,42 @@ func (c *Redshift) ModifyClusterSubnetGroup(input *ModifyClusterSubnetGroupInput
 	return out, err
 }
 
-var opModifyClusterSubnetGroup *aws.Operation
+const opModifyEventSubscription = "ModifyEventSubscription"
 
-// ModifyEventSubscriptionRequest generates a request for the ModifyEventSubscription operation.
-func (c *Redshift) ModifyEventSubscriptionRequest(input *ModifyEventSubscriptionInput) (req *aws.Request, output *ModifyEventSubscriptionOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyEventSubscription == nil {
-		opModifyEventSubscription = &aws.Operation{
-			Name:       "ModifyEventSubscription",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyEventSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyEventSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyEventSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyEventSubscriptionRequest method.
+//    req, resp := client.ModifyEventSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ModifyEventSubscriptionRequest(input *ModifyEventSubscriptionInput) (req *request.Request, output *ModifyEventSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opModifyEventSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyEventSubscriptionInput{}
 	}
 
-	req = c.newRequest(opModifyEventSubscription, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyEventSubscriptionOutput{}
 	req.Data = output
 	return
@@ -2063,26 +3388,42 @@ func (c *Redshift) ModifyEventSubscription(input *ModifyEventSubscriptionInput) 
 	return out, err
 }
 
-var opModifyEventSubscription *aws.Operation
+const opModifySnapshotCopyRetentionPeriod = "ModifySnapshotCopyRetentionPeriod"
 
-// ModifySnapshotCopyRetentionPeriodRequest generates a request for the ModifySnapshotCopyRetentionPeriod operation.
-func (c *Redshift) ModifySnapshotCopyRetentionPeriodRequest(input *ModifySnapshotCopyRetentionPeriodInput) (req *aws.Request, output *ModifySnapshotCopyRetentionPeriodOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifySnapshotCopyRetentionPeriod == nil {
-		opModifySnapshotCopyRetentionPeriod = &aws.Operation{
-			Name:       "ModifySnapshotCopyRetentionPeriod",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifySnapshotCopyRetentionPeriodRequest generates a "aws/request.Request" representing the
+// client's request for the ModifySnapshotCopyRetentionPeriod operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifySnapshotCopyRetentionPeriod method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifySnapshotCopyRetentionPeriodRequest method.
+//    req, resp := client.ModifySnapshotCopyRetentionPeriodRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ModifySnapshotCopyRetentionPeriodRequest(input *ModifySnapshotCopyRetentionPeriodInput) (req *request.Request, output *ModifySnapshotCopyRetentionPeriodOutput) {
+	op := &request.Operation{
+		Name:       opModifySnapshotCopyRetentionPeriod,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifySnapshotCopyRetentionPeriodInput{}
 	}
 
-	req = c.newRequest(opModifySnapshotCopyRetentionPeriod, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifySnapshotCopyRetentionPeriodOutput{}
 	req.Data = output
 	return
@@ -2096,39 +3437,55 @@ func (c *Redshift) ModifySnapshotCopyRetentionPeriod(input *ModifySnapshotCopyRe
 	return out, err
 }
 
-var opModifySnapshotCopyRetentionPeriod *aws.Operation
+const opPurchaseReservedNodeOffering = "PurchaseReservedNodeOffering"
 
-// PurchaseReservedNodeOfferingRequest generates a request for the PurchaseReservedNodeOffering operation.
-func (c *Redshift) PurchaseReservedNodeOfferingRequest(input *PurchaseReservedNodeOfferingInput) (req *aws.Request, output *PurchaseReservedNodeOfferingOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opPurchaseReservedNodeOffering == nil {
-		opPurchaseReservedNodeOffering = &aws.Operation{
-			Name:       "PurchaseReservedNodeOffering",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// PurchaseReservedNodeOfferingRequest generates a "aws/request.Request" representing the
+// client's request for the PurchaseReservedNodeOffering operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PurchaseReservedNodeOffering method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PurchaseReservedNodeOfferingRequest method.
+//    req, resp := client.PurchaseReservedNodeOfferingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) PurchaseReservedNodeOfferingRequest(input *PurchaseReservedNodeOfferingInput) (req *request.Request, output *PurchaseReservedNodeOfferingOutput) {
+	op := &request.Operation{
+		Name:       opPurchaseReservedNodeOffering,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &PurchaseReservedNodeOfferingInput{}
 	}
 
-	req = c.newRequest(opPurchaseReservedNodeOffering, input, output)
+	req = c.newRequest(op, input, output)
 	output = &PurchaseReservedNodeOfferingOutput{}
 	req.Data = output
 	return
 }
 
 // Allows you to purchase reserved nodes. Amazon Redshift offers a predefined
-// set of reserved node offerings. You can purchase one of the offerings. You
-// can call the DescribeReservedNodeOfferings API to obtain the available reserved
-// node offerings. You can call this API by providing a specific reserved node
-// offering and the number of nodes you want to reserve.
+// set of reserved node offerings. You can purchase one or more of the offerings.
+// You can call the DescribeReservedNodeOfferings API to obtain the available
+// reserved node offerings. You can call this API by providing a specific reserved
+// node offering and the number of nodes you want to reserve.
 //
-//  For more information about managing parameter groups, go to Purchasing
-// Reserved Nodes (http://docs.aws.amazon.com/redshift/latest/mgmt/purchase-reserved-node-instance.html)
+//  For more information about reserved node offerings, go to Purchasing Reserved
+// Nodes (http://docs.aws.amazon.com/redshift/latest/mgmt/purchase-reserved-node-instance.html)
 // in the Amazon Redshift Cluster Management Guide.
 func (c *Redshift) PurchaseReservedNodeOffering(input *PurchaseReservedNodeOfferingInput) (*PurchaseReservedNodeOfferingOutput, error) {
 	req, out := c.PurchaseReservedNodeOfferingRequest(input)
@@ -2136,26 +3493,42 @@ func (c *Redshift) PurchaseReservedNodeOffering(input *PurchaseReservedNodeOffer
 	return out, err
 }
 
-var opPurchaseReservedNodeOffering *aws.Operation
+const opRebootCluster = "RebootCluster"
 
-// RebootClusterRequest generates a request for the RebootCluster operation.
-func (c *Redshift) RebootClusterRequest(input *RebootClusterInput) (req *aws.Request, output *RebootClusterOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRebootCluster == nil {
-		opRebootCluster = &aws.Operation{
-			Name:       "RebootCluster",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RebootClusterRequest generates a "aws/request.Request" representing the
+// client's request for the RebootCluster operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RebootCluster method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RebootClusterRequest method.
+//    req, resp := client.RebootClusterRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) RebootClusterRequest(input *RebootClusterInput) (req *request.Request, output *RebootClusterOutput) {
+	op := &request.Operation{
+		Name:       opRebootCluster,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RebootClusterInput{}
 	}
 
-	req = c.newRequest(opRebootCluster, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RebootClusterOutput{}
 	req.Data = output
 	return
@@ -2174,26 +3547,42 @@ func (c *Redshift) RebootCluster(input *RebootClusterInput) (*RebootClusterOutpu
 	return out, err
 }
 
-var opRebootCluster *aws.Operation
+const opResetClusterParameterGroup = "ResetClusterParameterGroup"
 
-// ResetClusterParameterGroupRequest generates a request for the ResetClusterParameterGroup operation.
-func (c *Redshift) ResetClusterParameterGroupRequest(input *ResetClusterParameterGroupInput) (req *aws.Request, output *ClusterParameterGroupNameMessage) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opResetClusterParameterGroup == nil {
-		opResetClusterParameterGroup = &aws.Operation{
-			Name:       "ResetClusterParameterGroup",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ResetClusterParameterGroupRequest generates a "aws/request.Request" representing the
+// client's request for the ResetClusterParameterGroup operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ResetClusterParameterGroup method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ResetClusterParameterGroupRequest method.
+//    req, resp := client.ResetClusterParameterGroupRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) ResetClusterParameterGroupRequest(input *ResetClusterParameterGroupInput) (req *request.Request, output *ClusterParameterGroupNameMessage) {
+	op := &request.Operation{
+		Name:       opResetClusterParameterGroup,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ResetClusterParameterGroupInput{}
 	}
 
-	req = c.newRequest(opResetClusterParameterGroup, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ClusterParameterGroupNameMessage{}
 	req.Data = output
 	return
@@ -2209,37 +3598,55 @@ func (c *Redshift) ResetClusterParameterGroup(input *ResetClusterParameterGroupI
 	return out, err
 }
 
-var opResetClusterParameterGroup *aws.Operation
+const opRestoreFromClusterSnapshot = "RestoreFromClusterSnapshot"
 
-// RestoreFromClusterSnapshotRequest generates a request for the RestoreFromClusterSnapshot operation.
-func (c *Redshift) RestoreFromClusterSnapshotRequest(input *RestoreFromClusterSnapshotInput) (req *aws.Request, output *RestoreFromClusterSnapshotOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRestoreFromClusterSnapshot == nil {
-		opRestoreFromClusterSnapshot = &aws.Operation{
-			Name:       "RestoreFromClusterSnapshot",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RestoreFromClusterSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the RestoreFromClusterSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RestoreFromClusterSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RestoreFromClusterSnapshotRequest method.
+//    req, resp := client.RestoreFromClusterSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) RestoreFromClusterSnapshotRequest(input *RestoreFromClusterSnapshotInput) (req *request.Request, output *RestoreFromClusterSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opRestoreFromClusterSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RestoreFromClusterSnapshotInput{}
 	}
 
-	req = c.newRequest(opRestoreFromClusterSnapshot, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RestoreFromClusterSnapshotOutput{}
 	req.Data = output
 	return
 }
 
-// Creates a new cluster from a snapshot. Amazon Redshift creates the resulting
-// cluster with the same configuration as the original cluster from which the
-// snapshot was created, except that the new cluster is created with the default
-// cluster security and parameter group. After Amazon Redshift creates the cluster
-// you can use the ModifyCluster API to associate a different security group
-// and different parameter group with the restored cluster.
+// Creates a new cluster from a snapshot. By default, Amazon Redshift creates
+// the resulting cluster with the same configuration as the original cluster
+// from which the snapshot was created, except that the new cluster is created
+// with the default cluster security and parameter groups. After Amazon Redshift
+// creates the cluster, you can use the ModifyCluster API to associate a different
+// security group and different parameter group with the restored cluster. If
+// you are using a DS node type, you can also choose to change to another DS
+// node type of the same size during restore.
 //
 //  If you restore a cluster into a VPC, you must provide a cluster subnet
 // group where you want the cluster restored.
@@ -2253,26 +3660,102 @@ func (c *Redshift) RestoreFromClusterSnapshot(input *RestoreFromClusterSnapshotI
 	return out, err
 }
 
-var opRestoreFromClusterSnapshot *aws.Operation
+const opRestoreTableFromClusterSnapshot = "RestoreTableFromClusterSnapshot"
 
-// RevokeClusterSecurityGroupIngressRequest generates a request for the RevokeClusterSecurityGroupIngress operation.
-func (c *Redshift) RevokeClusterSecurityGroupIngressRequest(input *RevokeClusterSecurityGroupIngressInput) (req *aws.Request, output *RevokeClusterSecurityGroupIngressOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// RestoreTableFromClusterSnapshotRequest generates a "aws/request.Request" representing the
+// client's request for the RestoreTableFromClusterSnapshot operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RestoreTableFromClusterSnapshot method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RestoreTableFromClusterSnapshotRequest method.
+//    req, resp := client.RestoreTableFromClusterSnapshotRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) RestoreTableFromClusterSnapshotRequest(input *RestoreTableFromClusterSnapshotInput) (req *request.Request, output *RestoreTableFromClusterSnapshotOutput) {
+	op := &request.Operation{
+		Name:       opRestoreTableFromClusterSnapshot,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opRevokeClusterSecurityGroupIngress == nil {
-		opRevokeClusterSecurityGroupIngress = &aws.Operation{
-			Name:       "RevokeClusterSecurityGroupIngress",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &RestoreTableFromClusterSnapshotInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &RestoreTableFromClusterSnapshotOutput{}
+	req.Data = output
+	return
+}
+
+// Creates a new table from a table in an Amazon Redshift cluster snapshot.
+// You must create the new table within the Amazon Redshift cluster that the
+// snapshot was taken from.
+//
+// You cannot use RestoreTableFromClusterSnapshot to restore a table with the
+// same name as an existing table in an Amazon Redshift cluster. That is, you
+// cannot overwrite an existing table in a cluster with a restored table. If
+// you want to replace your original table with a new, restored table, then
+// rename or drop your original table before you call RestoreTableFromClusterSnapshot.
+// When you have renamed your original table, then you can pass the original
+// name of the table as the NewTableName parameter value in the call to RestoreTableFromClusterSnapshot.
+// This way, you can replace the original table with the table created from
+// the snapshot.
+func (c *Redshift) RestoreTableFromClusterSnapshot(input *RestoreTableFromClusterSnapshotInput) (*RestoreTableFromClusterSnapshotOutput, error) {
+	req, out := c.RestoreTableFromClusterSnapshotRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opRevokeClusterSecurityGroupIngress = "RevokeClusterSecurityGroupIngress"
+
+// RevokeClusterSecurityGroupIngressRequest generates a "aws/request.Request" representing the
+// client's request for the RevokeClusterSecurityGroupIngress operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RevokeClusterSecurityGroupIngress method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RevokeClusterSecurityGroupIngressRequest method.
+//    req, resp := client.RevokeClusterSecurityGroupIngressRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) RevokeClusterSecurityGroupIngressRequest(input *RevokeClusterSecurityGroupIngressInput) (req *request.Request, output *RevokeClusterSecurityGroupIngressOutput) {
+	op := &request.Operation{
+		Name:       opRevokeClusterSecurityGroupIngress,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RevokeClusterSecurityGroupIngressInput{}
 	}
 
-	req = c.newRequest(opRevokeClusterSecurityGroupIngress, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RevokeClusterSecurityGroupIngressOutput{}
 	req.Data = output
 	return
@@ -2289,26 +3772,42 @@ func (c *Redshift) RevokeClusterSecurityGroupIngress(input *RevokeClusterSecurit
 	return out, err
 }
 
-var opRevokeClusterSecurityGroupIngress *aws.Operation
+const opRevokeSnapshotAccess = "RevokeSnapshotAccess"
 
-// RevokeSnapshotAccessRequest generates a request for the RevokeSnapshotAccess operation.
-func (c *Redshift) RevokeSnapshotAccessRequest(input *RevokeSnapshotAccessInput) (req *aws.Request, output *RevokeSnapshotAccessOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRevokeSnapshotAccess == nil {
-		opRevokeSnapshotAccess = &aws.Operation{
-			Name:       "RevokeSnapshotAccess",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RevokeSnapshotAccessRequest generates a "aws/request.Request" representing the
+// client's request for the RevokeSnapshotAccess operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RevokeSnapshotAccess method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RevokeSnapshotAccessRequest method.
+//    req, resp := client.RevokeSnapshotAccessRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) RevokeSnapshotAccessRequest(input *RevokeSnapshotAccessInput) (req *request.Request, output *RevokeSnapshotAccessOutput) {
+	op := &request.Operation{
+		Name:       opRevokeSnapshotAccess,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RevokeSnapshotAccessInput{}
 	}
 
-	req = c.newRequest(opRevokeSnapshotAccess, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RevokeSnapshotAccessOutput{}
 	req.Data = output
 	return
@@ -2327,26 +3826,42 @@ func (c *Redshift) RevokeSnapshotAccess(input *RevokeSnapshotAccessInput) (*Revo
 	return out, err
 }
 
-var opRevokeSnapshotAccess *aws.Operation
+const opRotateEncryptionKey = "RotateEncryptionKey"
 
-// RotateEncryptionKeyRequest generates a request for the RotateEncryptionKey operation.
-func (c *Redshift) RotateEncryptionKeyRequest(input *RotateEncryptionKeyInput) (req *aws.Request, output *RotateEncryptionKeyOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRotateEncryptionKey == nil {
-		opRotateEncryptionKey = &aws.Operation{
-			Name:       "RotateEncryptionKey",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RotateEncryptionKeyRequest generates a "aws/request.Request" representing the
+// client's request for the RotateEncryptionKey operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RotateEncryptionKey method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RotateEncryptionKeyRequest method.
+//    req, resp := client.RotateEncryptionKeyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *Redshift) RotateEncryptionKeyRequest(input *RotateEncryptionKeyInput) (req *request.Request, output *RotateEncryptionKeyOutput) {
+	op := &request.Operation{
+		Name:       opRotateEncryptionKey,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RotateEncryptionKeyInput{}
 	}
 
-	req = c.newRequest(opRotateEncryptionKey, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RotateEncryptionKeyOutput{}
 	req.Data = output
 	return
@@ -2359,22 +3874,27 @@ func (c *Redshift) RotateEncryptionKey(input *RotateEncryptionKeyInput) (*Rotate
 	return out, err
 }
 
-var opRotateEncryptionKey *aws.Operation
-
 // Describes an AWS customer account authorized to restore a snapshot.
 type AccountWithRestoreAccess struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of an AWS customer account authorized to restore a snapshot.
-	AccountID *string `locationName:"AccountId" type:"string"`
-
-	metadataAccountWithRestoreAccess `json:"-" xml:"-"`
+	AccountId *string `type:"string"`
 }
 
-type metadataAccountWithRestoreAccess struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AccountWithRestoreAccess) String() string {
+	return awsutil.Prettify(s)
 }
 
-// ???
+// GoString returns the string representation
+func (s AccountWithRestoreAccess) GoString() string {
+	return s.String()
+}
+
 type AuthorizeClusterSecurityGroupIngressInput struct {
+	_ struct{} `type:"structure"`
+
 	// The IP range to be added the Amazon Redshift security group.
 	CIDRIP *string `type:"string"`
 
@@ -2389,27 +3909,52 @@ type AuthorizeClusterSecurityGroupIngressInput struct {
 	// value.
 	//
 	//  Example: 111122223333
-	EC2SecurityGroupOwnerID *string `locationName:"EC2SecurityGroupOwnerId" type:"string"`
-
-	metadataAuthorizeClusterSecurityGroupIngressInput `json:"-" xml:"-"`
+	EC2SecurityGroupOwnerId *string `type:"string"`
 }
 
-type metadataAuthorizeClusterSecurityGroupIngressInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AuthorizeClusterSecurityGroupIngressInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AuthorizeClusterSecurityGroupIngressInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AuthorizeClusterSecurityGroupIngressInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AuthorizeClusterSecurityGroupIngressInput"}
+	if s.ClusterSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSecurityGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type AuthorizeClusterSecurityGroupIngressOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a security group.
 	ClusterSecurityGroup *ClusterSecurityGroup `type:"structure"`
-
-	metadataAuthorizeClusterSecurityGroupIngressOutput `json:"-" xml:"-"`
 }
 
-type metadataAuthorizeClusterSecurityGroupIngressOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AuthorizeClusterSecurityGroupIngressOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AuthorizeClusterSecurityGroupIngressOutput) GoString() string {
+	return s.String()
 }
 
 type AuthorizeSnapshotAccessInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the AWS customer account authorized to restore the specified
 	// snapshot.
 	AccountWithRestoreAccess *string `type:"string" required:"true"`
@@ -2421,39 +3966,73 @@ type AuthorizeSnapshotAccessInput struct {
 
 	// The identifier of the snapshot the account is authorized to restore.
 	SnapshotIdentifier *string `type:"string" required:"true"`
-
-	metadataAuthorizeSnapshotAccessInput `json:"-" xml:"-"`
 }
 
-type metadataAuthorizeSnapshotAccessInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AuthorizeSnapshotAccessInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AuthorizeSnapshotAccessInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AuthorizeSnapshotAccessInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AuthorizeSnapshotAccessInput"}
+	if s.AccountWithRestoreAccess == nil {
+		invalidParams.Add(request.NewErrParamRequired("AccountWithRestoreAccess"))
+	}
+	if s.SnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type AuthorizeSnapshotAccessOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a snapshot.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataAuthorizeSnapshotAccessOutput `json:"-" xml:"-"`
 }
 
-type metadataAuthorizeSnapshotAccessOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AuthorizeSnapshotAccessOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AuthorizeSnapshotAccessOutput) GoString() string {
+	return s.String()
 }
 
 // Describes an availability zone.
 type AvailabilityZone struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the availability zone.
 	Name *string `type:"string"`
-
-	metadataAvailabilityZone `json:"-" xml:"-"`
 }
 
-type metadataAvailabilityZone struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AvailabilityZone) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AvailabilityZone) GoString() string {
+	return s.String()
 }
 
 // Describes a cluster.
 type Cluster struct {
+	_ struct{} `type:"structure"`
+
 	// If true, major version upgrades will be applied automatically to the cluster
 	// during the maintenance window.
 	AllowVersionUpgrade *bool `type:"boolean"`
@@ -2474,6 +4053,7 @@ type Cluster struct {
 	ClusterNodes []*ClusterNode `type:"list"`
 
 	// The list of cluster parameter groups that are associated with this cluster.
+	// Each parameter group in the list is returned with its status.
 	ClusterParameterGroups []*ClusterParameterGroupStatus `locationNameList:"ClusterParameterGroup" type:"list"`
 
 	// The public key for the cluster.
@@ -2495,8 +4075,10 @@ type Cluster struct {
 	// cross-region snapshot copy.
 	ClusterSnapshotCopyStatus *ClusterSnapshotCopyStatus `type:"structure"`
 
-	// The current state of this cluster. Possible values include available, creating,
-	// deleting, rebooting, renaming, and resizing.
+	// The current state of the cluster. Possible values are:  available creating
+	// deleting final-snapshot hardware-failure incompatible-hsm incompatible-network
+	// incompatible-parameters incompatible-restore modifying rebooting renaming
+	// resizing rotating-keys storage-full updating-hsm
 	ClusterStatus *string `type:"string"`
 
 	// The name of the subnet group that is associated with the cluster. This parameter
@@ -2511,8 +4093,8 @@ type Cluster struct {
 	// was not specified, a database named "dev" was created by default.
 	DBName *string `type:"string"`
 
-	// Describes the status of the elastic IP (EIP) address.
-	ElasticIPStatus *ElasticIPStatus `locationName:"ElasticIpStatus" type:"structure"`
+	// The status of the elastic IP (EIP) address.
+	ElasticIpStatus *ElasticIpStatus `type:"structure"`
 
 	// If true, data in the cluster is encrypted at rest.
 	Encrypted *bool `type:"boolean"`
@@ -2524,11 +4106,15 @@ type Cluster struct {
 	// settings changes specified in a modify cluster command.
 	//
 	// Values: active, applying
-	HSMStatus *HSMStatus `locationName:"HsmStatus" type:"structure"`
+	HsmStatus *HsmStatus `type:"structure"`
+
+	// A list of AWS Identity and Access Management (IAM) roles that can be used
+	// by the cluster to access other AWS services.
+	IamRoles []*ClusterIamRole `locationNameList:"ClusterIamRole" type:"list"`
 
 	// The AWS Key Management Service (KMS) key ID of the encryption key used to
 	// encrypt data in the cluster.
-	KMSKeyID *string `locationName:"KmsKeyId" type:"string"`
+	KmsKeyId *string `type:"string"`
 
 	// The master user name for the cluster. This name is used to connect to the
 	// database that is specified in DBName.
@@ -2561,22 +4147,56 @@ type Cluster struct {
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
 
 	// The identifier of the VPC the cluster is in, if the cluster is in a VPC.
-	VPCID *string `locationName:"VpcId" type:"string"`
+	VpcId *string `type:"string"`
 
 	// A list of Virtual Private Cloud (VPC) security groups that are associated
 	// with the cluster. This parameter is returned only if the cluster is in a
 	// VPC.
-	VPCSecurityGroups []*VPCSecurityGroupMembership `locationName:"VpcSecurityGroups" locationNameList:"VpcSecurityGroup" type:"list"`
-
-	metadataCluster `json:"-" xml:"-"`
+	VpcSecurityGroups []*VpcSecurityGroupMembership `locationNameList:"VpcSecurityGroup" type:"list"`
 }
 
-type metadataCluster struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Cluster) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Cluster) GoString() string {
+	return s.String()
+}
+
+// An AWS Identity and Access Management (IAM) role that can be used by the
+// associated Amazon Redshift cluster to access other AWS services.
+type ClusterIamRole struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the status of the IAM role's association with an Amazon Redshift
+	// cluster.
+	//
+	// The following are possible statuses and descriptions. in-sync: The role
+	// is available for use by the cluster. adding: The role is in the process of
+	// being associated with the cluster. removing: The role is in the process of
+	// being disassociated with the cluster.
+	ApplyStatus *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) of the IAM role. For example, arn:aws:iam::123456789012:role/RedshiftCopyUnload.
+	IamRoleArn *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ClusterIamRole) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterIamRole) GoString() string {
+	return s.String()
 }
 
 // The identifier of a node in a cluster.
 type ClusterNode struct {
+	_ struct{} `type:"structure"`
+
 	// Whether the node is a leader node or a compute node.
 	NodeRole *string `type:"string"`
 
@@ -2585,16 +4205,22 @@ type ClusterNode struct {
 
 	// The public IP address of a node within a cluster.
 	PublicIPAddress *string `type:"string"`
-
-	metadataClusterNode `json:"-" xml:"-"`
 }
 
-type metadataClusterNode struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterNode) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterNode) GoString() string {
+	return s.String()
 }
 
 // Describes a parameter group.
 type ClusterParameterGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The description of the parameter group.
 	Description *string `type:"string"`
 
@@ -2607,18 +4233,21 @@ type ClusterParameterGroup struct {
 
 	// The list of tags for the cluster parameter group.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataClusterParameterGroup `json:"-" xml:"-"`
 }
 
-type metadataClusterParameterGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterParameterGroup) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the ModifyClusterParameterGroup and ResetClusterParameterGroup
-// actions and indicate the parameter group involved and the status of the operation
-// on the parameter group.
+// GoString returns the string representation
+func (s ClusterParameterGroup) GoString() string {
+	return s.String()
+}
+
 type ClusterParameterGroupNameMessage struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster parameter group.
 	ParameterGroupName *string `type:"string"`
 
@@ -2626,31 +4255,87 @@ type ClusterParameterGroupNameMessage struct {
 	// parameter group name-value pair, then the change could be pending a reboot
 	// of an associated cluster.
 	ParameterGroupStatus *string `type:"string"`
-
-	metadataClusterParameterGroupNameMessage `json:"-" xml:"-"`
 }
 
-type metadataClusterParameterGroupNameMessage struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterParameterGroupNameMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterParameterGroupNameMessage) GoString() string {
+	return s.String()
 }
 
 // Describes the status of a parameter group.
 type ClusterParameterGroupStatus struct {
+	_ struct{} `type:"structure"`
+
+	// The list of parameter statuses.
+	//
+	//  For more information about parameters and parameter groups, go to Amazon
+	// Redshift Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+	// in the Amazon Redshift Cluster Management Guide.
+	ClusterParameterStatusList []*ClusterParameterStatus `type:"list"`
+
 	// The status of parameter updates.
 	ParameterApplyStatus *string `type:"string"`
 
 	// The name of the cluster parameter group.
 	ParameterGroupName *string `type:"string"`
-
-	metadataClusterParameterGroupStatus `json:"-" xml:"-"`
 }
 
-type metadataClusterParameterGroupStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterParameterGroupStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterParameterGroupStatus) GoString() string {
+	return s.String()
+}
+
+// Describes the status of a parameter group.
+type ClusterParameterStatus struct {
+	_ struct{} `type:"structure"`
+
+	// The error that prevented the parameter from being applied to the database.
+	ParameterApplyErrorDescription *string `type:"string"`
+
+	// The status of the parameter that indicates whether the parameter is in sync
+	// with the database, waiting for a cluster reboot, or encountered an error
+	// when being applied.
+	//
+	// The following are possible statuses and descriptions. in-sync: The parameter
+	// value is in sync with the database. pending-reboot: The parameter value will
+	// be applied after the cluster reboots. applying: The parameter value is being
+	// applied to the database. invalid-parameter: Cannot apply the parameter value
+	// because it has an invalid value or syntax. apply-deferred: The parameter
+	// contains static property changes. The changes are deferred until the cluster
+	// reboots. apply-error: Cannot connect to the cluster. The parameter change
+	// will be applied after the cluster reboots. unknown-error: Cannot apply the
+	// parameter change right now. The change will be applied after the cluster
+	// reboots.
+	ParameterApplyStatus *string `type:"string"`
+
+	// The name of the parameter.
+	ParameterName *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ClusterParameterStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterParameterStatus) GoString() string {
+	return s.String()
 }
 
 // Describes a security group.
 type ClusterSecurityGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster security group to which the operation was applied.
 	ClusterSecurityGroupName *string `type:"string"`
 
@@ -2667,32 +4352,44 @@ type ClusterSecurityGroup struct {
 
 	// The list of tags for the cluster security group.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataClusterSecurityGroup `json:"-" xml:"-"`
 }
 
-type metadataClusterSecurityGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterSecurityGroup) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Describes a security group.
+// GoString returns the string representation
+func (s ClusterSecurityGroup) GoString() string {
+	return s.String()
+}
+
+// Describes a cluster security group.
 type ClusterSecurityGroupMembership struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster security group.
 	ClusterSecurityGroupName *string `type:"string"`
 
 	// The status of the cluster security group.
 	Status *string `type:"string"`
-
-	metadataClusterSecurityGroupMembership `json:"-" xml:"-"`
 }
 
-type metadataClusterSecurityGroupMembership struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterSecurityGroupMembership) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterSecurityGroupMembership) GoString() string {
+	return s.String()
 }
 
 // Returns the destination region and retention period that are configured for
 // cross-region snapshot copy.
 type ClusterSnapshotCopyStatus struct {
+	_ struct{} `type:"structure"`
+
 	// The destination region that snapshots are automatically copied to when cross-region
 	// snapshot copy is enabled.
 	DestinationRegion *string `type:"string"`
@@ -2701,15 +4398,24 @@ type ClusterSnapshotCopyStatus struct {
 	// region after they are copied from a source region.
 	RetentionPeriod *int64 `type:"long"`
 
-	metadataClusterSnapshotCopyStatus `json:"-" xml:"-"`
+	// The name of the snapshot copy grant.
+	SnapshotCopyGrantName *string `type:"string"`
 }
 
-type metadataClusterSnapshotCopyStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterSnapshotCopyStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterSnapshotCopyStatus) GoString() string {
+	return s.String()
 }
 
 // Describes a subnet group.
 type ClusterSubnetGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster subnet group.
 	ClusterSubnetGroupName *string `type:"string"`
 
@@ -2727,18 +4433,24 @@ type ClusterSubnetGroup struct {
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
 
 	// The VPC ID of the cluster subnet group.
-	VPCID *string `locationName:"VpcId" type:"string"`
-
-	metadataClusterSubnetGroup `json:"-" xml:"-"`
+	VpcId *string `type:"string"`
 }
 
-type metadataClusterSubnetGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterSubnetGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterSubnetGroup) GoString() string {
+	return s.String()
 }
 
 // Describes a cluster version, including the parameter group family and description
 // of the version.
 type ClusterVersion struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster parameter group family for the cluster.
 	ClusterParameterGroupFamily *string `type:"string"`
 
@@ -2747,15 +4459,21 @@ type ClusterVersion struct {
 
 	// The description of the cluster version.
 	Description *string `type:"string"`
-
-	metadataClusterVersion `json:"-" xml:"-"`
 }
 
-type metadataClusterVersion struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ClusterVersion) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ClusterVersion) GoString() string {
+	return s.String()
 }
 
 type CopyClusterSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the cluster the source snapshot was created from. This
 	// parameter is required if your IAM user has a policy containing a snapshot
 	// resource element that specifies anything other than * for the cluster name.
@@ -2781,26 +4499,57 @@ type CopyClusterSnapshotInput struct {
 	// a hyphen or contain two consecutive hyphens. Must be unique for the AWS account
 	// that is making the request.
 	TargetSnapshotIdentifier *string `type:"string" required:"true"`
-
-	metadataCopyClusterSnapshotInput `json:"-" xml:"-"`
 }
 
-type metadataCopyClusterSnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CopyClusterSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CopyClusterSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CopyClusterSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CopyClusterSnapshotInput"}
+	if s.SourceSnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceSnapshotIdentifier"))
+	}
+	if s.TargetSnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetSnapshotIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CopyClusterSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a snapshot.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataCopyClusterSnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataCopyClusterSnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CopyClusterSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CopyClusterSnapshotOutput) GoString() string {
+	return s.String()
 }
 
 type CreateClusterInput struct {
+	_ struct{} `type:"structure"`
+
+	// Reserved.
+	AdditionalInfo *string `type:"string"`
+
 	// If true, major version upgrades can be applied during the maintenance window
 	// to the Amazon Redshift engine that is running on the cluster.
 	//
@@ -2869,8 +4618,8 @@ type CreateClusterInput struct {
 	// outside virtual private cloud (VPC).
 	ClusterSubnetGroupName *string `type:"string"`
 
-	// The type of the cluster. When cluster type is specified as   single-node,
-	// the NumberOfNodes parameter is not required.  multi-node, the NumberOfNodes
+	// The type of the cluster. When cluster type is specified as  single-node,
+	// the NumberOfNodes parameter is not required. multi-node, the NumberOfNodes
 	// parameter is required.
 	//
 	//  Valid Values: multi-node | single-node
@@ -2911,7 +4660,7 @@ type CreateClusterInput struct {
 	// through an Internet gateway. For more information about provisioning clusters
 	// in EC2-VPC, go to Supported Platforms to Launch Your Cluster (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#cluster-platforms)
 	// in the Amazon Redshift Cluster Management Guide.
-	ElasticIP *string `locationName:"ElasticIp" type:"string"`
+	ElasticIp *string `type:"string"`
 
 	// If true, the data in the cluster is encrypted at rest.
 	//
@@ -2920,15 +4669,23 @@ type CreateClusterInput struct {
 
 	// Specifies the name of the HSM client certificate the Amazon Redshift cluster
 	// uses to retrieve the data encryption keys stored in an HSM.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string"`
+	HsmClientCertificateIdentifier *string `type:"string"`
 
 	// Specifies the name of the HSM configuration that contains the information
 	// the Amazon Redshift cluster can use to retrieve and store keys in an HSM.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string"`
+	HsmConfigurationIdentifier *string `type:"string"`
+
+	// A list of AWS Identity and Access Management (IAM) roles that can be used
+	// by the cluster to access other AWS services. You must supply the IAM roles
+	// in their Amazon Resource Name (ARN) format. You can supply up to 10 IAM roles
+	// in a single request.
+	//
+	// A cluster can have up to 10 IAM roles associated at any time.
+	IamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
 
 	// The AWS Key Management Service (KMS) key ID of the encryption key that you
 	// want to use to encrypt data in the cluster.
-	KMSKeyID *string `locationName:"KmsKeyId" type:"string"`
+	KmsKeyId *string `type:"string"`
 
 	// The password associated with the master user account for the cluster that
 	// is being created.
@@ -2956,7 +4713,8 @@ type CreateClusterInput struct {
 	// types, go to  Working with Clusters (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#how-many-nodes)
 	// in the Amazon Redshift Cluster Management Guide.
 	//
-	//  Valid Values: dw1.xlarge | dw1.8xlarge | dw2.large | dw2.8xlarge.
+	//  Valid Values: ds1.xlarge | ds1.8xlarge | ds2.xlarge | ds2.8xlarge | dc1.large
+	// | dc1.8xlarge.
 	NodeType *string `type:"string" required:"true"`
 
 	// The number of compute nodes in the cluster. This parameter is required when
@@ -3011,27 +4769,61 @@ type CreateClusterInput struct {
 	// the cluster.
 	//
 	// Default: The default VPC security group is associated with the cluster.
-	VPCSecurityGroupIDs []*string `locationName:"VpcSecurityGroupIds" locationNameList:"VpcSecurityGroupId" type:"list"`
-
-	metadataCreateClusterInput `json:"-" xml:"-"`
+	VpcSecurityGroupIds []*string `locationNameList:"VpcSecurityGroupId" type:"list"`
 }
 
-type metadataCreateClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateClusterInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+	if s.MasterUserPassword == nil {
+		invalidParams.Add(request.NewErrParamRequired("MasterUserPassword"))
+	}
+	if s.MasterUsername == nil {
+		invalidParams.Add(request.NewErrParamRequired("MasterUsername"))
+	}
+	if s.NodeType == nil {
+		invalidParams.Add(request.NewErrParamRequired("NodeType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataCreateClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterOutput) GoString() string {
+	return s.String()
 }
 
 type CreateClusterParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// A description of the parameter group.
 	Description *string `type:"string" required:"true"`
 
@@ -3058,27 +4850,57 @@ type CreateClusterParameterGroupInput struct {
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateClusterParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateClusterParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateClusterParameterGroupInput"}
+	if s.Description == nil {
+		invalidParams.Add(request.NewErrParamRequired("Description"))
+	}
+	if s.ParameterGroupFamily == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupFamily"))
+	}
+	if s.ParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateClusterParameterGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a parameter group.
 	ClusterParameterGroup *ClusterParameterGroup `type:"structure"`
-
-	metadataCreateClusterParameterGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterParameterGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterParameterGroupOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// ???
+// GoString returns the string representation
+func (s CreateClusterParameterGroupOutput) GoString() string {
+	return s.String()
+}
+
 type CreateClusterSecurityGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name for the security group. Amazon Redshift stores the value as a lowercase
 	// string.
 	//
@@ -3094,26 +4916,54 @@ type CreateClusterSecurityGroupInput struct {
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateClusterSecurityGroupInput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterSecurityGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterSecurityGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterSecurityGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateClusterSecurityGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateClusterSecurityGroupInput"}
+	if s.ClusterSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSecurityGroupName"))
+	}
+	if s.Description == nil {
+		invalidParams.Add(request.NewErrParamRequired("Description"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateClusterSecurityGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a security group.
 	ClusterSecurityGroup *ClusterSecurityGroup `type:"structure"`
-
-	metadataCreateClusterSecurityGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterSecurityGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterSecurityGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterSecurityGroupOutput) GoString() string {
+	return s.String()
 }
 
 type CreateClusterSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cluster identifier for which you want a snapshot.
 	ClusterIdentifier *string `type:"string" required:"true"`
 
@@ -3129,26 +4979,54 @@ type CreateClusterSnapshotInput struct {
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateClusterSnapshotInput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterSnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateClusterSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateClusterSnapshotInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+	if s.SnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateClusterSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a snapshot.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataCreateClusterSnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterSnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterSnapshotOutput) GoString() string {
+	return s.String()
 }
 
 type CreateClusterSubnetGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name for the subnet group. Amazon Redshift stores the value as a lowercase
 	// string.
 	//
@@ -3164,30 +5042,61 @@ type CreateClusterSubnetGroupInput struct {
 
 	// An array of VPC subnet IDs. A maximum of 20 subnets can be modified in a
 	// single request.
-	SubnetIDs []*string `locationName:"SubnetIds" locationNameList:"SubnetIdentifier" type:"list" required:"true"`
+	SubnetIds []*string `locationNameList:"SubnetIdentifier" type:"list" required:"true"`
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateClusterSubnetGroupInput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterSubnetGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterSubnetGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterSubnetGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateClusterSubnetGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateClusterSubnetGroupInput"}
+	if s.ClusterSubnetGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSubnetGroupName"))
+	}
+	if s.Description == nil {
+		invalidParams.Add(request.NewErrParamRequired("Description"))
+	}
+	if s.SubnetIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateClusterSubnetGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a subnet group.
 	ClusterSubnetGroup *ClusterSubnetGroup `type:"structure"`
-
-	metadataCreateClusterSubnetGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateClusterSubnetGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateClusterSubnetGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateClusterSubnetGroupOutput) GoString() string {
+	return s.String()
 }
 
 type CreateEventSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
 	// A Boolean value; set to true to activate the subscription, set to false to
 	// create the subscription but not active it.
 	Enabled *bool `type:"boolean"`
@@ -3198,16 +5107,16 @@ type CreateEventSubscriptionInput struct {
 	// Values: Configuration, Management, Monitoring, Security
 	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
 
-	// The Amazon Resource Name (ARN) of the Amazon SNS topic used to transmit the
-	// event notifications. The ARN is created by Amazon SNS when you create a topic
-	// and subscribe to it.
-	SNSTopicARN *string `locationName:"SnsTopicArn" type:"string" required:"true"`
-
 	// Specifies the Amazon Redshift event severity to be published by the event
 	// notification subscription.
 	//
 	// Values: ERROR, INFO
 	Severity *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) of the Amazon SNS topic used to transmit the
+	// event notifications. The ARN is created by Amazon SNS when you create a topic
+	// and subscribe to it.
+	SnsTopicArn *string `type:"string" required:"true"`
 
 	// A list of one or more identifiers of Amazon Redshift source objects. All
 	// of the objects must be of the same type as was specified in the source type
@@ -3218,7 +5127,7 @@ type CreateEventSubscriptionInput struct {
 	// Example: my-cluster-1, my-cluster-2
 	//
 	// Example: my-snapshot-20131010
-	SourceIDs []*string `locationName:"SourceIds" locationNameList:"SourceId" type:"list"`
+	SourceIds []*string `locationNameList:"SourceId" type:"list"`
 
 	// The type of source that will be generating the events. For example, if you
 	// want to be notified of events generated by a cluster, you would set this
@@ -3241,127 +5150,317 @@ type CreateEventSubscriptionInput struct {
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateEventSubscriptionInput `json:"-" xml:"-"`
 }
 
-type metadataCreateEventSubscriptionInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateEventSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateEventSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateEventSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateEventSubscriptionInput"}
+	if s.SnsTopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnsTopicArn"))
+	}
+	if s.SubscriptionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateEventSubscriptionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Describes event subscriptions.
 	EventSubscription *EventSubscription `type:"structure"`
-
-	metadataCreateEventSubscriptionOutput `json:"-" xml:"-"`
 }
 
-type metadataCreateEventSubscriptionOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateEventSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type CreateHSMClientCertificateInput struct {
+// GoString returns the string representation
+func (s CreateEventSubscriptionOutput) GoString() string {
+	return s.String()
+}
+
+type CreateHsmClientCertificateInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier to be assigned to the new HSM client certificate that the
 	// cluster will use to connect to the HSM to use the database encryption keys.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string" required:"true"`
+	HsmClientCertificateIdentifier *string `type:"string" required:"true"`
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateHSMClientCertificateInput `json:"-" xml:"-"`
 }
 
-type metadataCreateHSMClientCertificateInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateHsmClientCertificateInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type CreateHSMClientCertificateOutput struct {
+// GoString returns the string representation
+func (s CreateHsmClientCertificateInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateHsmClientCertificateInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateHsmClientCertificateInput"}
+	if s.HsmClientCertificateIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmClientCertificateIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type CreateHsmClientCertificateOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Returns information about an HSM client certificate. The certificate is stored
 	// in a secure Hardware Storage Module (HSM), and used by the Amazon Redshift
 	// cluster to encrypt data files.
-	HSMClientCertificate *HSMClientCertificate `locationName:"HsmClientCertificate" type:"structure"`
-
-	metadataCreateHSMClientCertificateOutput `json:"-" xml:"-"`
+	HsmClientCertificate *HsmClientCertificate `type:"structure"`
 }
 
-type metadataCreateHSMClientCertificateOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateHsmClientCertificateOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type CreateHSMConfigurationInput struct {
+// GoString returns the string representation
+func (s CreateHsmClientCertificateOutput) GoString() string {
+	return s.String()
+}
+
+type CreateHsmConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
 	// A text description of the HSM configuration to be created.
 	Description *string `type:"string" required:"true"`
 
 	// The identifier to be assigned to the new Amazon Redshift HSM configuration.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string" required:"true"`
+	HsmConfigurationIdentifier *string `type:"string" required:"true"`
 
 	// The IP address that the Amazon Redshift cluster must use to access the HSM.
-	HSMIPAddress *string `locationName:"HsmIpAddress" type:"string" required:"true"`
+	HsmIpAddress *string `type:"string" required:"true"`
 
 	// The name of the partition in the HSM where the Amazon Redshift clusters will
 	// store their database encryption keys.
-	HSMPartitionName *string `locationName:"HsmPartitionName" type:"string" required:"true"`
+	HsmPartitionName *string `type:"string" required:"true"`
 
 	// The password required to access the HSM partition.
-	HSMPartitionPassword *string `locationName:"HsmPartitionPassword" type:"string" required:"true"`
+	HsmPartitionPassword *string `type:"string" required:"true"`
 
 	// The HSMs public certificate file. When using Cloud HSM, the file name is
 	// server.pem.
-	HSMServerPublicCertificate *string `locationName:"HsmServerPublicCertificate" type:"string" required:"true"`
+	HsmServerPublicCertificate *string `type:"string" required:"true"`
 
 	// A list of tag instances.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataCreateHSMConfigurationInput `json:"-" xml:"-"`
 }
 
-type metadataCreateHSMConfigurationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateHsmConfigurationInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type CreateHSMConfigurationOutput struct {
+// GoString returns the string representation
+func (s CreateHsmConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateHsmConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateHsmConfigurationInput"}
+	if s.Description == nil {
+		invalidParams.Add(request.NewErrParamRequired("Description"))
+	}
+	if s.HsmConfigurationIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmConfigurationIdentifier"))
+	}
+	if s.HsmIpAddress == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmIpAddress"))
+	}
+	if s.HsmPartitionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmPartitionName"))
+	}
+	if s.HsmPartitionPassword == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmPartitionPassword"))
+	}
+	if s.HsmServerPublicCertificate == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmServerPublicCertificate"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type CreateHsmConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Returns information about an HSM configuration, which is an object that describes
 	// to Amazon Redshift clusters the information they require to connect to an
 	// HSM where they can store database encryption keys.
-	HSMConfiguration *HSMConfiguration `locationName:"HsmConfiguration" type:"structure"`
-
-	metadataCreateHSMConfigurationOutput `json:"-" xml:"-"`
+	HsmConfiguration *HsmConfiguration `type:"structure"`
 }
 
-type metadataCreateHSMConfigurationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateHsmConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateHsmConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// The result of the CreateSnapshotCopyGrant action.
+type CreateSnapshotCopyGrantInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the customer master key (CMK) to which to grant
+	// Amazon Redshift permission. If no key is specified, the default key is used.
+	KmsKeyId *string `type:"string"`
+
+	// The name of the snapshot copy grant. This name must be unique in the region
+	// for the AWS account.
+	//
+	//  Constraints:
+	//
+	//  Must contain from 1 to 63 alphanumeric characters or hyphens. Alphabetic
+	// characters must be lowercase. First character must be a letter. Cannot end
+	// with a hyphen or contain two consecutive hyphens. Must be unique for all
+	// clusters within an AWS account.
+	SnapshotCopyGrantName *string `type:"string" required:"true"`
+
+	// A list of tag instances.
+	Tags []*Tag `locationNameList:"Tag" type:"list"`
+}
+
+// String returns the string representation
+func (s CreateSnapshotCopyGrantInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateSnapshotCopyGrantInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateSnapshotCopyGrantInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateSnapshotCopyGrantInput"}
+	if s.SnapshotCopyGrantName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotCopyGrantName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type CreateSnapshotCopyGrantOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The snapshot copy grant that grants Amazon Redshift permission to encrypt
+	// copied snapshots with the specified customer master key (CMK) from AWS KMS
+	// in the destination region.
+	//
+	//  For more information about managing snapshot copy grants, go to Amazon
+	// Redshift Database Encryption (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html)
+	// in the Amazon Redshift Cluster Management Guide.
+	SnapshotCopyGrant *SnapshotCopyGrant `type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateSnapshotCopyGrantOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateSnapshotCopyGrantOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the CreateTags action.
 type CreateTagsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The Amazon Resource Name (ARN) to which you want to add the tag or tags.
 	// For example, arn:aws:redshift:us-east-1:123456789:cluster:t1.
 	ResourceName *string `type:"string" required:"true"`
 
 	// One or more name/value pairs to add as tags to the specified resource. Each
-	// tag name is passed in with the parameter tag-key and the corresponding value
-	// is passed in with the parameter tag-value. The tag-key and tag-value parameters
-	// are separated by a colon (:). Separate multiple tags with a space. For example,
-	// --tags "tag-key"="owner":"tag-value"="admin" "tag-key"="environment":"tag-value"="test"
-	// "tag-key"="version":"tag-value"="1.0".
+	// tag name is passed in with the parameter Key and the corresponding value
+	// is passed in with the parameter Value. The Key and Value parameters are separated
+	// by a comma (,). Separate multiple tags with a space. For example, --tags
+	// "Key"="owner","Value"="admin" "Key"="environment","Value"="test" "Key"="version","Value"="1.0".
 	Tags []*Tag `locationNameList:"Tag" type:"list" required:"true"`
-
-	metadataCreateTagsInput `json:"-" xml:"-"`
 }
 
-type metadataCreateTagsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateTagsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateTagsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateTagsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateTagsInput"}
+	if s.ResourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type CreateTagsOutput struct {
-	metadataCreateTagsOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataCreateTagsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateTagsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateTagsOutput) GoString() string {
+	return s.String()
 }
 
 // Describes the default cluster parameters for a parameter group family.
 type DefaultClusterParameters struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -3375,15 +5474,21 @@ type DefaultClusterParameters struct {
 
 	// The list of cluster default parameters.
 	Parameters []*Parameter `locationNameList:"Parameter" type:"list"`
-
-	metadataDefaultClusterParameters `json:"-" xml:"-"`
 }
 
-type metadataDefaultClusterParameters struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DefaultClusterParameters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DefaultClusterParameters) GoString() string {
+	return s.String()
 }
 
 type DeleteClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the cluster to be deleted.
 	//
 	// Constraints:
@@ -3410,26 +5515,51 @@ type DeleteClusterInput struct {
 	// The FinalClusterSnapshotIdentifier parameter must be specified if SkipFinalClusterSnapshot
 	// is false. Default: false
 	SkipFinalClusterSnapshot *bool `type:"boolean"`
-
-	metadataDeleteClusterInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteClusterInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataDeleteClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteClusterParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the parameter group to be deleted.
 	//
 	// Constraints:
@@ -3437,42 +5567,92 @@ type DeleteClusterParameterGroupInput struct {
 	//  Must be the name of an existing cluster parameter group. Cannot delete
 	// a default cluster parameter group.
 	ParameterGroupName *string `type:"string" required:"true"`
-
-	metadataDeleteClusterParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteClusterParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteClusterParameterGroupInput"}
+	if s.ParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteClusterParameterGroupOutput struct {
-	metadataDeleteClusterParameterGroupOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteClusterParameterGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterParameterGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterParameterGroupOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteClusterSecurityGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster security group to be deleted.
 	ClusterSecurityGroupName *string `type:"string" required:"true"`
-
-	metadataDeleteClusterSecurityGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterSecurityGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterSecurityGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterSecurityGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteClusterSecurityGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteClusterSecurityGroupInput"}
+	if s.ClusterSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSecurityGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteClusterSecurityGroupOutput struct {
-	metadataDeleteClusterSecurityGroupOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteClusterSecurityGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterSecurityGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterSecurityGroupOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteClusterSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of the cluster the snapshot was created from. This
 	// parameter is required if your IAM user has a policy containing a snapshot
 	// resource element that specifies anything other than * for the cluster name.
@@ -3485,126 +5665,324 @@ type DeleteClusterSnapshotInput struct {
 	// Constraints: Must be the name of an existing snapshot that is in the available
 	// state.
 	SnapshotIdentifier *string `type:"string" required:"true"`
-
-	metadataDeleteClusterSnapshotInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterSnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteClusterSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteClusterSnapshotInput"}
+	if s.SnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteClusterSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a snapshot.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataDeleteClusterSnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterSnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterSnapshotOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteClusterSubnetGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster subnet group name to be deleted.
 	ClusterSubnetGroupName *string `type:"string" required:"true"`
-
-	metadataDeleteClusterSubnetGroupInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteClusterSubnetGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterSubnetGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterSubnetGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteClusterSubnetGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteClusterSubnetGroupInput"}
+	if s.ClusterSubnetGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSubnetGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteClusterSubnetGroupOutput struct {
-	metadataDeleteClusterSubnetGroupOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteClusterSubnetGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteClusterSubnetGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteClusterSubnetGroupOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteEventSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the Amazon Redshift event notification subscription to be deleted.
 	SubscriptionName *string `type:"string" required:"true"`
-
-	metadataDeleteEventSubscriptionInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteEventSubscriptionInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteEventSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEventSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteEventSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteEventSubscriptionInput"}
+	if s.SubscriptionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteEventSubscriptionOutput struct {
-	metadataDeleteEventSubscriptionOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteEventSubscriptionOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteEventSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DeleteHSMClientCertificateInput struct {
+// GoString returns the string representation
+func (s DeleteEventSubscriptionOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteHsmClientCertificateInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the HSM client certificate to be deleted.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string" required:"true"`
-
-	metadataDeleteHSMClientCertificateInput `json:"-" xml:"-"`
+	HsmClientCertificateIdentifier *string `type:"string" required:"true"`
 }
 
-type metadataDeleteHSMClientCertificateInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteHsmClientCertificateInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DeleteHSMClientCertificateOutput struct {
-	metadataDeleteHSMClientCertificateOutput `json:"-" xml:"-"`
+// GoString returns the string representation
+func (s DeleteHsmClientCertificateInput) GoString() string {
+	return s.String()
 }
 
-type metadataDeleteHSMClientCertificateOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteHsmClientCertificateInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteHsmClientCertificateInput"}
+	if s.HsmClientCertificateIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmClientCertificateIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
-type DeleteHSMConfigurationInput struct {
+type DeleteHsmClientCertificateOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteHsmClientCertificateOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteHsmClientCertificateOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteHsmConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the Amazon Redshift HSM configuration to be deleted.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string" required:"true"`
-
-	metadataDeleteHSMConfigurationInput `json:"-" xml:"-"`
+	HsmConfigurationIdentifier *string `type:"string" required:"true"`
 }
 
-type metadataDeleteHSMConfigurationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteHsmConfigurationInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DeleteHSMConfigurationOutput struct {
-	metadataDeleteHSMConfigurationOutput `json:"-" xml:"-"`
+// GoString returns the string representation
+func (s DeleteHsmConfigurationInput) GoString() string {
+	return s.String()
 }
 
-type metadataDeleteHSMConfigurationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteHsmConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteHsmConfigurationInput"}
+	if s.HsmConfigurationIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmConfigurationIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type DeleteHsmConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteHsmConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteHsmConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// The result of the DeleteSnapshotCopyGrant action.
+type DeleteSnapshotCopyGrantInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the snapshot copy grant to delete.
+	SnapshotCopyGrantName *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteSnapshotCopyGrantInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSnapshotCopyGrantInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteSnapshotCopyGrantInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteSnapshotCopyGrantInput"}
+	if s.SnapshotCopyGrantName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotCopyGrantName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type DeleteSnapshotCopyGrantOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteSnapshotCopyGrantOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSnapshotCopyGrantOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DeleteTags action.
 type DeleteTagsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The Amazon Resource Name (ARN) from which you want to remove the tag or tags.
 	// For example, arn:aws:redshift:us-east-1:123456789:cluster:t1.
 	ResourceName *string `type:"string" required:"true"`
 
 	// The tag key that you want to delete.
 	TagKeys []*string `locationNameList:"TagKey" type:"list" required:"true"`
-
-	metadataDeleteTagsInput `json:"-" xml:"-"`
 }
 
-type metadataDeleteTagsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteTagsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteTagsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteTagsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteTagsInput"}
+	if s.ResourceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
+	}
+	if s.TagKeys == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteTagsOutput struct {
-	metadataDeleteTagsOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteTagsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteTagsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteTagsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeClusterParameterGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeClusterParameterGroups request
 	// exceed the value specified in MaxRecords, AWS returns a value in the Marker
@@ -3642,16 +6020,22 @@ type DescribeClusterParameterGroupsInput struct {
 	// Redshift returns a response with the parameter groups that have either or
 	// both of these tag values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeClusterParameterGroupsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterParameterGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterParameterGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterParameterGroupsInput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DescribeClusterParameterGroups action.
 type DescribeClusterParameterGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -3662,15 +6046,21 @@ type DescribeClusterParameterGroupsOutput struct {
 	// A list of ClusterParameterGroup instances. Each instance describes one cluster
 	// parameter group.
 	ParameterGroups []*ClusterParameterGroup `locationNameList:"ClusterParameterGroup" type:"list"`
-
-	metadataDescribeClusterParameterGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterParameterGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterParameterGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterParameterGroupsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeClusterParametersInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeClusterParameters request
 	// exceed the value specified in MaxRecords, AWS returns a value in the Marker
@@ -3700,16 +6090,35 @@ type DescribeClusterParametersInput struct {
 	//
 	// Valid Values: user | engine-default
 	Source *string `type:"string"`
-
-	metadataDescribeClusterParametersInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterParametersInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterParametersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterParametersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeClusterParametersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeClusterParametersInput"}
+	if s.ParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Contains the output from the DescribeClusterParameters action.
 type DescribeClusterParametersOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -3720,16 +6129,21 @@ type DescribeClusterParametersOutput struct {
 	// A list of Parameter instances. Each instance lists the parameters of one
 	// cluster parameter group.
 	Parameters []*Parameter `locationNameList:"Parameter" type:"list"`
-
-	metadataDescribeClusterParametersOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterParametersOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterParametersOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// ???
+// GoString returns the string representation
+func (s DescribeClusterParametersOutput) GoString() string {
+	return s.String()
+}
+
 type DescribeClusterSecurityGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of a cluster security group for which you are requesting details.
 	// You can specify either the Marker parameter or a ClusterSecurityGroupName
 	// parameter, but not both.
@@ -3773,16 +6187,21 @@ type DescribeClusterSecurityGroupsInput struct {
 	// Redshift returns a response with the security groups that have either or
 	// both of these tag values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeClusterSecurityGroupsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterSecurityGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterSecurityGroupsInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the DescribeClusterSecurityGroups action.
+// GoString returns the string representation
+func (s DescribeClusterSecurityGroupsInput) GoString() string {
+	return s.String()
+}
+
 type DescribeClusterSecurityGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of ClusterSecurityGroup instances.
 	ClusterSecurityGroups []*ClusterSecurityGroup `locationNameList:"ClusterSecurityGroup" type:"list"`
 
@@ -3792,15 +6211,21 @@ type DescribeClusterSecurityGroupsOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeClusterSecurityGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterSecurityGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterSecurityGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterSecurityGroupsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeClusterSnapshotsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the cluster for which information about snapshots is requested.
 	ClusterIdentifier *string `type:"string"`
 
@@ -3866,16 +6291,22 @@ type DescribeClusterSnapshotsInput struct {
 	// Redshift returns a response with the snapshots that have either or both of
 	// these tag values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeClusterSnapshotsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterSnapshotsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterSnapshotsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterSnapshotsInput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DescribeClusterSnapshots action.
 type DescribeClusterSnapshotsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -3885,15 +6316,21 @@ type DescribeClusterSnapshotsOutput struct {
 
 	// A list of Snapshot instances.
 	Snapshots []*Snapshot `locationNameList:"Snapshot" type:"list"`
-
-	metadataDescribeClusterSnapshotsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterSnapshotsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterSnapshotsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterSnapshotsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeClusterSubnetGroupsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster subnet group for which information is requested.
 	ClusterSubnetGroupName *string `type:"string"`
 
@@ -3930,16 +6367,22 @@ type DescribeClusterSubnetGroupsInput struct {
 	// Redshift returns a response with the subnet groups that have either or both
 	// of these tag values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeClusterSubnetGroupsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterSubnetGroupsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterSubnetGroupsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterSubnetGroupsInput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DescribeClusterSubnetGroups action.
 type DescribeClusterSubnetGroupsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of ClusterSubnetGroup instances.
 	ClusterSubnetGroups []*ClusterSubnetGroup `locationNameList:"ClusterSubnetGroup" type:"list"`
 
@@ -3949,15 +6392,21 @@ type DescribeClusterSubnetGroupsOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeClusterSubnetGroupsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterSubnetGroupsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterSubnetGroupsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterSubnetGroupsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeClusterVersionsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of a specific cluster parameter group family to return details for.
 	//
 	// Constraints:
@@ -3987,16 +6436,22 @@ type DescribeClusterVersionsInput struct {
 	//
 	// Constraints: minimum 20, maximum 100.
 	MaxRecords *int64 `type:"integer"`
-
-	metadataDescribeClusterVersionsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterVersionsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterVersionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterVersionsInput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DescribeClusterVersions action.
 type DescribeClusterVersionsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of Version elements.
 	ClusterVersions []*ClusterVersion `locationNameList:"ClusterVersion" type:"list"`
 
@@ -4006,15 +6461,21 @@ type DescribeClusterVersionsOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeClusterVersionsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClusterVersionsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClusterVersionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClusterVersionsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeClustersInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of a cluster whose properties you are requesting. This
 	// parameter is case sensitive.
 	//
@@ -4056,16 +6517,22 @@ type DescribeClustersInput struct {
 	// returns a response with the clusters that have either or both of these tag
 	// values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeClustersInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClustersInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClustersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClustersInput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DescribeClusters action.
 type DescribeClustersOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of Cluster objects, where each object describes one cluster.
 	Clusters []*Cluster `locationNameList:"Cluster" type:"list"`
 
@@ -4075,15 +6542,21 @@ type DescribeClustersOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeClustersOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeClustersOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeClustersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeClustersOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeDefaultClusterParametersInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeDefaultClusterParameters
 	// request exceed the value specified in MaxRecords, AWS returns a value in
@@ -4104,51 +6577,88 @@ type DescribeDefaultClusterParametersInput struct {
 
 	// The name of the cluster parameter group family.
 	ParameterGroupFamily *string `type:"string" required:"true"`
-
-	metadataDescribeDefaultClusterParametersInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeDefaultClusterParametersInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeDefaultClusterParametersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDefaultClusterParametersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeDefaultClusterParametersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeDefaultClusterParametersInput"}
+	if s.ParameterGroupFamily == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupFamily"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DescribeDefaultClusterParametersOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes the default cluster parameters for a parameter group family.
 	DefaultClusterParameters *DefaultClusterParameters `type:"structure"`
-
-	metadataDescribeDefaultClusterParametersOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeDefaultClusterParametersOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeDefaultClusterParametersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDefaultClusterParametersOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeEventCategoriesInput struct {
+	_ struct{} `type:"structure"`
+
 	// The source type, such as cluster or parameter group, to which the described
 	// event categories apply.
 	//
-	//  Valid values: cluster, snapshot, parameter group, and security group.
+	//  Valid values: cluster, cluster-snapshot, cluster-parameter-group, and cluster-security-group.
 	SourceType *string `type:"string"`
-
-	metadataDescribeEventCategoriesInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventCategoriesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventCategoriesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventCategoriesInput) GoString() string {
+	return s.String()
 }
 
 type DescribeEventCategoriesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of event categories descriptions.
 	EventCategoriesMapList []*EventCategoriesMap `locationNameList:"EventCategoriesMap" type:"list"`
-
-	metadataDescribeEventCategoriesOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventCategoriesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventCategoriesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventCategoriesOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeEventSubscriptionsInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeEventSubscriptions request
 	// exceed the value specified in MaxRecords, AWS returns a value in the Marker
@@ -4169,15 +6679,21 @@ type DescribeEventSubscriptionsInput struct {
 
 	// The name of the Amazon Redshift event notification subscription to be described.
 	SubscriptionName *string `type:"string"`
-
-	metadataDescribeEventSubscriptionsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventSubscriptionsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventSubscriptionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventSubscriptionsInput) GoString() string {
+	return s.String()
 }
 
 type DescribeEventSubscriptionsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of event subscriptions.
 	EventSubscriptionsList []*EventSubscription `locationNameList:"EventSubscription" type:"list"`
 
@@ -4187,15 +6703,21 @@ type DescribeEventSubscriptionsOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeEventSubscriptionsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventSubscriptionsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventSubscriptionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventSubscriptionsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeEventsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The number of minutes prior to the time of the request for which to retrieve
 	// events. For example, if the request is sent at 18:00 and you specify a duration
 	// of 60, then only events which have occurred after 17:00 will be returned.
@@ -4252,7 +6774,7 @@ type DescribeEventsInput struct {
 	// name. Specify cluster-parameter-group when SourceIdentifier is a cluster
 	// parameter group name. Specify cluster-snapshot when SourceIdentifier is a
 	// cluster snapshot identifier.
-	SourceType *string `type:"string"`
+	SourceType *string `type:"string" enum:"SourceType"`
 
 	// The beginning of the time interval to retrieve events for, specified in ISO
 	// 8601 format. For more information about ISO 8601, go to the ISO8601 Wikipedia
@@ -4260,16 +6782,21 @@ type DescribeEventsInput struct {
 	//
 	// Example: 2009-07-08T18:00Z
 	StartTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
-
-	metadataDescribeEventsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventsInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the DescribeEvents action.
+// GoString returns the string representation
+func (s DescribeEventsInput) GoString() string {
+	return s.String()
+}
+
 type DescribeEventsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of Event instances.
 	Events []*Event `locationNameList:"Event" type:"list"`
 
@@ -4279,19 +6806,25 @@ type DescribeEventsOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeEventsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeEventsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeEventsOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DescribeHSMClientCertificatesInput struct {
+// GoString returns the string representation
+func (s DescribeEventsOutput) GoString() string {
+	return s.String()
+}
+
+type DescribeHsmClientCertificatesInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of a specific HSM client certificate for which you want information.
 	// If no identifier is specified, information is returned for all HSM client
 	// certificates owned by your AWS customer account.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string"`
+	HsmClientCertificateIdentifier *string `type:"string"`
 
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeHsmClientCertificates request
@@ -4326,19 +6859,25 @@ type DescribeHSMClientCertificatesInput struct {
 	// in the request, Amazon Redshift returns a response with the HSM client certificates
 	// that have either or both of these tag values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeHSMClientCertificatesInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeHSMClientCertificatesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHsmClientCertificatesInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DescribeHSMClientCertificatesOutput struct {
+// GoString returns the string representation
+func (s DescribeHsmClientCertificatesInput) GoString() string {
+	return s.String()
+}
+
+type DescribeHsmClientCertificatesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of the identifiers for one or more HSM client certificates used by
 	// Amazon Redshift clusters to store and retrieve database encryption keys in
 	// an HSM.
-	HSMClientCertificates []*HSMClientCertificate `locationName:"HsmClientCertificates" locationNameList:"HsmClientCertificate" type:"list"`
+	HsmClientCertificates []*HsmClientCertificate `locationNameList:"HsmClientCertificate" type:"list"`
 
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
@@ -4346,19 +6885,25 @@ type DescribeHSMClientCertificatesOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeHSMClientCertificatesOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeHSMClientCertificatesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHsmClientCertificatesOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DescribeHSMConfigurationsInput struct {
+// GoString returns the string representation
+func (s DescribeHsmClientCertificatesOutput) GoString() string {
+	return s.String()
+}
+
+type DescribeHsmConfigurationsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of a specific Amazon Redshift HSM configuration to be described.
 	// If no identifier is specified, information is returned for all HSM configurations
 	// owned by your AWS customer account.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string"`
+	HsmConfigurationIdentifier *string `type:"string"`
 
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeHsmConfigurations request
@@ -4393,17 +6938,23 @@ type DescribeHSMConfigurationsInput struct {
 	// Redshift returns a response with the HSM configurations that have either
 	// or both of these tag values associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeHSMConfigurationsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeHSMConfigurationsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHsmConfigurationsInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type DescribeHSMConfigurationsOutput struct {
-	// A list of Amazon Redshift HSM configurations.
-	HSMConfigurations []*HSMConfiguration `locationName:"HsmConfigurations" locationNameList:"HsmConfiguration" type:"list"`
+// GoString returns the string representation
+func (s DescribeHsmConfigurationsInput) GoString() string {
+	return s.String()
+}
+
+type DescribeHsmConfigurationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of HsmConfiguration objects.
+	HsmConfigurations []*HsmConfiguration `locationNameList:"HsmConfiguration" type:"list"`
 
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
@@ -4411,28 +6962,53 @@ type DescribeHSMConfigurationsOutput struct {
 	// parameter and retrying the command. If the Marker field is empty, all response
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
-
-	metadataDescribeHSMConfigurationsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeHSMConfigurationsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHsmConfigurationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeHsmConfigurationsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeLoggingStatusInput struct {
-	// The identifier of the cluster to get the logging status from.
+	_ struct{} `type:"structure"`
+
+	// The identifier of the cluster from which to get the logging status.
 	//
 	// Example: examplecluster
 	ClusterIdentifier *string `type:"string" required:"true"`
-
-	metadataDescribeLoggingStatusInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeLoggingStatusInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeLoggingStatusInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeLoggingStatusInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeLoggingStatusInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeLoggingStatusInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DescribeOrderableClusterOptionsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The version filter value. Specify this parameter to show only the available
 	// offerings matching the specified version.
 	//
@@ -4462,16 +7038,22 @@ type DescribeOrderableClusterOptionsInput struct {
 	// The node type filter value. Specify this parameter to show only the available
 	// offerings matching the specified node type.
 	NodeType *string `type:"string"`
-
-	metadataDescribeOrderableClusterOptionsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeOrderableClusterOptionsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeOrderableClusterOptionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeOrderableClusterOptionsInput) GoString() string {
+	return s.String()
 }
 
 // Contains the output from the DescribeOrderableClusterOptions action.
 type DescribeOrderableClusterOptionsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -4480,18 +7062,23 @@ type DescribeOrderableClusterOptionsOutput struct {
 	Marker *string `type:"string"`
 
 	// An OrderableClusterOption structure containing information about orderable
-	// options for the Cluster.
+	// options for the cluster.
 	OrderableClusterOptions []*OrderableClusterOption `locationNameList:"OrderableClusterOption" type:"list"`
-
-	metadataDescribeOrderableClusterOptionsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeOrderableClusterOptionsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeOrderableClusterOptionsOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// to be provided.
+// GoString returns the string representation
+func (s DescribeOrderableClusterOptionsOutput) GoString() string {
+	return s.String()
+}
+
 type DescribeReservedNodeOfferingsInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeReservedNodeOfferings request
 	// exceed the value specified in MaxRecords, AWS returns a value in the Marker
@@ -4511,17 +7098,22 @@ type DescribeReservedNodeOfferingsInput struct {
 	MaxRecords *int64 `type:"integer"`
 
 	// The unique identifier for the offering.
-	ReservedNodeOfferingID *string `locationName:"ReservedNodeOfferingId" type:"string"`
-
-	metadataDescribeReservedNodeOfferingsInput `json:"-" xml:"-"`
+	ReservedNodeOfferingId *string `type:"string"`
 }
 
-type metadataDescribeReservedNodeOfferingsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedNodeOfferingsInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the DescribeReservedNodeOfferings action.
+// GoString returns the string representation
+func (s DescribeReservedNodeOfferingsInput) GoString() string {
+	return s.String()
+}
+
 type DescribeReservedNodeOfferingsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -4529,17 +7121,23 @@ type DescribeReservedNodeOfferingsOutput struct {
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
 
-	// A list of reserved node offerings.
+	// A list of ReservedNodeOffering objects.
 	ReservedNodeOfferings []*ReservedNodeOffering `locationNameList:"ReservedNodeOffering" type:"list"`
-
-	metadataDescribeReservedNodeOfferingsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeReservedNodeOfferingsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedNodeOfferingsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReservedNodeOfferingsOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeReservedNodesInput struct {
+	_ struct{} `type:"structure"`
+
 	// An optional parameter that specifies the starting point to return a set of
 	// response records. When the results of a DescribeReservedNodes request exceed
 	// the value specified in MaxRecords, AWS returns a value in the Marker field
@@ -4558,17 +7156,22 @@ type DescribeReservedNodesInput struct {
 	MaxRecords *int64 `type:"integer"`
 
 	// Identifier for the node reservation.
-	ReservedNodeID *string `locationName:"ReservedNodeId" type:"string"`
-
-	metadataDescribeReservedNodesInput `json:"-" xml:"-"`
+	ReservedNodeId *string `type:"string"`
 }
 
-type metadataDescribeReservedNodesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedNodesInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the DescribeReservedNodes action.
+// GoString returns the string representation
+func (s DescribeReservedNodesInput) GoString() string {
+	return s.String()
+}
+
 type DescribeReservedNodesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -4576,33 +7179,58 @@ type DescribeReservedNodesOutput struct {
 	// records have been retrieved for the request.
 	Marker *string `type:"string"`
 
-	// The list of reserved nodes.
+	// The list of ReservedNode objects.
 	ReservedNodes []*ReservedNode `locationNameList:"ReservedNode" type:"list"`
-
-	metadataDescribeReservedNodesOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeReservedNodesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeReservedNodesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeReservedNodesOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeResizeInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of a cluster whose resize progress you are requesting.
 	// This parameter is case-sensitive.
 	//
 	// By default, resize operations for all clusters defined for an AWS account
 	// are returned.
 	ClusterIdentifier *string `type:"string" required:"true"`
-
-	metadataDescribeResizeInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeResizeInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeResizeInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeResizeInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeResizeInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeResizeInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Describes the result of a cluster resize operation.
 type DescribeResizeOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The average rate of the resize operation over the last few minutes, measured
 	// in megabytes per second. After the resize operation completes, this value
 	// shows the average rate of the entire resize operation.
@@ -4661,16 +7289,157 @@ type DescribeResizeOutput struct {
 	// The estimated total amount of data, in megabytes, on the cluster before the
 	// resize operation began.
 	TotalResizeDataInMegaBytes *int64 `type:"long"`
-
-	metadataDescribeResizeOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeResizeOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeResizeOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the DescribeTags action.
+// GoString returns the string representation
+func (s DescribeResizeOutput) GoString() string {
+	return s.String()
+}
+
+// The result of the DescribeSnapshotCopyGrants action.
+type DescribeSnapshotCopyGrantsInput struct {
+	_ struct{} `type:"structure"`
+
+	// An optional parameter that specifies the starting point to return a set of
+	// response records. When the results of a DescribeSnapshotCopyGrant request
+	// exceed the value specified in MaxRecords, AWS returns a value in the Marker
+	// field of the response. You can retrieve the next set of response records
+	// by providing the returned marker value in the Marker parameter and retrying
+	// the request.
+	//
+	//  Constraints: You can specify either the SnapshotCopyGrantName parameter
+	// or the Marker parameter, but not both.
+	Marker *string `type:"string"`
+
+	// The maximum number of response records to return in each call. If the number
+	// of remaining response records exceeds the specified MaxRecords value, a value
+	// is returned in a marker field of the response. You can retrieve the next
+	// set of records by retrying the command with the returned marker value.
+	//
+	// Default: 100
+	//
+	// Constraints: minimum 20, maximum 100.
+	MaxRecords *int64 `type:"integer"`
+
+	// The name of the snapshot copy grant.
+	SnapshotCopyGrantName *string `type:"string"`
+
+	// A tag key or keys for which you want to return all matching resources that
+	// are associated with the specified key or keys. For example, suppose that
+	// you have resources tagged with keys called owner and environment. If you
+	// specify both of these tag keys in the request, Amazon Redshift returns a
+	// response with all resources that have either or both of these tag keys associated
+	// with them.
+	TagKeys []*string `locationNameList:"TagKey" type:"list"`
+
+	// A tag value or values for which you want to return all matching resources
+	// that are associated with the specified value or values. For example, suppose
+	// that you have resources tagged with values called admin and test. If you
+	// specify both of these tag values in the request, Amazon Redshift returns
+	// a response with all resources that have either or both of these tag values
+	// associated with them.
+	TagValues []*string `locationNameList:"TagValue" type:"list"`
+}
+
+// String returns the string representation
+func (s DescribeSnapshotCopyGrantsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeSnapshotCopyGrantsInput) GoString() string {
+	return s.String()
+}
+
+type DescribeSnapshotCopyGrantsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An optional parameter that specifies the starting point to return a set of
+	// response records. When the results of a DescribeSnapshotCopyGrant request
+	// exceed the value specified in MaxRecords, AWS returns a value in the Marker
+	// field of the response. You can retrieve the next set of response records
+	// by providing the returned marker value in the Marker parameter and retrying
+	// the request.
+	//
+	//  Constraints: You can specify either the SnapshotCopyGrantName parameter
+	// or the Marker parameter, but not both.
+	Marker *string `type:"string"`
+
+	// The list of SnapshotCopyGrant objects.
+	SnapshotCopyGrants []*SnapshotCopyGrant `locationNameList:"SnapshotCopyGrant" type:"list"`
+}
+
+// String returns the string representation
+func (s DescribeSnapshotCopyGrantsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeSnapshotCopyGrantsOutput) GoString() string {
+	return s.String()
+}
+
+type DescribeTableRestoreStatusInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Redshift cluster that the table is being restored to.
+	ClusterIdentifier *string `type:"string"`
+
+	// An optional pagination token provided by a previous DescribeTableRestoreStatus
+	// request. If this parameter is specified, the response includes only records
+	// beyond the marker, up to the value specified by the MaxRecords parameter.
+	Marker *string `type:"string"`
+
+	// The maximum number of records to include in the response. If more records
+	// exist than the specified MaxRecords value, a pagination token called a marker
+	// is included in the response so that the remaining results can be retrieved.
+	MaxRecords *int64 `type:"integer"`
+
+	// The identifier of the table restore request to return status for. If you
+	// don't specify a TableRestoreRequestId value, then DescribeTableRestoreStatus
+	// returns the status of all in-progress table restore requests.
+	TableRestoreRequestId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeTableRestoreStatusInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeTableRestoreStatusInput) GoString() string {
+	return s.String()
+}
+
+type DescribeTableRestoreStatusOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A pagination token that can be used in a subsequent DescribeTableRestoreStatus
+	// request.
+	Marker *string `type:"string"`
+
+	// A list of status details for one or more table restore requests.
+	TableRestoreStatusDetails []*TableRestoreStatus `locationNameList:"TableRestoreStatus" type:"list"`
+}
+
+// String returns the string representation
+func (s DescribeTableRestoreStatusOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeTableRestoreStatusOutput) GoString() string {
+	return s.String()
+}
+
 type DescribeTagsInput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the marker
@@ -4690,7 +7459,8 @@ type DescribeTagsInput struct {
 
 	// The type of resource with which you want to view tags. Valid resource types
 	// are:  Cluster CIDR/IP EC2 security group Snapshot Cluster security group
-	// Subnet group HSM connection HSM certificate Parameter group
+	// Subnet group HSM connection HSM certificate Parameter group Snapshot copy
+	// grant
 	//
 	//  For more information about Amazon Redshift resource types and constructing
 	// ARNs, go to Constructing an Amazon Redshift Amazon Resource Name (ARN) (http://docs.aws.amazon.com/redshift/latest/mgmt/constructing-redshift-arn.html)
@@ -4712,16 +7482,21 @@ type DescribeTagsInput struct {
 	// a response with all resources that have either or both of these tag values
 	// associated with them.
 	TagValues []*string `locationNameList:"TagValue" type:"list"`
-
-	metadataDescribeTagsInput `json:"-" xml:"-"`
 }
 
-type metadataDescribeTagsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeTagsInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output from the DescribeTags action.
+// GoString returns the string representation
+func (s DescribeTagsInput) GoString() string {
+	return s.String()
+}
+
 type DescribeTagsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A value that indicates the starting point for the next set of response records
 	// in a subsequent request. If a value is returned in a response, you can retrieve
 	// the next set of records by providing this returned marker value in the Marker
@@ -4731,91 +7506,153 @@ type DescribeTagsOutput struct {
 
 	// A list of tags with their associated resources.
 	TaggedResources []*TaggedResource `locationNameList:"TaggedResource" type:"list"`
-
-	metadataDescribeTagsOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeTagsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeTagsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeTagsOutput) GoString() string {
+	return s.String()
 }
 
 type DisableLoggingInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the cluster on which logging is to be stopped.
 	//
 	// Example: examplecluster
 	ClusterIdentifier *string `type:"string" required:"true"`
-
-	metadataDisableLoggingInput `json:"-" xml:"-"`
 }
 
-type metadataDisableLoggingInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DisableLoggingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableLoggingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DisableLoggingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DisableLoggingInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DisableSnapshotCopyInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of the source cluster that you want to disable copying
 	// of snapshots to a destination region.
 	//
 	//  Constraints: Must be the valid name of an existing cluster that has cross-region
 	// snapshot copy enabled.
 	ClusterIdentifier *string `type:"string" required:"true"`
-
-	metadataDisableSnapshotCopyInput `json:"-" xml:"-"`
 }
 
-type metadataDisableSnapshotCopyInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DisableSnapshotCopyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableSnapshotCopyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DisableSnapshotCopyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DisableSnapshotCopyInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DisableSnapshotCopyOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataDisableSnapshotCopyOutput `json:"-" xml:"-"`
 }
 
-type metadataDisableSnapshotCopyOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DisableSnapshotCopyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableSnapshotCopyOutput) GoString() string {
+	return s.String()
 }
 
 // Describes an Amazon EC2 security group.
 type EC2SecurityGroup struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the EC2 Security Group.
 	EC2SecurityGroupName *string `type:"string"`
 
 	// The AWS ID of the owner of the EC2 security group specified in the EC2SecurityGroupName
 	// field.
-	EC2SecurityGroupOwnerID *string `locationName:"EC2SecurityGroupOwnerId" type:"string"`
+	EC2SecurityGroupOwnerId *string `type:"string"`
 
 	// The status of the EC2 security group.
 	Status *string `type:"string"`
 
 	// The list of tags for the EC2 security group.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataEC2SecurityGroup `json:"-" xml:"-"`
 }
 
-type metadataEC2SecurityGroup struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EC2SecurityGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EC2SecurityGroup) GoString() string {
+	return s.String()
 }
 
 // Describes the status of the elastic IP (EIP) address.
-type ElasticIPStatus struct {
+type ElasticIpStatus struct {
+	_ struct{} `type:"structure"`
+
 	// The elastic IP (EIP) address for the cluster.
-	ElasticIP *string `locationName:"ElasticIp" type:"string"`
+	ElasticIp *string `type:"string"`
 
-	// Describes the status of the elastic IP (EIP) address.
+	// The status of the elastic IP (EIP) address.
 	Status *string `type:"string"`
-
-	metadataElasticIPStatus `json:"-" xml:"-"`
 }
 
-type metadataElasticIPStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ElasticIpStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ElasticIpStatus) GoString() string {
+	return s.String()
 }
 
 type EnableLoggingInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of an existing S3 bucket where the log files are to be stored.
 	//
 	// Constraints:
@@ -4837,15 +7674,37 @@ type EnableLoggingInput struct {
 	// single quotes ('), a backslash (\), or control characters. The hexadecimal
 	// codes for invalid characters are:  x00 to x20 x22 x27 x5c x7f or larger
 	S3KeyPrefix *string `type:"string"`
-
-	metadataEnableLoggingInput `json:"-" xml:"-"`
 }
 
-type metadataEnableLoggingInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EnableLoggingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableLoggingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EnableLoggingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EnableLoggingInput"}
+	if s.BucketName == nil {
+		invalidParams.Add(request.NewErrParamRequired("BucketName"))
+	}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type EnableSnapshotCopyInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of the source cluster to copy snapshots from.
 	//
 	//  Constraints: Must be the valid name of an existing cluster that does not
@@ -4867,49 +7726,89 @@ type EnableSnapshotCopyInput struct {
 	//  Constraints: Must be at least 1 and no more than 35.
 	RetentionPeriod *int64 `type:"integer"`
 
-	metadataEnableSnapshotCopyInput `json:"-" xml:"-"`
+	// The name of the snapshot copy grant to use when snapshots of an AWS KMS-encrypted
+	// cluster are copied to the destination region.
+	SnapshotCopyGrantName *string `type:"string"`
 }
 
-type metadataEnableSnapshotCopyInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EnableSnapshotCopyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableSnapshotCopyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EnableSnapshotCopyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EnableSnapshotCopyInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+	if s.DestinationRegion == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationRegion"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type EnableSnapshotCopyOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataEnableSnapshotCopyOutput `json:"-" xml:"-"`
 }
 
-type metadataEnableSnapshotCopyOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EnableSnapshotCopyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableSnapshotCopyOutput) GoString() string {
+	return s.String()
 }
 
 // Describes a connection endpoint.
 type Endpoint struct {
+	_ struct{} `type:"structure"`
+
 	// The DNS address of the Cluster.
 	Address *string `type:"string"`
 
 	// The port that the database engine is listening on.
 	Port *int64 `type:"integer"`
-
-	metadataEndpoint `json:"-" xml:"-"`
 }
 
-type metadataEndpoint struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Endpoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Endpoint) GoString() string {
+	return s.String()
 }
 
 // Describes an event.
 type Event struct {
+	_ struct{} `type:"structure"`
+
 	// The date and time of the event.
 	Date *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// A list of the event categories.
+	//
+	// Values: Configuration, Management, Monitoring, Security
 	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
 
 	// The identifier of the event.
-	EventID *string `locationName:"EventId" type:"string"`
+	EventId *string `type:"string"`
 
 	// The text of this event.
 	Message *string `type:"string"`
@@ -4923,31 +7822,45 @@ type Event struct {
 	SourceIdentifier *string `type:"string"`
 
 	// The source type for this event.
-	SourceType *string `type:"string"`
-
-	metadataEvent `json:"-" xml:"-"`
+	SourceType *string `type:"string" enum:"SourceType"`
 }
 
-type metadataEvent struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Event) String() string {
+	return awsutil.Prettify(s)
 }
 
+// GoString returns the string representation
+func (s Event) GoString() string {
+	return s.String()
+}
+
+// Describes event categories.
 type EventCategoriesMap struct {
+	_ struct{} `type:"structure"`
+
 	// The events in the event category.
 	Events []*EventInfoMap `locationNameList:"EventInfoMap" type:"list"`
 
-	// The Amazon Redshift source type, such as cluster or cluster-snapshot, that
-	// the returned categories belong to.
+	// The source type, such as cluster or cluster-snapshot, that the returned categories
+	// belong to.
 	SourceType *string `type:"string"`
-
-	metadataEventCategoriesMap `json:"-" xml:"-"`
 }
 
-type metadataEventCategoriesMap struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EventCategoriesMap) String() string {
+	return awsutil.Prettify(s)
 }
 
+// GoString returns the string representation
+func (s EventCategoriesMap) GoString() string {
+	return s.String()
+}
+
+// Describes event information.
 type EventInfoMap struct {
+	_ struct{} `type:"structure"`
+
 	// The category of an Amazon Redshift event.
 	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
 
@@ -4955,27 +7868,34 @@ type EventInfoMap struct {
 	EventDescription *string `type:"string"`
 
 	// The identifier of an Amazon Redshift event.
-	EventID *string `locationName:"EventId" type:"string"`
+	EventId *string `type:"string"`
 
 	// The severity of the event.
 	//
 	// Values: ERROR, INFO
 	Severity *string `type:"string"`
-
-	metadataEventInfoMap `json:"-" xml:"-"`
 }
 
-type metadataEventInfoMap struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EventInfoMap) String() string {
+	return awsutil.Prettify(s)
 }
 
+// GoString returns the string representation
+func (s EventInfoMap) GoString() string {
+	return s.String()
+}
+
+// Describes event subscriptions.
 type EventSubscription struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the Amazon Redshift event notification subscription.
-	CustSubscriptionID *string `locationName:"CustSubscriptionId" type:"string"`
+	CustSubscriptionId *string `type:"string"`
 
 	// The AWS customer account associated with the Amazon Redshift event notification
 	// subscription.
-	CustomerAWSID *string `locationName:"CustomerAwsId" type:"string"`
+	CustomerAwsId *string `type:"string"`
 
 	// A Boolean value indicating whether the subscription is enabled. true indicates
 	// the subscription is enabled.
@@ -4987,18 +7907,18 @@ type EventSubscription struct {
 	// Values: Configuration, Management, Monitoring, Security
 	EventCategoriesList []*string `locationNameList:"EventCategory" type:"list"`
 
-	// The Amazon Resource Name (ARN) of the Amazon SNS topic used by the event
-	// notification subscription.
-	SNSTopicARN *string `locationName:"SnsTopicArn" type:"string"`
-
 	// The event severity specified in the Amazon Redshift event notification subscription.
 	//
 	// Values: ERROR, INFO
 	Severity *string `type:"string"`
 
+	// The Amazon Resource Name (ARN) of the Amazon SNS topic used by the event
+	// notification subscription.
+	SnsTopicArn *string `type:"string"`
+
 	// A list of the sources that publish events to the Amazon Redshift event notification
 	// subscription.
-	SourceIDsList []*string `locationName:"SourceIdsList" locationNameList:"SourceId" type:"list"`
+	SourceIdsList []*string `locationNameList:"SourceId" type:"list"`
 
 	// The source type of the events returned the Amazon Redshift event notification,
 	// such as cluster, or cluster-snapshot.
@@ -5020,86 +7940,111 @@ type EventSubscription struct {
 
 	// The list of tags for the event subscription.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataEventSubscription `json:"-" xml:"-"`
 }
 
-type metadataEventSubscription struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s EventSubscription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EventSubscription) GoString() string {
+	return s.String()
 }
 
 // Returns information about an HSM client certificate. The certificate is stored
 // in a secure Hardware Storage Module (HSM), and used by the Amazon Redshift
 // cluster to encrypt data files.
-type HSMClientCertificate struct {
+type HsmClientCertificate struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the HSM client certificate.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string"`
+	HsmClientCertificateIdentifier *string `type:"string"`
 
 	// The public key that the Amazon Redshift cluster will use to connect to the
 	// HSM. You must register the public key in the HSM.
-	HSMClientCertificatePublicKey *string `locationName:"HsmClientCertificatePublicKey" type:"string"`
+	HsmClientCertificatePublicKey *string `type:"string"`
 
 	// The list of tags for the HSM client certificate.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataHSMClientCertificate `json:"-" xml:"-"`
 }
 
-type metadataHSMClientCertificate struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s HsmClientCertificate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HsmClientCertificate) GoString() string {
+	return s.String()
 }
 
 // Returns information about an HSM configuration, which is an object that describes
 // to Amazon Redshift clusters the information they require to connect to an
 // HSM where they can store database encryption keys.
-type HSMConfiguration struct {
+type HsmConfiguration struct {
+	_ struct{} `type:"structure"`
+
 	// A text description of the HSM configuration.
 	Description *string `type:"string"`
 
 	// The name of the Amazon Redshift HSM configuration.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string"`
+	HsmConfigurationIdentifier *string `type:"string"`
 
 	// The IP address that the Amazon Redshift cluster must use to access the HSM.
-	HSMIPAddress *string `locationName:"HsmIpAddress" type:"string"`
+	HsmIpAddress *string `type:"string"`
 
 	// The name of the partition in the HSM where the Amazon Redshift clusters will
 	// store their database encryption keys.
-	HSMPartitionName *string `locationName:"HsmPartitionName" type:"string"`
+	HsmPartitionName *string `type:"string"`
 
 	// The list of tags for the HSM configuration.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataHSMConfiguration `json:"-" xml:"-"`
 }
 
-type metadataHSMConfiguration struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s HsmConfiguration) String() string {
+	return awsutil.Prettify(s)
 }
 
-type HSMStatus struct {
+// GoString returns the string representation
+func (s HsmConfiguration) GoString() string {
+	return s.String()
+}
+
+// Describes the status of changes to HSM settings.
+type HsmStatus struct {
+	_ struct{} `type:"structure"`
+
 	// Specifies the name of the HSM client certificate the Amazon Redshift cluster
 	// uses to retrieve the data encryption keys stored in an HSM.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string"`
+	HsmClientCertificateIdentifier *string `type:"string"`
 
 	// Specifies the name of the HSM configuration that contains the information
 	// the Amazon Redshift cluster can use to retrieve and store keys in an HSM.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string"`
+	HsmConfigurationIdentifier *string `type:"string"`
 
 	// Reports whether the Amazon Redshift cluster has finished applying any HSM
 	// settings changes specified in a modify cluster command.
 	//
 	// Values: active, applying
 	Status *string `type:"string"`
-
-	metadataHSMStatus `json:"-" xml:"-"`
 }
 
-type metadataHSMStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s HsmStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HsmStatus) GoString() string {
+	return s.String()
 }
 
 // Describes an IP range used in a security group.
 type IPRange struct {
+	_ struct{} `type:"structure"`
+
 	// The IP range in Classless Inter-Domain Routing (CIDR) notation.
 	CIDRIP *string `type:"string"`
 
@@ -5108,16 +8053,22 @@ type IPRange struct {
 
 	// The list of tags for the IP range.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
-
-	metadataIPRange `json:"-" xml:"-"`
 }
 
-type metadataIPRange struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s IPRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s IPRange) GoString() string {
+	return s.String()
 }
 
 // Describes the status of logging for a cluster.
 type LoggingStatus struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the S3 bucket where the log files are stored.
 	BucketName *string `type:"string"`
 
@@ -5127,7 +8078,7 @@ type LoggingStatus struct {
 	// The last time when logs failed to be delivered.
 	LastFailureTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
-	// The last time when logs were delivered.
+	// The last time that logs were delivered.
 	LastSuccessfulDeliveryTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// true if logging is on, false if logging is off.
@@ -5135,15 +8086,78 @@ type LoggingStatus struct {
 
 	// The prefix applied to the log file names.
 	S3KeyPrefix *string `type:"string"`
-
-	metadataLoggingStatus `json:"-" xml:"-"`
 }
 
-type metadataLoggingStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s LoggingStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LoggingStatus) GoString() string {
+	return s.String()
+}
+
+type ModifyClusterIamRolesInput struct {
+	_ struct{} `type:"structure"`
+
+	// Zero or more IAM roles (in their ARN format) to associate with the cluster.
+	// You can associate up to 10 IAM roles with a single cluster in a single request.
+	AddIamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
+
+	// The unique identifier of the cluster for which you want to associate or disassociate
+	// IAM roles.
+	ClusterIdentifier *string `type:"string" required:"true"`
+
+	// Zero or more IAM roles (in their ARN format) to disassociate from the cluster.
+	// You can disassociate up to 10 IAM roles from a single cluster in a single
+	// request.
+	RemoveIamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
+}
+
+// String returns the string representation
+func (s ModifyClusterIamRolesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterIamRolesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyClusterIamRolesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyClusterIamRolesInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type ModifyClusterIamRolesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Describes a cluster.
+	Cluster *Cluster `type:"structure"`
+}
+
+// String returns the string representation
+func (s ModifyClusterIamRolesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterIamRolesOutput) GoString() string {
+	return s.String()
 }
 
 type ModifyClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// If true, major version upgrades will be applied automatically to the cluster
 	// during the maintenance window.
 	//
@@ -5206,20 +8220,28 @@ type ModifyClusterInput struct {
 	// currently in use, a new cluster parameter group in the cluster parameter
 	// group family for the new version must be specified. The new cluster parameter
 	// group can be the default for that cluster parameter group family. For more
-	// information about managing parameter groups, go to Amazon Redshift Parameter
-	// Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+	// information about parameters and parameter groups, go to Amazon Redshift
+	// Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
 	// in the Amazon Redshift Cluster Management Guide.
 	//
 	// Example: 1.0
 	ClusterVersion *string `type:"string"`
 
+	// The Elastic IP (EIP) address for the cluster.
+	//
+	// Constraints: The cluster must be provisioned in EC2-VPC and publicly-accessible
+	// through an Internet gateway. For more information about provisioning clusters
+	// in EC2-VPC, go to Supported Platforms to Launch Your Cluster (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#cluster-platforms)
+	// in the Amazon Redshift Cluster Management Guide.
+	ElasticIp *string `type:"string"`
+
 	// Specifies the name of the HSM client certificate the Amazon Redshift cluster
 	// uses to retrieve the data encryption keys stored in an HSM.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string"`
+	HsmClientCertificateIdentifier *string `type:"string"`
 
 	// Specifies the name of the HSM configuration that contains the information
 	// the Amazon Redshift cluster can use to retrieve and store keys in an HSM.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string"`
+	HsmConfigurationIdentifier *string `type:"string"`
 
 	// The new password for the cluster master user. This change is asynchronously
 	// applied as soon as possible. Between the time of the request and the completion
@@ -5259,7 +8281,8 @@ type ModifyClusterInput struct {
 	// permissions for the cluster are restored. You can use DescribeResize to track
 	// the progress of the resize request.
 	//
-	// Valid Values:  dw1.xlarge | dw1.8xlarge | dw2.large | dw2.8xlarge.
+	// Valid Values:  ds1.xlarge | ds1.8xlarge |  ds2.xlarge | ds2.8xlarge | dc1.large
+	// | dc1.8xlarge.
 	NodeType *string `type:"string"`
 
 	// The new number of nodes of the cluster. If you specify a new number of nodes,
@@ -5294,29 +8317,58 @@ type ModifyClusterInput struct {
 	// Constraints: Must be at least 30 minutes.
 	PreferredMaintenanceWindow *string `type:"string"`
 
+	// If true, the cluster can be accessed from a public network. Only clusters
+	// in VPCs can be set to be publicly available.
+	PubliclyAccessible *bool `type:"boolean"`
+
 	// A list of virtual private cloud (VPC) security groups to be associated with
 	// the cluster.
-	VPCSecurityGroupIDs []*string `locationName:"VpcSecurityGroupIds" locationNameList:"VpcSecurityGroupId" type:"list"`
-
-	metadataModifyClusterInput `json:"-" xml:"-"`
+	VpcSecurityGroupIds []*string `locationNameList:"VpcSecurityGroupId" type:"list"`
 }
 
-type metadataModifyClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyClusterInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataModifyClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataModifyClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterOutput) GoString() string {
+	return s.String()
 }
 
 type ModifyClusterParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the parameter group to be modified.
 	ParameterGroupName *string `type:"string" required:"true"`
 
@@ -5329,15 +8381,37 @@ type ModifyClusterParameterGroupInput struct {
 	//  For the workload management (WLM) configuration, you must supply all the
 	// name-value pairs in the wlm_json_configuration parameter.
 	Parameters []*Parameter `locationNameList:"Parameter" type:"list" required:"true"`
-
-	metadataModifyClusterParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataModifyClusterParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyClusterParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyClusterParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyClusterParameterGroupInput"}
+	if s.ParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupName"))
+	}
+	if s.Parameters == nil {
+		invalidParams.Add(request.NewErrParamRequired("Parameters"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyClusterSubnetGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the subnet group to be modified.
 	ClusterSubnetGroupName *string `type:"string" required:"true"`
 
@@ -5346,27 +8420,55 @@ type ModifyClusterSubnetGroupInput struct {
 
 	// An array of VPC subnet IDs. A maximum of 20 subnets can be modified in a
 	// single request.
-	SubnetIDs []*string `locationName:"SubnetIds" locationNameList:"SubnetIdentifier" type:"list" required:"true"`
-
-	metadataModifyClusterSubnetGroupInput `json:"-" xml:"-"`
+	SubnetIds []*string `locationNameList:"SubnetIdentifier" type:"list" required:"true"`
 }
 
-type metadataModifyClusterSubnetGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyClusterSubnetGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterSubnetGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyClusterSubnetGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyClusterSubnetGroupInput"}
+	if s.ClusterSubnetGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSubnetGroupName"))
+	}
+	if s.SubnetIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyClusterSubnetGroupOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a subnet group.
 	ClusterSubnetGroup *ClusterSubnetGroup `type:"structure"`
-
-	metadataModifyClusterSubnetGroupOutput `json:"-" xml:"-"`
 }
 
-type metadataModifyClusterSubnetGroupOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyClusterSubnetGroupOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyClusterSubnetGroupOutput) GoString() string {
+	return s.String()
 }
 
 type ModifyEventSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
 	// A Boolean value indicating if the subscription is enabled. true indicates
 	// the subscription is enabled
 	Enabled *bool `type:"boolean"`
@@ -5377,15 +8479,15 @@ type ModifyEventSubscriptionInput struct {
 	// Values: Configuration, Management, Monitoring, Security
 	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
 
-	// The Amazon Resource Name (ARN) of the SNS topic to be used by the event notification
-	// subscription.
-	SNSTopicARN *string `locationName:"SnsTopicArn" type:"string"`
-
 	// Specifies the Amazon Redshift event severity to be published by the event
 	// notification subscription.
 	//
 	// Values: ERROR, INFO
 	Severity *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) of the SNS topic to be used by the event notification
+	// subscription.
+	SnsTopicArn *string `type:"string"`
 
 	// A list of one or more identifiers of Amazon Redshift source objects. All
 	// of the objects must be of the same type as was specified in the source type
@@ -5396,7 +8498,7 @@ type ModifyEventSubscriptionInput struct {
 	// Example: my-cluster-1, my-cluster-2
 	//
 	// Example: my-snapshot-20131010
-	SourceIDs []*string `locationName:"SourceIds" locationNameList:"SourceId" type:"list"`
+	SourceIds []*string `locationNameList:"SourceId" type:"list"`
 
 	// The type of source that will be generating the events. For example, if you
 	// want to be notified of events generated by a cluster, you would set this
@@ -5410,25 +8512,51 @@ type ModifyEventSubscriptionInput struct {
 
 	// The name of the modified Amazon Redshift event notification subscription.
 	SubscriptionName *string `type:"string" required:"true"`
-
-	metadataModifyEventSubscriptionInput `json:"-" xml:"-"`
 }
 
-type metadataModifyEventSubscriptionInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyEventSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyEventSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyEventSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyEventSubscriptionInput"}
+	if s.SubscriptionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyEventSubscriptionOutput struct {
-	EventSubscription *EventSubscription `type:"structure"`
+	_ struct{} `type:"structure"`
 
-	metadataModifyEventSubscriptionOutput `json:"-" xml:"-"`
+	// Describes event subscriptions.
+	EventSubscription *EventSubscription `type:"structure"`
 }
 
-type metadataModifyEventSubscriptionOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyEventSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyEventSubscriptionOutput) GoString() string {
+	return s.String()
 }
 
 type ModifySnapshotCopyRetentionPeriodInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of the cluster for which you want to change the retention
 	// period for automated snapshots that are copied to a destination region.
 	//
@@ -5446,27 +8574,55 @@ type ModifySnapshotCopyRetentionPeriodInput struct {
 	//
 	//  Constraints: Must be at least 1 and no more than 35.
 	RetentionPeriod *int64 `type:"integer" required:"true"`
-
-	metadataModifySnapshotCopyRetentionPeriodInput `json:"-" xml:"-"`
 }
 
-type metadataModifySnapshotCopyRetentionPeriodInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifySnapshotCopyRetentionPeriodInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifySnapshotCopyRetentionPeriodInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifySnapshotCopyRetentionPeriodInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifySnapshotCopyRetentionPeriodInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+	if s.RetentionPeriod == nil {
+		invalidParams.Add(request.NewErrParamRequired("RetentionPeriod"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifySnapshotCopyRetentionPeriodOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataModifySnapshotCopyRetentionPeriodOutput `json:"-" xml:"-"`
 }
 
-type metadataModifySnapshotCopyRetentionPeriodOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifySnapshotCopyRetentionPeriodOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifySnapshotCopyRetentionPeriodOutput) GoString() string {
+	return s.String()
 }
 
 // Describes an orderable cluster option.
 type OrderableClusterOption struct {
+	_ struct{} `type:"structure"`
+
 	// A list of availability zones for the orderable cluster.
 	AvailabilityZones []*AvailabilityZone `locationNameList:"AvailabilityZone" type:"list"`
 
@@ -5478,18 +8634,32 @@ type OrderableClusterOption struct {
 
 	// The node type for the orderable cluster.
 	NodeType *string `type:"string"`
-
-	metadataOrderableClusterOption `json:"-" xml:"-"`
 }
 
-type metadataOrderableClusterOption struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s OrderableClusterOption) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OrderableClusterOption) GoString() string {
+	return s.String()
 }
 
 // Describes a parameter in a cluster parameter group.
 type Parameter struct {
+	_ struct{} `type:"structure"`
+
 	// The valid range of values for the parameter.
 	AllowedValues *string `type:"string"`
+
+	// Specifies how to apply the WLM configuration parameter. Some properties can
+	// be applied dynamically, while other properties require that any associated
+	// clusters be rebooted for the configuration changes to be applied. For more
+	// information about parameters and parameter groups, go to Amazon Redshift
+	// Parameter Groups (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-parameter-groups.html)
+	// in the Amazon Redshift Cluster Management Guide.
+	ApplyType *string `type:"string" enum:"ParameterApplyType"`
 
 	// The data type of the parameter.
 	DataType *string `type:"string"`
@@ -5512,17 +8682,23 @@ type Parameter struct {
 
 	// The source of the parameter value, such as "engine-default" or "user".
 	Source *string `type:"string"`
-
-	metadataParameter `json:"-" xml:"-"`
 }
 
-type metadataParameter struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Parameter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Parameter) GoString() string {
+	return s.String()
 }
 
 // Describes cluster attributes that are in a pending state. A change to one
 // or more the attributes was requested and is in progress or will be applied.
 type PendingModifiedValues struct {
+	_ struct{} `type:"structure"`
+
 	// The pending or in-progress change of the automated snapshot retention period.
 	AutomatedSnapshotRetentionPeriod *int64 `type:"integer"`
 
@@ -5544,87 +8720,155 @@ type PendingModifiedValues struct {
 	// The pending or in-progress change of the number of nodes in the cluster.
 	NumberOfNodes *int64 `type:"integer"`
 
-	metadataPendingModifiedValues `json:"-" xml:"-"`
+	// The pending or in-progress change of the ability to connect to the cluster
+	// from the public network.
+	PubliclyAccessible *bool `type:"boolean"`
 }
 
-type metadataPendingModifiedValues struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PendingModifiedValues) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PendingModifiedValues) GoString() string {
+	return s.String()
 }
 
 type PurchaseReservedNodeOfferingInput struct {
-	// The number of reserved nodes you want to purchase.
+	_ struct{} `type:"structure"`
+
+	// The number of reserved nodes that you want to purchase.
 	//
 	// Default: 1
 	NodeCount *int64 `type:"integer"`
 
 	// The unique identifier of the reserved node offering you want to purchase.
-	ReservedNodeOfferingID *string `locationName:"ReservedNodeOfferingId" type:"string" required:"true"`
-
-	metadataPurchaseReservedNodeOfferingInput `json:"-" xml:"-"`
+	ReservedNodeOfferingId *string `type:"string" required:"true"`
 }
 
-type metadataPurchaseReservedNodeOfferingInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PurchaseReservedNodeOfferingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PurchaseReservedNodeOfferingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PurchaseReservedNodeOfferingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PurchaseReservedNodeOfferingInput"}
+	if s.ReservedNodeOfferingId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReservedNodeOfferingId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type PurchaseReservedNodeOfferingOutput struct {
-	// Describes a reserved node.
-	ReservedNode *ReservedNode `type:"structure"`
+	_ struct{} `type:"structure"`
 
-	metadataPurchaseReservedNodeOfferingOutput `json:"-" xml:"-"`
+	// Describes a reserved node. You can call the DescribeReservedNodeOfferings
+	// API to obtain the available reserved node offerings.
+	ReservedNode *ReservedNode `type:"structure"`
 }
 
-type metadataPurchaseReservedNodeOfferingOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PurchaseReservedNodeOfferingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PurchaseReservedNodeOfferingOutput) GoString() string {
+	return s.String()
 }
 
 type RebootClusterInput struct {
+	_ struct{} `type:"structure"`
+
 	// The cluster identifier.
 	ClusterIdentifier *string `type:"string" required:"true"`
-
-	metadataRebootClusterInput `json:"-" xml:"-"`
 }
 
-type metadataRebootClusterInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RebootClusterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RebootClusterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RebootClusterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RebootClusterInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RebootClusterOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataRebootClusterOutput `json:"-" xml:"-"`
 }
 
-type metadataRebootClusterOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RebootClusterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RebootClusterOutput) GoString() string {
+	return s.String()
 }
 
 // Describes a recurring charge.
 type RecurringCharge struct {
+	_ struct{} `type:"structure"`
+
 	// The amount charged per the period of time specified by the recurring charge
 	// frequency.
 	RecurringChargeAmount *float64 `type:"double"`
 
 	// The frequency at which the recurring charge amount is applied.
 	RecurringChargeFrequency *string `type:"string"`
-
-	metadataRecurringCharge `json:"-" xml:"-"`
 }
 
-type metadataRecurringCharge struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RecurringCharge) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Describes a reserved node.
+// GoString returns the string representation
+func (s RecurringCharge) GoString() string {
+	return s.String()
+}
+
+// Describes a reserved node. You can call the DescribeReservedNodeOfferings
+// API to obtain the available reserved node offerings.
 type ReservedNode struct {
+	_ struct{} `type:"structure"`
+
 	// The currency code for the reserved cluster.
 	CurrencyCode *string `type:"string"`
 
 	// The duration of the node reservation in seconds.
 	Duration *int64 `type:"integer"`
 
-	// The fixed cost Amazon Redshift charged you for this reserved node.
+	// The fixed cost Amazon Redshift charges you for this reserved node.
 	FixedPrice *float64 `type:"double"`
 
 	// The number of reserved compute nodes.
@@ -5641,10 +8885,10 @@ type ReservedNode struct {
 	RecurringCharges []*RecurringCharge `locationNameList:"RecurringCharge" type:"list"`
 
 	// The unique identifier for the reservation.
-	ReservedNodeID *string `locationName:"ReservedNodeId" type:"string"`
+	ReservedNodeId *string `type:"string"`
 
 	// The identifier for the reserved node offering.
-	ReservedNodeOfferingID *string `locationName:"ReservedNodeOfferingId" type:"string"`
+	ReservedNodeOfferingId *string `type:"string"`
 
 	// The time the reservation started. You purchase a reserved node offering for
 	// a duration. This is the start time of that duration.
@@ -5660,18 +8904,24 @@ type ReservedNode struct {
 	// failed for the purchase attempt.
 	State *string `type:"string"`
 
-	// The hourly rate Amazon Redshift charge you for this reserved node.
+	// The hourly rate Amazon Redshift charges you for this reserved node.
 	UsagePrice *float64 `type:"double"`
-
-	metadataReservedNode `json:"-" xml:"-"`
 }
 
-type metadataReservedNode struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ReservedNode) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservedNode) GoString() string {
+	return s.String()
 }
 
 // Describes a reserved node offering.
 type ReservedNodeOffering struct {
+	_ struct{} `type:"structure"`
+
 	// The currency code for the compute nodes offering.
 	CurrencyCode *string `type:"string"`
 
@@ -5695,20 +8945,26 @@ type ReservedNodeOffering struct {
 	RecurringCharges []*RecurringCharge `locationNameList:"RecurringCharge" type:"list"`
 
 	// The offering identifier.
-	ReservedNodeOfferingID *string `locationName:"ReservedNodeOfferingId" type:"string"`
+	ReservedNodeOfferingId *string `type:"string"`
 
 	// The rate you are charged for each hour the cluster that is using the offering
 	// is running.
 	UsagePrice *float64 `type:"double"`
-
-	metadataReservedNodeOffering `json:"-" xml:"-"`
 }
 
-type metadataReservedNodeOffering struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ReservedNodeOffering) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReservedNodeOffering) GoString() string {
+	return s.String()
 }
 
 type ResetClusterParameterGroupInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the cluster parameter group to be reset.
 	ParameterGroupName *string `type:"string" required:"true"`
 
@@ -5723,15 +8979,37 @@ type ResetClusterParameterGroupInput struct {
 	//
 	// Default: true
 	ResetAllParameters *bool `type:"boolean"`
-
-	metadataResetClusterParameterGroupInput `json:"-" xml:"-"`
 }
 
-type metadataResetClusterParameterGroupInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ResetClusterParameterGroupInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ResetClusterParameterGroupInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ResetClusterParameterGroupInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ResetClusterParameterGroupInput"}
+	if s.ParameterGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ParameterGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RestoreFromClusterSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
+	// Reserved.
+	AdditionalInfo *string `type:"string"`
+
 	// If true, major version upgrades can be applied during the maintenance window
 	// to the Amazon Redshift engine that is running on the cluster.
 	//
@@ -5791,20 +9069,41 @@ type RestoreFromClusterSnapshotInput struct {
 	ClusterSubnetGroupName *string `type:"string"`
 
 	// The elastic IP (EIP) address for the cluster.
-	ElasticIP *string `locationName:"ElasticIp" type:"string"`
+	ElasticIp *string `type:"string"`
 
 	// Specifies the name of the HSM client certificate the Amazon Redshift cluster
 	// uses to retrieve the data encryption keys stored in an HSM.
-	HSMClientCertificateIdentifier *string `locationName:"HsmClientCertificateIdentifier" type:"string"`
+	HsmClientCertificateIdentifier *string `type:"string"`
 
 	// Specifies the name of the HSM configuration that contains the information
 	// the Amazon Redshift cluster can use to retrieve and store keys in an HSM.
-	HSMConfigurationIdentifier *string `locationName:"HsmConfigurationIdentifier" type:"string"`
+	HsmConfigurationIdentifier *string `type:"string"`
+
+	// A list of AWS Identity and Access Management (IAM) roles that can be used
+	// by the cluster to access other AWS services. You must supply the IAM roles
+	// in their Amazon Resource Name (ARN) format. You can supply up to 10 IAM roles
+	// in a single request.
+	//
+	// A cluster can have up to 10 IAM roles associated at any time.
+	IamRoles []*string `locationNameList:"IamRoleArn" type:"list"`
 
 	// The AWS Key Management Service (KMS) key ID of the encryption key that you
 	// want to use to encrypt data in the cluster that you restore from a shared
 	// snapshot.
-	KMSKeyID *string `locationName:"KmsKeyId" type:"string"`
+	KmsKeyId *string `type:"string"`
+
+	// The node type that the restored cluster will be provisioned with.
+	//
+	//  Default: The node type of the cluster from which the snapshot was taken.
+	// You can modify this if you are using any DS node type. In that case, you
+	// can choose to restore into another DS node type of the same size. For example,
+	// you can restore ds1.8xlarge into ds2.8xlarge, or ds2.xlarge into ds1.xlarge.
+	// If you have a DC instance type, you must restore into that same instance
+	// type and size. In other words, you can only restore a dc1.large instance
+	// type into another dc1.large instance type. For more information about node
+	// types, see  About Clusters and Nodes (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#rs-about-clusters-and-nodes)
+	// in the Amazon Redshift Cluster Management Guide
+	NodeType *string `type:"string"`
 
 	// The AWS customer account used to create or copy the snapshot. Required if
 	// you are restoring a snapshot you do not own, optional if you own the snapshot.
@@ -5852,29 +9151,57 @@ type RestoreFromClusterSnapshotInput struct {
 	//  Default: The default VPC security group is associated with the cluster.
 	//
 	//  VPC security groups only apply to clusters in VPCs.
-	VPCSecurityGroupIDs []*string `locationName:"VpcSecurityGroupIds" locationNameList:"VpcSecurityGroupId" type:"list"`
-
-	metadataRestoreFromClusterSnapshotInput `json:"-" xml:"-"`
+	VpcSecurityGroupIds []*string `locationNameList:"VpcSecurityGroupId" type:"list"`
 }
 
-type metadataRestoreFromClusterSnapshotInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RestoreFromClusterSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RestoreFromClusterSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RestoreFromClusterSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RestoreFromClusterSnapshotInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+	if s.SnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RestoreFromClusterSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataRestoreFromClusterSnapshotOutput `json:"-" xml:"-"`
 }
 
-type metadataRestoreFromClusterSnapshotOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RestoreFromClusterSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RestoreFromClusterSnapshotOutput) GoString() string {
+	return s.String()
 }
 
 // Describes the status of a cluster restore action. Returns null if the cluster
 // was not created by restoring a snapshot.
 type RestoreStatus struct {
+	_ struct{} `type:"structure"`
+
 	// The number of megabytes per second being transferred from the backup storage.
 	// Returns the average rate for a completed backup.
 	CurrentRestoreRateInMegaBytesPerSecond *float64 `type:"double"`
@@ -5896,16 +9223,104 @@ type RestoreStatus struct {
 	// The status of the restore action. Returns starting, restoring, completed,
 	// or failed.
 	Status *string `type:"string"`
-
-	metadataRestoreStatus `json:"-" xml:"-"`
 }
 
-type metadataRestoreStatus struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RestoreStatus) String() string {
+	return awsutil.Prettify(s)
 }
 
-// ???
+// GoString returns the string representation
+func (s RestoreStatus) GoString() string {
+	return s.String()
+}
+
+type RestoreTableFromClusterSnapshotInput struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the Amazon Redshift cluster to restore the table to.
+	ClusterIdentifier *string `type:"string" required:"true"`
+
+	// The name of the table to create as a result of the current request.
+	NewTableName *string `type:"string" required:"true"`
+
+	// The identifier of the snapshot to restore the table from. This snapshot must
+	// have been created from the Amazon Redshift cluster specified by the ClusterIdentifier
+	// parameter.
+	SnapshotIdentifier *string `type:"string" required:"true"`
+
+	// The name of the source database that contains the table to restore from.
+	SourceDatabaseName *string `type:"string" required:"true"`
+
+	// The name of the source schema that contains the table to restore from. If
+	// you do not specify a SourceSchemaName value, the default is public.
+	SourceSchemaName *string `type:"string"`
+
+	// The name of the source table to restore from.
+	SourceTableName *string `type:"string" required:"true"`
+
+	// The name of the database to restore the table to.
+	TargetDatabaseName *string `type:"string"`
+
+	// The name of the schema to restore the table to.
+	TargetSchemaName *string `type:"string"`
+}
+
+// String returns the string representation
+func (s RestoreTableFromClusterSnapshotInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RestoreTableFromClusterSnapshotInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RestoreTableFromClusterSnapshotInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RestoreTableFromClusterSnapshotInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+	if s.NewTableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("NewTableName"))
+	}
+	if s.SnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
+	}
+	if s.SourceDatabaseName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceDatabaseName"))
+	}
+	if s.SourceTableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceTableName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type RestoreTableFromClusterSnapshotOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the status of a RestoreTableFromClusterSnapshot operation.
+	TableRestoreStatus *TableRestoreStatus `type:"structure"`
+}
+
+// String returns the string representation
+func (s RestoreTableFromClusterSnapshotOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RestoreTableFromClusterSnapshotOutput) GoString() string {
+	return s.String()
+}
+
 type RevokeClusterSecurityGroupIngressInput struct {
+	_ struct{} `type:"structure"`
+
 	// The IP range for which to revoke access. This range must be a valid Classless
 	// Inter-Domain Routing (CIDR) block of IP addresses. If CIDRIP is specified,
 	// EC2SecurityGroupName and EC2SecurityGroupOwnerId cannot be provided.
@@ -5925,27 +9340,52 @@ type RevokeClusterSecurityGroupIngressInput struct {
 	// also be provided. and CIDRIP cannot be provided.
 	//
 	// Example: 111122223333
-	EC2SecurityGroupOwnerID *string `locationName:"EC2SecurityGroupOwnerId" type:"string"`
-
-	metadataRevokeClusterSecurityGroupIngressInput `json:"-" xml:"-"`
+	EC2SecurityGroupOwnerId *string `type:"string"`
 }
 
-type metadataRevokeClusterSecurityGroupIngressInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RevokeClusterSecurityGroupIngressInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RevokeClusterSecurityGroupIngressInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RevokeClusterSecurityGroupIngressInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RevokeClusterSecurityGroupIngressInput"}
+	if s.ClusterSecurityGroupName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterSecurityGroupName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RevokeClusterSecurityGroupIngressOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a security group.
 	ClusterSecurityGroup *ClusterSecurityGroup `type:"structure"`
-
-	metadataRevokeClusterSecurityGroupIngressOutput `json:"-" xml:"-"`
 }
 
-type metadataRevokeClusterSecurityGroupIngressOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RevokeClusterSecurityGroupIngressOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RevokeClusterSecurityGroupIngressOutput) GoString() string {
+	return s.String()
 }
 
 type RevokeSnapshotAccessInput struct {
+	_ struct{} `type:"structure"`
+
 	// The identifier of the AWS customer account that can no longer restore the
 	// specified snapshot.
 	AccountWithRestoreAccess *string `type:"string" required:"true"`
@@ -5957,52 +9397,105 @@ type RevokeSnapshotAccessInput struct {
 
 	// The identifier of the snapshot that the account can no longer access.
 	SnapshotIdentifier *string `type:"string" required:"true"`
-
-	metadataRevokeSnapshotAccessInput `json:"-" xml:"-"`
 }
 
-type metadataRevokeSnapshotAccessInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RevokeSnapshotAccessInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RevokeSnapshotAccessInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RevokeSnapshotAccessInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RevokeSnapshotAccessInput"}
+	if s.AccountWithRestoreAccess == nil {
+		invalidParams.Add(request.NewErrParamRequired("AccountWithRestoreAccess"))
+	}
+	if s.SnapshotIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RevokeSnapshotAccessOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a snapshot.
 	Snapshot *Snapshot `type:"structure"`
-
-	metadataRevokeSnapshotAccessOutput `json:"-" xml:"-"`
 }
 
-type metadataRevokeSnapshotAccessOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RevokeSnapshotAccessOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RevokeSnapshotAccessOutput) GoString() string {
+	return s.String()
 }
 
 type RotateEncryptionKeyInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique identifier of the cluster that you want to rotate the encryption
 	// keys for.
 	//
 	//  Constraints: Must be the name of valid cluster that has encryption enabled.
 	ClusterIdentifier *string `type:"string" required:"true"`
-
-	metadataRotateEncryptionKeyInput `json:"-" xml:"-"`
 }
 
-type metadataRotateEncryptionKeyInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RotateEncryptionKeyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RotateEncryptionKeyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RotateEncryptionKeyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RotateEncryptionKeyInput"}
+	if s.ClusterIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClusterIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RotateEncryptionKeyOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Describes a cluster.
 	Cluster *Cluster `type:"structure"`
-
-	metadataRotateEncryptionKeyOutput `json:"-" xml:"-"`
 }
 
-type metadataRotateEncryptionKeyOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RotateEncryptionKeyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RotateEncryptionKeyOutput) GoString() string {
+	return s.String()
 }
 
 // Describes a snapshot.
 type Snapshot struct {
+	_ struct{} `type:"structure"`
+
 	// A list of the AWS customer accounts authorized to restore the snapshot. Returns
 	// null if no accounts are authorized. Visible only to the snapshot owner.
 	AccountsWithRestoreAccess []*AccountWithRestoreAccess `locationNameList:"AccountWithRestoreAccess" type:"list"`
@@ -6050,7 +9543,7 @@ type Snapshot struct {
 
 	// The AWS Key Management Service (KMS) key ID of the encryption key that was
 	// used to encrypt data in the cluster from which the snapshot was taken.
-	KMSKeyID *string `locationName:"KmsKeyId" type:"string"`
+	KmsKeyId *string `type:"string"`
 
 	// The master user name for the cluster.
 	MasterUsername *string `type:"string"`
@@ -6069,6 +9562,9 @@ type Snapshot struct {
 	// The port that the cluster is listening on.
 	Port *int64 `type:"integer"`
 
+	// The list of node types that this cluster snapshot is able to restore into.
+	RestorableNodeTypes []*string `locationNameList:"NodeType" type:"list"`
+
 	// The time (UTC) when Amazon Redshift began the snapshot. A snapshot contains
 	// a copy of the cluster data as of this exact time.
 	SnapshotCreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
@@ -6084,9 +9580,9 @@ type Snapshot struct {
 	SourceRegion *string `type:"string"`
 
 	// The snapshot status. The value of the status depends on the API operation
-	// used.   CreateClusterSnapshot and CopyClusterSnapshot returns status as "creating".
-	//   DescribeClusterSnapshots returns status as "creating", "available", "final
-	// snapshot", or "failed".  DeleteClusterSnapshot returns status as "deleted".
+	// used.  CreateClusterSnapshot and CopyClusterSnapshot returns status as "creating".
+	//  DescribeClusterSnapshots returns status as "creating", "available", "final
+	// snapshot", or "failed". DeleteClusterSnapshot returns status as "deleted".
 	Status *string `type:"string"`
 
 	// The list of tags for the cluster snapshot.
@@ -6098,17 +9594,54 @@ type Snapshot struct {
 
 	// The VPC identifier of the cluster if the snapshot is from a cluster in a
 	// VPC. Otherwise, this field is not in the output.
-	VPCID *string `locationName:"VpcId" type:"string"`
-
-	metadataSnapshot `json:"-" xml:"-"`
+	VpcId *string `type:"string"`
 }
 
-type metadataSnapshot struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Snapshot) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Snapshot) GoString() string {
+	return s.String()
+}
+
+// The snapshot copy grant that grants Amazon Redshift permission to encrypt
+// copied snapshots with the specified customer master key (CMK) from AWS KMS
+// in the destination region.
+//
+//  For more information about managing snapshot copy grants, go to Amazon
+// Redshift Database Encryption (http://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html)
+// in the Amazon Redshift Cluster Management Guide.
+type SnapshotCopyGrant struct {
+	_ struct{} `type:"structure"`
+
+	// The unique identifier of the customer master key (CMK) in AWS KMS to which
+	// Amazon Redshift is granted permission.
+	KmsKeyId *string `type:"string"`
+
+	// The name of the snapshot copy grant.
+	SnapshotCopyGrantName *string `type:"string"`
+
+	// A list of tag instances.
+	Tags []*Tag `locationNameList:"Tag" type:"list"`
+}
+
+// String returns the string representation
+func (s SnapshotCopyGrant) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SnapshotCopyGrant) GoString() string {
+	return s.String()
 }
 
 // Describes a subnet.
 type Subnet struct {
+	_ struct{} `type:"structure"`
+
 	// Describes an availability zone.
 	SubnetAvailabilityZone *AvailabilityZone `type:"structure"`
 
@@ -6117,31 +9650,105 @@ type Subnet struct {
 
 	// The status of the subnet.
 	SubnetStatus *string `type:"string"`
-
-	metadataSubnet `json:"-" xml:"-"`
 }
 
-type metadataSubnet struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Subnet) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Subnet) GoString() string {
+	return s.String()
+}
+
+// Describes the status of a RestoreTableFromClusterSnapshot operation.
+type TableRestoreStatus struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the Amazon Redshift cluster that the table is being restored
+	// to.
+	ClusterIdentifier *string `type:"string"`
+
+	// A description of the status of the table restore request. Status values include
+	// SUCCEEDED, FAILED, CANCELED, PENDING, IN_PROGRESS.
+	Message *string `type:"string"`
+
+	// The name of the table to create as a result of the table restore request.
+	NewTableName *string `type:"string"`
+
+	// The amount of data restored to the new table so far, in megabytes (MB).
+	ProgressInMegaBytes *int64 `type:"long"`
+
+	// The time that the table restore request was made, in Universal Coordinated
+	// Time (UTC).
+	RequestTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
+	// The identifier of the snapshot that the table is being restored from.
+	SnapshotIdentifier *string `type:"string"`
+
+	// The name of the source database that contains the table being restored.
+	SourceDatabaseName *string `type:"string"`
+
+	// The name of the source schema that contains the table being restored.
+	SourceSchemaName *string `type:"string"`
+
+	// The name of the source table being restored.
+	SourceTableName *string `type:"string"`
+
+	// A value that describes the current state of the table restore request.
+	//
+	// Valid Values: SUCCEEDED, FAILED, CANCELED, PENDING, IN_PROGRESS
+	Status *string `type:"string" enum:"TableRestoreStatusType"`
+
+	// The unique identifier for the table restore request.
+	TableRestoreRequestId *string `type:"string"`
+
+	// The name of the database to restore the table to.
+	TargetDatabaseName *string `type:"string"`
+
+	// The name of the schema to restore the table to.
+	TargetSchemaName *string `type:"string"`
+
+	// The total amount of data to restore to the new table, in megabytes (MB).
+	TotalDataInMegaBytes *int64 `type:"long"`
+}
+
+// String returns the string representation
+func (s TableRestoreStatus) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TableRestoreStatus) GoString() string {
+	return s.String()
 }
 
 // A tag consisting of a name/value pair for a resource.
 type Tag struct {
+	_ struct{} `type:"structure"`
+
 	// The key, or name, for the resource tag.
 	Key *string `type:"string"`
 
 	// The value for the resource tag.
 	Value *string `type:"string"`
-
-	metadataTag `json:"-" xml:"-"`
 }
 
-type metadataTag struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Tag) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Tag) GoString() string {
+	return s.String()
 }
 
 // A tag and its associated resource.
 type TaggedResource struct {
+	_ struct{} `type:"structure"`
+
 	// The Amazon Resource Name (ARN) with which the tag is associated. For example,
 	// arn:aws:redshift:us-east-1:123456789:cluster:t1.
 	ResourceName *string `type:"string"`
@@ -6157,23 +9764,66 @@ type TaggedResource struct {
 
 	// The tag for the resource.
 	Tag *Tag `type:"structure"`
-
-	metadataTaggedResource `json:"-" xml:"-"`
 }
 
-type metadataTaggedResource struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s TaggedResource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TaggedResource) GoString() string {
+	return s.String()
 }
 
 // Describes the members of a VPC security group.
-type VPCSecurityGroupMembership struct {
+type VpcSecurityGroupMembership struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the VPC security group.
 	Status *string `type:"string"`
 
-	VPCSecurityGroupID *string `locationName:"VpcSecurityGroupId" type:"string"`
-
-	metadataVPCSecurityGroupMembership `json:"-" xml:"-"`
+	// The identifier of the VPC security group.
+	VpcSecurityGroupId *string `type:"string"`
 }
 
-type metadataVPCSecurityGroupMembership struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s VpcSecurityGroupMembership) String() string {
+	return awsutil.Prettify(s)
 }
+
+// GoString returns the string representation
+func (s VpcSecurityGroupMembership) GoString() string {
+	return s.String()
+}
+
+const (
+	// @enum ParameterApplyType
+	ParameterApplyTypeStatic = "static"
+	// @enum ParameterApplyType
+	ParameterApplyTypeDynamic = "dynamic"
+)
+
+const (
+	// @enum SourceType
+	SourceTypeCluster = "cluster"
+	// @enum SourceType
+	SourceTypeClusterParameterGroup = "cluster-parameter-group"
+	// @enum SourceType
+	SourceTypeClusterSecurityGroup = "cluster-security-group"
+	// @enum SourceType
+	SourceTypeClusterSnapshot = "cluster-snapshot"
+)
+
+const (
+	// @enum TableRestoreStatusType
+	TableRestoreStatusTypePending = "PENDING"
+	// @enum TableRestoreStatusType
+	TableRestoreStatusTypeInProgress = "IN_PROGRESS"
+	// @enum TableRestoreStatusType
+	TableRestoreStatusTypeSucceeded = "SUCCEEDED"
+	// @enum TableRestoreStatusType
+	TableRestoreStatusTypeFailed = "FAILED"
+	// @enum TableRestoreStatusType
+	TableRestoreStatusTypeCanceled = "CANCELED"
+)

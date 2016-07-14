@@ -2,6 +2,7 @@ package prices
 
 import (
 	"bytes"
+	"crypto/tls"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -43,7 +44,14 @@ func DownloadPricesMap(url string) (PricesMap, error) {
 	if url == "" {
 		return PricesMap{}, nil
 	}
-	res, err := http.Get(url)
+
+	// TODO: working TLS
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	res, err := client.Get(url)
 	if err != nil {
 		log.Error(err.Error())
 	}

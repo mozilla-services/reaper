@@ -31,8 +31,8 @@ func NewVolume(region string, vol *ec2.Volume) *Volume {
 	a := Volume{
 		Resource: Resource{
 			Region: reapable.Region(region),
-			ID:     reapable.ID(*vol.VolumeID),
-			Name:   *vol.VolumeID,
+			ID:     reapable.ID(*vol.VolumeId),
+			Name:   *vol.VolumeId,
 			Tags:   make(map[string]string),
 		},
 		Volume: *vol,
@@ -43,8 +43,8 @@ func NewVolume(region string, vol *ec2.Volume) *Volume {
 	}
 
 	for _, attachment := range vol.Attachments {
-		if attachment.InstanceID != nil {
-			a.AttachedInstanceIDs = append(a.AttachedInstanceIDs, *attachment.InstanceID)
+		if attachment.InstanceId != nil {
+			a.AttachedInstanceIDs = append(a.AttachedInstanceIDs, *attachment.InstanceId)
 		}
 	}
 
@@ -360,10 +360,10 @@ func (a *Volume) AWSConsoleURL() *url.URL {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Volume) Terminate() (bool, error) {
 	log.Info("Terminating Volume ", a.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: a.Region.String()})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
 	idString := a.ID.String()
 	input := &ec2.DeleteVolumeInput{
-		VolumeID: &idString,
+		VolumeId: &idString,
 	}
 	_, err := api.DeleteVolume(input)
 	if err != nil {

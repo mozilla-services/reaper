@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -35,6 +36,7 @@ var (
 	// package wide global
 	config  *Config
 	timeout = time.Tick(100 * time.Millisecond)
+	sess    = session.New()
 )
 
 // Scaler is an interface used to configure scheduable resources' schedules
@@ -78,7 +80,7 @@ func AllCloudformations() chan *Cloudformation {
 		go func(region string) {
 			defer wg.Done()
 			// add region to waitgroup
-			api := cloudformation.New(&aws.Config{Region: region})
+			api := cloudformation.New(sess, aws.NewConfig().WithRegion(region))
 			err := api.DescribeStacksPages(&cloudformation.DescribeStacksInput{}, func(resp *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 				for _, stack := range resp.Stacks {
 					ch <- NewCloudformation(region, stack)
@@ -118,7 +120,7 @@ func cloudformationResources(region, id string) chan *cloudformation.StackResour
 		return ch
 	}
 
-	api := cloudformation.New(&aws.Config{Region: region})
+	api := cloudformation.New(sess, aws.NewConfig().WithRegion(region))
 	go func() {
 		<-timeout
 
@@ -185,7 +187,7 @@ func AllAutoScalingGroups() chan *AutoScalingGroup {
 		go func(region string) {
 			defer wg.Done()
 			// add region to waitgroup
-			api := autoscaling.New(&aws.Config{Region: region})
+			api := autoscaling.New(sess, aws.NewConfig().WithRegion(region))
 			err := api.DescribeAutoScalingGroupsPages(&autoscaling.DescribeAutoScalingGroupsInput{}, func(resp *autoscaling.DescribeAutoScalingGroupsOutput, lastPage bool) bool {
 				for _, asg := range resp.AutoScalingGroups {
 					ch <- NewAutoScalingGroup(region, asg)
@@ -226,7 +228,7 @@ func AllInstances() chan *Instance {
 		go func(region string) {
 			defer wg.Done()
 			// add region to waitgroup
-			api := ec2.New(&aws.Config{Region: region})
+			api := ec2.New(sess, aws.NewConfig().WithRegion(region))
 			// DescribeInstancesPages does autopagination
 			err := api.DescribeInstancesPages(&ec2.DescribeInstancesInput{}, func(resp *ec2.DescribeInstancesOutput, lastPage bool) bool {
 				for _, res := range resp.Reservations {
@@ -268,7 +270,7 @@ func AllVolumes() chan *Volume {
 		go func(region string) {
 			defer wg.Done()
 			// add region to waitgroup
-			api := ec2.New(&aws.Config{Region: region})
+			api := ec2.New(sess, aws.NewConfig().WithRegion(region))
 			// DescribeVolumesPages does autopagination
 			err := api.DescribeVolumesPages(&ec2.DescribeVolumesInput{}, func(resp *ec2.DescribeVolumesOutput, lastPage bool) bool {
 				for _, vol := range resp.Volumes {
@@ -308,7 +310,7 @@ func AllSecurityGroups() chan *SecurityGroup {
 		go func(region string) {
 			defer wg.Done()
 			// add region to waitgroup
-			api := ec2.New(&aws.Config{Region: region})
+			api := ec2.New(sess, aws.NewConfig().WithRegion(region))
 			resp, err := api.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 			for _, sg := range resp.SecurityGroups {
 				ch <- NewSecurityGroup(region, sg)

@@ -72,7 +72,7 @@ func (s instanceScalingSchedule) scheduleTag() string {
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	a := Instance{
 		Resource: Resource{
-			ID:     reapable.ID(*instance.InstanceID),
+			ID:     reapable.ID(*instance.InstanceId),
 			Region: reapable.Region(region), // passed in cause not possible to extract out of api
 			Tags:   make(map[string]string),
 		},
@@ -82,7 +82,7 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	for _, sg := range instance.SecurityGroups {
 		if sg != nil {
-			a.SecurityGroups[reapable.ID(*sg.GroupID)] = *sg.GroupName
+			a.SecurityGroups[reapable.ID(*sg.GroupId)] = *sg.GroupName
 		}
 	}
 
@@ -306,7 +306,7 @@ const reapableInstanceEventHTMLShort = `
 
 const reapableInstanceEventTextShort = `%%%
 Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
-Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIPAddress}}, Public IP: {{.Instance.PublicIPAddress}}.\n{{end}}
+Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIpAddress}}, Public IP: {{.Instance.PublicIpAddress}}.\n{{end}}
 Schedule this instance to stop and start with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this instance.
 %%%`
@@ -316,7 +316,7 @@ Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{
 {{if .Instance.Owner}}Owned by {{.Instance.Owner}}.\n{{end}}
 State: {{ .Instance.State.Name}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
-{{ if .Instance.PublicIPAddress}}This instance's public IP: {{.Instance.PublicIPAddress}}\n{{end}}
+{{ if .Instance.PublicIpAddress}}This instance's public IP: {{.Instance.PublicIpAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
 Schedule this instance to start and stop with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}).
@@ -346,12 +346,12 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 		if a.InstanceType != nil && *a.InstanceType == filter.Arguments[0] {
 			matched = true
 		}
-	case "HasPublicIPAddress":
-		if b, err := filter.BoolValue(0); err == nil && b == (a.PublicIPAddress != nil) {
+	case "HasPublicIpAddress":
+		if b, err := filter.BoolValue(0); err == nil && b == (a.PublicIpAddress != nil) {
 			matched = true
 		}
-	case "PublicIPAddress":
-		if a.PublicIPAddress != nil && *a.PublicIPAddress == filter.Arguments[0] {
+	case "PublicIpAddress":
+		if a.PublicIpAddress != nil && *a.PublicIpAddress == filter.Arguments[0] {
 			matched = true
 		}
 	case "InCloudformation":
@@ -450,9 +450,9 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Instance) Terminate() (bool, error) {
 	log.Info("Terminating Instance %s", a.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: string(a.Region)})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
 	req := &ec2.TerminateInstancesInput{
-		InstanceIDs: []*string{aws.String(string(a.ID))},
+		InstanceIds: []*string{aws.String(string(a.ID))},
 	}
 
 	resp, err := api.TerminateInstances(req)
@@ -476,9 +476,9 @@ func (a *Instance) ForceStop() (bool, error) {
 // Start starts an instance
 func (a *Instance) Start() (bool, error) {
 	log.Info("Starting Instance %s", a.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: string(a.Region)})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
 	req := &ec2.StartInstancesInput{
-		InstanceIDs: []*string{aws.String(string(a.ID))},
+		InstanceIds: []*string{aws.String(string(a.ID))},
 	}
 
 	resp, err := api.StartInstances(req)
@@ -497,9 +497,9 @@ func (a *Instance) Start() (bool, error) {
 // Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 func (a *Instance) Stop() (bool, error) {
 	log.Info("Stopping Instance %s", a.ReapableDescriptionTiny())
-	api := ec2.New(&aws.Config{Region: string(a.Region)})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
 	req := &ec2.StopInstancesInput{
-		InstanceIDs: []*string{aws.String(string(a.ID))},
+		InstanceIds: []*string{aws.String(string(a.ID))},
 	}
 
 	resp, err := api.StopInstances(req)

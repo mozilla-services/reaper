@@ -76,6 +76,7 @@ func GetPrices() {
 	pricesMap, err = prices.DownloadPricesMap(prices.Ec2PricingUrl)
 	if err != nil {
 		log.Error(fmt.Sprintf("Error getting prices: %s", err.Error()))
+		return
 	}
 	log.Info("Successfully downloaded prices")
 }

@@ -3,6 +3,7 @@ package prices
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +27,7 @@ var regions = map[string]string{
 	"South America (Sao Paulo)": "sa-east-1",
 	"Asia Pacific (Singapore)":  "ap-southeast-1",
 	"Asia Pacific (Tokyo)":      "ap-northeast-1",
+	"Asia Pacific (Mumbai)":     "ap-south-1",
 	"AWS GovCloud (US)":         "AWS GovCloud (US)",
 }
 
@@ -60,6 +62,12 @@ func DownloadPricesMap(url string) (PricesMap, error) {
 }
 
 func populatePricesMap(r io.Reader) (PricesMap, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("Recovered from a panic: ", r)
+		}
+	}()
+
 	pricesMap := make(PricesMap)
 	for _, region := range regions {
 		pricesMap[region] = make(map[string]string)
@@ -74,6 +82,7 @@ func populatePricesMap(r io.Reader) (PricesMap, error) {
 	if err != nil {
 		return PricesMap{}, err
 	}
+
 	for _, skuObject := range products.Map() {
 		individualSkuObject, err := skuObject.Object()
 		if err != nil {
@@ -102,7 +111,9 @@ func populatePricesMap(r io.Reader) (PricesMap, error) {
 			// get pricing information from a separate part of the json file by sku
 			priceSkuObject, err := decoded.GetObject("terms", "OnDemand", sku)
 			if err != nil {
-				return PricesMap{}, err
+				// some weirdness, ignoring TODO
+				log.Info(fmt.Sprintf("Couldn't find prices for %s", sku))
+				continue
 			}
 			for _, specificSku := range priceSkuObject.Map() {
 				specificSkuObject, err := specificSku.Object()
@@ -126,7 +137,11 @@ func populatePricesMap(r io.Reader) (PricesMap, error) {
 					if err != nil {
 						return PricesMap{}, err
 					}
-					pricesMap[regions[location]][instanceTypeString] = USD
+					if region, ok := regions[location]; ok {
+						pricesMap[region][instanceTypeString] = USD
+					} else {
+						log.Error(fmt.Sprintf("Region not found for location %s", location))
+					}
 				}
 			}
 		}

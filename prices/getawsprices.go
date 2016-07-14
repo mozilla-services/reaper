@@ -2,13 +2,12 @@ package prices
 
 import (
 	"bytes"
-	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/antonholmquist/jason"
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
@@ -31,6 +30,62 @@ var regions = map[string]string{
 	"AWS GovCloud (US)":         "AWS GovCloud (US)",
 }
 
+type ProductPriceData struct {
+	Attributes struct {
+		ClockSpeed            string `json:"clockSpeed"`
+		CurrentGeneration     string `json:"currentGeneration"`
+		InstanceFamily        string `json:"instanceFamily"`
+		InstanceType          string `json:"instanceType"`
+		LicenseModel          string `json:"licenseModel"`
+		Location              string `json:"location"`
+		LocationType          string `json:"locationType"`
+		Memory                string `json:"memory"`
+		NetworkPerformance    string `json:"networkPerformance"`
+		OperatingSystem       string `json:"operatingSystem"`
+		Operation             string `json:"operation"`
+		PhysicalProcessor     string `json:"physicalProcessor"`
+		PreInstalledSw        string `json:"preInstalledSw"`
+		ProcessorArchitecture string `json:"processorArchitecture"`
+		Servicecode           string `json:"servicecode"`
+		Storage               string `json:"storage"`
+		Tenancy               string `json:"tenancy"`
+		Usagetype             string `json:"usagetype"`
+		Vcpu                  string `json:"vcpu"`
+	} `json:"attributes"`
+	ProductFamily string `json:"productFamily"`
+	Sku           string `json:"sku"`
+}
+
+type TermData struct {
+	EffectiveDate   string `json:"effectiveDate"`
+	OfferTermCode   string `json:"offerTermCode"`
+	PriceDimensions map[string]struct {
+		BeginRange   string `json:"beginRange"`
+		Description  string `json:"description"`
+		EndRange     string `json:"endRange"`
+		PricePerUnit struct {
+			USD string `json:"USD"`
+		} `json:"pricePerUnit"`
+		RateCode string `json:"rateCode"`
+		Unit     string `json:"unit"`
+	} `json:"priceDimensions"`
+	Sku            string   `json:"sku"`
+	TermAttributes struct{} `json:"termAttributes"`
+}
+
+type PriceData struct {
+	Disclaimer    string                      `json:"disclaimer"`
+	FormatVersion string                      `json:"formatVersion"`
+	OfferCode     string                      `json:"offerCode"`
+	Products      map[string]ProductPriceData `json:"products"`
+	Terms         struct {
+		OnDemand map[string]map[string]TermData
+		Reserved map[string]map[string]TermData
+	}
+	PublicationDate string `json:"publicationDate"`
+	Version         string `json:"version"`
+}
+
 func GetPricesMapFromFile(filename string) (PricesMap, error) {
 	if filename == "" {
 		return PricesMap{}, nil
@@ -47,15 +102,9 @@ func DownloadPricesMap(url string) (PricesMap, error) {
 		return PricesMap{}, nil
 	}
 
-	// TODO: working TLS
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	res, err := client.Get(url)
+	res, err := http.Get(url)
 	if err != nil {
-		log.Error(err.Error())
+		return PricesMap{}, nil
 	}
 	defer res.Body.Close()
 	return populatePricesMap(res.Body)
@@ -68,83 +117,33 @@ func populatePricesMap(r io.Reader) (PricesMap, error) {
 		}
 	}()
 
+	// initialize inner map
 	pricesMap := make(PricesMap)
 	for _, region := range regions {
 		pricesMap[region] = make(map[string]string)
 	}
 
-	// initialize inner map
-	decoded, err := jason.NewObjectFromReader(r)
-	if err != nil {
-		return PricesMap{}, err
-	}
-	products, err := decoded.GetObject("products")
+	pd := new(PriceData)
+	err := json.NewDecoder(r).Decode(pd)
 	if err != nil {
 		return PricesMap{}, err
 	}
 
-	for _, skuObject := range products.Map() {
-		individualSkuObject, err := skuObject.Object()
-		if err != nil {
-			return PricesMap{}, err
-		}
-		sku, err := individualSkuObject.Map()["sku"].String()
-		if err != nil {
-			return PricesMap{}, err
-		}
-		attributes, err := individualSkuObject.Map()["attributes"].Object()
-		if err != nil {
-			return PricesMap{}, err
-		}
-		if instanceType, ok := attributes.Map()["instanceType"]; !ok {
-			// if it's not an instance, skip it
+	for sku, productData := range pd.Products {
+		// only get prices for EC2 instances
+		if productData.ProductFamily != "Compute Instance" {
 			continue
-		} else {
-			instanceTypeString, err := instanceType.String()
-			if err != nil {
-				return PricesMap{}, err
-			}
-			location, err := attributes.Map()["location"].String()
-			if err != nil {
-				return PricesMap{}, err
-			}
-			// get pricing information from a separate part of the json file by sku
-			priceSkuObject, err := decoded.GetObject("terms", "OnDemand", sku)
-			if err != nil {
-				// some weirdness, ignoring TODO
-				log.Info(fmt.Sprintf("Couldn't find prices for %s", sku))
-				continue
-			}
-			for _, specificSku := range priceSkuObject.Map() {
-				specificSkuObject, err := specificSku.Object()
-				if err != nil {
-					return PricesMap{}, err
-				}
-				priceDimensionsObject, err := specificSkuObject.Map()["priceDimensions"].Object()
-				if err != nil {
-					return PricesMap{}, err
-				}
-				for _, specificPriceDimensions := range priceDimensionsObject.Map() {
-					specificPriceDimensionsObject, err := specificPriceDimensions.Object()
-					if err != nil {
-						return PricesMap{}, err
-					}
-					pricePerUnitObject, err := specificPriceDimensionsObject.Map()["pricePerUnit"].Object()
-					if err != nil {
-						return PricesMap{}, err
-					}
-					USD, err := pricePerUnitObject.Map()["USD"].String()
-					if err != nil {
-						return PricesMap{}, err
-					}
-					if region, ok := regions[location]; ok {
-						pricesMap[region][instanceTypeString] = USD
-					} else {
-						log.Error(fmt.Sprintf("Region not found for location %s", location))
-					}
+		}
+		for _, termData := range pd.Terms.OnDemand[sku] {
+			for _, dimensionData := range termData.PriceDimensions {
+				if region, ok := regions[productData.Attributes.Location]; ok {
+					pricesMap[region][productData.Attributes.InstanceType] = dimensionData.PricePerUnit.USD
+				} else {
+					log.Error(fmt.Sprintf("Region not found for sku %s location %s", sku, productData.Attributes.Location))
 				}
 			}
 		}
 	}
+
 	return pricesMap, nil
 }

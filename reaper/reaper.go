@@ -87,8 +87,8 @@ func (r *Reaper) Start() {
 	r.Cron.Schedule(cron.Every(config.Notifications.Interval.Duration), r)
 	r.Cron.Start()
 
-	// start prices download...
-	go GetPrices()
+	// initial prices download, synchronous
+	GetPrices()
 
 	// initial run
 	go r.Run()
@@ -117,6 +117,7 @@ func (r *Reaper) Stop() {
 // conforms to the cron.Job interface
 func (r *Reaper) Run() {
 	schedule = cron.New()
+	schedule.AddFunc("@weekly", GetPrices)
 	schedule.Start()
 	r.reap()
 
@@ -420,7 +421,6 @@ func getInstances() chan *reaperaws.Instance {
 							} else {
 								// some instance types are priceless
 								log.Error(fmt.Sprintf("No price for %s", instanceType))
-
 							}
 						}
 						err := e.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})

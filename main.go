@@ -20,7 +20,7 @@ func init() {
 	configFile := flag.String("config", "", "path to config file")
 	dryRun := flag.Bool("dryrun", true, "dry run, don't trigger events")
 	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
-	withoutCloudformationResources := flag.Bool("withoutCloudformationResources", false, "enables dependency checking for Cloudformations (slow!)")
+	withoutCloudformationResources := flag.Bool("withoutCloudformationResources", false, "disables dependency checking for Cloudformations (which is slow!)")
 	loadFromStateFile := flag.Bool("load", false, "load state from state file specified in config (overrides AWS state)")
 	flag.Parse()
 

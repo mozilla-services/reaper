@@ -8,6 +8,8 @@ DefaultOwner = "reaper_notifications"
 DefaultEmailHost = "mozilla.com"
 EventTag = "env:default"
 
+DryRun = true
+
 [HTTP]
     # Set this to secure the tokens in the links back to the
     # web server.
@@ -45,7 +47,12 @@ EventTag = "env:default"
 
     # Triggers are one of ["first", "second", "third", "final", "ignore"]
 
-    [Events.DataDog]
+    [Events.DatadogStatistics]
+        Enabled = true
+        # triggers N/A for statistics
+        Triggers = []
+
+    [Events.DatadogEvents]
         Enabled = false
         Triggers = []
 

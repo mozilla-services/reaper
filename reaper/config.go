@@ -109,11 +109,12 @@ type Config struct {
 }
 
 type EventTypes struct {
-	DataDog     reaperevents.DatadogConfig
-	Email       reaperevents.MailerConfig
-	Tagger      reaperevents.TaggerConfig
-	Reaper      reaperevents.ReaperEventConfig
-	Interactive reaperevents.InteractiveEventConfig
+	DatadogEvents     reaperevents.DatadogConfig
+	DatadogStatistics reaperevents.DatadogConfig
+	Email             reaperevents.MailerConfig
+	Tagger            reaperevents.TaggerConfig
+	Reaper            reaperevents.ReaperEventConfig
+	Interactive       reaperevents.InteractiveEventConfig
 }
 
 type ResourceConfig struct {

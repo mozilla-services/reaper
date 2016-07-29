@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -40,7 +41,7 @@ func init() {
 			}
 		}()
 		config = *c
-		log.Info("Configuration loaded from ", *configFile)
+		log.Info(fmt.Sprintf("Configuration loaded from %s", *configFile))
 	} else {
 		// config not successfully loaded -> exit with error
 		log.Error("toml", err)
@@ -52,10 +53,16 @@ func init() {
 		log.AddLogFile(config.LogFile)
 	}
 
-	// if Datadog EventReporter is enabled
-	if config.Events.DataDog.Enabled {
-		log.Info("DataDog EventReporter enabled.")
-		eventReporters = append(eventReporters, reaperevents.NewDatadog(&config.Events.DataDog))
+	// if DatadogStatistics EventReporter is enabled
+	if config.Events.DatadogStatistics.Enabled {
+		log.Info("DatadogStatistics EventReporter enabled.")
+		eventReporters = append(eventReporters, reaperevents.NewDatadogStatistics(&config.Events.DatadogStatistics))
+	}
+
+	// if DatadogEvents EventReporter is enabled
+	if config.Events.DatadogEvents.Enabled {
+		log.Info("DatadogEvents EventReporter enabled.")
+		eventReporters = append(eventReporters, reaperevents.NewDatadogEvents(&config.Events.DatadogEvents))
 	}
 
 	// if Email ReapableEventReporter is enabled
@@ -93,7 +100,6 @@ func init() {
 		log.Error("WhitelistTag is empty, exiting")
 		os.Exit(1)
 	} else {
-		// else use the default
 		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
 	}
 

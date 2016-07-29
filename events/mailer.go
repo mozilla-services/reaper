@@ -131,34 +131,37 @@ func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 
 // NewBatchReapableEvent is a method of ReapableEventReporter
 func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
-	var triggering []Reapable
-	for _, r := range rs {
-		if e.Config.shouldTriggerFor(r) {
-			triggering = append(triggering, r)
-		}
-	}
-	if len(triggering) == 0 {
-		return nil
-	}
+	errorStrings := []string{}
+	buffer := new(bytes.Buffer)
 
-	buffer := *bytes.NewBuffer(nil)
+	// owner is the same for all of these resources
 	owner, _, err := rs[0].ReapableEventEmailShort()
 	if err != nil {
-		return err
+		return fmt.Errorf("Error getting resource owner with ReapableEventEmailShort: %s", err)
 	}
-	log.Info("Sending batch Mailer event for %d reapables.", len(triggering))
-	subject := fmt.Sprintf("%d AWS Resources you own are going to be reaped!", len(triggering))
-	buffer.WriteString(fmt.Sprintf("You are receiving this message because your email, %s, is associated with AWS resources that matched Reaper's filters.\nIf you do not take action they will be terminated!", owner.Address))
-	for _, r := range triggering {
-		_, body, err := r.ReapableEventEmailShort()
-		if err != nil {
-			return err
+
+	subject := fmt.Sprintf("AWS Resources you own are going to be reaped!")
+	buffer.WriteString(
+		fmt.Sprintf("You are receiving this message because your email, "+
+			"%s, is associated with AWS resources that matched Reaper's filters.\n"+
+			"If you do not take action they will be stopped and then terminated!\n", owner.Address))
+
+	// if none of these resources should trigger, we shouldn't send an email
+	triggering := false
+	for _, r := range rs {
+		if !e.Config.shouldTriggerFor(r) {
+			continue
 		}
+		triggering = true
+		_, body, err := r.ReapableEventEmailShort()
+		errorStrings = append(errorStrings, fmt.Sprintf("ReapableEventEmailShort: %s", err))
 		buffer.ReadFrom(body)
 		buffer.WriteString("\n")
 	}
-
-	return e.send(owner, subject, &buffer)
+	if triggering {
+		return e.send(owner, subject, buffer)
+	}
+	return nil
 }
 
 // Send an HTML email

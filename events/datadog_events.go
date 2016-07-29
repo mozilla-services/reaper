@@ -2,7 +2,9 @@ package events
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"strings"
 
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
@@ -58,53 +60,42 @@ func (e *DatadogEvents) NewReapableEvent(r Reapable, tags []string) error {
 
 // NewBatchReapableEvent is a method of EventReporter
 func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) error {
-	var triggering []Reapable
+	errorStrings := []string{}
+	buffer := new(bytes.Buffer)
 	for _, r := range rs {
-		if e.Config.shouldTriggerFor(r) {
-			triggering = append(triggering, r)
+		if !e.Config.shouldTriggerFor(r) {
+			continue
 		}
-	}
-	// no events triggering
-	if len(triggering) == 0 {
-		return nil
-	}
-
-	log.Info("Sending batch Datadog events for %d reapables.", len(triggering))
-	// this is a bin packing problem
-	// we ignore its complexity because we don't care (that much)
-	for j := 0; j < len(triggering); {
-		var written int64
-		buffer := *bytes.NewBuffer(nil)
-		for moveOn := false; j < len(triggering) && !moveOn; {
-			text, err := triggering[j].ReapableEventTextShort()
+		text, err := r.ReapableEventTextShort()
+		if err != nil {
+			errorStrings = append(errorStrings, fmt.Sprintf("ReapableEventText: %v", err))
+			continue
+		}
+		if text.Len() > 4500 {
+			text.Truncate(4499)
+		}
+		if text.Len()+buffer.Len() > 4500 {
+			// send events in this buffer
+			err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, tags)
 			if err != nil {
-				return err
+				errorStrings = append(errorStrings, fmt.Sprintf("NewEvent: %v", err))
 			}
-			size := int64(text.Len())
-
-			// if there is room
-			if size+written < 4500 {
-				// write it + a newline
-				n, err := buffer.ReadFrom(text)
-				// not counting this length, but we have padding
-				_, err = buffer.WriteString("\n")
-				if err != nil {
-					return err
-				}
-				written += n
-				// increment counter of written reapables
-				j++
-			} else {
-				// if we've written enough to the buffer, break the loop
-				moveOn = true
-			}
+			buffer.Reset()
 		}
+		buffer.ReadFrom(text)
+		buffer.WriteByte('\n')
+	}
+
+	// Flush remaining buffer
+	if buffer.Len() > 0 {
 		// send events in this buffer
 		err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, tags)
 		if err != nil {
-			return err
+			errorStrings = append(errorStrings, fmt.Sprintf("NewEvent: %v", err))
 		}
 	}
-
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
 	return nil
 }

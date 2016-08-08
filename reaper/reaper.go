@@ -245,10 +245,14 @@ func (r *Reaper) reap() {
 	// trigger batch events for each filtered owned resource in a goroutine
 	// for each owner in the owner map
 	go func() {
-		for _, ownerMap := range filteredOwned {
+		for _, ownedReapables := range filteredOwned {
 			// trigger a per owner batch event
 			for _, e := range *reapableEventReporters {
-				if err := e.NewBatchReapableEvent(ownerMap, []string{config.EventTag}); err != nil {
+				// just in case
+				if len(ownedReapables) < 1 {
+					break
+				}
+				if err := e.NewBatchReapableEvent(ownedReapables, []string{config.EventTag}); err != nil {
 					log.Error(err.Error())
 				}
 			}

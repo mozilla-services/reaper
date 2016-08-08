@@ -28,7 +28,7 @@ type SecurityGroup struct {
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
 		Resource: Resource{
-			ID:     reapable.ID(*sg.GroupID),
+			ID:     reapable.ID(*sg.GroupId),
 			Name:   *sg.GroupName,
 			Region: reapable.Region(region),
 			Tags:   make(map[string]string),
@@ -264,7 +264,7 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *SecurityGroup) Terminate() (bool, error) {
 	log.Info("Terminating SecurityGroup ", a.ReapableDescriptionTiny())
-	as := ec2.New(&aws.Config{Region: string(a.Region)})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
 
 	// ugh this is stupid
 	stringID := string(a.ID)
@@ -272,7 +272,7 @@ func (a *SecurityGroup) Terminate() (bool, error) {
 	input := &ec2.DeleteSecurityGroupInput{
 		GroupName: &stringID,
 	}
-	_, err := as.DeleteSecurityGroup(input)
+	_, err := api.DeleteSecurityGroup(input)
 	if err != nil {
 		log.Error("could not delete SecurityGroup ", a.ReapableDescriptionTiny())
 		return false, err

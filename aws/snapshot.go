@@ -21,13 +21,13 @@ type Snapshot struct {
 func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	snap := Snapshot{
 		Resource: Resource{
-			ID:     reapable.ID(*s.SnapshotID),
+			ID:     reapable.ID(*s.SnapshotId),
 			Region: reapable.Region(region),
 			Tags:   make(map[string]string),
 		},
 		SizeGB:        *s.VolumeSize,
 		SnapshotState: *s.State,
-		VolumeID:      reapable.ID(*s.VolumeID),
+		VolumeID:      reapable.ID(*s.VolumeId),
 		LaunchTime:    *s.StartTime,
 	}
 

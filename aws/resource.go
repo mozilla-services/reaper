@@ -218,9 +218,9 @@ func (a *Resource) Unsave() (bool, error) {
 }
 
 func untag(region, id, key string) (bool, error) {
-	api := ec2.New(&aws.Config{Region: region})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(region)))
 	delreq := &ec2.DeleteTagsInput{
-		DryRun:    aws.Boolean(false),
+		DryRun:    aws.Bool(false),
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
@@ -236,9 +236,9 @@ func untag(region, id, key string) (bool, error) {
 }
 
 func tag(region, id, key, value string) (bool, error) {
-	api := ec2.New(&aws.Config{Region: region})
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(region)))
 	createreq := &ec2.CreateTagsInput{
-		DryRun:    aws.Boolean(false),
+		DryRun:    aws.Bool(false),
 		Resources: []*string{aws.String(id)},
 		Tags: []*ec2.Tag{
 			&ec2.Tag{
@@ -254,7 +254,7 @@ func tag(region, id, key, value string) (bool, error) {
 	}
 
 	describereq := &ec2.DescribeTagsInput{
-		DryRun: aws.Boolean(false),
+		DryRun: aws.Bool(false),
 		Filters: []*ec2.Filter{
 			&ec2.Filter{
 				Name:   aws.String("resource-id"),

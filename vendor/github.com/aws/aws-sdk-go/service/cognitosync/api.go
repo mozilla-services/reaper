@@ -4,32 +4,51 @@
 package cognitosync
 
 import (
-	"sync"
+	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/restjson"
 )
 
-var oprw sync.Mutex
+const opBulkPublish = "BulkPublish"
 
-// BulkPublishRequest generates a request for the BulkPublish operation.
-func (c *CognitoSync) BulkPublishRequest(input *BulkPublishInput) (req *aws.Request, output *BulkPublishOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opBulkPublish == nil {
-		opBulkPublish = &aws.Operation{
-			Name:       "BulkPublish",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/bulkpublish",
-		}
+// BulkPublishRequest generates a "aws/request.Request" representing the
+// client's request for the BulkPublish operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the BulkPublish method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the BulkPublishRequest method.
+//    req, resp := client.BulkPublishRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) BulkPublishRequest(input *BulkPublishInput) (req *request.Request, output *BulkPublishOutput) {
+	op := &request.Operation{
+		Name:       opBulkPublish,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/bulkpublish",
 	}
 
 	if input == nil {
 		input = &BulkPublishInput{}
 	}
 
-	req = c.newRequest(opBulkPublish, input, output)
+	req = c.newRequest(op, input, output)
 	output = &BulkPublishOutput{}
 	req.Data = output
 	return
@@ -39,32 +58,51 @@ func (c *CognitoSync) BulkPublishRequest(input *BulkPublishInput) (req *aws.Requ
 // the configured stream. Customers are limited to one successful bulk publish
 // per 24 hours. Bulk publish is an asynchronous request, customers can see
 // the status of the request via the GetBulkPublishDetails operation.
+//
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) BulkPublish(input *BulkPublishInput) (*BulkPublishOutput, error) {
 	req, out := c.BulkPublishRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opBulkPublish *aws.Operation
+const opDeleteDataset = "DeleteDataset"
 
-// DeleteDatasetRequest generates a request for the DeleteDataset operation.
-func (c *CognitoSync) DeleteDatasetRequest(input *DeleteDatasetInput) (req *aws.Request, output *DeleteDatasetOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteDataset == nil {
-		opDeleteDataset = &aws.Operation{
-			Name:       "DeleteDataset",
-			HTTPMethod: "DELETE",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}",
-		}
+// DeleteDatasetRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteDataset operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteDataset method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteDatasetRequest method.
+//    req, resp := client.DeleteDatasetRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) DeleteDatasetRequest(input *DeleteDatasetInput) (req *request.Request, output *DeleteDatasetOutput) {
+	op := &request.Operation{
+		Name:       opDeleteDataset,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}",
 	}
 
 	if input == nil {
 		input = &DeleteDatasetInput{}
 	}
 
-	req = c.newRequest(opDeleteDataset, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteDatasetOutput{}
 	req.Data = output
 	return
@@ -75,34 +113,50 @@ func (c *CognitoSync) DeleteDatasetRequest(input *DeleteDatasetInput) (req *aws.
 // no longer report the merge. Any subsequent operation on this dataset will
 // result in a ResourceNotFoundException.
 //
-// DeleteDataset can be called with temporary user credentials provided by
-// Cognito Identity or with developer credentials.
+// This API can be called with temporary user credentials provided by Cognito
+// Identity or with developer credentials.
 func (c *CognitoSync) DeleteDataset(input *DeleteDatasetInput) (*DeleteDatasetOutput, error) {
 	req, out := c.DeleteDatasetRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDeleteDataset *aws.Operation
+const opDescribeDataset = "DescribeDataset"
 
-// DescribeDatasetRequest generates a request for the DescribeDataset operation.
-func (c *CognitoSync) DescribeDatasetRequest(input *DescribeDatasetInput) (req *aws.Request, output *DescribeDatasetOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeDataset == nil {
-		opDescribeDataset = &aws.Operation{
-			Name:       "DescribeDataset",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}",
-		}
+// DescribeDatasetRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeDataset operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeDataset method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeDatasetRequest method.
+//    req, resp := client.DescribeDatasetRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) DescribeDatasetRequest(input *DescribeDatasetInput) (req *request.Request, output *DescribeDatasetOutput) {
+	op := &request.Operation{
+		Name:       opDescribeDataset,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}",
 	}
 
 	if input == nil {
 		input = &DescribeDatasetInput{}
 	}
 
-	req = c.newRequest(opDescribeDataset, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeDatasetOutput{}
 	req.Data = output
 	return
@@ -112,35 +166,51 @@ func (c *CognitoSync) DescribeDatasetRequest(input *DescribeDatasetInput) (req *
 // Cognito Sync, each identity has access only to its own data. Thus, the credentials
 // used to make this API call need to have access to the identity data.
 //
-// DescribeDataset can be called with temporary user credentials provided by
-// Cognito Identity or with developer credentials. You should use Cognito Identity
-// credentials to make this API call.
+// This API can be called with temporary user credentials provided by Cognito
+// Identity or with developer credentials. You should use Cognito Identity credentials
+// to make this API call.
 func (c *CognitoSync) DescribeDataset(input *DescribeDatasetInput) (*DescribeDatasetOutput, error) {
 	req, out := c.DescribeDatasetRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDescribeDataset *aws.Operation
+const opDescribeIdentityPoolUsage = "DescribeIdentityPoolUsage"
 
-// DescribeIdentityPoolUsageRequest generates a request for the DescribeIdentityPoolUsage operation.
-func (c *CognitoSync) DescribeIdentityPoolUsageRequest(input *DescribeIdentityPoolUsageInput) (req *aws.Request, output *DescribeIdentityPoolUsageOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeIdentityPoolUsage == nil {
-		opDescribeIdentityPoolUsage = &aws.Operation{
-			Name:       "DescribeIdentityPoolUsage",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}",
-		}
+// DescribeIdentityPoolUsageRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeIdentityPoolUsage operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeIdentityPoolUsage method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeIdentityPoolUsageRequest method.
+//    req, resp := client.DescribeIdentityPoolUsageRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) DescribeIdentityPoolUsageRequest(input *DescribeIdentityPoolUsageInput) (req *request.Request, output *DescribeIdentityPoolUsageOutput) {
+	op := &request.Operation{
+		Name:       opDescribeIdentityPoolUsage,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}",
 	}
 
 	if input == nil {
 		input = &DescribeIdentityPoolUsageInput{}
 	}
 
-	req = c.newRequest(opDescribeIdentityPoolUsage, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeIdentityPoolUsageOutput{}
 	req.Data = output
 	return
@@ -149,35 +219,50 @@ func (c *CognitoSync) DescribeIdentityPoolUsageRequest(input *DescribeIdentityPo
 // Gets usage details (for example, data storage) about a particular identity
 // pool.
 //
-// DescribeIdentityPoolUsage can only be called with developer credentials.
-// You cannot make this API call with the temporary user credentials provided
-// by Cognito Identity.
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) DescribeIdentityPoolUsage(input *DescribeIdentityPoolUsageInput) (*DescribeIdentityPoolUsageOutput, error) {
 	req, out := c.DescribeIdentityPoolUsageRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDescribeIdentityPoolUsage *aws.Operation
+const opDescribeIdentityUsage = "DescribeIdentityUsage"
 
-// DescribeIdentityUsageRequest generates a request for the DescribeIdentityUsage operation.
-func (c *CognitoSync) DescribeIdentityUsageRequest(input *DescribeIdentityUsageInput) (req *aws.Request, output *DescribeIdentityUsageOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeIdentityUsage == nil {
-		opDescribeIdentityUsage = &aws.Operation{
-			Name:       "DescribeIdentityUsage",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}",
-		}
+// DescribeIdentityUsageRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeIdentityUsage operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeIdentityUsage method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeIdentityUsageRequest method.
+//    req, resp := client.DescribeIdentityUsageRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) DescribeIdentityUsageRequest(input *DescribeIdentityUsageInput) (req *request.Request, output *DescribeIdentityUsageOutput) {
+	op := &request.Operation{
+		Name:       opDescribeIdentityUsage,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}",
 	}
 
 	if input == nil {
 		input = &DescribeIdentityUsageInput{}
 	}
 
-	req = c.newRequest(opDescribeIdentityUsage, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeIdentityUsageOutput{}
 	req.Data = output
 	return
@@ -186,131 +271,204 @@ func (c *CognitoSync) DescribeIdentityUsageRequest(input *DescribeIdentityUsageI
 // Gets usage information for an identity, including number of datasets and
 // data usage.
 //
-// DescribeIdentityUsage can be called with temporary user credentials provided
-// by Cognito Identity or with developer credentials.
+// This API can be called with temporary user credentials provided by Cognito
+// Identity or with developer credentials.
 func (c *CognitoSync) DescribeIdentityUsage(input *DescribeIdentityUsageInput) (*DescribeIdentityUsageOutput, error) {
 	req, out := c.DescribeIdentityUsageRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDescribeIdentityUsage *aws.Operation
+const opGetBulkPublishDetails = "GetBulkPublishDetails"
 
-// GetBulkPublishDetailsRequest generates a request for the GetBulkPublishDetails operation.
-func (c *CognitoSync) GetBulkPublishDetailsRequest(input *GetBulkPublishDetailsInput) (req *aws.Request, output *GetBulkPublishDetailsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetBulkPublishDetails == nil {
-		opGetBulkPublishDetails = &aws.Operation{
-			Name:       "GetBulkPublishDetails",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/getBulkPublishDetails",
-		}
+// GetBulkPublishDetailsRequest generates a "aws/request.Request" representing the
+// client's request for the GetBulkPublishDetails operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetBulkPublishDetails method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetBulkPublishDetailsRequest method.
+//    req, resp := client.GetBulkPublishDetailsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) GetBulkPublishDetailsRequest(input *GetBulkPublishDetailsInput) (req *request.Request, output *GetBulkPublishDetailsOutput) {
+	op := &request.Operation{
+		Name:       opGetBulkPublishDetails,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/getBulkPublishDetails",
 	}
 
 	if input == nil {
 		input = &GetBulkPublishDetailsInput{}
 	}
 
-	req = c.newRequest(opGetBulkPublishDetails, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetBulkPublishDetailsOutput{}
 	req.Data = output
 	return
 }
 
 // Get the status of the last BulkPublish operation for an identity pool.
+//
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) GetBulkPublishDetails(input *GetBulkPublishDetailsInput) (*GetBulkPublishDetailsOutput, error) {
 	req, out := c.GetBulkPublishDetailsRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opGetBulkPublishDetails *aws.Operation
+const opGetCognitoEvents = "GetCognitoEvents"
 
-// GetCognitoEventsRequest generates a request for the GetCognitoEvents operation.
-func (c *CognitoSync) GetCognitoEventsRequest(input *GetCognitoEventsInput) (req *aws.Request, output *GetCognitoEventsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetCognitoEvents == nil {
-		opGetCognitoEvents = &aws.Operation{
-			Name:       "GetCognitoEvents",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/events",
-		}
+// GetCognitoEventsRequest generates a "aws/request.Request" representing the
+// client's request for the GetCognitoEvents operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetCognitoEvents method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetCognitoEventsRequest method.
+//    req, resp := client.GetCognitoEventsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) GetCognitoEventsRequest(input *GetCognitoEventsInput) (req *request.Request, output *GetCognitoEventsOutput) {
+	op := &request.Operation{
+		Name:       opGetCognitoEvents,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/events",
 	}
 
 	if input == nil {
 		input = &GetCognitoEventsInput{}
 	}
 
-	req = c.newRequest(opGetCognitoEvents, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetCognitoEventsOutput{}
 	req.Data = output
 	return
 }
 
 // Gets the events and the corresponding Lambda functions associated with an
-// identity pool
+// identity pool.
+//
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) GetCognitoEvents(input *GetCognitoEventsInput) (*GetCognitoEventsOutput, error) {
 	req, out := c.GetCognitoEventsRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opGetCognitoEvents *aws.Operation
+const opGetIdentityPoolConfiguration = "GetIdentityPoolConfiguration"
 
-// GetIdentityPoolConfigurationRequest generates a request for the GetIdentityPoolConfiguration operation.
-func (c *CognitoSync) GetIdentityPoolConfigurationRequest(input *GetIdentityPoolConfigurationInput) (req *aws.Request, output *GetIdentityPoolConfigurationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetIdentityPoolConfiguration == nil {
-		opGetIdentityPoolConfiguration = &aws.Operation{
-			Name:       "GetIdentityPoolConfiguration",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/configuration",
-		}
+// GetIdentityPoolConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the GetIdentityPoolConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetIdentityPoolConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetIdentityPoolConfigurationRequest method.
+//    req, resp := client.GetIdentityPoolConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) GetIdentityPoolConfigurationRequest(input *GetIdentityPoolConfigurationInput) (req *request.Request, output *GetIdentityPoolConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opGetIdentityPoolConfiguration,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/configuration",
 	}
 
 	if input == nil {
 		input = &GetIdentityPoolConfigurationInput{}
 	}
 
-	req = c.newRequest(opGetIdentityPoolConfiguration, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetIdentityPoolConfigurationOutput{}
 	req.Data = output
 	return
 }
 
 // Gets the configuration settings of an identity pool.
+//
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) GetIdentityPoolConfiguration(input *GetIdentityPoolConfigurationInput) (*GetIdentityPoolConfigurationOutput, error) {
 	req, out := c.GetIdentityPoolConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opGetIdentityPoolConfiguration *aws.Operation
+const opListDatasets = "ListDatasets"
 
-// ListDatasetsRequest generates a request for the ListDatasets operation.
-func (c *CognitoSync) ListDatasetsRequest(input *ListDatasetsInput) (req *aws.Request, output *ListDatasetsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListDatasets == nil {
-		opListDatasets = &aws.Operation{
-			Name:       "ListDatasets",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets",
-		}
+// ListDatasetsRequest generates a "aws/request.Request" representing the
+// client's request for the ListDatasets operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListDatasets method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListDatasetsRequest method.
+//    req, resp := client.ListDatasetsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) ListDatasetsRequest(input *ListDatasetsInput) (req *request.Request, output *ListDatasetsOutput) {
+	op := &request.Operation{
+		Name:       opListDatasets,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets",
 	}
 
 	if input == nil {
 		input = &ListDatasetsInput{}
 	}
 
-	req = c.newRequest(opListDatasets, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListDatasetsOutput{}
 	req.Data = output
 	return
@@ -329,26 +487,42 @@ func (c *CognitoSync) ListDatasets(input *ListDatasetsInput) (*ListDatasetsOutpu
 	return out, err
 }
 
-var opListDatasets *aws.Operation
+const opListIdentityPoolUsage = "ListIdentityPoolUsage"
 
-// ListIdentityPoolUsageRequest generates a request for the ListIdentityPoolUsage operation.
-func (c *CognitoSync) ListIdentityPoolUsageRequest(input *ListIdentityPoolUsageInput) (req *aws.Request, output *ListIdentityPoolUsageOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListIdentityPoolUsage == nil {
-		opListIdentityPoolUsage = &aws.Operation{
-			Name:       "ListIdentityPoolUsage",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools",
-		}
+// ListIdentityPoolUsageRequest generates a "aws/request.Request" representing the
+// client's request for the ListIdentityPoolUsage operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListIdentityPoolUsage method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListIdentityPoolUsageRequest method.
+//    req, resp := client.ListIdentityPoolUsageRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) ListIdentityPoolUsageRequest(input *ListIdentityPoolUsageInput) (req *request.Request, output *ListIdentityPoolUsageOutput) {
+	op := &request.Operation{
+		Name:       opListIdentityPoolUsage,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools",
 	}
 
 	if input == nil {
 		input = &ListIdentityPoolUsageInput{}
 	}
 
-	req = c.newRequest(opListIdentityPoolUsage, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListIdentityPoolUsageOutput{}
 	req.Data = output
 	return
@@ -365,26 +539,42 @@ func (c *CognitoSync) ListIdentityPoolUsage(input *ListIdentityPoolUsageInput) (
 	return out, err
 }
 
-var opListIdentityPoolUsage *aws.Operation
+const opListRecords = "ListRecords"
 
-// ListRecordsRequest generates a request for the ListRecords operation.
-func (c *CognitoSync) ListRecordsRequest(input *ListRecordsInput) (req *aws.Request, output *ListRecordsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListRecords == nil {
-		opListRecords = &aws.Operation{
-			Name:       "ListRecords",
-			HTTPMethod: "GET",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}/records",
-		}
+// ListRecordsRequest generates a "aws/request.Request" representing the
+// client's request for the ListRecords operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListRecords method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListRecordsRequest method.
+//    req, resp := client.ListRecordsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) ListRecordsRequest(input *ListRecordsInput) (req *request.Request, output *ListRecordsOutput) {
+	op := &request.Operation{
+		Name:       opListRecords,
+		HTTPMethod: "GET",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}/records",
 	}
 
 	if input == nil {
 		input = &ListRecordsInput{}
 	}
 
-	req = c.newRequest(opListRecords, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListRecordsOutput{}
 	req.Data = output
 	return
@@ -404,58 +594,95 @@ func (c *CognitoSync) ListRecords(input *ListRecordsInput) (*ListRecordsOutput, 
 	return out, err
 }
 
-var opListRecords *aws.Operation
+const opRegisterDevice = "RegisterDevice"
 
-// RegisterDeviceRequest generates a request for the RegisterDevice operation.
-func (c *CognitoSync) RegisterDeviceRequest(input *RegisterDeviceInput) (req *aws.Request, output *RegisterDeviceOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRegisterDevice == nil {
-		opRegisterDevice = &aws.Operation{
-			Name:       "RegisterDevice",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identity/{IdentityId}/device",
-		}
+// RegisterDeviceRequest generates a "aws/request.Request" representing the
+// client's request for the RegisterDevice operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RegisterDevice method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RegisterDeviceRequest method.
+//    req, resp := client.RegisterDeviceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) RegisterDeviceRequest(input *RegisterDeviceInput) (req *request.Request, output *RegisterDeviceOutput) {
+	op := &request.Operation{
+		Name:       opRegisterDevice,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identity/{IdentityId}/device",
 	}
 
 	if input == nil {
 		input = &RegisterDeviceInput{}
 	}
 
-	req = c.newRequest(opRegisterDevice, input, output)
+	req = c.newRequest(op, input, output)
 	output = &RegisterDeviceOutput{}
 	req.Data = output
 	return
 }
 
 // Registers a device to receive push sync notifications.
+//
+// This API can only be called with temporary credentials provided by Cognito
+// Identity. You cannot call this API with developer credentials.
 func (c *CognitoSync) RegisterDevice(input *RegisterDeviceInput) (*RegisterDeviceOutput, error) {
 	req, out := c.RegisterDeviceRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opRegisterDevice *aws.Operation
+const opSetCognitoEvents = "SetCognitoEvents"
 
-// SetCognitoEventsRequest generates a request for the SetCognitoEvents operation.
-func (c *CognitoSync) SetCognitoEventsRequest(input *SetCognitoEventsInput) (req *aws.Request, output *SetCognitoEventsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSetCognitoEvents == nil {
-		opSetCognitoEvents = &aws.Operation{
-			Name:       "SetCognitoEvents",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/events",
-		}
+// SetCognitoEventsRequest generates a "aws/request.Request" representing the
+// client's request for the SetCognitoEvents operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetCognitoEvents method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetCognitoEventsRequest method.
+//    req, resp := client.SetCognitoEventsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) SetCognitoEventsRequest(input *SetCognitoEventsInput) (req *request.Request, output *SetCognitoEventsOutput) {
+	op := &request.Operation{
+		Name:       opSetCognitoEvents,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/events",
 	}
 
 	if input == nil {
 		input = &SetCognitoEventsInput{}
 	}
 
-	req = c.newRequest(opSetCognitoEvents, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restjson.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &SetCognitoEventsOutput{}
 	req.Data = output
 	return
@@ -465,64 +692,102 @@ func (c *CognitoSync) SetCognitoEventsRequest(input *SetCognitoEventsInput) (req
 // This request only updates the key/value pair specified. Other key/values
 // pairs are not updated. To remove a key value pair, pass a empty value for
 // the particular key.
+//
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) SetCognitoEvents(input *SetCognitoEventsInput) (*SetCognitoEventsOutput, error) {
 	req, out := c.SetCognitoEventsRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opSetCognitoEvents *aws.Operation
+const opSetIdentityPoolConfiguration = "SetIdentityPoolConfiguration"
 
-// SetIdentityPoolConfigurationRequest generates a request for the SetIdentityPoolConfiguration operation.
-func (c *CognitoSync) SetIdentityPoolConfigurationRequest(input *SetIdentityPoolConfigurationInput) (req *aws.Request, output *SetIdentityPoolConfigurationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSetIdentityPoolConfiguration == nil {
-		opSetIdentityPoolConfiguration = &aws.Operation{
-			Name:       "SetIdentityPoolConfiguration",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/configuration",
-		}
+// SetIdentityPoolConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the SetIdentityPoolConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetIdentityPoolConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetIdentityPoolConfigurationRequest method.
+//    req, resp := client.SetIdentityPoolConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) SetIdentityPoolConfigurationRequest(input *SetIdentityPoolConfigurationInput) (req *request.Request, output *SetIdentityPoolConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opSetIdentityPoolConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/configuration",
 	}
 
 	if input == nil {
 		input = &SetIdentityPoolConfigurationInput{}
 	}
 
-	req = c.newRequest(opSetIdentityPoolConfiguration, input, output)
+	req = c.newRequest(op, input, output)
 	output = &SetIdentityPoolConfigurationOutput{}
 	req.Data = output
 	return
 }
 
 // Sets the necessary configuration for push sync.
+//
+// This API can only be called with developer credentials. You cannot call
+// this API with the temporary user credentials provided by Cognito Identity.
 func (c *CognitoSync) SetIdentityPoolConfiguration(input *SetIdentityPoolConfigurationInput) (*SetIdentityPoolConfigurationOutput, error) {
 	req, out := c.SetIdentityPoolConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opSetIdentityPoolConfiguration *aws.Operation
+const opSubscribeToDataset = "SubscribeToDataset"
 
-// SubscribeToDatasetRequest generates a request for the SubscribeToDataset operation.
-func (c *CognitoSync) SubscribeToDatasetRequest(input *SubscribeToDatasetInput) (req *aws.Request, output *SubscribeToDatasetOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSubscribeToDataset == nil {
-		opSubscribeToDataset = &aws.Operation{
-			Name:       "SubscribeToDataset",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}/subscriptions/{DeviceId}",
-		}
+// SubscribeToDatasetRequest generates a "aws/request.Request" representing the
+// client's request for the SubscribeToDataset operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SubscribeToDataset method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SubscribeToDatasetRequest method.
+//    req, resp := client.SubscribeToDatasetRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) SubscribeToDatasetRequest(input *SubscribeToDatasetInput) (req *request.Request, output *SubscribeToDatasetOutput) {
+	op := &request.Operation{
+		Name:       opSubscribeToDataset,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}/subscriptions/{DeviceId}",
 	}
 
 	if input == nil {
 		input = &SubscribeToDatasetInput{}
 	}
 
-	req = c.newRequest(opSubscribeToDataset, input, output)
+	req = c.newRequest(op, input, output)
 	output = &SubscribeToDatasetOutput{}
 	req.Data = output
 	return
@@ -530,32 +795,51 @@ func (c *CognitoSync) SubscribeToDatasetRequest(input *SubscribeToDatasetInput) 
 
 // Subscribes to receive notifications when a dataset is modified by another
 // device.
+//
+// This API can only be called with temporary credentials provided by Cognito
+// Identity. You cannot call this API with developer credentials.
 func (c *CognitoSync) SubscribeToDataset(input *SubscribeToDatasetInput) (*SubscribeToDatasetOutput, error) {
 	req, out := c.SubscribeToDatasetRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opSubscribeToDataset *aws.Operation
+const opUnsubscribeFromDataset = "UnsubscribeFromDataset"
 
-// UnsubscribeFromDatasetRequest generates a request for the UnsubscribeFromDataset operation.
-func (c *CognitoSync) UnsubscribeFromDatasetRequest(input *UnsubscribeFromDatasetInput) (req *aws.Request, output *UnsubscribeFromDatasetOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opUnsubscribeFromDataset == nil {
-		opUnsubscribeFromDataset = &aws.Operation{
-			Name:       "UnsubscribeFromDataset",
-			HTTPMethod: "DELETE",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}/subscriptions/{DeviceId}",
-		}
+// UnsubscribeFromDatasetRequest generates a "aws/request.Request" representing the
+// client's request for the UnsubscribeFromDataset operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UnsubscribeFromDataset method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UnsubscribeFromDatasetRequest method.
+//    req, resp := client.UnsubscribeFromDatasetRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) UnsubscribeFromDatasetRequest(input *UnsubscribeFromDatasetInput) (req *request.Request, output *UnsubscribeFromDatasetOutput) {
+	op := &request.Operation{
+		Name:       opUnsubscribeFromDataset,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}/subscriptions/{DeviceId}",
 	}
 
 	if input == nil {
 		input = &UnsubscribeFromDatasetInput{}
 	}
 
-	req = c.newRequest(opUnsubscribeFromDataset, input, output)
+	req = c.newRequest(op, input, output)
 	output = &UnsubscribeFromDatasetOutput{}
 	req.Data = output
 	return
@@ -563,32 +847,51 @@ func (c *CognitoSync) UnsubscribeFromDatasetRequest(input *UnsubscribeFromDatase
 
 // Unsubscribes from receiving notifications when a dataset is modified by another
 // device.
+//
+// This API can only be called with temporary credentials provided by Cognito
+// Identity. You cannot call this API with developer credentials.
 func (c *CognitoSync) UnsubscribeFromDataset(input *UnsubscribeFromDatasetInput) (*UnsubscribeFromDatasetOutput, error) {
 	req, out := c.UnsubscribeFromDatasetRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opUnsubscribeFromDataset *aws.Operation
+const opUpdateRecords = "UpdateRecords"
 
-// UpdateRecordsRequest generates a request for the UpdateRecords operation.
-func (c *CognitoSync) UpdateRecordsRequest(input *UpdateRecordsInput) (req *aws.Request, output *UpdateRecordsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opUpdateRecords == nil {
-		opUpdateRecords = &aws.Operation{
-			Name:       "UpdateRecords",
-			HTTPMethod: "POST",
-			HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}",
-		}
+// UpdateRecordsRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateRecords operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UpdateRecords method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UpdateRecordsRequest method.
+//    req, resp := client.UpdateRecordsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CognitoSync) UpdateRecordsRequest(input *UpdateRecordsInput) (req *request.Request, output *UpdateRecordsOutput) {
+	op := &request.Operation{
+		Name:       opUpdateRecords,
+		HTTPMethod: "POST",
+		HTTPPath:   "/identitypools/{IdentityPoolId}/identities/{IdentityId}/datasets/{DatasetName}",
 	}
 
 	if input == nil {
 		input = &UpdateRecordsInput{}
 	}
 
-	req = c.newRequest(opUpdateRecords, input, output)
+	req = c.newRequest(op, input, output)
 	output = &UpdateRecordsOutput{}
 	req.Data = output
 	return
@@ -596,65 +899,125 @@ func (c *CognitoSync) UpdateRecordsRequest(input *UpdateRecordsInput) (req *aws.
 
 // Posts updates to records and adds and deletes records for a dataset and user.
 //
-// UpdateRecords can only be called with temporary user credentials provided
-// by Cognito Identity. You cannot make this API call with developer credentials.
+// The sync count in the record patch is your last known sync count for that
+// record. The server will reject an UpdateRecords request with a ResourceConflictException
+// if you try to patch a record with a new value but a stale sync count.
+//
+// For example, if the sync count on the server is 5 for a key called highScore
+// and you try and submit a new highScore with sync count of 4, the request
+// will be rejected. To obtain the current sync count for a record, call ListRecords.
+// On a successful update of the record, the response returns the new sync count
+// for that record. You should present that sync count the next time you try
+// to update that same record. When the record does not exist, specify the sync
+// count as 0.
+//
+// This API can be called with temporary user credentials provided by Cognito
+// Identity or with developer credentials.
 func (c *CognitoSync) UpdateRecords(input *UpdateRecordsInput) (*UpdateRecordsOutput, error) {
 	req, out := c.UpdateRecordsRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opUpdateRecords *aws.Operation
-
 // The input for the BulkPublish operation.
 type BulkPublishInput struct {
+	_ struct{} `type:"structure"`
+
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataBulkPublishInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataBulkPublishInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s BulkPublishInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BulkPublishInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BulkPublishInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BulkPublishInput"}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The output for the BulkPublish operation.
 type BulkPublishOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `locationName:"IdentityPoolId" type:"string"`
-
-	metadataBulkPublishOutput `json:"-" xml:"-"`
+	IdentityPoolId *string `min:"1" type:"string"`
 }
 
-type metadataBulkPublishOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s BulkPublishOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BulkPublishOutput) GoString() string {
+	return s.String()
 }
 
 // Configuration options for configure Cognito streams.
 type CognitoStreams struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the role Amazon Cognito can assume in order to publish to the
 	// stream. This role must grant access to Amazon Cognito (cognito-sync) to invoke
 	// PutRecord on your Cognito stream.
-	RoleARN *string `locationName:"RoleArn" type:"string"`
+	RoleArn *string `min:"20" type:"string"`
 
 	// The name of the Cognito stream to receive updates. This stream must be in
 	// the developers account and in the same region as the identity pool.
-	StreamName *string `type:"string"`
+	StreamName *string `min:"1" type:"string"`
 
 	// Status of the Cognito streams. Valid values are: ENABLED - Streaming of updates
 	// to identity pool is enabled.
 	//
 	// DISABLED - Streaming of updates to identity pool is disabled. Bulk publish
 	// will also fail if StreamingStatus is DISABLED.
-	StreamingStatus *string `type:"string"`
-
-	metadataCognitoStreams `json:"-" xml:"-"`
+	StreamingStatus *string `type:"string" enum:"StreamingStatus"`
 }
 
-type metadataCognitoStreams struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CognitoStreams) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CognitoStreams) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CognitoStreams) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CognitoStreams"}
+	if s.RoleArn != nil && len(*s.RoleArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleArn", 20))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // A collection of data for an identity pool. An identity pool can have multiple
@@ -663,6 +1026,8 @@ type metadataCognitoStreams struct {
 // created if they don't exist. Data is synced by dataset, and a dataset can
 // hold up to 1MB of key-value pairs.
 type Dataset struct {
+	_ struct{} `type:"structure"`
+
 	// Date on which the dataset was created.
 	CreationDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
@@ -671,11 +1036,11 @@ type Dataset struct {
 
 	// A string of up to 128 characters. Allowed characters are a-z, A-Z, 0-9, '_'
 	// (underscore), '-' (dash), and '.' (dot).
-	DatasetName *string `type:"string"`
+	DatasetName *string `min:"1" type:"string"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `locationName:"IdentityId" type:"string"`
+	IdentityId *string `min:"1" type:"string"`
 
 	// The device that made the last change to this dataset.
 	LastModifiedBy *string `type:"string"`
@@ -685,158 +1050,328 @@ type Dataset struct {
 
 	// Number of records in this dataset.
 	NumRecords *int64 `type:"long"`
-
-	metadataDataset `json:"-" xml:"-"`
 }
 
-type metadataDataset struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Dataset) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Dataset) GoString() string {
+	return s.String()
 }
 
 // A request to delete the specific dataset.
 type DeleteDatasetInput struct {
+	_ struct{} `type:"structure"`
+
 	// A string of up to 128 characters. Allowed characters are a-z, A-Z, 0-9, '_'
 	// (underscore), '-' (dash), and '.' (dot).
-	DatasetName *string `location:"uri" locationName:"DatasetName" type:"string" required:"true"`
+	DatasetName *string `location:"uri" locationName:"DatasetName" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataDeleteDatasetInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataDeleteDatasetInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteDatasetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteDatasetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteDatasetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteDatasetInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response to a successful DeleteDataset request.
 type DeleteDatasetOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A collection of data for an identity pool. An identity pool can have multiple
 	// datasets. A dataset is per identity and can be general or associated with
 	// a particular entity in an application (like a saved game). Datasets are automatically
 	// created if they don't exist. Data is synced by dataset, and a dataset can
 	// hold up to 1MB of key-value pairs.
 	Dataset *Dataset `type:"structure"`
-
-	metadataDeleteDatasetOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteDatasetOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteDatasetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteDatasetOutput) GoString() string {
+	return s.String()
 }
 
 // A request for meta data about a dataset (creation date, number of records,
 // size) by owner and dataset name.
 type DescribeDatasetInput struct {
+	_ struct{} `type:"structure"`
+
 	// A string of up to 128 characters. Allowed characters are a-z, A-Z, 0-9, '_'
 	// (underscore), '-' (dash), and '.' (dot).
-	DatasetName *string `location:"uri" locationName:"DatasetName" type:"string" required:"true"`
+	DatasetName *string `location:"uri" locationName:"DatasetName" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataDescribeDatasetInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataDescribeDatasetInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeDatasetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDatasetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeDatasetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeDatasetInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response to a successful DescribeDataset request.
 type DescribeDatasetOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Meta data for a collection of data for an identity. An identity can have
 	// multiple datasets. A dataset can be general or associated with a particular
 	// entity in an application (like a saved game). Datasets are automatically
 	// created if they don't exist. Data is synced by dataset, and a dataset can
 	// hold up to 1MB of key-value pairs.
 	Dataset *Dataset `type:"structure"`
-
-	metadataDescribeDatasetOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeDatasetOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeDatasetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDatasetOutput) GoString() string {
+	return s.String()
 }
 
 // A request for usage information about the identity pool.
 type DescribeIdentityPoolUsageInput struct {
+	_ struct{} `type:"structure"`
+
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataDescribeIdentityPoolUsageInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataDescribeIdentityPoolUsageInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeIdentityPoolUsageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeIdentityPoolUsageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeIdentityPoolUsageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeIdentityPoolUsageInput"}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response to a successful DescribeIdentityPoolUsage request.
 type DescribeIdentityPoolUsageOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Information about the usage of the identity pool.
 	IdentityPoolUsage *IdentityPoolUsage `type:"structure"`
-
-	metadataDescribeIdentityPoolUsageOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeIdentityPoolUsageOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeIdentityPoolUsageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeIdentityPoolUsageOutput) GoString() string {
+	return s.String()
 }
 
 // A request for information about the usage of an identity pool.
 type DescribeIdentityUsageInput struct {
-	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
-	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
-	metadataDescribeIdentityUsageInput `json:"-" xml:"-"`
+	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
+	// created by Amazon Cognito. GUID generation is unique within a region.
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataDescribeIdentityUsageInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeIdentityUsageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeIdentityUsageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeIdentityUsageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeIdentityUsageInput"}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The response to a successful DescribeIdentityUsage request.
 type DescribeIdentityUsageOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Usage information for the identity.
 	IdentityUsage *IdentityUsage `type:"structure"`
-
-	metadataDescribeIdentityUsageOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeIdentityUsageOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeIdentityUsageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeIdentityUsageOutput) GoString() string {
+	return s.String()
 }
 
 // The input for the GetBulkPublishDetails operation.
 type GetBulkPublishDetailsInput struct {
+	_ struct{} `type:"structure"`
+
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataGetBulkPublishDetailsInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataGetBulkPublishDetailsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetBulkPublishDetailsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBulkPublishDetailsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetBulkPublishDetailsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetBulkPublishDetailsInput"}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The output for the GetBulkPublishDetails operation.
 type GetBulkPublishDetailsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// If BulkPublishStatus is SUCCEEDED, the time the last bulk publish operation
 	// completed.
 	BulkPublishCompleteTime *time.Time `type:"timestamp" timestampFormat:"unix"`
@@ -854,7 +1389,7 @@ type GetBulkPublishDetailsOutput struct {
 	//
 	// FAILED - Some portion of the data has failed to publish, check FailureMessage
 	// for the cause.
-	BulkPublishStatus *string `type:"string"`
+	BulkPublishStatus *string `type:"string" enum:"BulkPublishStatus"`
 
 	// If BulkPublishStatus is FAILED this field will contain the error message
 	// that caused the bulk publish to fail.
@@ -862,96 +1397,164 @@ type GetBulkPublishDetailsOutput struct {
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `locationName:"IdentityPoolId" type:"string"`
-
-	metadataGetBulkPublishDetailsOutput `json:"-" xml:"-"`
+	IdentityPoolId *string `min:"1" type:"string"`
 }
 
-type metadataGetBulkPublishDetailsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetBulkPublishDetailsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBulkPublishDetailsOutput) GoString() string {
+	return s.String()
 }
 
 // A request for a list of the configured Cognito Events
 type GetCognitoEventsInput struct {
-	// The Cognito Identity Pool ID for the request
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataGetCognitoEventsInput `json:"-" xml:"-"`
+	// The Cognito Identity Pool ID for the request
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataGetCognitoEventsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetCognitoEventsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetCognitoEventsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetCognitoEventsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetCognitoEventsInput"}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The response from the GetCognitoEvents request
 type GetCognitoEventsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The Cognito Events returned from the GetCognitoEvents request
 	Events map[string]*string `type:"map"`
-
-	metadataGetCognitoEventsOutput `json:"-" xml:"-"`
 }
 
-type metadataGetCognitoEventsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetCognitoEventsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetCognitoEventsOutput) GoString() string {
+	return s.String()
 }
 
 // The input for the GetIdentityPoolConfiguration operation.
 type GetIdentityPoolConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. This is the ID of the pool for which to return
 	// a configuration.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataGetIdentityPoolConfigurationInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataGetIdentityPoolConfigurationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetIdentityPoolConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetIdentityPoolConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetIdentityPoolConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetIdentityPoolConfigurationInput"}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The output for the GetIdentityPoolConfiguration operation.
 type GetIdentityPoolConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Options to apply to this identity pool for Amazon Cognito streams.
 	CognitoStreams *CognitoStreams `type:"structure"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito.
-	IdentityPoolID *string `locationName:"IdentityPoolId" type:"string"`
+	IdentityPoolId *string `min:"1" type:"string"`
 
 	// Options to apply to this identity pool for push synchronization.
 	PushSync *PushSync `type:"structure"`
-
-	metadataGetIdentityPoolConfigurationOutput `json:"-" xml:"-"`
 }
 
-type metadataGetIdentityPoolConfigurationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetIdentityPoolConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetIdentityPoolConfigurationOutput) GoString() string {
+	return s.String()
 }
 
 // Usage information for the identity pool.
 type IdentityPoolUsage struct {
+	_ struct{} `type:"structure"`
+
 	// Data storage information for the identity pool.
 	DataStorage *int64 `type:"long"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `locationName:"IdentityPoolId" type:"string"`
+	IdentityPoolId *string `min:"1" type:"string"`
 
 	// Date on which the identity pool was last modified.
 	LastModifiedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// Number of sync sessions for the identity pool.
 	SyncSessionsCount *int64 `type:"long"`
-
-	metadataIdentityPoolUsage `json:"-" xml:"-"`
 }
 
-type metadataIdentityPoolUsage struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s IdentityPoolUsage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s IdentityPoolUsage) GoString() string {
+	return s.String()
 }
 
 // Usage information for the identity.
 type IdentityUsage struct {
+	_ struct{} `type:"structure"`
+
 	// Total data storage for this identity.
 	DataStorage *int64 `type:"long"`
 
@@ -960,47 +1563,81 @@ type IdentityUsage struct {
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `locationName:"IdentityId" type:"string"`
+	IdentityId *string `min:"1" type:"string"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `locationName:"IdentityPoolId" type:"string"`
+	IdentityPoolId *string `min:"1" type:"string"`
 
 	// Date on which the identity was last modified.
 	LastModifiedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
-
-	metadataIdentityUsage `json:"-" xml:"-"`
 }
 
-type metadataIdentityUsage struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s IdentityUsage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s IdentityUsage) GoString() string {
+	return s.String()
 }
 
 // Request for a list of datasets for an identity.
 type ListDatasetsInput struct {
-	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
-	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
+
+	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
+	// created by Amazon Cognito. GUID generation is unique within a region.
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 
 	// The maximum number of results to be returned.
 	MaxResults *int64 `location:"querystring" locationName:"maxResults" type:"integer"`
 
 	// A pagination token for obtaining the next page of results.
 	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
-
-	metadataListDatasetsInput `json:"-" xml:"-"`
 }
 
-type metadataListDatasetsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListDatasetsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListDatasetsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDatasetsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDatasetsInput"}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Returned for a successful ListDatasets request.
 type ListDatasetsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Number of datasets returned.
 	Count *int64 `type:"integer"`
 
@@ -1009,31 +1646,43 @@ type ListDatasetsOutput struct {
 
 	// A pagination token for obtaining the next page of results.
 	NextToken *string `type:"string"`
-
-	metadataListDatasetsOutput `json:"-" xml:"-"`
 }
 
-type metadataListDatasetsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListDatasetsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListDatasetsOutput) GoString() string {
+	return s.String()
 }
 
 // A request for usage information on an identity pool.
 type ListIdentityPoolUsageInput struct {
+	_ struct{} `type:"structure"`
+
 	// The maximum number of results to be returned.
 	MaxResults *int64 `location:"querystring" locationName:"maxResults" type:"integer"`
 
 	// A pagination token for obtaining the next page of results.
 	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
-
-	metadataListIdentityPoolUsageInput `json:"-" xml:"-"`
 }
 
-type metadataListIdentityPoolUsageInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListIdentityPoolUsageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListIdentityPoolUsageInput) GoString() string {
+	return s.String()
 }
 
 // Returned for a successful ListIdentityPoolUsage request.
 type ListIdentityPoolUsageOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Total number of identities for the identity pool.
 	Count *int64 `type:"integer"`
 
@@ -1045,27 +1694,33 @@ type ListIdentityPoolUsageOutput struct {
 
 	// A pagination token for obtaining the next page of results.
 	NextToken *string `type:"string"`
-
-	metadataListIdentityPoolUsageOutput `json:"-" xml:"-"`
 }
 
-type metadataListIdentityPoolUsageOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListIdentityPoolUsageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListIdentityPoolUsageOutput) GoString() string {
+	return s.String()
 }
 
 // A request for a list of records.
 type ListRecordsInput struct {
+	_ struct{} `type:"structure"`
+
 	// A string of up to 128 characters. Allowed characters are a-z, A-Z, 0-9, '_'
 	// (underscore), '-' (dash), and '.' (dot).
-	DatasetName *string `location:"uri" locationName:"DatasetName" type:"string" required:"true"`
+	DatasetName *string `location:"uri" locationName:"DatasetName" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 
 	// The last server sync count for this record.
 	LastSyncCount *int64 `location:"querystring" locationName:"lastSyncCount" type:"long"`
@@ -1078,16 +1733,50 @@ type ListRecordsInput struct {
 
 	// A token containing a session ID, identity ID, and expiration.
 	SyncSessionToken *string `location:"querystring" locationName:"syncSessionToken" type:"string"`
-
-	metadataListRecordsInput `json:"-" xml:"-"`
 }
 
-type metadataListRecordsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListRecordsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListRecordsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListRecordsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListRecordsInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Returned for a successful ListRecordsRequest.
 type ListRecordsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Total number of records.
 	Count *int64 `type:"integer"`
 
@@ -1114,36 +1803,61 @@ type ListRecordsOutput struct {
 
 	// A token containing a session ID, identity ID, and expiration.
 	SyncSessionToken *string `type:"string"`
-
-	metadataListRecordsOutput `json:"-" xml:"-"`
 }
 
-type metadataListRecordsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListRecordsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListRecordsOutput) GoString() string {
+	return s.String()
 }
 
 // Configuration options to be applied to the identity pool.
 type PushSync struct {
+	_ struct{} `type:"structure"`
+
 	// List of SNS platform application ARNs that could be used by clients.
-	ApplicationARNs []*string `locationName:"ApplicationArns" type:"list"`
+	ApplicationArns []*string `type:"list"`
 
 	// A role configured to allow Cognito to call SNS on behalf of the developer.
-	RoleARN *string `locationName:"RoleArn" type:"string"`
-
-	metadataPushSync `json:"-" xml:"-"`
+	RoleArn *string `min:"20" type:"string"`
 }
 
-type metadataPushSync struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PushSync) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PushSync) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PushSync) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PushSync"}
+	if s.RoleArn != nil && len(*s.RoleArn) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleArn", 20))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The basic data structure of a dataset.
 type Record struct {
+	_ struct{} `type:"structure"`
+
 	// The last modified date of the client device.
 	DeviceLastModifiedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The key for the record.
-	Key *string `type:"string"`
+	Key *string `min:"1" type:"string"`
 
 	// The user/device that made the last change to this record.
 	LastModifiedBy *string `type:"string"`
@@ -1156,219 +1870,454 @@ type Record struct {
 
 	// The value for the record.
 	Value *string `type:"string"`
-
-	metadataRecord `json:"-" xml:"-"`
 }
 
-type metadataRecord struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Record) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Record) GoString() string {
+	return s.String()
 }
 
 // An update operation for a record.
 type RecordPatch struct {
+	_ struct{} `type:"structure"`
+
 	// The last modified date of the client device.
 	DeviceLastModifiedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The key associated with the record patch.
-	Key *string `type:"string" required:"true"`
+	Key *string `min:"1" type:"string" required:"true"`
 
 	// An operation, either replace or remove.
-	Op *string `type:"string" required:"true"`
+	Op *string `type:"string" required:"true" enum:"Operation"`
 
 	// Last known server sync count for this record. Set to 0 if unknown.
 	SyncCount *int64 `type:"long" required:"true"`
 
 	// The value associated with the record patch.
 	Value *string `type:"string"`
-
-	metadataRecordPatch `json:"-" xml:"-"`
 }
 
-type metadataRecordPatch struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RecordPatch) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RecordPatch) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RecordPatch) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RecordPatch"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.Op == nil {
+		invalidParams.Add(request.NewErrParamRequired("Op"))
+	}
+	if s.SyncCount == nil {
+		invalidParams.Add(request.NewErrParamRequired("SyncCount"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // A request to RegisterDevice.
 type RegisterDeviceInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique ID for this identity.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. Here, the ID of the pool that the identity belongs
 	// to.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 
 	// The SNS platform type (e.g. GCM, SDM, APNS, APNS_SANDBOX).
-	Platform *string `type:"string" required:"true"`
+	Platform *string `type:"string" required:"true" enum:"Platform"`
 
 	// The push token.
 	Token *string `type:"string" required:"true"`
-
-	metadataRegisterDeviceInput `json:"-" xml:"-"`
 }
 
-type metadataRegisterDeviceInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RegisterDeviceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RegisterDeviceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RegisterDeviceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RegisterDeviceInput"}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+	if s.Platform == nil {
+		invalidParams.Add(request.NewErrParamRequired("Platform"))
+	}
+	if s.Token == nil {
+		invalidParams.Add(request.NewErrParamRequired("Token"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response to a RegisterDevice request.
 type RegisterDeviceOutput struct {
-	// The unique ID generated for this device by Cognito.
-	DeviceID *string `locationName:"DeviceId" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataRegisterDeviceOutput `json:"-" xml:"-"`
+	// The unique ID generated for this device by Cognito.
+	DeviceId *string `min:"1" type:"string"`
 }
 
-type metadataRegisterDeviceOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RegisterDeviceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RegisterDeviceOutput) GoString() string {
+	return s.String()
 }
 
 // A request to configure Cognito Events"
 //
 // "
 type SetCognitoEventsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The events to configure
 	Events map[string]*string `type:"map" required:"true"`
 
 	// The Cognito Identity Pool to use when configuring Cognito Events
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataSetCognitoEventsInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataSetCognitoEventsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetCognitoEventsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetCognitoEventsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetCognitoEventsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetCognitoEventsInput"}
+	if s.Events == nil {
+		invalidParams.Add(request.NewErrParamRequired("Events"))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type SetCognitoEventsOutput struct {
-	metadataSetCognitoEventsOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataSetCognitoEventsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetCognitoEventsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetCognitoEventsOutput) GoString() string {
+	return s.String()
 }
 
 // The input for the SetIdentityPoolConfiguration operation.
 type SetIdentityPoolConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
 	// Options to apply to this identity pool for Amazon Cognito streams.
 	CognitoStreams *CognitoStreams `type:"structure"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. This is the ID of the pool to modify.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 
 	// Options to apply to this identity pool for push synchronization.
 	PushSync *PushSync `type:"structure"`
-
-	metadataSetIdentityPoolConfigurationInput `json:"-" xml:"-"`
 }
 
-type metadataSetIdentityPoolConfigurationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetIdentityPoolConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetIdentityPoolConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetIdentityPoolConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetIdentityPoolConfigurationInput"}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+	if s.CognitoStreams != nil {
+		if err := s.CognitoStreams.Validate(); err != nil {
+			invalidParams.AddNested("CognitoStreams", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.PushSync != nil {
+		if err := s.PushSync.Validate(); err != nil {
+			invalidParams.AddNested("PushSync", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // The output for the SetIdentityPoolConfiguration operation
 type SetIdentityPoolConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Options to apply to this identity pool for Amazon Cognito streams.
 	CognitoStreams *CognitoStreams `type:"structure"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito.
-	IdentityPoolID *string `locationName:"IdentityPoolId" type:"string"`
+	IdentityPoolId *string `min:"1" type:"string"`
 
 	// Options to apply to this identity pool for push synchronization.
 	PushSync *PushSync `type:"structure"`
-
-	metadataSetIdentityPoolConfigurationOutput `json:"-" xml:"-"`
 }
 
-type metadataSetIdentityPoolConfigurationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetIdentityPoolConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetIdentityPoolConfigurationOutput) GoString() string {
+	return s.String()
 }
 
 // A request to SubscribeToDatasetRequest.
 type SubscribeToDatasetInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the dataset to subcribe to.
-	DatasetName *string `location:"uri" locationName:"DatasetName" type:"string" required:"true"`
+	DatasetName *string `location:"uri" locationName:"DatasetName" min:"1" type:"string" required:"true"`
 
 	// The unique ID generated for this device by Cognito.
-	DeviceID *string `location:"uri" locationName:"DeviceId" type:"string" required:"true"`
+	DeviceId *string `location:"uri" locationName:"DeviceId" min:"1" type:"string" required:"true"`
 
 	// Unique ID for this identity.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. The ID of the pool to which the identity belongs.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataSubscribeToDatasetInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataSubscribeToDatasetInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SubscribeToDatasetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SubscribeToDatasetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SubscribeToDatasetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SubscribeToDatasetInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.DeviceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeviceId"))
+	}
+	if s.DeviceId != nil && len(*s.DeviceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DeviceId", 1))
+	}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response to a SubscribeToDataset request.
 type SubscribeToDatasetOutput struct {
-	metadataSubscribeToDatasetOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataSubscribeToDatasetOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SubscribeToDatasetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SubscribeToDatasetOutput) GoString() string {
+	return s.String()
 }
 
 // A request to UnsubscribeFromDataset.
 type UnsubscribeFromDatasetInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the dataset from which to unsubcribe.
-	DatasetName *string `location:"uri" locationName:"DatasetName" type:"string" required:"true"`
+	DatasetName *string `location:"uri" locationName:"DatasetName" min:"1" type:"string" required:"true"`
 
 	// The unique ID generated for this device by Cognito.
-	DeviceID *string `location:"uri" locationName:"DeviceId" type:"string" required:"true"`
+	DeviceId *string `location:"uri" locationName:"DeviceId" min:"1" type:"string" required:"true"`
 
 	// Unique ID for this identity.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. The ID of the pool to which this identity belongs.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
-
-	metadataUnsubscribeFromDatasetInput `json:"-" xml:"-"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 }
 
-type metadataUnsubscribeFromDatasetInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s UnsubscribeFromDatasetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UnsubscribeFromDatasetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UnsubscribeFromDatasetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UnsubscribeFromDatasetInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.DeviceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DeviceId"))
+	}
+	if s.DeviceId != nil && len(*s.DeviceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DeviceId", 1))
+	}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response to an UnsubscribeFromDataset request.
 type UnsubscribeFromDatasetOutput struct {
-	metadataUnsubscribeFromDatasetOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataUnsubscribeFromDatasetOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s UnsubscribeFromDatasetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UnsubscribeFromDatasetOutput) GoString() string {
+	return s.String()
 }
 
 // A request to post updates to records or add and delete records for a dataset
 // and user.
 type UpdateRecordsInput struct {
+	_ struct{} `type:"structure"`
+
 	// Intended to supply a device ID that will populate the lastModifiedBy field
 	// referenced in other methods. The ClientContext field is not yet implemented.
 	ClientContext *string `location:"header" locationName:"x-amz-Client-Context" type:"string"`
 
 	// A string of up to 128 characters. Allowed characters are a-z, A-Z, 0-9, '_'
 	// (underscore), '-' (dash), and '.' (dot).
-	DatasetName *string `location:"uri" locationName:"DatasetName" type:"string" required:"true"`
+	DatasetName *string `location:"uri" locationName:"DatasetName" min:"1" type:"string" required:"true"`
 
 	// The unique ID generated for this device by Cognito.
-	DeviceID *string `locationName:"DeviceId" type:"string"`
+	DeviceId *string `min:"1" type:"string"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityID *string `location:"uri" locationName:"IdentityId" type:"string" required:"true"`
+	IdentityId *string `location:"uri" locationName:"IdentityId" min:"1" type:"string" required:"true"`
 
 	// A name-spaced GUID (for example, us-east-1:23EC4050-6AEA-7089-A2DD-08002EXAMPLE)
 	// created by Amazon Cognito. GUID generation is unique within a region.
-	IdentityPoolID *string `location:"uri" locationName:"IdentityPoolId" type:"string" required:"true"`
+	IdentityPoolId *string `location:"uri" locationName:"IdentityPoolId" min:"1" type:"string" required:"true"`
 
 	// A list of patch operations.
 	RecordPatches []*RecordPatch `type:"list"`
@@ -1376,22 +2325,112 @@ type UpdateRecordsInput struct {
 	// The SyncSessionToken returned by a previous call to ListRecords for this
 	// dataset and identity.
 	SyncSessionToken *string `type:"string" required:"true"`
-
-	metadataUpdateRecordsInput `json:"-" xml:"-"`
 }
 
-type metadataUpdateRecordsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s UpdateRecordsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateRecordsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateRecordsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateRecordsInput"}
+	if s.DatasetName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetName"))
+	}
+	if s.DatasetName != nil && len(*s.DatasetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatasetName", 1))
+	}
+	if s.DeviceId != nil && len(*s.DeviceId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DeviceId", 1))
+	}
+	if s.IdentityId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityId"))
+	}
+	if s.IdentityId != nil && len(*s.IdentityId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityId", 1))
+	}
+	if s.IdentityPoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdentityPoolId"))
+	}
+	if s.IdentityPoolId != nil && len(*s.IdentityPoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdentityPoolId", 1))
+	}
+	if s.SyncSessionToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("SyncSessionToken"))
+	}
+	if s.RecordPatches != nil {
+		for i, v := range s.RecordPatches {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "RecordPatches", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Returned for a successful UpdateRecordsRequest.
 type UpdateRecordsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A list of records that have been updated.
 	Records []*Record `type:"list"`
-
-	metadataUpdateRecordsOutput `json:"-" xml:"-"`
 }
 
-type metadataUpdateRecordsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s UpdateRecordsOutput) String() string {
+	return awsutil.Prettify(s)
 }
+
+// GoString returns the string representation
+func (s UpdateRecordsOutput) GoString() string {
+	return s.String()
+}
+
+const (
+	// @enum BulkPublishStatus
+	BulkPublishStatusNotStarted = "NOT_STARTED"
+	// @enum BulkPublishStatus
+	BulkPublishStatusInProgress = "IN_PROGRESS"
+	// @enum BulkPublishStatus
+	BulkPublishStatusFailed = "FAILED"
+	// @enum BulkPublishStatus
+	BulkPublishStatusSucceeded = "SUCCEEDED"
+)
+
+const (
+	// @enum Operation
+	OperationReplace = "replace"
+	// @enum Operation
+	OperationRemove = "remove"
+)
+
+const (
+	// @enum Platform
+	PlatformApns = "APNS"
+	// @enum Platform
+	PlatformApnsSandbox = "APNS_SANDBOX"
+	// @enum Platform
+	PlatformGcm = "GCM"
+	// @enum Platform
+	PlatformAdm = "ADM"
+)
+
+const (
+	// @enum StreamingStatus
+	StreamingStatusEnabled = "ENABLED"
+	// @enum StreamingStatus
+	StreamingStatusDisabled = "DISABLED"
+)

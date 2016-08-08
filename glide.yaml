@@ -5,7 +5,7 @@ import:
 - package: github.com/PagerDuty/godspeed
   version: 079d1fb267ad66b7a3bd42c24013cbeb29698c3d
 - package: github.com/aws/aws-sdk-go
-  version: 5fa0a7e63b3d9f094d7e8549ce483a190587398f
+  version: 1.2.5
   subpackages:
   - aws
   - internal/apierr

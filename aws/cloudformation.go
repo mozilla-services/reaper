@@ -33,7 +33,7 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 	a := Cloudformation{
 		Resource: Resource{
 			Region:      reapable.Region(region),
-			ID:          reapable.ID(*stack.StackID),
+			ID:          reapable.ID(*stack.StackId),
 			Name:        *stack.StackName,
 			Tags:        make(map[string]string),
 			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstStateDuration.Duration)),
@@ -327,7 +327,7 @@ func (a *Cloudformation) AWSConsoleURL() *url.URL {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Cloudformation) Terminate() (bool, error) {
 	log.Info("Terminating Cloudformation %s", a.ReapableDescriptionTiny())
-	as := cloudformation.New(&aws.Config{Region: string(a.Region)})
+	as := cloudformation.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
 
 	stringID := string(a.ID)
 

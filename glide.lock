@@ -1,8 +1,8 @@
-hash: e3b6b6ed5386ab066c79567c17c46bc1b8a61795ff6137c47502edea21fecd36
-updated: 2016-07-14T12:41:03.832499437-07:00
+hash: 483d00dadf460d4a96a5249886f1132f98ba2b9dd18f56ccd4d805def24f5383
+updated: 2016-07-14T14:29:19.797901026-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 5fa0a7e63b3d9f094d7e8549ce483a190587398f
+  version: 3c37d29820480639ff03fd66df00a0f27984f88d
   subpackages:
   - aws
   - internal/apierr
@@ -16,11 +16,26 @@ imports:
   - service/cloudformation
   - service/ec2
   - aws/awserr
-  - aws/awsutil
   - aws/credentials
-  - internal/protocol/query/queryutil
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/request
+  - aws/signer/v4
+  - private/protocol
+  - private/protocol/query
+  - private/waiter
+  - private/endpoints
+  - private/protocol/ec2query
+  - private/protocol/rest
+  - private/protocol/query/queryutil
+  - private/protocol/xml/xmlutil
 - name: github.com/BurntSushi/toml
   version: 056c9bc7be7190eaa7715723883caffa5f8fa3e4
+- name: github.com/go-ini/ini
+  version: cf53f9204df4fbdd7ec4164b57fa6184ba168292
+- name: github.com/jmespath/go-jmespath
+  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
 - name: github.com/jordan-wright/email
   version: fd703108daeb23d77c124d12978e9b6c4f28f034
 - name: github.com/PagerDuty/godspeed

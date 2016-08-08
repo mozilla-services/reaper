@@ -4,31 +4,52 @@
 package sns
 
 import (
-	"sync"
+	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/query"
 )
 
-var oprw sync.Mutex
+const opAddPermission = "AddPermission"
 
-// AddPermissionRequest generates a request for the AddPermission operation.
-func (c *SNS) AddPermissionRequest(input *AddPermissionInput) (req *aws.Request, output *AddPermissionOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opAddPermission == nil {
-		opAddPermission = &aws.Operation{
-			Name:       "AddPermission",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// AddPermissionRequest generates a "aws/request.Request" representing the
+// client's request for the AddPermission operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the AddPermission method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the AddPermissionRequest method.
+//    req, resp := client.AddPermissionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) AddPermissionRequest(input *AddPermissionInput) (req *request.Request, output *AddPermissionOutput) {
+	op := &request.Operation{
+		Name:       opAddPermission,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &AddPermissionInput{}
 	}
 
-	req = c.newRequest(opAddPermission, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &AddPermissionOutput{}
 	req.Data = output
 	return
@@ -42,26 +63,95 @@ func (c *SNS) AddPermission(input *AddPermissionInput) (*AddPermissionOutput, er
 	return out, err
 }
 
-var opAddPermission *aws.Operation
+const opCheckIfPhoneNumberIsOptedOut = "CheckIfPhoneNumberIsOptedOut"
 
-// ConfirmSubscriptionRequest generates a request for the ConfirmSubscription operation.
-func (c *SNS) ConfirmSubscriptionRequest(input *ConfirmSubscriptionInput) (req *aws.Request, output *ConfirmSubscriptionOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// CheckIfPhoneNumberIsOptedOutRequest generates a "aws/request.Request" representing the
+// client's request for the CheckIfPhoneNumberIsOptedOut operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CheckIfPhoneNumberIsOptedOut method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CheckIfPhoneNumberIsOptedOutRequest method.
+//    req, resp := client.CheckIfPhoneNumberIsOptedOutRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) CheckIfPhoneNumberIsOptedOutRequest(input *CheckIfPhoneNumberIsOptedOutInput) (req *request.Request, output *CheckIfPhoneNumberIsOptedOutOutput) {
+	op := &request.Operation{
+		Name:       opCheckIfPhoneNumberIsOptedOut,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opConfirmSubscription == nil {
-		opConfirmSubscription = &aws.Operation{
-			Name:       "ConfirmSubscription",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &CheckIfPhoneNumberIsOptedOutInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &CheckIfPhoneNumberIsOptedOutOutput{}
+	req.Data = output
+	return
+}
+
+// Accepts a phone number and indicates whether the phone holder has opted out
+// of receiving SMS messages from your account. You cannot send SMS messages
+// to a number that is opted out.
+//
+// To resume sending messages, you can opt in the number by using the OptInPhoneNumber
+// action.
+func (c *SNS) CheckIfPhoneNumberIsOptedOut(input *CheckIfPhoneNumberIsOptedOutInput) (*CheckIfPhoneNumberIsOptedOutOutput, error) {
+	req, out := c.CheckIfPhoneNumberIsOptedOutRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opConfirmSubscription = "ConfirmSubscription"
+
+// ConfirmSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the ConfirmSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ConfirmSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ConfirmSubscriptionRequest method.
+//    req, resp := client.ConfirmSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ConfirmSubscriptionRequest(input *ConfirmSubscriptionInput) (req *request.Request, output *ConfirmSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opConfirmSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ConfirmSubscriptionInput{}
 	}
 
-	req = c.newRequest(opConfirmSubscription, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ConfirmSubscriptionOutput{}
 	req.Data = output
 	return
@@ -78,26 +168,42 @@ func (c *SNS) ConfirmSubscription(input *ConfirmSubscriptionInput) (*ConfirmSubs
 	return out, err
 }
 
-var opConfirmSubscription *aws.Operation
+const opCreatePlatformApplication = "CreatePlatformApplication"
 
-// CreatePlatformApplicationRequest generates a request for the CreatePlatformApplication operation.
-func (c *SNS) CreatePlatformApplicationRequest(input *CreatePlatformApplicationInput) (req *aws.Request, output *CreatePlatformApplicationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreatePlatformApplication == nil {
-		opCreatePlatformApplication = &aws.Operation{
-			Name:       "CreatePlatformApplication",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreatePlatformApplicationRequest generates a "aws/request.Request" representing the
+// client's request for the CreatePlatformApplication operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreatePlatformApplication method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreatePlatformApplicationRequest method.
+//    req, resp := client.CreatePlatformApplicationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) CreatePlatformApplicationRequest(input *CreatePlatformApplicationInput) (req *request.Request, output *CreatePlatformApplicationOutput) {
+	op := &request.Operation{
+		Name:       opCreatePlatformApplication,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreatePlatformApplicationInput{}
 	}
 
-	req = c.newRequest(opCreatePlatformApplication, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreatePlatformApplicationOutput{}
 	req.Data = output
 	return
@@ -110,38 +216,67 @@ func (c *SNS) CreatePlatformApplicationRequest(input *CreatePlatformApplicationI
 // from the notification service. For APNS/APNS_SANDBOX, PlatformPrincipal is
 // "SSL certificate". For GCM, PlatformPrincipal is not applicable. For ADM,
 // PlatformPrincipal is "client id". The PlatformCredential is also received
-// from the notification service. For APNS/APNS_SANDBOX, PlatformCredential
-// is "private key". For GCM, PlatformCredential is "API key". For ADM, PlatformCredential
-// is "client secret". The PlatformApplicationArn that is returned when using
-// CreatePlatformApplication is then used as an attribute for the CreatePlatformEndpoint
-// action. For more information, see Using Amazon SNS Mobile Push Notifications
-// (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
+// from the notification service. For WNS, PlatformPrincipal is "Package Security
+// Identifier". For MPNS, PlatformPrincipal is "TLS certificate". For Baidu,
+// PlatformPrincipal is "API key".
+//
+// For APNS/APNS_SANDBOX, PlatformCredential is "private key". For GCM, PlatformCredential
+// is "API key". For ADM, PlatformCredential is "client secret". For WNS, PlatformCredential
+// is "secret key". For MPNS, PlatformCredential is "private key". For Baidu,
+// PlatformCredential is "secret key". The PlatformApplicationArn that is returned
+// when using CreatePlatformApplication is then used as an attribute for the
+// CreatePlatformEndpoint action. For more information, see Using Amazon SNS
+// Mobile Push Notifications (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
+// For more information about obtaining the PlatformPrincipal and PlatformCredential
+// for each of the supported push notification services, see Getting Started
+// with Apple Push Notification Service (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-apns.html),
+// Getting Started with Amazon Device Messaging (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-adm.html),
+// Getting Started with Baidu Cloud Push (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-baidu.html),
+// Getting Started with Google Cloud Messaging for Android (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-gcm.html),
+// Getting Started with MPNS (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-mpns.html),
+// or Getting Started with WNS (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-wns.html).
 func (c *SNS) CreatePlatformApplication(input *CreatePlatformApplicationInput) (*CreatePlatformApplicationOutput, error) {
 	req, out := c.CreatePlatformApplicationRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCreatePlatformApplication *aws.Operation
+const opCreatePlatformEndpoint = "CreatePlatformEndpoint"
 
-// CreatePlatformEndpointRequest generates a request for the CreatePlatformEndpoint operation.
-func (c *SNS) CreatePlatformEndpointRequest(input *CreatePlatformEndpointInput) (req *aws.Request, output *CreatePlatformEndpointOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreatePlatformEndpoint == nil {
-		opCreatePlatformEndpoint = &aws.Operation{
-			Name:       "CreatePlatformEndpoint",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreatePlatformEndpointRequest generates a "aws/request.Request" representing the
+// client's request for the CreatePlatformEndpoint operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreatePlatformEndpoint method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreatePlatformEndpointRequest method.
+//    req, resp := client.CreatePlatformEndpointRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) CreatePlatformEndpointRequest(input *CreatePlatformEndpointInput) (req *request.Request, output *CreatePlatformEndpointOutput) {
+	op := &request.Operation{
+		Name:       opCreatePlatformEndpoint,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreatePlatformEndpointInput{}
 	}
 
-	req = c.newRequest(opCreatePlatformEndpoint, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreatePlatformEndpointOutput{}
 	req.Data = output
 	return
@@ -167,33 +302,49 @@ func (c *SNS) CreatePlatformEndpoint(input *CreatePlatformEndpointInput) (*Creat
 	return out, err
 }
 
-var opCreatePlatformEndpoint *aws.Operation
+const opCreateTopic = "CreateTopic"
 
-// CreateTopicRequest generates a request for the CreateTopic operation.
-func (c *SNS) CreateTopicRequest(input *CreateTopicInput) (req *aws.Request, output *CreateTopicOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateTopic == nil {
-		opCreateTopic = &aws.Operation{
-			Name:       "CreateTopic",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateTopicRequest generates a "aws/request.Request" representing the
+// client's request for the CreateTopic operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateTopic method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateTopicRequest method.
+//    req, resp := client.CreateTopicRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) CreateTopicRequest(input *CreateTopicInput) (req *request.Request, output *CreateTopicOutput) {
+	op := &request.Operation{
+		Name:       opCreateTopic,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateTopicInput{}
 	}
 
-	req = c.newRequest(opCreateTopic, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateTopicOutput{}
 	req.Data = output
 	return
 }
 
 // Creates a topic to which notifications can be published. Users can create
-// at most 3000 topics. For more information, see http://aws.amazon.com/sns
+// at most 100,000 topics. For more information, see http://aws.amazon.com/sns
 // (http://aws.amazon.com/sns/). This action is idempotent, so if the requester
 // already owns a topic with the specified name, that topic's ARN is returned
 // without creating a new topic.
@@ -203,59 +354,99 @@ func (c *SNS) CreateTopic(input *CreateTopicInput) (*CreateTopicOutput, error) {
 	return out, err
 }
 
-var opCreateTopic *aws.Operation
+const opDeleteEndpoint = "DeleteEndpoint"
 
-// DeleteEndpointRequest generates a request for the DeleteEndpoint operation.
-func (c *SNS) DeleteEndpointRequest(input *DeleteEndpointInput) (req *aws.Request, output *DeleteEndpointOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteEndpoint == nil {
-		opDeleteEndpoint = &aws.Operation{
-			Name:       "DeleteEndpoint",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteEndpointRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteEndpoint operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteEndpoint method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteEndpointRequest method.
+//    req, resp := client.DeleteEndpointRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) DeleteEndpointRequest(input *DeleteEndpointInput) (req *request.Request, output *DeleteEndpointOutput) {
+	op := &request.Operation{
+		Name:       opDeleteEndpoint,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteEndpointInput{}
 	}
 
-	req = c.newRequest(opDeleteEndpoint, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteEndpointOutput{}
 	req.Data = output
 	return
 }
 
-// Deletes the endpoint from Amazon SNS. This action is idempotent. For more
-// information, see Using Amazon SNS Mobile Push Notifications (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
+// Deletes the endpoint for a device and mobile app from Amazon SNS. This action
+// is idempotent. For more information, see Using Amazon SNS Mobile Push Notifications
+// (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
+//
+// When you delete an endpoint that is also subscribed to a topic, then you
+// must also unsubscribe the endpoint from the topic.
 func (c *SNS) DeleteEndpoint(input *DeleteEndpointInput) (*DeleteEndpointOutput, error) {
 	req, out := c.DeleteEndpointRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDeleteEndpoint *aws.Operation
+const opDeletePlatformApplication = "DeletePlatformApplication"
 
-// DeletePlatformApplicationRequest generates a request for the DeletePlatformApplication operation.
-func (c *SNS) DeletePlatformApplicationRequest(input *DeletePlatformApplicationInput) (req *aws.Request, output *DeletePlatformApplicationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeletePlatformApplication == nil {
-		opDeletePlatformApplication = &aws.Operation{
-			Name:       "DeletePlatformApplication",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeletePlatformApplicationRequest generates a "aws/request.Request" representing the
+// client's request for the DeletePlatformApplication operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeletePlatformApplication method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeletePlatformApplicationRequest method.
+//    req, resp := client.DeletePlatformApplicationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) DeletePlatformApplicationRequest(input *DeletePlatformApplicationInput) (req *request.Request, output *DeletePlatformApplicationOutput) {
+	op := &request.Operation{
+		Name:       opDeletePlatformApplication,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeletePlatformApplicationInput{}
 	}
 
-	req = c.newRequest(opDeletePlatformApplication, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeletePlatformApplicationOutput{}
 	req.Data = output
 	return
@@ -270,26 +461,44 @@ func (c *SNS) DeletePlatformApplication(input *DeletePlatformApplicationInput) (
 	return out, err
 }
 
-var opDeletePlatformApplication *aws.Operation
+const opDeleteTopic = "DeleteTopic"
 
-// DeleteTopicRequest generates a request for the DeleteTopic operation.
-func (c *SNS) DeleteTopicRequest(input *DeleteTopicInput) (req *aws.Request, output *DeleteTopicOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteTopic == nil {
-		opDeleteTopic = &aws.Operation{
-			Name:       "DeleteTopic",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteTopicRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteTopic operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteTopic method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteTopicRequest method.
+//    req, resp := client.DeleteTopicRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) DeleteTopicRequest(input *DeleteTopicInput) (req *request.Request, output *DeleteTopicOutput) {
+	op := &request.Operation{
+		Name:       opDeleteTopic,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteTopicInput{}
 	}
 
-	req = c.newRequest(opDeleteTopic, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &DeleteTopicOutput{}
 	req.Data = output
 	return
@@ -305,26 +514,42 @@ func (c *SNS) DeleteTopic(input *DeleteTopicInput) (*DeleteTopicOutput, error) {
 	return out, err
 }
 
-var opDeleteTopic *aws.Operation
+const opGetEndpointAttributes = "GetEndpointAttributes"
 
-// GetEndpointAttributesRequest generates a request for the GetEndpointAttributes operation.
-func (c *SNS) GetEndpointAttributesRequest(input *GetEndpointAttributesInput) (req *aws.Request, output *GetEndpointAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetEndpointAttributes == nil {
-		opGetEndpointAttributes = &aws.Operation{
-			Name:       "GetEndpointAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// GetEndpointAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the GetEndpointAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetEndpointAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetEndpointAttributesRequest method.
+//    req, resp := client.GetEndpointAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) GetEndpointAttributesRequest(input *GetEndpointAttributesInput) (req *request.Request, output *GetEndpointAttributesOutput) {
+	op := &request.Operation{
+		Name:       opGetEndpointAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &GetEndpointAttributesInput{}
 	}
 
-	req = c.newRequest(opGetEndpointAttributes, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetEndpointAttributesOutput{}
 	req.Data = output
 	return
@@ -339,26 +564,42 @@ func (c *SNS) GetEndpointAttributes(input *GetEndpointAttributesInput) (*GetEndp
 	return out, err
 }
 
-var opGetEndpointAttributes *aws.Operation
+const opGetPlatformApplicationAttributes = "GetPlatformApplicationAttributes"
 
-// GetPlatformApplicationAttributesRequest generates a request for the GetPlatformApplicationAttributes operation.
-func (c *SNS) GetPlatformApplicationAttributesRequest(input *GetPlatformApplicationAttributesInput) (req *aws.Request, output *GetPlatformApplicationAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetPlatformApplicationAttributes == nil {
-		opGetPlatformApplicationAttributes = &aws.Operation{
-			Name:       "GetPlatformApplicationAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// GetPlatformApplicationAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the GetPlatformApplicationAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetPlatformApplicationAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetPlatformApplicationAttributesRequest method.
+//    req, resp := client.GetPlatformApplicationAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) GetPlatformApplicationAttributesRequest(input *GetPlatformApplicationAttributesInput) (req *request.Request, output *GetPlatformApplicationAttributesOutput) {
+	op := &request.Operation{
+		Name:       opGetPlatformApplicationAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &GetPlatformApplicationAttributesInput{}
 	}
 
-	req = c.newRequest(opGetPlatformApplicationAttributes, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetPlatformApplicationAttributesOutput{}
 	req.Data = output
 	return
@@ -373,26 +614,92 @@ func (c *SNS) GetPlatformApplicationAttributes(input *GetPlatformApplicationAttr
 	return out, err
 }
 
-var opGetPlatformApplicationAttributes *aws.Operation
+const opGetSMSAttributes = "GetSMSAttributes"
 
-// GetSubscriptionAttributesRequest generates a request for the GetSubscriptionAttributes operation.
-func (c *SNS) GetSubscriptionAttributesRequest(input *GetSubscriptionAttributesInput) (req *aws.Request, output *GetSubscriptionAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// GetSMSAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the GetSMSAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetSMSAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetSMSAttributesRequest method.
+//    req, resp := client.GetSMSAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) GetSMSAttributesRequest(input *GetSMSAttributesInput) (req *request.Request, output *GetSMSAttributesOutput) {
+	op := &request.Operation{
+		Name:       opGetSMSAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opGetSubscriptionAttributes == nil {
-		opGetSubscriptionAttributes = &aws.Operation{
-			Name:       "GetSubscriptionAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &GetSMSAttributesInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &GetSMSAttributesOutput{}
+	req.Data = output
+	return
+}
+
+// Returns the settings for sending SMS messages from your account.
+//
+// These settings are set with the SetSMSAttributes action.
+func (c *SNS) GetSMSAttributes(input *GetSMSAttributesInput) (*GetSMSAttributesOutput, error) {
+	req, out := c.GetSMSAttributesRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opGetSubscriptionAttributes = "GetSubscriptionAttributes"
+
+// GetSubscriptionAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the GetSubscriptionAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetSubscriptionAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetSubscriptionAttributesRequest method.
+//    req, resp := client.GetSubscriptionAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) GetSubscriptionAttributesRequest(input *GetSubscriptionAttributesInput) (req *request.Request, output *GetSubscriptionAttributesOutput) {
+	op := &request.Operation{
+		Name:       opGetSubscriptionAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &GetSubscriptionAttributesInput{}
 	}
 
-	req = c.newRequest(opGetSubscriptionAttributes, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetSubscriptionAttributesOutput{}
 	req.Data = output
 	return
@@ -405,26 +712,42 @@ func (c *SNS) GetSubscriptionAttributes(input *GetSubscriptionAttributesInput) (
 	return out, err
 }
 
-var opGetSubscriptionAttributes *aws.Operation
+const opGetTopicAttributes = "GetTopicAttributes"
 
-// GetTopicAttributesRequest generates a request for the GetTopicAttributes operation.
-func (c *SNS) GetTopicAttributesRequest(input *GetTopicAttributesInput) (req *aws.Request, output *GetTopicAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetTopicAttributes == nil {
-		opGetTopicAttributes = &aws.Operation{
-			Name:       "GetTopicAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// GetTopicAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the GetTopicAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetTopicAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetTopicAttributesRequest method.
+//    req, resp := client.GetTopicAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) GetTopicAttributesRequest(input *GetTopicAttributesInput) (req *request.Request, output *GetTopicAttributesOutput) {
+	op := &request.Operation{
+		Name:       opGetTopicAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &GetTopicAttributesInput{}
 	}
 
-	req = c.newRequest(opGetTopicAttributes, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetTopicAttributesOutput{}
 	req.Data = output
 	return
@@ -438,32 +761,48 @@ func (c *SNS) GetTopicAttributes(input *GetTopicAttributesInput) (*GetTopicAttri
 	return out, err
 }
 
-var opGetTopicAttributes *aws.Operation
+const opListEndpointsByPlatformApplication = "ListEndpointsByPlatformApplication"
 
-// ListEndpointsByPlatformApplicationRequest generates a request for the ListEndpointsByPlatformApplication operation.
-func (c *SNS) ListEndpointsByPlatformApplicationRequest(input *ListEndpointsByPlatformApplicationInput) (req *aws.Request, output *ListEndpointsByPlatformApplicationOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListEndpointsByPlatformApplication == nil {
-		opListEndpointsByPlatformApplication = &aws.Operation{
-			Name:       "ListEndpointsByPlatformApplication",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"NextToken"},
-				OutputTokens:    []string{"NextToken"},
-				LimitToken:      "",
-				TruncationToken: "",
-			},
-		}
+// ListEndpointsByPlatformApplicationRequest generates a "aws/request.Request" representing the
+// client's request for the ListEndpointsByPlatformApplication operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListEndpointsByPlatformApplication method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListEndpointsByPlatformApplicationRequest method.
+//    req, resp := client.ListEndpointsByPlatformApplicationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ListEndpointsByPlatformApplicationRequest(input *ListEndpointsByPlatformApplicationInput) (req *request.Request, output *ListEndpointsByPlatformApplicationOutput) {
+	op := &request.Operation{
+		Name:       opListEndpointsByPlatformApplication,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &ListEndpointsByPlatformApplicationInput{}
 	}
 
-	req = c.newRequest(opListEndpointsByPlatformApplication, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListEndpointsByPlatformApplicationOutput{}
 	req.Data = output
 	return
@@ -483,39 +822,129 @@ func (c *SNS) ListEndpointsByPlatformApplication(input *ListEndpointsByPlatformA
 	return out, err
 }
 
+// ListEndpointsByPlatformApplicationPages iterates over the pages of a ListEndpointsByPlatformApplication operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListEndpointsByPlatformApplication method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListEndpointsByPlatformApplication operation.
+//    pageNum := 0
+//    err := client.ListEndpointsByPlatformApplicationPages(params,
+//        func(page *ListEndpointsByPlatformApplicationOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *SNS) ListEndpointsByPlatformApplicationPages(input *ListEndpointsByPlatformApplicationInput, fn func(p *ListEndpointsByPlatformApplicationOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.ListEndpointsByPlatformApplicationRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*ListEndpointsByPlatformApplicationOutput), lastPage)
 	})
 }
 
-var opListEndpointsByPlatformApplication *aws.Operation
+const opListPhoneNumbersOptedOut = "ListPhoneNumbersOptedOut"
 
-// ListPlatformApplicationsRequest generates a request for the ListPlatformApplications operation.
-func (c *SNS) ListPlatformApplicationsRequest(input *ListPlatformApplicationsInput) (req *aws.Request, output *ListPlatformApplicationsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// ListPhoneNumbersOptedOutRequest generates a "aws/request.Request" representing the
+// client's request for the ListPhoneNumbersOptedOut operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListPhoneNumbersOptedOut method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListPhoneNumbersOptedOutRequest method.
+//    req, resp := client.ListPhoneNumbersOptedOutRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ListPhoneNumbersOptedOutRequest(input *ListPhoneNumbersOptedOutInput) (req *request.Request, output *ListPhoneNumbersOptedOutOutput) {
+	op := &request.Operation{
+		Name:       opListPhoneNumbersOptedOut,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opListPlatformApplications == nil {
-		opListPlatformApplications = &aws.Operation{
-			Name:       "ListPlatformApplications",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"NextToken"},
-				OutputTokens:    []string{"NextToken"},
-				LimitToken:      "",
-				TruncationToken: "",
-			},
-		}
+	if input == nil {
+		input = &ListPhoneNumbersOptedOutInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ListPhoneNumbersOptedOutOutput{}
+	req.Data = output
+	return
+}
+
+// Returns a list of phone numbers that are opted out, meaning you cannot send
+// SMS messages to them.
+//
+// The results for ListPhoneNumbersOptedOut are paginated, and each page returns
+// up to 100 phone numbers. If additional phone numbers are available after
+// the first page of results, then a NextToken string will be returned. To receive
+// the next page, you call ListPhoneNumbersOptedOut again using the NextToken
+// string received from the previous call. When there are no more records to
+// return, NextToken will be null.
+func (c *SNS) ListPhoneNumbersOptedOut(input *ListPhoneNumbersOptedOutInput) (*ListPhoneNumbersOptedOutOutput, error) {
+	req, out := c.ListPhoneNumbersOptedOutRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opListPlatformApplications = "ListPlatformApplications"
+
+// ListPlatformApplicationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListPlatformApplications operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListPlatformApplications method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListPlatformApplicationsRequest method.
+//    req, resp := client.ListPlatformApplicationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ListPlatformApplicationsRequest(input *ListPlatformApplicationsInput) (req *request.Request, output *ListPlatformApplicationsOutput) {
+	op := &request.Operation{
+		Name:       opListPlatformApplications,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &ListPlatformApplicationsInput{}
 	}
 
-	req = c.newRequest(opListPlatformApplications, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListPlatformApplicationsOutput{}
 	req.Data = output
 	return
@@ -535,39 +964,73 @@ func (c *SNS) ListPlatformApplications(input *ListPlatformApplicationsInput) (*L
 	return out, err
 }
 
+// ListPlatformApplicationsPages iterates over the pages of a ListPlatformApplications operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListPlatformApplications method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListPlatformApplications operation.
+//    pageNum := 0
+//    err := client.ListPlatformApplicationsPages(params,
+//        func(page *ListPlatformApplicationsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *SNS) ListPlatformApplicationsPages(input *ListPlatformApplicationsInput, fn func(p *ListPlatformApplicationsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.ListPlatformApplicationsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*ListPlatformApplicationsOutput), lastPage)
 	})
 }
 
-var opListPlatformApplications *aws.Operation
+const opListSubscriptions = "ListSubscriptions"
 
-// ListSubscriptionsRequest generates a request for the ListSubscriptions operation.
-func (c *SNS) ListSubscriptionsRequest(input *ListSubscriptionsInput) (req *aws.Request, output *ListSubscriptionsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListSubscriptions == nil {
-		opListSubscriptions = &aws.Operation{
-			Name:       "ListSubscriptions",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"NextToken"},
-				OutputTokens:    []string{"NextToken"},
-				LimitToken:      "",
-				TruncationToken: "",
-			},
-		}
+// ListSubscriptionsRequest generates a "aws/request.Request" representing the
+// client's request for the ListSubscriptions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListSubscriptions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListSubscriptionsRequest method.
+//    req, resp := client.ListSubscriptionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ListSubscriptionsRequest(input *ListSubscriptionsInput) (req *request.Request, output *ListSubscriptionsOutput) {
+	op := &request.Operation{
+		Name:       opListSubscriptions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &ListSubscriptionsInput{}
 	}
 
-	req = c.newRequest(opListSubscriptions, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListSubscriptionsOutput{}
 	req.Data = output
 	return
@@ -583,39 +1046,73 @@ func (c *SNS) ListSubscriptions(input *ListSubscriptionsInput) (*ListSubscriptio
 	return out, err
 }
 
+// ListSubscriptionsPages iterates over the pages of a ListSubscriptions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListSubscriptions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListSubscriptions operation.
+//    pageNum := 0
+//    err := client.ListSubscriptionsPages(params,
+//        func(page *ListSubscriptionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *SNS) ListSubscriptionsPages(input *ListSubscriptionsInput, fn func(p *ListSubscriptionsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.ListSubscriptionsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*ListSubscriptionsOutput), lastPage)
 	})
 }
 
-var opListSubscriptions *aws.Operation
+const opListSubscriptionsByTopic = "ListSubscriptionsByTopic"
 
-// ListSubscriptionsByTopicRequest generates a request for the ListSubscriptionsByTopic operation.
-func (c *SNS) ListSubscriptionsByTopicRequest(input *ListSubscriptionsByTopicInput) (req *aws.Request, output *ListSubscriptionsByTopicOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListSubscriptionsByTopic == nil {
-		opListSubscriptionsByTopic = &aws.Operation{
-			Name:       "ListSubscriptionsByTopic",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"NextToken"},
-				OutputTokens:    []string{"NextToken"},
-				LimitToken:      "",
-				TruncationToken: "",
-			},
-		}
+// ListSubscriptionsByTopicRequest generates a "aws/request.Request" representing the
+// client's request for the ListSubscriptionsByTopic operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListSubscriptionsByTopic method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListSubscriptionsByTopicRequest method.
+//    req, resp := client.ListSubscriptionsByTopicRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ListSubscriptionsByTopicRequest(input *ListSubscriptionsByTopicInput) (req *request.Request, output *ListSubscriptionsByTopicOutput) {
+	op := &request.Operation{
+		Name:       opListSubscriptionsByTopic,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &ListSubscriptionsByTopicInput{}
 	}
 
-	req = c.newRequest(opListSubscriptionsByTopic, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListSubscriptionsByTopicOutput{}
 	req.Data = output
 	return
@@ -631,39 +1128,73 @@ func (c *SNS) ListSubscriptionsByTopic(input *ListSubscriptionsByTopicInput) (*L
 	return out, err
 }
 
+// ListSubscriptionsByTopicPages iterates over the pages of a ListSubscriptionsByTopic operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListSubscriptionsByTopic method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListSubscriptionsByTopic operation.
+//    pageNum := 0
+//    err := client.ListSubscriptionsByTopicPages(params,
+//        func(page *ListSubscriptionsByTopicOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *SNS) ListSubscriptionsByTopicPages(input *ListSubscriptionsByTopicInput, fn func(p *ListSubscriptionsByTopicOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.ListSubscriptionsByTopicRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*ListSubscriptionsByTopicOutput), lastPage)
 	})
 }
 
-var opListSubscriptionsByTopic *aws.Operation
+const opListTopics = "ListTopics"
 
-// ListTopicsRequest generates a request for the ListTopics operation.
-func (c *SNS) ListTopicsRequest(input *ListTopicsInput) (req *aws.Request, output *ListTopicsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListTopics == nil {
-		opListTopics = &aws.Operation{
-			Name:       "ListTopics",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-			Paginator: &aws.Paginator{
-				InputTokens:     []string{"NextToken"},
-				OutputTokens:    []string{"NextToken"},
-				LimitToken:      "",
-				TruncationToken: "",
-			},
-		}
+// ListTopicsRequest generates a "aws/request.Request" representing the
+// client's request for the ListTopics operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListTopics method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListTopicsRequest method.
+//    req, resp := client.ListTopicsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) ListTopicsRequest(input *ListTopicsInput) (req *request.Request, output *ListTopicsOutput) {
+	op := &request.Operation{
+		Name:       opListTopics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
 		input = &ListTopicsInput{}
 	}
 
-	req = c.newRequest(opListTopics, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListTopicsOutput{}
 	req.Data = output
 	return
@@ -678,33 +1209,118 @@ func (c *SNS) ListTopics(input *ListTopicsInput) (*ListTopicsOutput, error) {
 	return out, err
 }
 
+// ListTopicsPages iterates over the pages of a ListTopics operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListTopics method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListTopics operation.
+//    pageNum := 0
+//    err := client.ListTopicsPages(params,
+//        func(page *ListTopicsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
 func (c *SNS) ListTopicsPages(input *ListTopicsInput, fn func(p *ListTopicsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.ListTopicsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*ListTopicsOutput), lastPage)
 	})
 }
 
-var opListTopics *aws.Operation
+const opOptInPhoneNumber = "OptInPhoneNumber"
 
-// PublishRequest generates a request for the Publish operation.
-func (c *SNS) PublishRequest(input *PublishInput) (req *aws.Request, output *PublishOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// OptInPhoneNumberRequest generates a "aws/request.Request" representing the
+// client's request for the OptInPhoneNumber operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the OptInPhoneNumber method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the OptInPhoneNumberRequest method.
+//    req, resp := client.OptInPhoneNumberRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) OptInPhoneNumberRequest(input *OptInPhoneNumberInput) (req *request.Request, output *OptInPhoneNumberOutput) {
+	op := &request.Operation{
+		Name:       opOptInPhoneNumber,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opPublish == nil {
-		opPublish = &aws.Operation{
-			Name:       "Publish",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &OptInPhoneNumberInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &OptInPhoneNumberOutput{}
+	req.Data = output
+	return
+}
+
+// Use this request to opt in a phone number that is opted out, which enables
+// you to resume sending SMS messages to the number.
+//
+// You can opt in a phone number only once every 30 days.
+func (c *SNS) OptInPhoneNumber(input *OptInPhoneNumberInput) (*OptInPhoneNumberOutput, error) {
+	req, out := c.OptInPhoneNumberRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opPublish = "Publish"
+
+// PublishRequest generates a "aws/request.Request" representing the
+// client's request for the Publish operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the Publish method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PublishRequest method.
+//    req, resp := client.PublishRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) PublishRequest(input *PublishInput) (req *request.Request, output *PublishOutput) {
+	op := &request.Operation{
+		Name:       opPublish,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &PublishInput{}
 	}
 
-	req = c.newRequest(opPublish, input, output)
+	req = c.newRequest(op, input, output)
 	output = &PublishOutput{}
 	req.Data = output
 	return
@@ -713,39 +1329,60 @@ func (c *SNS) PublishRequest(input *PublishInput) (req *aws.Request, output *Pub
 // Sends a message to all of a topic's subscribed endpoints. When a messageId
 // is returned, the message has been saved and Amazon SNS will attempt to deliver
 // it to the topic's subscribers shortly. The format of the outgoing message
-// to each subscribed endpoint depends on the notification protocol selected.
+// to each subscribed endpoint depends on the notification protocol.
 //
 // To use the Publish action for sending a message to a mobile endpoint, such
-// as an app on a Kindle device or mobile phone, you must specify the EndpointArn.
-// The EndpointArn is returned when making a call with the CreatePlatformEndpoint
-// action. The second example below shows a request and response for publishing
-// to a mobile endpoint.
+// as an app on a Kindle device or mobile phone, you must specify the EndpointArn
+// for the TargetArn parameter. The EndpointArn is returned when making a call
+// with the CreatePlatformEndpoint action. The second example below shows a
+// request and response for publishing to a mobile endpoint.
+//
+// For more information about formatting messages, see Send Custom Platform-Specific
+// Payloads in Messages to Mobile Devices (http://docs.aws.amazon.com/sns/latest/dg/mobile-push-send-custommessage.html).
 func (c *SNS) Publish(input *PublishInput) (*PublishOutput, error) {
 	req, out := c.PublishRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opPublish *aws.Operation
+const opRemovePermission = "RemovePermission"
 
-// RemovePermissionRequest generates a request for the RemovePermission operation.
-func (c *SNS) RemovePermissionRequest(input *RemovePermissionInput) (req *aws.Request, output *RemovePermissionOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opRemovePermission == nil {
-		opRemovePermission = &aws.Operation{
-			Name:       "RemovePermission",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// RemovePermissionRequest generates a "aws/request.Request" representing the
+// client's request for the RemovePermission operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RemovePermission method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RemovePermissionRequest method.
+//    req, resp := client.RemovePermissionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) RemovePermissionRequest(input *RemovePermissionInput) (req *request.Request, output *RemovePermissionOutput) {
+	op := &request.Operation{
+		Name:       opRemovePermission,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &RemovePermissionInput{}
 	}
 
-	req = c.newRequest(opRemovePermission, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &RemovePermissionOutput{}
 	req.Data = output
 	return
@@ -758,26 +1395,44 @@ func (c *SNS) RemovePermission(input *RemovePermissionInput) (*RemovePermissionO
 	return out, err
 }
 
-var opRemovePermission *aws.Operation
+const opSetEndpointAttributes = "SetEndpointAttributes"
 
-// SetEndpointAttributesRequest generates a request for the SetEndpointAttributes operation.
-func (c *SNS) SetEndpointAttributesRequest(input *SetEndpointAttributesInput) (req *aws.Request, output *SetEndpointAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSetEndpointAttributes == nil {
-		opSetEndpointAttributes = &aws.Operation{
-			Name:       "SetEndpointAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// SetEndpointAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the SetEndpointAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetEndpointAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetEndpointAttributesRequest method.
+//    req, resp := client.SetEndpointAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) SetEndpointAttributesRequest(input *SetEndpointAttributesInput) (req *request.Request, output *SetEndpointAttributesOutput) {
+	op := &request.Operation{
+		Name:       opSetEndpointAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &SetEndpointAttributesInput{}
 	}
 
-	req = c.newRequest(opSetEndpointAttributes, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &SetEndpointAttributesOutput{}
 	req.Data = output
 	return
@@ -792,26 +1447,44 @@ func (c *SNS) SetEndpointAttributes(input *SetEndpointAttributesInput) (*SetEndp
 	return out, err
 }
 
-var opSetEndpointAttributes *aws.Operation
+const opSetPlatformApplicationAttributes = "SetPlatformApplicationAttributes"
 
-// SetPlatformApplicationAttributesRequest generates a request for the SetPlatformApplicationAttributes operation.
-func (c *SNS) SetPlatformApplicationAttributesRequest(input *SetPlatformApplicationAttributesInput) (req *aws.Request, output *SetPlatformApplicationAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSetPlatformApplicationAttributes == nil {
-		opSetPlatformApplicationAttributes = &aws.Operation{
-			Name:       "SetPlatformApplicationAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// SetPlatformApplicationAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the SetPlatformApplicationAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetPlatformApplicationAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetPlatformApplicationAttributesRequest method.
+//    req, resp := client.SetPlatformApplicationAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) SetPlatformApplicationAttributesRequest(input *SetPlatformApplicationAttributesInput) (req *request.Request, output *SetPlatformApplicationAttributesOutput) {
+	op := &request.Operation{
+		Name:       opSetPlatformApplicationAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &SetPlatformApplicationAttributesInput{}
 	}
 
-	req = c.newRequest(opSetPlatformApplicationAttributes, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &SetPlatformApplicationAttributesOutput{}
 	req.Data = output
 	return
@@ -820,32 +1493,106 @@ func (c *SNS) SetPlatformApplicationAttributesRequest(input *SetPlatformApplicat
 // Sets the attributes of the platform application object for the supported
 // push notification services, such as APNS and GCM. For more information, see
 // Using Amazon SNS Mobile Push Notifications (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
+// For information on configuring attributes for message delivery status, see
+// Using Amazon SNS Application Attributes for Message Delivery Status (http://docs.aws.amazon.com/sns/latest/dg/sns-msg-status.html).
 func (c *SNS) SetPlatformApplicationAttributes(input *SetPlatformApplicationAttributesInput) (*SetPlatformApplicationAttributesOutput, error) {
 	req, out := c.SetPlatformApplicationAttributesRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opSetPlatformApplicationAttributes *aws.Operation
+const opSetSMSAttributes = "SetSMSAttributes"
 
-// SetSubscriptionAttributesRequest generates a request for the SetSubscriptionAttributes operation.
-func (c *SNS) SetSubscriptionAttributesRequest(input *SetSubscriptionAttributesInput) (req *aws.Request, output *SetSubscriptionAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// SetSMSAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the SetSMSAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetSMSAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetSMSAttributesRequest method.
+//    req, resp := client.SetSMSAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) SetSMSAttributesRequest(input *SetSMSAttributesInput) (req *request.Request, output *SetSMSAttributesOutput) {
+	op := &request.Operation{
+		Name:       opSetSMSAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opSetSubscriptionAttributes == nil {
-		opSetSubscriptionAttributes = &aws.Operation{
-			Name:       "SetSubscriptionAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &SetSMSAttributesInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &SetSMSAttributesOutput{}
+	req.Data = output
+	return
+}
+
+// Use this request to set the default settings for sending SMS messages and
+// receiving daily SMS usage reports.
+//
+// You can override some of these settings for a single message when you use
+// the Publish action with the MessageAttributes.entry.N parameter. For more
+// information, see Sending an SMS Message (http://docs.aws.amazon.com/sns/latest/dg/sms_publish-to-phone.html)
+// in the Amazon SNS Developer Guide.
+func (c *SNS) SetSMSAttributes(input *SetSMSAttributesInput) (*SetSMSAttributesOutput, error) {
+	req, out := c.SetSMSAttributesRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opSetSubscriptionAttributes = "SetSubscriptionAttributes"
+
+// SetSubscriptionAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the SetSubscriptionAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetSubscriptionAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetSubscriptionAttributesRequest method.
+//    req, resp := client.SetSubscriptionAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) SetSubscriptionAttributesRequest(input *SetSubscriptionAttributesInput) (req *request.Request, output *SetSubscriptionAttributesOutput) {
+	op := &request.Operation{
+		Name:       opSetSubscriptionAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &SetSubscriptionAttributesInput{}
 	}
 
-	req = c.newRequest(opSetSubscriptionAttributes, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &SetSubscriptionAttributesOutput{}
 	req.Data = output
 	return
@@ -858,26 +1605,44 @@ func (c *SNS) SetSubscriptionAttributes(input *SetSubscriptionAttributesInput) (
 	return out, err
 }
 
-var opSetSubscriptionAttributes *aws.Operation
+const opSetTopicAttributes = "SetTopicAttributes"
 
-// SetTopicAttributesRequest generates a request for the SetTopicAttributes operation.
-func (c *SNS) SetTopicAttributesRequest(input *SetTopicAttributesInput) (req *aws.Request, output *SetTopicAttributesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSetTopicAttributes == nil {
-		opSetTopicAttributes = &aws.Operation{
-			Name:       "SetTopicAttributes",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// SetTopicAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the SetTopicAttributes operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SetTopicAttributes method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SetTopicAttributesRequest method.
+//    req, resp := client.SetTopicAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) SetTopicAttributesRequest(input *SetTopicAttributesInput) (req *request.Request, output *SetTopicAttributesOutput) {
+	op := &request.Operation{
+		Name:       opSetTopicAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &SetTopicAttributesInput{}
 	}
 
-	req = c.newRequest(opSetTopicAttributes, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &SetTopicAttributesOutput{}
 	req.Data = output
 	return
@@ -890,26 +1655,42 @@ func (c *SNS) SetTopicAttributes(input *SetTopicAttributesInput) (*SetTopicAttri
 	return out, err
 }
 
-var opSetTopicAttributes *aws.Operation
+const opSubscribe = "Subscribe"
 
-// SubscribeRequest generates a request for the Subscribe operation.
-func (c *SNS) SubscribeRequest(input *SubscribeInput) (req *aws.Request, output *SubscribeOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opSubscribe == nil {
-		opSubscribe = &aws.Operation{
-			Name:       "Subscribe",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// SubscribeRequest generates a "aws/request.Request" representing the
+// client's request for the Subscribe operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the Subscribe method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SubscribeRequest method.
+//    req, resp := client.SubscribeRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) SubscribeRequest(input *SubscribeInput) (req *request.Request, output *SubscribeOutput) {
+	op := &request.Operation{
+		Name:       opSubscribe,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &SubscribeInput{}
 	}
 
-	req = c.newRequest(opSubscribe, input, output)
+	req = c.newRequest(op, input, output)
 	output = &SubscribeOutput{}
 	req.Data = output
 	return
@@ -925,26 +1706,44 @@ func (c *SNS) Subscribe(input *SubscribeInput) (*SubscribeOutput, error) {
 	return out, err
 }
 
-var opSubscribe *aws.Operation
+const opUnsubscribe = "Unsubscribe"
 
-// UnsubscribeRequest generates a request for the Unsubscribe operation.
-func (c *SNS) UnsubscribeRequest(input *UnsubscribeInput) (req *aws.Request, output *UnsubscribeOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opUnsubscribe == nil {
-		opUnsubscribe = &aws.Operation{
-			Name:       "Unsubscribe",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// UnsubscribeRequest generates a "aws/request.Request" representing the
+// client's request for the Unsubscribe operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the Unsubscribe method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UnsubscribeRequest method.
+//    req, resp := client.UnsubscribeRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *SNS) UnsubscribeRequest(input *UnsubscribeInput) (req *request.Request, output *UnsubscribeOutput) {
+	op := &request.Operation{
+		Name:       opUnsubscribe,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &UnsubscribeInput{}
 	}
 
-	req = c.newRequest(opUnsubscribe, input, output)
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(query.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	output = &UnsubscribeOutput{}
 	req.Data = output
 	return
@@ -962,13 +1761,13 @@ func (c *SNS) Unsubscribe(input *UnsubscribeInput) (*UnsubscribeOutput, error) {
 	return out, err
 }
 
-var opUnsubscribe *aws.Operation
-
 type AddPermissionInput struct {
+	_ struct{} `type:"structure"`
+
 	// The AWS account IDs of the users (principals) who will be given access to
 	// the specified actions. The users must have AWS accounts, but do not need
 	// to be signed up for this service.
-	AWSAccountID []*string `locationName:"AWSAccountId" type:"list" required:"true"`
+	AWSAccountId []*string `type:"list" required:"true"`
 
 	// The action you want to allow for the specified principal(s).
 	//
@@ -979,25 +1778,114 @@ type AddPermissionInput struct {
 	Label *string `type:"string" required:"true"`
 
 	// The ARN of the topic whose access control policy you wish to modify.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
-
-	metadataAddPermissionInput `json:"-" xml:"-"`
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataAddPermissionInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AddPermissionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddPermissionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AddPermissionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AddPermissionInput"}
+	if s.AWSAccountId == nil {
+		invalidParams.Add(request.NewErrParamRequired("AWSAccountId"))
+	}
+	if s.ActionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ActionName"))
+	}
+	if s.Label == nil {
+		invalidParams.Add(request.NewErrParamRequired("Label"))
+	}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type AddPermissionOutput struct {
-	metadataAddPermissionOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataAddPermissionOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s AddPermissionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddPermissionOutput) GoString() string {
+	return s.String()
+}
+
+// The input for the CheckIfPhoneNumberIsOptedOut action.
+type CheckIfPhoneNumberIsOptedOutInput struct {
+	_ struct{} `type:"structure"`
+
+	// The phone number for which you want to check the opt out status.
+	PhoneNumber *string `locationName:"phoneNumber" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CheckIfPhoneNumberIsOptedOutInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CheckIfPhoneNumberIsOptedOutInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CheckIfPhoneNumberIsOptedOutInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CheckIfPhoneNumberIsOptedOutInput"}
+	if s.PhoneNumber == nil {
+		invalidParams.Add(request.NewErrParamRequired("PhoneNumber"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// The response from the CheckIfPhoneNumberIsOptedOut action.
+type CheckIfPhoneNumberIsOptedOutOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether the phone number is opted out:
+	//
+	//  true – The phone number is opted out, meaning you cannot publish SMS messages
+	// to it.
+	//
+	// false – The phone number is opted in, meaning you can publish SMS messages
+	// to it.
+	IsOptedOut *bool `locationName:"isOptedOut" type:"boolean"`
+}
+
+// String returns the string representation
+func (s CheckIfPhoneNumberIsOptedOutOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CheckIfPhoneNumberIsOptedOutOutput) GoString() string {
+	return s.String()
 }
 
 // Input for ConfirmSubscription action.
 type ConfirmSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
 	// Disallows unauthenticated unsubscribes of the subscription. If the value
 	// of this parameter is true and the request has an AWS signature, then only
 	// the topic owner and the subscription owner can unsubscribe the endpoint.
@@ -1008,29 +1896,57 @@ type ConfirmSubscriptionInput struct {
 	Token *string `type:"string" required:"true"`
 
 	// The ARN of the topic for which you wish to confirm a subscription.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
-
-	metadataConfirmSubscriptionInput `json:"-" xml:"-"`
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataConfirmSubscriptionInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ConfirmSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ConfirmSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ConfirmSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ConfirmSubscriptionInput"}
+	if s.Token == nil {
+		invalidParams.Add(request.NewErrParamRequired("Token"))
+	}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for ConfirmSubscriptions action.
 type ConfirmSubscriptionOutput struct {
-	// The ARN of the created subscription.
-	SubscriptionARN *string `locationName:"SubscriptionArn" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataConfirmSubscriptionOutput `json:"-" xml:"-"`
+	// The ARN of the created subscription.
+	SubscriptionArn *string `type:"string"`
 }
 
-type metadataConfirmSubscriptionOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ConfirmSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ConfirmSubscriptionOutput) GoString() string {
+	return s.String()
 }
 
 // Input for CreatePlatformApplication action.
 type CreatePlatformApplicationInput struct {
+	_ struct{} `type:"structure"`
+
 	// For a list of attributes, see SetPlatformApplicationAttributes (http://docs.aws.amazon.com/sns/latest/api/API_SetPlatformApplicationAttributes.html)
 	Attributes map[string]*string `type:"map" required:"true"`
 
@@ -1042,28 +1958,59 @@ type CreatePlatformApplicationInput struct {
 	// The following platforms are supported: ADM (Amazon Device Messaging), APNS
 	// (Apple Push Notification Service), APNS_SANDBOX, and GCM (Google Cloud Messaging).
 	Platform *string `type:"string" required:"true"`
-
-	metadataCreatePlatformApplicationInput `json:"-" xml:"-"`
 }
 
-type metadataCreatePlatformApplicationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreatePlatformApplicationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreatePlatformApplicationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreatePlatformApplicationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreatePlatformApplicationInput"}
+	if s.Attributes == nil {
+		invalidParams.Add(request.NewErrParamRequired("Attributes"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Platform == nil {
+		invalidParams.Add(request.NewErrParamRequired("Platform"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response from CreatePlatformApplication action.
 type CreatePlatformApplicationOutput struct {
-	// PlatformApplicationArn is returned.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataCreatePlatformApplicationOutput `json:"-" xml:"-"`
+	// PlatformApplicationArn is returned.
+	PlatformApplicationArn *string `type:"string"`
 }
 
-type metadataCreatePlatformApplicationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreatePlatformApplicationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreatePlatformApplicationOutput) GoString() string {
+	return s.String()
 }
 
 // Input for CreatePlatformEndpoint action.
 type CreatePlatformEndpointInput struct {
+	_ struct{} `type:"structure"`
+
 	// For a list of attributes, see SetEndpointAttributes (http://docs.aws.amazon.com/sns/latest/api/API_SetEndpointAttributes.html).
 	Attributes map[string]*string `type:"map"`
 
@@ -1073,7 +2020,7 @@ type CreatePlatformEndpointInput struct {
 
 	// PlatformApplicationArn returned from CreatePlatformApplication is used to
 	// create a an endpoint.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string" required:"true"`
+	PlatformApplicationArn *string `type:"string" required:"true"`
 
 	// Unique identifier created by the notification service for an app on a device.
 	// The specific name for Token will vary, depending on which notification service
@@ -1081,408 +2028,837 @@ type CreatePlatformEndpointInput struct {
 	// you need the device token. Alternatively, when using GCM or ADM, the device
 	// token equivalent is called the registration ID.
 	Token *string `type:"string" required:"true"`
-
-	metadataCreatePlatformEndpointInput `json:"-" xml:"-"`
 }
 
-type metadataCreatePlatformEndpointInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreatePlatformEndpointInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreatePlatformEndpointInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreatePlatformEndpointInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreatePlatformEndpointInput"}
+	if s.PlatformApplicationArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
+	}
+	if s.Token == nil {
+		invalidParams.Add(request.NewErrParamRequired("Token"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response from CreateEndpoint action.
 type CreatePlatformEndpointOutput struct {
-	// EndpointArn returned from CreateEndpoint action.
-	EndpointARN *string `locationName:"EndpointArn" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataCreatePlatformEndpointOutput `json:"-" xml:"-"`
+	// EndpointArn returned from CreateEndpoint action.
+	EndpointArn *string `type:"string"`
 }
 
-type metadataCreatePlatformEndpointOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreatePlatformEndpointOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreatePlatformEndpointOutput) GoString() string {
+	return s.String()
 }
 
 // Input for CreateTopic action.
 type CreateTopicInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the topic you want to create.
 	//
 	// Constraints: Topic names must be made up of only uppercase and lowercase
 	// ASCII letters, numbers, underscores, and hyphens, and must be between 1 and
 	// 256 characters long.
 	Name *string `type:"string" required:"true"`
-
-	metadataCreateTopicInput `json:"-" xml:"-"`
 }
 
-type metadataCreateTopicInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateTopicInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateTopicInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateTopicInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateTopicInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response from CreateTopic action.
 type CreateTopicOutput struct {
-	// The Amazon Resource Name (ARN) assigned to the created topic.
-	TopicARN *string `locationName:"TopicArn" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataCreateTopicOutput `json:"-" xml:"-"`
+	// The Amazon Resource Name (ARN) assigned to the created topic.
+	TopicArn *string `type:"string"`
 }
 
-type metadataCreateTopicOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateTopicOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateTopicOutput) GoString() string {
+	return s.String()
 }
 
 // Input for DeleteEndpoint action.
 type DeleteEndpointInput struct {
-	// EndpointArn of endpoint to delete.
-	EndpointARN *string `locationName:"EndpointArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataDeleteEndpointInput `json:"-" xml:"-"`
+	// EndpointArn of endpoint to delete.
+	EndpointArn *string `type:"string" required:"true"`
 }
 
-type metadataDeleteEndpointInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteEndpointInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEndpointInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteEndpointInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteEndpointInput"}
+	if s.EndpointArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteEndpointOutput struct {
-	metadataDeleteEndpointOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteEndpointOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteEndpointOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEndpointOutput) GoString() string {
+	return s.String()
 }
 
 // Input for DeletePlatformApplication action.
 type DeletePlatformApplicationInput struct {
-	// PlatformApplicationArn of platform application object to delete.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataDeletePlatformApplicationInput `json:"-" xml:"-"`
+	// PlatformApplicationArn of platform application object to delete.
+	PlatformApplicationArn *string `type:"string" required:"true"`
 }
 
-type metadataDeletePlatformApplicationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeletePlatformApplicationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeletePlatformApplicationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeletePlatformApplicationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeletePlatformApplicationInput"}
+	if s.PlatformApplicationArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeletePlatformApplicationOutput struct {
-	metadataDeletePlatformApplicationOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeletePlatformApplicationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeletePlatformApplicationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeletePlatformApplicationOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteTopicInput struct {
-	// The ARN of the topic you want to delete.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataDeleteTopicInput `json:"-" xml:"-"`
+	// The ARN of the topic you want to delete.
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataDeleteTopicInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteTopicInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteTopicInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteTopicInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteTopicInput"}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteTopicOutput struct {
-	metadataDeleteTopicOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataDeleteTopicOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteTopicOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteTopicOutput) GoString() string {
+	return s.String()
 }
 
 // Endpoint for mobile app and device.
 type Endpoint struct {
+	_ struct{} `type:"structure"`
+
 	// Attributes for endpoint.
 	Attributes map[string]*string `type:"map"`
 
 	// EndpointArn for mobile app and device.
-	EndpointARN *string `locationName:"EndpointArn" type:"string"`
-
-	metadataEndpoint `json:"-" xml:"-"`
+	EndpointArn *string `type:"string"`
 }
 
-type metadataEndpoint struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Endpoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Endpoint) GoString() string {
+	return s.String()
 }
 
 // Input for GetEndpointAttributes action.
 type GetEndpointAttributesInput struct {
-	// EndpointArn for GetEndpointAttributes input.
-	EndpointARN *string `locationName:"EndpointArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataGetEndpointAttributesInput `json:"-" xml:"-"`
+	// EndpointArn for GetEndpointAttributes input.
+	EndpointArn *string `type:"string" required:"true"`
 }
 
-type metadataGetEndpointAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetEndpointAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetEndpointAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetEndpointAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetEndpointAttributesInput"}
+	if s.EndpointArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response from GetEndpointAttributes of the EndpointArn.
 type GetEndpointAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Attributes include the following:
 	//
-	//   CustomUserData -- arbitrary user data to associate with the endpoint.
-	// Amazon SNS does not use this data. The data must be in UTF-8 format and less
-	// than 2KB.  Enabled -- flag that enables/disables delivery to the endpoint.
-	// Amazon SNS will set this to false when a notification service indicates to
-	// Amazon SNS that the endpoint is invalid. Users can set it back to true, typically
-	// after updating Token.  Token -- device token, also referred to as a registration
-	// id, for an app and mobile device. This is returned from the notification
-	// service when an app and mobile device are registered with the notification
-	// service.
+	//  CustomUserData -- arbitrary user data to associate with the endpoint. Amazon
+	// SNS does not use this data. The data must be in UTF-8 format and less than
+	// 2KB.
+	//
+	// Enabled -- flag that enables/disables delivery to the endpoint. Amazon SNS
+	// will set this to false when a notification service indicates to Amazon SNS
+	// that the endpoint is invalid. Users can set it back to true, typically after
+	// updating Token.
+	//
+	// Token -- device token, also referred to as a registration id, for an app
+	// and mobile device. This is returned from the notification service when an
+	// app and mobile device are registered with the notification service.
 	Attributes map[string]*string `type:"map"`
-
-	metadataGetEndpointAttributesOutput `json:"-" xml:"-"`
 }
 
-type metadataGetEndpointAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetEndpointAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetEndpointAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for GetPlatformApplicationAttributes action.
 type GetPlatformApplicationAttributesInput struct {
-	// PlatformApplicationArn for GetPlatformApplicationAttributesInput.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataGetPlatformApplicationAttributesInput `json:"-" xml:"-"`
+	// PlatformApplicationArn for GetPlatformApplicationAttributesInput.
+	PlatformApplicationArn *string `type:"string" required:"true"`
 }
 
-type metadataGetPlatformApplicationAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetPlatformApplicationAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetPlatformApplicationAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetPlatformApplicationAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetPlatformApplicationAttributesInput"}
+	if s.PlatformApplicationArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for GetPlatformApplicationAttributes action.
 type GetPlatformApplicationAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Attributes include the following:
 	//
-	//   EventEndpointCreated -- Topic ARN to which EndpointCreated event notifications
-	// should be sent.  EventEndpointDeleted -- Topic ARN to which EndpointDeleted
-	// event notifications should be sent.  EventEndpointUpdated -- Topic ARN to
-	// which EndpointUpdate event notifications should be sent.  EventDeliveryFailure
-	// -- Topic ARN to which DeliveryFailure event notifications should be sent
-	// upon Direct Publish delivery failure (permanent) to one of the application's
-	// endpoints.
+	//  EventEndpointCreated -- Topic ARN to which EndpointCreated event notifications
+	// should be sent.
+	//
+	// EventEndpointDeleted -- Topic ARN to which EndpointDeleted event notifications
+	// should be sent.
+	//
+	// EventEndpointUpdated -- Topic ARN to which EndpointUpdate event notifications
+	// should be sent.
+	//
+	// EventDeliveryFailure -- Topic ARN to which DeliveryFailure event notifications
+	// should be sent upon Direct Publish delivery failure (permanent) to one of
+	// the application's endpoints.
 	Attributes map[string]*string `type:"map"`
-
-	metadataGetPlatformApplicationAttributesOutput `json:"-" xml:"-"`
 }
 
-type metadataGetPlatformApplicationAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetPlatformApplicationAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetPlatformApplicationAttributesOutput) GoString() string {
+	return s.String()
+}
+
+// The input for the GetSMSAttributes request.
+type GetSMSAttributesInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of the individual attribute names, such as MonthlySpendLimit, for
+	// which you want values.
+	//
+	// For all attribute names, see SetSMSAttributes (http://docs.aws.amazon.com/sns/latest/api/API_SetSMSAttributes.html).
+	//
+	// If you don't use this parameter, Amazon SNS returns all SMS attributes.
+	Attributes []*string `locationName:"attributes" type:"list"`
+}
+
+// String returns the string representation
+func (s GetSMSAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetSMSAttributesInput) GoString() string {
+	return s.String()
+}
+
+// The response from the GetSMSAttributes request.
+type GetSMSAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The SMS attribute names and their values.
+	Attributes map[string]*string `locationName:"attributes" type:"map"`
+}
+
+// String returns the string representation
+func (s GetSMSAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetSMSAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for GetSubscriptionAttributes.
 type GetSubscriptionAttributesInput struct {
-	// The ARN of the subscription whose properties you want to get.
-	SubscriptionARN *string `locationName:"SubscriptionArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataGetSubscriptionAttributesInput `json:"-" xml:"-"`
+	// The ARN of the subscription whose properties you want to get.
+	SubscriptionArn *string `type:"string" required:"true"`
 }
 
-type metadataGetSubscriptionAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetSubscriptionAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetSubscriptionAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetSubscriptionAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetSubscriptionAttributesInput"}
+	if s.SubscriptionArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for GetSubscriptionAttributes action.
 type GetSubscriptionAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A map of the subscription's attributes. Attributes in this map include the
 	// following:
 	//
-	//   SubscriptionArn -- the subscription's ARN  TopicArn -- the topic ARN that
-	// the subscription is associated with  Owner -- the AWS account ID of the subscription's
-	// owner  ConfirmationWasAuthenticated -- true if the subscription confirmation
-	// request was authenticated  DeliveryPolicy -- the JSON serialization of the
-	// subscription's delivery policy  EffectiveDeliveryPolicy -- the JSON serialization
-	// of the effective delivery policy that takes into account the topic delivery
-	// policy and account system defaults
+	//   SubscriptionArn -- the subscription's ARN
+	//
+	//   TopicArn -- the topic ARN that the subscription is associated with
+	//
+	//   Owner -- the AWS account ID of the subscription's owner
+	//
+	//   ConfirmationWasAuthenticated -- true if the subscription confirmation
+	// request was authenticated
+	//
+	//   DeliveryPolicy -- the JSON serialization of the subscription's delivery
+	// policy
+	//
+	//   EffectiveDeliveryPolicy -- the JSON serialization of the effective delivery
+	// policy that takes into account the topic delivery policy and account system
+	// defaults
 	Attributes map[string]*string `type:"map"`
-
-	metadataGetSubscriptionAttributesOutput `json:"-" xml:"-"`
 }
 
-type metadataGetSubscriptionAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetSubscriptionAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetSubscriptionAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for GetTopicAttributes action.
 type GetTopicAttributesInput struct {
-	// The ARN of the topic whose properties you want to get.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataGetTopicAttributesInput `json:"-" xml:"-"`
+	// The ARN of the topic whose properties you want to get.
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataGetTopicAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetTopicAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetTopicAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetTopicAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetTopicAttributesInput"}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for GetTopicAttributes action.
 type GetTopicAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// A map of the topic's attributes. Attributes in this map include the following:
 	//
-	//   TopicArn -- the topic's ARN  Owner -- the AWS account ID of the topic's
-	// owner  Policy -- the JSON serialization of the topic's access control policy
-	//  DisplayName -- the human-readable name used in the "From" field for notifications
-	// to email and email-json endpoints  SubscriptionsPending -- the number of
-	// subscriptions pending confirmation on this topic  SubscriptionsConfirmed
-	// -- the number of confirmed subscriptions on this topic  SubscriptionsDeleted
-	// -- the number of deleted subscriptions on this topic  DeliveryPolicy -- the
-	// JSON serialization of the topic's delivery policy  EffectiveDeliveryPolicy
-	// -- the JSON serialization of the effective delivery policy that takes into
-	// account system defaults
+	//  TopicArn -- the topic's ARN
+	//
+	// Owner -- the AWS account ID of the topic's owner
+	//
+	// Policy -- the JSON serialization of the topic's access control policy
+	//
+	// DisplayName -- the human-readable name used in the "From" field for notifications
+	// to email and email-json endpoints
+	//
+	// SubscriptionsPending -- the number of subscriptions pending confirmation
+	// on this topic
+	//
+	// SubscriptionsConfirmed -- the number of confirmed subscriptions on this
+	// topic
+	//
+	// SubscriptionsDeleted -- the number of deleted subscriptions on this topic
+	//
+	// DeliveryPolicy -- the JSON serialization of the topic's delivery policy
+	//
+	// EffectiveDeliveryPolicy -- the JSON serialization of the effective delivery
+	// policy that takes into account system defaults
 	Attributes map[string]*string `type:"map"`
-
-	metadataGetTopicAttributesOutput `json:"-" xml:"-"`
 }
 
-type metadataGetTopicAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetTopicAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetTopicAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for ListEndpointsByPlatformApplication action.
 type ListEndpointsByPlatformApplicationInput struct {
+	_ struct{} `type:"structure"`
+
 	// NextToken string is used when calling ListEndpointsByPlatformApplication
 	// action to retrieve additional records that are available after the first
 	// page results.
 	NextToken *string `type:"string"`
 
 	// PlatformApplicationArn for ListEndpointsByPlatformApplicationInput action.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string" required:"true"`
-
-	metadataListEndpointsByPlatformApplicationInput `json:"-" xml:"-"`
+	PlatformApplicationArn *string `type:"string" required:"true"`
 }
 
-type metadataListEndpointsByPlatformApplicationInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListEndpointsByPlatformApplicationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListEndpointsByPlatformApplicationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListEndpointsByPlatformApplicationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListEndpointsByPlatformApplicationInput"}
+	if s.PlatformApplicationArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for ListEndpointsByPlatformApplication action.
 type ListEndpointsByPlatformApplicationOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Endpoints returned for ListEndpointsByPlatformApplication action.
 	Endpoints []*Endpoint `type:"list"`
 
 	// NextToken string is returned when calling ListEndpointsByPlatformApplication
 	// action if additional records are available after the first page results.
 	NextToken *string `type:"string"`
-
-	metadataListEndpointsByPlatformApplicationOutput `json:"-" xml:"-"`
 }
 
-type metadataListEndpointsByPlatformApplicationOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListEndpointsByPlatformApplicationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListEndpointsByPlatformApplicationOutput) GoString() string {
+	return s.String()
+}
+
+// The input for the ListPhoneNumbersOptedOut action.
+type ListPhoneNumbersOptedOutInput struct {
+	_ struct{} `type:"structure"`
+
+	// A NextToken string is used when you call the ListPhoneNumbersOptedOut action
+	// to retrieve additional records that are available after the first page of
+	// results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s ListPhoneNumbersOptedOutInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListPhoneNumbersOptedOutInput) GoString() string {
+	return s.String()
+}
+
+// The response from the ListPhoneNumbersOptedOut action.
+type ListPhoneNumbersOptedOutOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A NextToken string is returned when you call the ListPhoneNumbersOptedOut
+	// action if additional records are available after the first page of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// A list of phone numbers that are opted out of receiving SMS messages. The
+	// list is paginated, and each page can contain up to 100 phone numbers.
+	PhoneNumbers []*string `locationName:"phoneNumbers" type:"list"`
+}
+
+// String returns the string representation
+func (s ListPhoneNumbersOptedOutOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListPhoneNumbersOptedOutOutput) GoString() string {
+	return s.String()
 }
 
 // Input for ListPlatformApplications action.
 type ListPlatformApplicationsInput struct {
+	_ struct{} `type:"structure"`
+
 	// NextToken string is used when calling ListPlatformApplications action to
 	// retrieve additional records that are available after the first page results.
 	NextToken *string `type:"string"`
-
-	metadataListPlatformApplicationsInput `json:"-" xml:"-"`
 }
 
-type metadataListPlatformApplicationsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListPlatformApplicationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListPlatformApplicationsInput) GoString() string {
+	return s.String()
 }
 
 // Response for ListPlatformApplications action.
 type ListPlatformApplicationsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// NextToken string is returned when calling ListPlatformApplications action
 	// if additional records are available after the first page results.
 	NextToken *string `type:"string"`
 
 	// Platform applications returned when calling ListPlatformApplications action.
 	PlatformApplications []*PlatformApplication `type:"list"`
-
-	metadataListPlatformApplicationsOutput `json:"-" xml:"-"`
 }
 
-type metadataListPlatformApplicationsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListPlatformApplicationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListPlatformApplicationsOutput) GoString() string {
+	return s.String()
 }
 
 // Input for ListSubscriptionsByTopic action.
 type ListSubscriptionsByTopicInput struct {
+	_ struct{} `type:"structure"`
+
 	// Token returned by the previous ListSubscriptionsByTopic request.
 	NextToken *string `type:"string"`
 
 	// The ARN of the topic for which you wish to find subscriptions.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
-
-	metadataListSubscriptionsByTopicInput `json:"-" xml:"-"`
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataListSubscriptionsByTopicInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListSubscriptionsByTopicInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListSubscriptionsByTopicInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListSubscriptionsByTopicInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListSubscriptionsByTopicInput"}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for ListSubscriptionsByTopic action.
 type ListSubscriptionsByTopicOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Token to pass along to the next ListSubscriptionsByTopic request. This element
 	// is returned if there are more subscriptions to retrieve.
 	NextToken *string `type:"string"`
 
 	// A list of subscriptions.
 	Subscriptions []*Subscription `type:"list"`
-
-	metadataListSubscriptionsByTopicOutput `json:"-" xml:"-"`
 }
 
-type metadataListSubscriptionsByTopicOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListSubscriptionsByTopicOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListSubscriptionsByTopicOutput) GoString() string {
+	return s.String()
 }
 
 // Input for ListSubscriptions action.
 type ListSubscriptionsInput struct {
+	_ struct{} `type:"structure"`
+
 	// Token returned by the previous ListSubscriptions request.
 	NextToken *string `type:"string"`
-
-	metadataListSubscriptionsInput `json:"-" xml:"-"`
 }
 
-type metadataListSubscriptionsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListSubscriptionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListSubscriptionsInput) GoString() string {
+	return s.String()
 }
 
 // Response for ListSubscriptions action
 type ListSubscriptionsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Token to pass along to the next ListSubscriptions request. This element is
 	// returned if there are more subscriptions to retrieve.
 	NextToken *string `type:"string"`
 
 	// A list of subscriptions.
 	Subscriptions []*Subscription `type:"list"`
-
-	metadataListSubscriptionsOutput `json:"-" xml:"-"`
 }
 
-type metadataListSubscriptionsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListSubscriptionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListSubscriptionsOutput) GoString() string {
+	return s.String()
 }
 
 type ListTopicsInput struct {
+	_ struct{} `type:"structure"`
+
 	// Token returned by the previous ListTopics request.
 	NextToken *string `type:"string"`
-
-	metadataListTopicsInput `json:"-" xml:"-"`
 }
 
-type metadataListTopicsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListTopicsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTopicsInput) GoString() string {
+	return s.String()
 }
 
 // Response for ListTopics action.
 type ListTopicsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Token to pass along to the next ListTopics request. This element is returned
 	// if there are additional topics to retrieve.
 	NextToken *string `type:"string"`
 
 	// A list of topic ARNs.
 	Topics []*Topic `type:"list"`
-
-	metadataListTopicsOutput `json:"-" xml:"-"`
 }
 
-type metadataListTopicsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListTopicsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTopicsOutput) GoString() string {
+	return s.String()
 }
 
 // The user-specified message attribute value. For string data types, the value
@@ -1495,8 +2871,12 @@ type metadataListTopicsOutput struct {
 // is currently 256 KB (262,144 bytes). For more information, see Using Amazon
 // SNS Message Attributes (http://docs.aws.amazon.com/sns/latest/dg/SNSMessageAttributes.html).
 type MessageAttributeValue struct {
+	_ struct{} `type:"structure"`
+
 	// Binary type attributes can store any binary data, for example, compressed
 	// data, encrypted data, or images.
+	//
+	// BinaryValue is automatically base64 encoded/decoded by the SDK.
 	BinaryValue []byte `type:"blob"`
 
 	// Amazon SNS supports the following logical data types: String, Number, and
@@ -1506,31 +2886,102 @@ type MessageAttributeValue struct {
 	// Strings are Unicode with UTF8 binary encoding. For a list of code values,
 	// see http://en.wikipedia.org/wiki/ASCII#ASCII_printable_characters (http://en.wikipedia.org/wiki/ASCII#ASCII_printable_characters).
 	StringValue *string `type:"string"`
-
-	metadataMessageAttributeValue `json:"-" xml:"-"`
 }
 
-type metadataMessageAttributeValue struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s MessageAttributeValue) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MessageAttributeValue) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MessageAttributeValue) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MessageAttributeValue"}
+	if s.DataType == nil {
+		invalidParams.Add(request.NewErrParamRequired("DataType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Input for the OptInPhoneNumber action.
+type OptInPhoneNumberInput struct {
+	_ struct{} `type:"structure"`
+
+	// The phone number to opt in.
+	PhoneNumber *string `locationName:"phoneNumber" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s OptInPhoneNumberInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OptInPhoneNumberInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OptInPhoneNumberInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OptInPhoneNumberInput"}
+	if s.PhoneNumber == nil {
+		invalidParams.Add(request.NewErrParamRequired("PhoneNumber"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// The response for the OptInPhoneNumber action.
+type OptInPhoneNumberOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s OptInPhoneNumberOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OptInPhoneNumberOutput) GoString() string {
+	return s.String()
 }
 
 // Platform application object.
 type PlatformApplication struct {
+	_ struct{} `type:"structure"`
+
 	// Attributes for platform application object.
 	Attributes map[string]*string `type:"map"`
 
 	// PlatformApplicationArn for platform application object.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string"`
-
-	metadataPlatformApplication `json:"-" xml:"-"`
+	PlatformApplicationArn *string `type:"string"`
 }
 
-type metadataPlatformApplication struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PlatformApplication) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PlatformApplication) GoString() string {
+	return s.String()
 }
 
 // Input for Publish action.
 type PublishInput struct {
+	_ struct{} `type:"structure"`
+
 	// The message you want to send to the topic.
 	//
 	// If you want to send the same message to all transport protocols, include
@@ -1544,17 +2995,30 @@ type PublishInput struct {
 	// Constraints: Messages must be UTF-8 encoded strings at most 256 KB in size
 	// (262144 bytes, not 262144 characters).
 	//
-	// JSON-specific constraints:  Keys in the JSON object that correspond to supported
-	// transport protocols must have simple JSON string values.  The values will
-	// be parsed (unescaped) before they are used in outgoing messages. Outbound
-	// notifications are JSON encoded (meaning that the characters will be reescaped
-	// for sending). Values have a minimum length of 0 (the empty string, "", is
-	// allowed). Values have a maximum length bounded by the overall message size
-	// (so, including multiple protocols may limit message sizes). Non-string values
-	// will cause the key to be ignored. Keys that do not correspond to supported
-	// transport protocols are ignored. Duplicate keys are not allowed. Failure
-	// to parse or validate any key or value in the message will cause the Publish
-	// call to return an error (no partial delivery).
+	// JSON-specific constraints:
+	//
+	//   Keys in the JSON object that correspond to supported transport protocols
+	// must have simple JSON string values.
+	//
+	//   The values will be parsed (unescaped) before they are used in outgoing
+	// messages.
+	//
+	//   Outbound notifications are JSON encoded (meaning that the characters will
+	// be reescaped for sending).
+	//
+	//   Values have a minimum length of 0 (the empty string, "", is allowed).
+	//
+	//   Values have a maximum length bounded by the overall message size (so,
+	// including multiple protocols may limit message sizes).
+	//
+	//   Non-string values will cause the key to be ignored.
+	//
+	//   Keys that do not correspond to supported transport protocols are ignored.
+	//
+	//   Duplicate keys are not allowed.
+	//
+	//   Failure to parse or validate any key or value in the message will cause
+	// the Publish call to return an error (no partial delivery).
 	Message *string `type:"string" required:"true"`
 
 	// Message attributes for Publish action.
@@ -1565,10 +3029,13 @@ type PublishInput struct {
 	// message to your SMS subscribers and a longer message to your email subscribers.
 	// If you set MessageStructure to json, the value of the Message parameter must:
 	//
-	//  be a syntactically valid JSON object; and contain at least a top-level
-	// JSON key of "default" with a value that is a string.   You can define other
-	// top-level keys that define the message you want to send to a specific transport
-	// protocol (e.g., "http").
+	//   be a syntactically valid JSON object; and
+	//
+	//   contain at least a top-level JSON key of "default" with a value that is
+	// a string.
+	//
+	//    You can define other top-level keys that define the message you want
+	// to send to a specific transport protocol (e.g., "http").
 	//
 	// For information about sending different messages for each protocol using
 	// the AWS Management Console, go to Create Different Messages for Each Protocol
@@ -1577,6 +3044,12 @@ type PublishInput struct {
 	//
 	// Valid value: json
 	MessageStructure *string `type:"string"`
+
+	// The phone number to which you want to deliver an SMS message. Use E.164 format.
+	//
+	// If you don't specify a value for the PhoneNumber parameter, you must specify
+	// a value for the TargetArn or TopicArn parameters.
+	PhoneNumber *string `type:"string"`
 
 	// Optional parameter to be used as the "Subject" line when the message is delivered
 	// to email endpoints. This field will also be included, if present, in the
@@ -1588,127 +3061,385 @@ type PublishInput struct {
 	Subject *string `type:"string"`
 
 	// Either TopicArn or EndpointArn, but not both.
-	TargetARN *string `locationName:"TargetArn" type:"string"`
+	//
+	// If you don't specify a value for the TargetArn parameter, you must specify
+	// a value for the PhoneNumber or TopicArn parameters.
+	TargetArn *string `type:"string"`
 
 	// The topic you want to publish to.
-	TopicARN *string `locationName:"TopicArn" type:"string"`
-
-	metadataPublishInput `json:"-" xml:"-"`
+	//
+	// If you don't specify a value for the TopicArn parameter, you must specify
+	// a value for the PhoneNumber or TargetArn parameters.
+	TopicArn *string `type:"string"`
 }
 
-type metadataPublishInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PublishInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PublishInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PublishInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PublishInput"}
+	if s.Message == nil {
+		invalidParams.Add(request.NewErrParamRequired("Message"))
+	}
+	if s.MessageAttributes != nil {
+		for i, v := range s.MessageAttributes {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "MessageAttributes", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for Publish action.
 type PublishOutput struct {
+	_ struct{} `type:"structure"`
+
 	// Unique identifier assigned to the published message.
 	//
 	// Length Constraint: Maximum 100 characters
-	MessageID *string `locationName:"MessageId" type:"string"`
-
-	metadataPublishOutput `json:"-" xml:"-"`
+	MessageId *string `type:"string"`
 }
 
-type metadataPublishOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s PublishOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PublishOutput) GoString() string {
+	return s.String()
 }
 
 // Input for RemovePermission action.
 type RemovePermissionInput struct {
+	_ struct{} `type:"structure"`
+
 	// The unique label of the statement you want to remove.
 	Label *string `type:"string" required:"true"`
 
 	// The ARN of the topic whose access control policy you wish to modify.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
-
-	metadataRemovePermissionInput `json:"-" xml:"-"`
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataRemovePermissionInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RemovePermissionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemovePermissionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RemovePermissionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RemovePermissionInput"}
+	if s.Label == nil {
+		invalidParams.Add(request.NewErrParamRequired("Label"))
+	}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type RemovePermissionOutput struct {
-	metadataRemovePermissionOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataRemovePermissionOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s RemovePermissionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemovePermissionOutput) GoString() string {
+	return s.String()
 }
 
 // Input for SetEndpointAttributes action.
 type SetEndpointAttributesInput struct {
+	_ struct{} `type:"structure"`
+
 	// A map of the endpoint attributes. Attributes in this map include the following:
 	//
-	//   CustomUserData -- arbitrary user data to associate with the endpoint.
-	// Amazon SNS does not use this data. The data must be in UTF-8 format and less
-	// than 2KB.  Enabled -- flag that enables/disables delivery to the endpoint.
-	// Amazon SNS will set this to false when a notification service indicates to
-	// Amazon SNS that the endpoint is invalid. Users can set it back to true, typically
-	// after updating Token.  Token -- device token, also referred to as a registration
-	// id, for an app and mobile device. This is returned from the notification
-	// service when an app and mobile device are registered with the notification
-	// service.
+	//  CustomUserData -- arbitrary user data to associate with the endpoint. Amazon
+	// SNS does not use this data. The data must be in UTF-8 format and less than
+	// 2KB.
+	//
+	// Enabled -- flag that enables/disables delivery to the endpoint. Amazon SNS
+	// will set this to false when a notification service indicates to Amazon SNS
+	// that the endpoint is invalid. Users can set it back to true, typically after
+	// updating Token.
+	//
+	// Token -- device token, also referred to as a registration id, for an app
+	// and mobile device. This is returned from the notification service when an
+	// app and mobile device are registered with the notification service.
 	Attributes map[string]*string `type:"map" required:"true"`
 
 	// EndpointArn used for SetEndpointAttributes action.
-	EndpointARN *string `locationName:"EndpointArn" type:"string" required:"true"`
-
-	metadataSetEndpointAttributesInput `json:"-" xml:"-"`
+	EndpointArn *string `type:"string" required:"true"`
 }
 
-type metadataSetEndpointAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetEndpointAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetEndpointAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetEndpointAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetEndpointAttributesInput"}
+	if s.Attributes == nil {
+		invalidParams.Add(request.NewErrParamRequired("Attributes"))
+	}
+	if s.EndpointArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type SetEndpointAttributesOutput struct {
-	metadataSetEndpointAttributesOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataSetEndpointAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetEndpointAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetEndpointAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for SetPlatformApplicationAttributes action.
 type SetPlatformApplicationAttributesInput struct {
+	_ struct{} `type:"structure"`
+
 	// A map of the platform application attributes. Attributes in this map include
 	// the following:
 	//
-	//   PlatformCredential -- The credential received from the notification service.
-	// For APNS/APNS_SANDBOX, PlatformCredential is "private key". For GCM, PlatformCredential
-	// is "API key". For ADM, PlatformCredential is "client secret".  PlatformPrincipal
-	// -- The principal received from the notification service. For APNS/APNS_SANDBOX,
-	// PlatformPrincipal is "SSL certificate". For GCM, PlatformPrincipal is not
-	// applicable. For ADM, PlatformPrincipal is "client id".  EventEndpointCreated
-	// -- Topic ARN to which EndpointCreated event notifications should be sent.
-	//  EventEndpointDeleted -- Topic ARN to which EndpointDeleted event notifications
-	// should be sent.  EventEndpointUpdated -- Topic ARN to which EndpointUpdate
-	// event notifications should be sent.  EventDeliveryFailure -- Topic ARN to
-	// which DeliveryFailure event notifications should be sent upon Direct Publish
-	// delivery failure (permanent) to one of the application's endpoints.
+	//  PlatformCredential -- The credential received from the notification service.
+	// For APNS/APNS_SANDBOX, PlatformCredential is private key. For GCM, PlatformCredential
+	// is "API key". For ADM, PlatformCredential is "client secret".
+	//
+	// PlatformPrincipal -- The principal received from the notification service.
+	// For APNS/APNS_SANDBOX, PlatformPrincipal is SSL certificate. For GCM, PlatformPrincipal
+	// is not applicable. For ADM, PlatformPrincipal is "client id".
+	//
+	// EventEndpointCreated -- Topic ARN to which EndpointCreated event notifications
+	// should be sent.
+	//
+	// EventEndpointDeleted -- Topic ARN to which EndpointDeleted event notifications
+	// should be sent.
+	//
+	// EventEndpointUpdated -- Topic ARN to which EndpointUpdate event notifications
+	// should be sent.
+	//
+	// EventDeliveryFailure -- Topic ARN to which DeliveryFailure event notifications
+	// should be sent upon Direct Publish delivery failure (permanent) to one of
+	// the application's endpoints.
+	//
+	// SuccessFeedbackRoleArn -- IAM role ARN used to give Amazon SNS write access
+	// to use CloudWatch Logs on your behalf.
+	//
+	// FailureFeedbackRoleArn -- IAM role ARN used to give Amazon SNS write access
+	// to use CloudWatch Logs on your behalf.
+	//
+	// SuccessFeedbackSampleRate -- Sample rate percentage (0-100) of successfully
+	// delivered messages.
 	Attributes map[string]*string `type:"map" required:"true"`
 
 	// PlatformApplicationArn for SetPlatformApplicationAttributes action.
-	PlatformApplicationARN *string `locationName:"PlatformApplicationArn" type:"string" required:"true"`
-
-	metadataSetPlatformApplicationAttributesInput `json:"-" xml:"-"`
+	PlatformApplicationArn *string `type:"string" required:"true"`
 }
 
-type metadataSetPlatformApplicationAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetPlatformApplicationAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetPlatformApplicationAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetPlatformApplicationAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetPlatformApplicationAttributesInput"}
+	if s.Attributes == nil {
+		invalidParams.Add(request.NewErrParamRequired("Attributes"))
+	}
+	if s.PlatformApplicationArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type SetPlatformApplicationAttributesOutput struct {
-	metadataSetPlatformApplicationAttributesOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataSetPlatformApplicationAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetPlatformApplicationAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetPlatformApplicationAttributesOutput) GoString() string {
+	return s.String()
+}
+
+// The input for the SetSMSAttributes action.
+type SetSMSAttributesInput struct {
+	_ struct{} `type:"structure"`
+
+	// The default settings for sending SMS messages from your account. You can
+	// set values for the following attribute names:
+	//
+	// MonthlySpendLimit – The maximum amount in USD that you are willing to spend
+	// each month to send SMS messages. When Amazon SNS determines that sending
+	// an SMS message would incur a cost that exceeds this limit, it stops sending
+	// SMS messages within minutes.
+	//
+	//  Amazon SNS stops sending SMS messages within minutes of the limit being
+	// crossed. During that interval, if you continue to send SMS messages, you
+	// will incur costs that exceed your limit.
+	//
+	//  DeliveryStatusIAMRole – The ARN of the IAM role that allows Amazon SNS
+	// to write logs about SMS deliveries in CloudWatch Logs. For each SMS message
+	// that you send, Amazon SNS writes a log that includes the message price, the
+	// success or failure status, the reason for failure (if the message failed),
+	// the message dwell time, and other information.
+	//
+	// DeliveryStatusSuccessSamplingRate – The percentage of successful SMS deliveries
+	// for which Amazon SNS will write logs in CloudWatch Logs. The value can be
+	// an integer from 0 - 100. For example, to write logs only for failed deliveries,
+	// set this value to 0. To write logs for 10% of your successful deliveries,
+	// set it to 10.
+	//
+	// DefaultSenderID – A string, such as your business brand, that is displayed
+	// as the sender on the receiving device. Support for sender IDs varies by country.
+	// The sender ID can be 1 - 11 alphanumeric characters, and it must contain
+	// at least one letter.
+	//
+	// DefaultSMSType – The type of SMS message that you will send by default.
+	// You can assign the following values:
+	//
+	//   Promotional – Noncritical messages, such as marketing messages. Amazon
+	// SNS optimizes the message delivery to incur the lowest cost.
+	//
+	//   Transactional – (Default) Critical messages that support customer transactions,
+	// such as one-time passcodes for multi-factor authentication. Amazon SNS optimizes
+	// the message delivery to achieve the highest reliability.
+	//
+	//   UsageReportS3Bucket – The name of the Amazon S3 bucket to receive daily
+	// SMS usage reports from Amazon SNS. Each day, Amazon SNS will deliver a usage
+	// report as a CSV file to the bucket. The report includes the following information
+	// for each SMS message that was successfully delivered by your account:
+	//
+	//   Time that the message was published (in UTC)
+	//
+	//   Message ID
+	//
+	//   Destination phone number
+	//
+	//   Message type
+	//
+	//   Delivery status
+	//
+	//   Message price (in USD)
+	//
+	//   Part number (a message is split into multiple parts if it is too long
+	// for a single message)
+	//
+	//   Total number of parts
+	//
+	//   To receive the report, the bucket must have a policy that allows the Amazon
+	// SNS service principle to perform the s3:PutObject and s3:GetBucketLocation
+	// actions.
+	//
+	// For an example bucket policy and usage report, see Viewing Statistics About
+	// SMS Message Delivery (http://docs.aws.amazon.com/sns/latest/dg/sms_stats.html)
+	// in the Amazon SNS Developer Guide.
+	Attributes map[string]*string `locationName:"attributes" type:"map" required:"true"`
+}
+
+// String returns the string representation
+func (s SetSMSAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetSMSAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetSMSAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetSMSAttributesInput"}
+	if s.Attributes == nil {
+		invalidParams.Add(request.NewErrParamRequired("Attributes"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// The response for the SetSMSAttributes action.
+type SetSMSAttributesOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s SetSMSAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetSMSAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for SetSubscriptionAttributes action.
 type SetSubscriptionAttributesInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the attribute you want to set. Only a subset of the subscriptions
 	// attributes are mutable.
 	//
@@ -1719,25 +3450,53 @@ type SetSubscriptionAttributesInput struct {
 	AttributeValue *string `type:"string"`
 
 	// The ARN of the subscription to modify.
-	SubscriptionARN *string `locationName:"SubscriptionArn" type:"string" required:"true"`
-
-	metadataSetSubscriptionAttributesInput `json:"-" xml:"-"`
+	SubscriptionArn *string `type:"string" required:"true"`
 }
 
-type metadataSetSubscriptionAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetSubscriptionAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetSubscriptionAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetSubscriptionAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetSubscriptionAttributesInput"}
+	if s.AttributeName == nil {
+		invalidParams.Add(request.NewErrParamRequired("AttributeName"))
+	}
+	if s.SubscriptionArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type SetSubscriptionAttributesOutput struct {
-	metadataSetSubscriptionAttributesOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataSetSubscriptionAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetSubscriptionAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetSubscriptionAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for SetTopicAttributes action.
 type SetTopicAttributesInput struct {
+	_ struct{} `type:"structure"`
+
 	// The name of the attribute you want to set. Only a subset of the topic's attributes
 	// are mutable.
 	//
@@ -1748,71 +3507,147 @@ type SetTopicAttributesInput struct {
 	AttributeValue *string `type:"string"`
 
 	// The ARN of the topic to modify.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
-
-	metadataSetTopicAttributesInput `json:"-" xml:"-"`
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataSetTopicAttributesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetTopicAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetTopicAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SetTopicAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SetTopicAttributesInput"}
+	if s.AttributeName == nil {
+		invalidParams.Add(request.NewErrParamRequired("AttributeName"))
+	}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type SetTopicAttributesOutput struct {
-	metadataSetTopicAttributesOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataSetTopicAttributesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SetTopicAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SetTopicAttributesOutput) GoString() string {
+	return s.String()
 }
 
 // Input for Subscribe action.
 type SubscribeInput struct {
+	_ struct{} `type:"structure"`
+
 	// The endpoint that you want to receive notifications. Endpoints vary by protocol:
 	//
-	//  For the http protocol, the endpoint is an URL beginning with "http://"
-	// For the https protocol, the endpoint is a URL beginning with "https://" For
-	// the email protocol, the endpoint is an email address For the email-json protocol,
-	// the endpoint is an email address For the sms protocol, the endpoint is a
-	// phone number of an SMS-enabled device For the sqs protocol, the endpoint
-	// is the ARN of an Amazon SQS queue For the application protocol, the endpoint
-	// is the EndpointArn of a mobile app and device.
+	//   For the http protocol, the endpoint is an URL beginning with "http://"
+	//
+	//   For the https protocol, the endpoint is a URL beginning with "https://"
+	//
+	//   For the email protocol, the endpoint is an email address
+	//
+	//   For the email-json protocol, the endpoint is an email address
+	//
+	//   For the sms protocol, the endpoint is a phone number of an SMS-enabled
+	// device
+	//
+	//   For the sqs protocol, the endpoint is the ARN of an Amazon SQS queue
+	//
+	//   For the application protocol, the endpoint is the EndpointArn of a mobile
+	// app and device.
+	//
+	//   For the lambda protocol, the endpoint is the ARN of an AWS Lambda function.
 	Endpoint *string `type:"string"`
 
 	// The protocol you want to use. Supported protocols include:
 	//
-	//   http -- delivery of JSON-encoded message via HTTP POST  https -- delivery
-	// of JSON-encoded message via HTTPS POST  email -- delivery of message via
-	// SMTP  email-json -- delivery of JSON-encoded message via SMTP  sms -- delivery
-	// of message via SMS  sqs -- delivery of JSON-encoded message to an Amazon
-	// SQS queue  application -- delivery of JSON-encoded message to an EndpointArn
-	// for a mobile app and device.
+	//   http -- delivery of JSON-encoded message via HTTP POST
+	//
+	//   https -- delivery of JSON-encoded message via HTTPS POST
+	//
+	//   email -- delivery of message via SMTP
+	//
+	//   email-json -- delivery of JSON-encoded message via SMTP
+	//
+	//   sms -- delivery of message via SMS
+	//
+	//   sqs -- delivery of JSON-encoded message to an Amazon SQS queue
+	//
+	//   application -- delivery of JSON-encoded message to an EndpointArn for
+	// a mobile app and device.
+	//
+	//   lambda -- delivery of JSON-encoded message to an AWS Lambda function.
 	Protocol *string `type:"string" required:"true"`
 
 	// The ARN of the topic you want to subscribe to.
-	TopicARN *string `locationName:"TopicArn" type:"string" required:"true"`
-
-	metadataSubscribeInput `json:"-" xml:"-"`
+	TopicArn *string `type:"string" required:"true"`
 }
 
-type metadataSubscribeInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SubscribeInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SubscribeInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SubscribeInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SubscribeInput"}
+	if s.Protocol == nil {
+		invalidParams.Add(request.NewErrParamRequired("Protocol"))
+	}
+	if s.TopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Response for Subscribe action.
 type SubscribeOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the subscription, if the service was able to create a subscription
 	// immediately (without requiring endpoint owner confirmation).
-	SubscriptionARN *string `locationName:"SubscriptionArn" type:"string"`
-
-	metadataSubscribeOutput `json:"-" xml:"-"`
+	SubscriptionArn *string `type:"string"`
 }
 
-type metadataSubscribeOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s SubscribeOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SubscribeOutput) GoString() string {
+	return s.String()
 }
 
 // A wrapper type for the attributes of an Amazon SNS subscription.
 type Subscription struct {
+	_ struct{} `type:"structure"`
+
 	// The subscription's endpoint (format depends on the protocol).
 	Endpoint *string `type:"string"`
 
@@ -1823,47 +3658,82 @@ type Subscription struct {
 	Protocol *string `type:"string"`
 
 	// The subscription's ARN.
-	SubscriptionARN *string `locationName:"SubscriptionArn" type:"string"`
+	SubscriptionArn *string `type:"string"`
 
 	// The ARN of the subscription's topic.
-	TopicARN *string `locationName:"TopicArn" type:"string"`
-
-	metadataSubscription `json:"-" xml:"-"`
+	TopicArn *string `type:"string"`
 }
 
-type metadataSubscription struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Subscription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Subscription) GoString() string {
+	return s.String()
 }
 
 // A wrapper type for the topic's Amazon Resource Name (ARN). To retrieve a
 // topic's attributes, use GetTopicAttributes.
 type Topic struct {
-	// The topic's ARN.
-	TopicARN *string `locationName:"TopicArn" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataTopic `json:"-" xml:"-"`
+	// The topic's ARN.
+	TopicArn *string `type:"string"`
 }
 
-type metadataTopic struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s Topic) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Topic) GoString() string {
+	return s.String()
 }
 
 // Input for Unsubscribe action.
 type UnsubscribeInput struct {
-	// The ARN of the subscription to be deleted.
-	SubscriptionARN *string `locationName:"SubscriptionArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataUnsubscribeInput `json:"-" xml:"-"`
+	// The ARN of the subscription to be deleted.
+	SubscriptionArn *string `type:"string" required:"true"`
 }
 
-type metadataUnsubscribeInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s UnsubscribeInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UnsubscribeInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UnsubscribeInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UnsubscribeInput"}
+	if s.SubscriptionArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type UnsubscribeOutput struct {
-	metadataUnsubscribeOutput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataUnsubscribeOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s UnsubscribeOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UnsubscribeOutput) GoString() string {
+	return s.String()
 }

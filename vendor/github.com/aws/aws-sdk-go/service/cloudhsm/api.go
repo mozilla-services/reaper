@@ -4,97 +4,206 @@
 package cloudhsm
 
 import (
-	"sync"
+	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/request"
 )
 
-var oprw sync.Mutex
+const opAddTagsToResource = "AddTagsToResource"
 
-// CreateHAPGRequest generates a request for the CreateHAPG operation.
-func (c *CloudHSM) CreateHAPGRequest(input *CreateHAPGInput) (req *aws.Request, output *CreateHAPGOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateHAPG == nil {
-		opCreateHAPG = &aws.Operation{
-			Name:       "CreateHapg",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// AddTagsToResourceRequest generates a "aws/request.Request" representing the
+// client's request for the AddTagsToResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the AddTagsToResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the AddTagsToResourceRequest method.
+//    req, resp := client.AddTagsToResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) AddTagsToResourceRequest(input *AddTagsToResourceInput) (req *request.Request, output *AddTagsToResourceOutput) {
+	op := &request.Operation{
+		Name:       opAddTagsToResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &CreateHAPGInput{}
+		input = &AddTagsToResourceInput{}
 	}
 
-	req = c.newRequest(opCreateHAPG, input, output)
-	output = &CreateHAPGOutput{}
+	req = c.newRequest(op, input, output)
+	output = &AddTagsToResourceOutput{}
+	req.Data = output
+	return
+}
+
+// Adds or overwrites one or more tags for the specified AWS CloudHSM resource.
+//
+// Each tag consists of a key and a value. Tag keys must be unique to each
+// resource.
+func (c *CloudHSM) AddTagsToResource(input *AddTagsToResourceInput) (*AddTagsToResourceOutput, error) {
+	req, out := c.AddTagsToResourceRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opCreateHapg = "CreateHapg"
+
+// CreateHapgRequest generates a "aws/request.Request" representing the
+// client's request for the CreateHapg operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateHapg method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateHapgRequest method.
+//    req, resp := client.CreateHapgRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) CreateHapgRequest(input *CreateHapgInput) (req *request.Request, output *CreateHapgOutput) {
+	op := &request.Operation{
+		Name:       opCreateHapg,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateHapgInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &CreateHapgOutput{}
 	req.Data = output
 	return
 }
 
 // Creates a high-availability partition group. A high-availability partition
 // group is a group of partitions that spans multiple physical HSMs.
-func (c *CloudHSM) CreateHAPG(input *CreateHAPGInput) (*CreateHAPGOutput, error) {
-	req, out := c.CreateHAPGRequest(input)
+func (c *CloudHSM) CreateHapg(input *CreateHapgInput) (*CreateHapgOutput, error) {
+	req, out := c.CreateHapgRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCreateHAPG *aws.Operation
+const opCreateHsm = "CreateHsm"
 
-// CreateHSMRequest generates a request for the CreateHSM operation.
-func (c *CloudHSM) CreateHSMRequest(input *CreateHSMInput) (req *aws.Request, output *CreateHSMOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateHSM == nil {
-		opCreateHSM = &aws.Operation{
-			Name:       "CreateHsm",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateHsmRequest generates a "aws/request.Request" representing the
+// client's request for the CreateHsm operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateHsm method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateHsmRequest method.
+//    req, resp := client.CreateHsmRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) CreateHsmRequest(input *CreateHsmInput) (req *request.Request, output *CreateHsmOutput) {
+	op := &request.Operation{
+		Name:       opCreateHsm,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &CreateHSMInput{}
+		input = &CreateHsmInput{}
 	}
 
-	req = c.newRequest(opCreateHSM, input, output)
-	output = &CreateHSMOutput{}
+	req = c.newRequest(op, input, output)
+	output = &CreateHsmOutput{}
 	req.Data = output
 	return
 }
 
-// Creates an uninitialized HSM instance. Running this command provisions an
-// HSM appliance and will result in charges to your AWS account for the HSM.
-func (c *CloudHSM) CreateHSM(input *CreateHSMInput) (*CreateHSMOutput, error) {
-	req, out := c.CreateHSMRequest(input)
+// Creates an uninitialized HSM instance.
+//
+// There is an upfront fee charged for each HSM instance that you create with
+// the CreateHsm operation. If you accidentally provision an HSM and want to
+// request a refund, delete the instance using the DeleteHsm operation, go to
+// the AWS Support Center (https://console.aws.amazon.com/support/home#/), create
+// a new case, and select Account and Billing Support.
+//
+//  It can take up to 20 minutes to create and provision an HSM. You can monitor
+// the status of the HSM with the DescribeHsm operation. The HSM is ready to
+// be initialized when the status changes to RUNNING.
+func (c *CloudHSM) CreateHsm(input *CreateHsmInput) (*CreateHsmOutput, error) {
+	req, out := c.CreateHsmRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opCreateHSM *aws.Operation
+const opCreateLunaClient = "CreateLunaClient"
 
-// CreateLunaClientRequest generates a request for the CreateLunaClient operation.
-func (c *CloudHSM) CreateLunaClientRequest(input *CreateLunaClientInput) (req *aws.Request, output *CreateLunaClientOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opCreateLunaClient == nil {
-		opCreateLunaClient = &aws.Operation{
-			Name:       "CreateLunaClient",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// CreateLunaClientRequest generates a "aws/request.Request" representing the
+// client's request for the CreateLunaClient operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateLunaClient method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateLunaClientRequest method.
+//    req, resp := client.CreateLunaClientRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) CreateLunaClientRequest(input *CreateLunaClientInput) (req *request.Request, output *CreateLunaClientOutput) {
+	op := &request.Operation{
+		Name:       opCreateLunaClient,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &CreateLunaClientInput{}
 	}
 
-	req = c.newRequest(opCreateLunaClient, input, output)
+	req = c.newRequest(op, input, output)
 	output = &CreateLunaClientOutput{}
 	req.Data = output
 	return
@@ -107,91 +216,139 @@ func (c *CloudHSM) CreateLunaClient(input *CreateLunaClientInput) (*CreateLunaCl
 	return out, err
 }
 
-var opCreateLunaClient *aws.Operation
+const opDeleteHapg = "DeleteHapg"
 
-// DeleteHAPGRequest generates a request for the DeleteHAPG operation.
-func (c *CloudHSM) DeleteHAPGRequest(input *DeleteHAPGInput) (req *aws.Request, output *DeleteHAPGOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteHAPG == nil {
-		opDeleteHAPG = &aws.Operation{
-			Name:       "DeleteHapg",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteHapgRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteHapg operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteHapg method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteHapgRequest method.
+//    req, resp := client.DeleteHapgRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) DeleteHapgRequest(input *DeleteHapgInput) (req *request.Request, output *DeleteHapgOutput) {
+	op := &request.Operation{
+		Name:       opDeleteHapg,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DeleteHAPGInput{}
+		input = &DeleteHapgInput{}
 	}
 
-	req = c.newRequest(opDeleteHAPG, input, output)
-	output = &DeleteHAPGOutput{}
+	req = c.newRequest(op, input, output)
+	output = &DeleteHapgOutput{}
 	req.Data = output
 	return
 }
 
 // Deletes a high-availability partition group.
-func (c *CloudHSM) DeleteHAPG(input *DeleteHAPGInput) (*DeleteHAPGOutput, error) {
-	req, out := c.DeleteHAPGRequest(input)
+func (c *CloudHSM) DeleteHapg(input *DeleteHapgInput) (*DeleteHapgOutput, error) {
+	req, out := c.DeleteHapgRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDeleteHAPG *aws.Operation
+const opDeleteHsm = "DeleteHsm"
 
-// DeleteHSMRequest generates a request for the DeleteHSM operation.
-func (c *CloudHSM) DeleteHSMRequest(input *DeleteHSMInput) (req *aws.Request, output *DeleteHSMOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteHSM == nil {
-		opDeleteHSM = &aws.Operation{
-			Name:       "DeleteHsm",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteHsmRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteHsm operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteHsm method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteHsmRequest method.
+//    req, resp := client.DeleteHsmRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) DeleteHsmRequest(input *DeleteHsmInput) (req *request.Request, output *DeleteHsmOutput) {
+	op := &request.Operation{
+		Name:       opDeleteHsm,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DeleteHSMInput{}
+		input = &DeleteHsmInput{}
 	}
 
-	req = c.newRequest(opDeleteHSM, input, output)
-	output = &DeleteHSMOutput{}
+	req = c.newRequest(op, input, output)
+	output = &DeleteHsmOutput{}
 	req.Data = output
 	return
 }
 
-// Deletes an HSM. Once complete, this operation cannot be undone and your key
-// material cannot be recovered.
-func (c *CloudHSM) DeleteHSM(input *DeleteHSMInput) (*DeleteHSMOutput, error) {
-	req, out := c.DeleteHSMRequest(input)
+// Deletes an HSM. After completion, this operation cannot be undone and your
+// key material cannot be recovered.
+func (c *CloudHSM) DeleteHsm(input *DeleteHsmInput) (*DeleteHsmOutput, error) {
+	req, out := c.DeleteHsmRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDeleteHSM *aws.Operation
+const opDeleteLunaClient = "DeleteLunaClient"
 
-// DeleteLunaClientRequest generates a request for the DeleteLunaClient operation.
-func (c *CloudHSM) DeleteLunaClientRequest(input *DeleteLunaClientInput) (req *aws.Request, output *DeleteLunaClientOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDeleteLunaClient == nil {
-		opDeleteLunaClient = &aws.Operation{
-			Name:       "DeleteLunaClient",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DeleteLunaClientRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteLunaClient operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteLunaClient method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteLunaClientRequest method.
+//    req, resp := client.DeleteLunaClientRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) DeleteLunaClientRequest(input *DeleteLunaClientInput) (req *request.Request, output *DeleteLunaClientOutput) {
+	op := &request.Operation{
+		Name:       opDeleteLunaClient,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DeleteLunaClientInput{}
 	}
 
-	req = c.newRequest(opDeleteLunaClient, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DeleteLunaClientOutput{}
 	req.Data = output
 	return
@@ -204,91 +361,139 @@ func (c *CloudHSM) DeleteLunaClient(input *DeleteLunaClientInput) (*DeleteLunaCl
 	return out, err
 }
 
-var opDeleteLunaClient *aws.Operation
+const opDescribeHapg = "DescribeHapg"
 
-// DescribeHAPGRequest generates a request for the DescribeHAPG operation.
-func (c *CloudHSM) DescribeHAPGRequest(input *DescribeHAPGInput) (req *aws.Request, output *DescribeHAPGOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeHAPG == nil {
-		opDescribeHAPG = &aws.Operation{
-			Name:       "DescribeHapg",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DescribeHapgRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeHapg operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeHapg method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeHapgRequest method.
+//    req, resp := client.DescribeHapgRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) DescribeHapgRequest(input *DescribeHapgInput) (req *request.Request, output *DescribeHapgOutput) {
+	op := &request.Operation{
+		Name:       opDescribeHapg,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DescribeHAPGInput{}
+		input = &DescribeHapgInput{}
 	}
 
-	req = c.newRequest(opDescribeHAPG, input, output)
-	output = &DescribeHAPGOutput{}
+	req = c.newRequest(op, input, output)
+	output = &DescribeHapgOutput{}
 	req.Data = output
 	return
 }
 
 // Retrieves information about a high-availability partition group.
-func (c *CloudHSM) DescribeHAPG(input *DescribeHAPGInput) (*DescribeHAPGOutput, error) {
-	req, out := c.DescribeHAPGRequest(input)
+func (c *CloudHSM) DescribeHapg(input *DescribeHapgInput) (*DescribeHapgOutput, error) {
+	req, out := c.DescribeHapgRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDescribeHAPG *aws.Operation
+const opDescribeHsm = "DescribeHsm"
 
-// DescribeHSMRequest generates a request for the DescribeHSM operation.
-func (c *CloudHSM) DescribeHSMRequest(input *DescribeHSMInput) (req *aws.Request, output *DescribeHSMOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeHSM == nil {
-		opDescribeHSM = &aws.Operation{
-			Name:       "DescribeHsm",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DescribeHsmRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeHsm operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeHsm method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeHsmRequest method.
+//    req, resp := client.DescribeHsmRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) DescribeHsmRequest(input *DescribeHsmInput) (req *request.Request, output *DescribeHsmOutput) {
+	op := &request.Operation{
+		Name:       opDescribeHsm,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DescribeHSMInput{}
+		input = &DescribeHsmInput{}
 	}
 
-	req = c.newRequest(opDescribeHSM, input, output)
-	output = &DescribeHSMOutput{}
+	req = c.newRequest(op, input, output)
+	output = &DescribeHsmOutput{}
 	req.Data = output
 	return
 }
 
 // Retrieves information about an HSM. You can identify the HSM by its ARN or
 // its serial number.
-func (c *CloudHSM) DescribeHSM(input *DescribeHSMInput) (*DescribeHSMOutput, error) {
-	req, out := c.DescribeHSMRequest(input)
+func (c *CloudHSM) DescribeHsm(input *DescribeHsmInput) (*DescribeHsmOutput, error) {
+	req, out := c.DescribeHsmRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opDescribeHSM *aws.Operation
+const opDescribeLunaClient = "DescribeLunaClient"
 
-// DescribeLunaClientRequest generates a request for the DescribeLunaClient operation.
-func (c *CloudHSM) DescribeLunaClientRequest(input *DescribeLunaClientInput) (req *aws.Request, output *DescribeLunaClientOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opDescribeLunaClient == nil {
-		opDescribeLunaClient = &aws.Operation{
-			Name:       "DescribeLunaClient",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// DescribeLunaClientRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeLunaClient operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeLunaClient method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeLunaClientRequest method.
+//    req, resp := client.DescribeLunaClientRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) DescribeLunaClientRequest(input *DescribeLunaClientInput) (req *request.Request, output *DescribeLunaClientOutput) {
+	op := &request.Operation{
+		Name:       opDescribeLunaClient,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &DescribeLunaClientInput{}
 	}
 
-	req = c.newRequest(opDescribeLunaClient, input, output)
+	req = c.newRequest(op, input, output)
 	output = &DescribeLunaClientOutput{}
 	req.Data = output
 	return
@@ -301,26 +506,42 @@ func (c *CloudHSM) DescribeLunaClient(input *DescribeLunaClientInput) (*Describe
 	return out, err
 }
 
-var opDescribeLunaClient *aws.Operation
+const opGetConfig = "GetConfig"
 
-// GetConfigRequest generates a request for the GetConfig operation.
-func (c *CloudHSM) GetConfigRequest(input *GetConfigInput) (req *aws.Request, output *GetConfigOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opGetConfig == nil {
-		opGetConfig = &aws.Operation{
-			Name:       "GetConfig",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// GetConfigRequest generates a "aws/request.Request" representing the
+// client's request for the GetConfig operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetConfig method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetConfigRequest method.
+//    req, resp := client.GetConfigRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) GetConfigRequest(input *GetConfigInput) (req *request.Request, output *GetConfigOutput) {
+	op := &request.Operation{
+		Name:       opGetConfig,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &GetConfigInput{}
 	}
 
-	req = c.newRequest(opGetConfig, input, output)
+	req = c.newRequest(op, input, output)
 	output = &GetConfigOutput{}
 	req.Data = output
 	return
@@ -334,26 +555,42 @@ func (c *CloudHSM) GetConfig(input *GetConfigInput) (*GetConfigOutput, error) {
 	return out, err
 }
 
-var opGetConfig *aws.Operation
+const opListAvailableZones = "ListAvailableZones"
 
-// ListAvailableZonesRequest generates a request for the ListAvailableZones operation.
-func (c *CloudHSM) ListAvailableZonesRequest(input *ListAvailableZonesInput) (req *aws.Request, output *ListAvailableZonesOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListAvailableZones == nil {
-		opListAvailableZones = &aws.Operation{
-			Name:       "ListAvailableZones",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ListAvailableZonesRequest generates a "aws/request.Request" representing the
+// client's request for the ListAvailableZones operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListAvailableZones method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListAvailableZonesRequest method.
+//    req, resp := client.ListAvailableZonesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ListAvailableZonesRequest(input *ListAvailableZonesInput) (req *request.Request, output *ListAvailableZonesOutput) {
+	op := &request.Operation{
+		Name:       opListAvailableZones,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ListAvailableZonesInput{}
 	}
 
-	req = c.newRequest(opListAvailableZones, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListAvailableZonesOutput{}
 	req.Data = output
 	return
@@ -366,64 +603,42 @@ func (c *CloudHSM) ListAvailableZones(input *ListAvailableZonesInput) (*ListAvai
 	return out, err
 }
 
-var opListAvailableZones *aws.Operation
+const opListHapgs = "ListHapgs"
 
-// ListHSMsRequest generates a request for the ListHSMs operation.
-func (c *CloudHSM) ListHSMsRequest(input *ListHSMsInput) (req *aws.Request, output *ListHSMsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListHSMs == nil {
-		opListHSMs = &aws.Operation{
-			Name:       "ListHsms",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
-	}
-
-	if input == nil {
-		input = &ListHSMsInput{}
-	}
-
-	req = c.newRequest(opListHSMs, input, output)
-	output = &ListHSMsOutput{}
-	req.Data = output
-	return
-}
-
-// Retrieves the identifiers of all of the HSMs provisioned for the current
-// customer.
+// ListHapgsRequest generates a "aws/request.Request" representing the
+// client's request for the ListHapgs operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
 //
-// This operation supports pagination with the use of the NextToken member.
-// If more results are available, the NextToken member of the response contains
-// a token that you pass in the next call to ListHsms to retrieve the next set
-// of items.
-func (c *CloudHSM) ListHSMs(input *ListHSMsInput) (*ListHSMsOutput, error) {
-	req, out := c.ListHSMsRequest(input)
-	err := req.Send()
-	return out, err
-}
-
-var opListHSMs *aws.Operation
-
-// ListHapgsRequest generates a request for the ListHapgs operation.
-func (c *CloudHSM) ListHapgsRequest(input *ListHapgsInput) (req *aws.Request, output *ListHapgsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opListHapgs == nil {
-		opListHapgs = &aws.Operation{
-			Name:       "ListHapgs",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListHapgs method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListHapgsRequest method.
+//    req, resp := client.ListHapgsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ListHapgsRequest(input *ListHapgsInput) (req *request.Request, output *ListHapgsOutput) {
+	op := &request.Operation{
+		Name:       opListHapgs,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ListHapgsInput{}
 	}
 
-	req = c.newRequest(opListHapgs, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListHapgsOutput{}
 	req.Data = output
 	return
@@ -441,26 +656,96 @@ func (c *CloudHSM) ListHapgs(input *ListHapgsInput) (*ListHapgsOutput, error) {
 	return out, err
 }
 
-var opListHapgs *aws.Operation
+const opListHsms = "ListHsms"
 
-// ListLunaClientsRequest generates a request for the ListLunaClients operation.
-func (c *CloudHSM) ListLunaClientsRequest(input *ListLunaClientsInput) (req *aws.Request, output *ListLunaClientsOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
+// ListHsmsRequest generates a "aws/request.Request" representing the
+// client's request for the ListHsms operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListHsms method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListHsmsRequest method.
+//    req, resp := client.ListHsmsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ListHsmsRequest(input *ListHsmsInput) (req *request.Request, output *ListHsmsOutput) {
+	op := &request.Operation{
+		Name:       opListHsms,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	if opListLunaClients == nil {
-		opListLunaClients = &aws.Operation{
-			Name:       "ListLunaClients",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+	if input == nil {
+		input = &ListHsmsInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ListHsmsOutput{}
+	req.Data = output
+	return
+}
+
+// Retrieves the identifiers of all of the HSMs provisioned for the current
+// customer.
+//
+// This operation supports pagination with the use of the NextToken member.
+// If more results are available, the NextToken member of the response contains
+// a token that you pass in the next call to ListHsms to retrieve the next set
+// of items.
+func (c *CloudHSM) ListHsms(input *ListHsmsInput) (*ListHsmsOutput, error) {
+	req, out := c.ListHsmsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opListLunaClients = "ListLunaClients"
+
+// ListLunaClientsRequest generates a "aws/request.Request" representing the
+// client's request for the ListLunaClients operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListLunaClients method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListLunaClientsRequest method.
+//    req, resp := client.ListLunaClientsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ListLunaClientsRequest(input *ListLunaClientsInput) (req *request.Request, output *ListLunaClientsOutput) {
+	op := &request.Operation{
+		Name:       opListLunaClients,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ListLunaClientsInput{}
 	}
 
-	req = c.newRequest(opListLunaClients, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ListLunaClientsOutput{}
 	req.Data = output
 	return
@@ -478,90 +763,192 @@ func (c *CloudHSM) ListLunaClients(input *ListLunaClientsInput) (*ListLunaClient
 	return out, err
 }
 
-var opListLunaClients *aws.Operation
+const opListTagsForResource = "ListTagsForResource"
 
-// ModifyHAPGRequest generates a request for the ModifyHAPG operation.
-func (c *CloudHSM) ModifyHAPGRequest(input *ModifyHAPGInput) (req *aws.Request, output *ModifyHAPGOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyHAPG == nil {
-		opModifyHAPG = &aws.Operation{
-			Name:       "ModifyHapg",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ListTagsForResourceRequest generates a "aws/request.Request" representing the
+// client's request for the ListTagsForResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListTagsForResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListTagsForResourceRequest method.
+//    req, resp := client.ListTagsForResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
+	op := &request.Operation{
+		Name:       opListTagsForResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &ModifyHAPGInput{}
+		input = &ListTagsForResourceInput{}
 	}
 
-	req = c.newRequest(opModifyHAPG, input, output)
-	output = &ModifyHAPGOutput{}
+	req = c.newRequest(op, input, output)
+	output = &ListTagsForResourceOutput{}
+	req.Data = output
+	return
+}
+
+// Returns a list of all tags for the specified AWS CloudHSM resource.
+func (c *CloudHSM) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
+	req, out := c.ListTagsForResourceRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opModifyHapg = "ModifyHapg"
+
+// ModifyHapgRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyHapg operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyHapg method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyHapgRequest method.
+//    req, resp := client.ModifyHapgRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ModifyHapgRequest(input *ModifyHapgInput) (req *request.Request, output *ModifyHapgOutput) {
+	op := &request.Operation{
+		Name:       opModifyHapg,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ModifyHapgInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ModifyHapgOutput{}
 	req.Data = output
 	return
 }
 
 // Modifies an existing high-availability partition group.
-func (c *CloudHSM) ModifyHAPG(input *ModifyHAPGInput) (*ModifyHAPGOutput, error) {
-	req, out := c.ModifyHAPGRequest(input)
+func (c *CloudHSM) ModifyHapg(input *ModifyHapgInput) (*ModifyHapgOutput, error) {
+	req, out := c.ModifyHapgRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opModifyHAPG *aws.Operation
+const opModifyHsm = "ModifyHsm"
 
-// ModifyHSMRequest generates a request for the ModifyHSM operation.
-func (c *CloudHSM) ModifyHSMRequest(input *ModifyHSMInput) (req *aws.Request, output *ModifyHSMOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyHSM == nil {
-		opModifyHSM = &aws.Operation{
-			Name:       "ModifyHsm",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyHsmRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyHsm operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyHsm method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyHsmRequest method.
+//    req, resp := client.ModifyHsmRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ModifyHsmRequest(input *ModifyHsmInput) (req *request.Request, output *ModifyHsmOutput) {
+	op := &request.Operation{
+		Name:       opModifyHsm,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &ModifyHSMInput{}
+		input = &ModifyHsmInput{}
 	}
 
-	req = c.newRequest(opModifyHSM, input, output)
-	output = &ModifyHSMOutput{}
+	req = c.newRequest(op, input, output)
+	output = &ModifyHsmOutput{}
 	req.Data = output
 	return
 }
 
 // Modifies an HSM.
-func (c *CloudHSM) ModifyHSM(input *ModifyHSMInput) (*ModifyHSMOutput, error) {
-	req, out := c.ModifyHSMRequest(input)
+//
+//  This operation can result in the HSM being offline for up to 15 minutes
+// while the AWS CloudHSM service is reconfigured. If you are modifying a production
+// HSM, you should ensure that your AWS CloudHSM service is configured for high
+// availability, and consider executing this operation during a maintenance
+// window.
+func (c *CloudHSM) ModifyHsm(input *ModifyHsmInput) (*ModifyHsmOutput, error) {
+	req, out := c.ModifyHsmRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-var opModifyHSM *aws.Operation
+const opModifyLunaClient = "ModifyLunaClient"
 
-// ModifyLunaClientRequest generates a request for the ModifyLunaClient operation.
-func (c *CloudHSM) ModifyLunaClientRequest(input *ModifyLunaClientInput) (req *aws.Request, output *ModifyLunaClientOutput) {
-	oprw.Lock()
-	defer oprw.Unlock()
-
-	if opModifyLunaClient == nil {
-		opModifyLunaClient = &aws.Operation{
-			Name:       "ModifyLunaClient",
-			HTTPMethod: "POST",
-			HTTPPath:   "/",
-		}
+// ModifyLunaClientRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyLunaClient operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyLunaClient method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyLunaClientRequest method.
+//    req, resp := client.ModifyLunaClientRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) ModifyLunaClientRequest(input *ModifyLunaClientInput) (req *request.Request, output *ModifyLunaClientOutput) {
+	op := &request.Operation{
+		Name:       opModifyLunaClient,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
 	}
 
 	if input == nil {
 		input = &ModifyLunaClientInput{}
 	}
 
-	req = c.newRequest(opModifyLunaClient, input, output)
+	req = c.newRequest(op, input, output)
 	output = &ModifyLunaClientOutput{}
 	req.Data = output
 	return
@@ -577,205 +964,507 @@ func (c *CloudHSM) ModifyLunaClient(input *ModifyLunaClientInput) (*ModifyLunaCl
 	return out, err
 }
 
-var opModifyLunaClient *aws.Operation
+const opRemoveTagsFromResource = "RemoveTagsFromResource"
 
-// Contains the inputs for the CreateHapgRequest action.
-type CreateHAPGInput struct {
-	// The label of the new high-availability partition group.
-	Label *string `type:"string" required:"true"`
+// RemoveTagsFromResourceRequest generates a "aws/request.Request" representing the
+// client's request for the RemoveTagsFromResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RemoveTagsFromResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RemoveTagsFromResourceRequest method.
+//    req, resp := client.RemoveTagsFromResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *CloudHSM) RemoveTagsFromResourceRequest(input *RemoveTagsFromResourceInput) (req *request.Request, output *RemoveTagsFromResourceOutput) {
+	op := &request.Operation{
+		Name:       opRemoveTagsFromResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
 
-	metadataCreateHAPGInput `json:"-" xml:"-"`
+	if input == nil {
+		input = &RemoveTagsFromResourceInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &RemoveTagsFromResourceOutput{}
+	req.Data = output
+	return
 }
 
-type metadataCreateHAPGInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// Removes one or more tags from the specified AWS CloudHSM resource.
+//
+// To remove a tag, specify only the tag key to remove (not the value). To
+// overwrite the value for an existing tag, use AddTagsToResource.
+func (c *CloudHSM) RemoveTagsFromResource(input *RemoveTagsFromResourceInput) (*RemoveTagsFromResourceOutput, error) {
+	req, out := c.RemoveTagsFromResourceRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+type AddTagsToResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the AWS CloudHSM resource to tag.
+	ResourceArn *string `type:"string" required:"true"`
+
+	// One or more tags.
+	TagList []*Tag `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s AddTagsToResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddTagsToResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AddTagsToResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AddTagsToResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.TagList == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagList"))
+	}
+	if s.TagList != nil {
+		for i, v := range s.TagList {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "TagList", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type AddTagsToResourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the operation.
+	Status *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s AddTagsToResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddTagsToResourceOutput) GoString() string {
+	return s.String()
+}
+
+// Contains the inputs for the CreateHapgRequest action.
+type CreateHapgInput struct {
+	_ struct{} `type:"structure"`
+
+	// The label of the new high-availability partition group.
+	Label *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateHapgInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateHapgInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateHapgInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateHapgInput"}
+	if s.Label == nil {
+		invalidParams.Add(request.NewErrParamRequired("Label"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Contains the output of the CreateHAPartitionGroup action.
-type CreateHAPGOutput struct {
+type CreateHapgOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the high-availability partition group.
-	HAPGARN *string `locationName:"HapgArn" type:"string"`
-
-	metadataCreateHAPGOutput `json:"-" xml:"-"`
+	HapgArn *string `type:"string"`
 }
 
-type metadataCreateHAPGOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateHapgOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the inputs for the CreateHsm action.
-type CreateHSMInput struct {
-	// A user-defined token to ensure idempotence. Subsequent calls to this action
+// GoString returns the string representation
+func (s CreateHapgOutput) GoString() string {
+	return s.String()
+}
+
+// Contains the inputs for the CreateHsm operation.
+type CreateHsmInput struct {
+	_ struct{} `locationName:"CreateHsmRequest" type:"structure"`
+
+	// A user-defined token to ensure idempotence. Subsequent calls to this operation
 	// with the same token will be ignored.
 	ClientToken *string `locationName:"ClientToken" type:"string"`
 
 	// The IP address to assign to the HSM's ENI.
-	ENIIP *string `locationName:"EniIp" type:"string"`
+	//
+	// If an IP address is not specified, an IP address will be randomly chosen
+	// from the CIDR range of the subnet.
+	EniIp *string `locationName:"EniIp" type:"string"`
 
 	// The external ID from IamRoleArn, if present.
-	ExternalID *string `locationName:"ExternalId" type:"string"`
+	ExternalId *string `locationName:"ExternalId" type:"string"`
 
 	// The ARN of an IAM role to enable the AWS CloudHSM service to allocate an
 	// ENI on your behalf.
-	IAMRoleARN *string `locationName:"IamRoleArn" type:"string" required:"true"`
+	IamRoleArn *string `locationName:"IamRoleArn" type:"string" required:"true"`
 
 	// The SSH public key to install on the HSM.
-	SSHKey *string `locationName:"SshKey" type:"string" required:"true"`
+	SshKey *string `locationName:"SshKey" type:"string" required:"true"`
 
 	// The identifier of the subnet in your VPC in which to place the HSM.
-	SubnetID *string `locationName:"SubnetId" type:"string" required:"true"`
+	SubnetId *string `locationName:"SubnetId" type:"string" required:"true"`
 
-	// The subscription type.
-	SubscriptionType *string `locationName:"SubscriptionType" type:"string" required:"true"`
+	// Specifies the type of subscription for the HSM.
+	//
+	//  PRODUCTION - The HSM is being used in a production environment. TRIAL -
+	// The HSM is being used in a product trial.
+	SubscriptionType *string `locationName:"SubscriptionType" type:"string" required:"true" enum:"SubscriptionType"`
 
-	// The IP address for the syslog monitoring server.
-	SyslogIP *string `locationName:"SyslogIp" type:"string"`
-
-	metadataCreateHSMInput `json:"-" xml:"-"`
+	// The IP address for the syslog monitoring server. The AWS CloudHSM service
+	// only supports one syslog monitoring server.
+	SyslogIp *string `locationName:"SyslogIp" type:"string"`
 }
 
-type metadataCreateHSMInput struct {
-	SDKShapeTraits bool `locationName:"CreateHsmRequest" type:"structure"`
+// String returns the string representation
+func (s CreateHsmInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output of the CreateHsm action.
-type CreateHSMOutput struct {
+// GoString returns the string representation
+func (s CreateHsmInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateHsmInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateHsmInput"}
+	if s.IamRoleArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("IamRoleArn"))
+	}
+	if s.SshKey == nil {
+		invalidParams.Add(request.NewErrParamRequired("SshKey"))
+	}
+	if s.SubnetId == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubnetId"))
+	}
+	if s.SubscriptionType == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Contains the output of the CreateHsm operation.
+type CreateHsmOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the HSM.
-	HSMARN *string `locationName:"HsmArn" type:"string"`
-
-	metadataCreateHSMOutput `json:"-" xml:"-"`
+	HsmArn *string `type:"string"`
 }
 
-type metadataCreateHSMOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateHsmOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateHsmOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the inputs for the CreateLunaClient action.
 type CreateLunaClientInput struct {
+	_ struct{} `type:"structure"`
+
 	// The contents of a Base64-Encoded X.509 v3 certificate to be installed on
 	// the HSMs used by this client.
-	Certificate *string `type:"string" required:"true"`
+	Certificate *string `min:"600" type:"string" required:"true"`
 
 	// The label for the client.
 	Label *string `type:"string"`
-
-	metadataCreateLunaClientInput `json:"-" xml:"-"`
 }
 
-type metadataCreateLunaClientInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateLunaClientInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateLunaClientInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateLunaClientInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateLunaClientInput"}
+	if s.Certificate == nil {
+		invalidParams.Add(request.NewErrParamRequired("Certificate"))
+	}
+	if s.Certificate != nil && len(*s.Certificate) < 600 {
+		invalidParams.Add(request.NewErrParamMinLen("Certificate", 600))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Contains the output of the CreateLunaClient action.
 type CreateLunaClientOutput struct {
-	// The ARN of the client.
-	ClientARN *string `locationName:"ClientArn" type:"string"`
+	_ struct{} `type:"structure"`
 
-	metadataCreateLunaClientOutput `json:"-" xml:"-"`
+	// The ARN of the client.
+	ClientArn *string `type:"string"`
 }
 
-type metadataCreateLunaClientOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s CreateLunaClientOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateLunaClientOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the inputs for the DeleteHapg action.
-type DeleteHAPGInput struct {
-	// The ARN of the high-availability partition group to delete.
-	HAPGARN *string `locationName:"HapgArn" type:"string" required:"true"`
+type DeleteHapgInput struct {
+	_ struct{} `type:"structure"`
 
-	metadataDeleteHAPGInput `json:"-" xml:"-"`
+	// The ARN of the high-availability partition group to delete.
+	HapgArn *string `type:"string" required:"true"`
 }
 
-type metadataDeleteHAPGInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteHapgInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteHapgInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteHapgInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteHapgInput"}
+	if s.HapgArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("HapgArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Contains the output of the DeleteHapg action.
-type DeleteHAPGOutput struct {
+type DeleteHapgOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The status of the action.
 	Status *string `type:"string" required:"true"`
-
-	metadataDeleteHAPGOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteHAPGOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteHapgOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the inputs for the DeleteHsm action.
-type DeleteHSMInput struct {
+// GoString returns the string representation
+func (s DeleteHapgOutput) GoString() string {
+	return s.String()
+}
+
+// Contains the inputs for the DeleteHsm operation.
+type DeleteHsmInput struct {
+	_ struct{} `locationName:"DeleteHsmRequest" type:"structure"`
+
 	// The ARN of the HSM to delete.
-	HSMARN *string `locationName:"HsmArn" type:"string" required:"true"`
-
-	metadataDeleteHSMInput `json:"-" xml:"-"`
+	HsmArn *string `locationName:"HsmArn" type:"string" required:"true"`
 }
 
-type metadataDeleteHSMInput struct {
-	SDKShapeTraits bool `locationName:"DeleteHsmRequest" type:"structure"`
+// String returns the string representation
+func (s DeleteHsmInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output of the DeleteHsm action.
-type DeleteHSMOutput struct {
-	// The status of the action.
+// GoString returns the string representation
+func (s DeleteHsmInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteHsmInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteHsmInput"}
+	if s.HsmArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Contains the output of the DeleteHsm operation.
+type DeleteHsmOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the operation.
 	Status *string `type:"string" required:"true"`
-
-	metadataDeleteHSMOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteHSMOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteHsmOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteHsmOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteLunaClientInput struct {
-	// The ARN of the client to delete.
-	ClientARN *string `locationName:"ClientArn" type:"string" required:"true"`
+	_ struct{} `type:"structure"`
 
-	metadataDeleteLunaClientInput `json:"-" xml:"-"`
+	// The ARN of the client to delete.
+	ClientArn *string `type:"string" required:"true"`
 }
 
-type metadataDeleteLunaClientInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteLunaClientInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteLunaClientInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteLunaClientInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteLunaClientInput"}
+	if s.ClientArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClientArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type DeleteLunaClientOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The status of the action.
 	Status *string `type:"string" required:"true"`
-
-	metadataDeleteLunaClientOutput `json:"-" xml:"-"`
 }
 
-type metadataDeleteLunaClientOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DeleteLunaClientOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteLunaClientOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the inputs for the DescribeHapg action.
-type DescribeHAPGInput struct {
-	// The ARN of the high-availability partition group to describe.
-	HAPGARN *string `locationName:"HapgArn" type:"string" required:"true"`
+type DescribeHapgInput struct {
+	_ struct{} `type:"structure"`
 
-	metadataDescribeHAPGInput `json:"-" xml:"-"`
+	// The ARN of the high-availability partition group to describe.
+	HapgArn *string `type:"string" required:"true"`
 }
 
-type metadataDescribeHAPGInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHapgInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeHapgInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeHapgInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeHapgInput"}
+	if s.HapgArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("HapgArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Contains the output of the DescribeHapg action.
-type DescribeHAPGOutput struct {
+type DescribeHapgOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the high-availability partition group.
-	HAPGARN *string `locationName:"HapgArn" type:"string"`
+	HapgArn *string `type:"string"`
 
 	// The serial number of the high-availability partition group.
-	HAPGSerial *string `locationName:"HapgSerial" type:"string"`
+	HapgSerial *string `type:"string"`
 
 	// Contains a list of ARNs that identify the HSMs.
-	HSMsLastActionFailed []*string `locationName:"HsmsLastActionFailed" type:"list"`
+	HsmsLastActionFailed []*string `type:"list"`
 
 	// Contains a list of ARNs that identify the HSMs.
-	HSMsPendingDeletion []*string `locationName:"HsmsPendingDeletion" type:"list"`
+	HsmsPendingDeletion []*string `type:"list"`
 
 	// Contains a list of ARNs that identify the HSMs.
-	HSMsPendingRegistration []*string `locationName:"HsmsPendingRegistration" type:"list"`
+	HsmsPendingRegistration []*string `type:"list"`
 
 	// The label for the high-availability partition group.
 	Label *string `type:"string"`
@@ -788,81 +1477,93 @@ type DescribeHAPGOutput struct {
 	PartitionSerialList []*string `type:"list"`
 
 	// The state of the high-availability partition group.
-	State *string `type:"string"`
-
-	metadataDescribeHAPGOutput `json:"-" xml:"-"`
+	State *string `type:"string" enum:"CloudHsmObjectState"`
 }
 
-type metadataDescribeHAPGOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHapgOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the inputs for the DescribeHsm action.
-type DescribeHSMInput struct {
+// GoString returns the string representation
+func (s DescribeHapgOutput) GoString() string {
+	return s.String()
+}
+
+// Contains the inputs for the DescribeHsm operation.
+type DescribeHsmInput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the HSM. Either the HsmArn or the SerialNumber parameter must
 	// be specified.
-	HSMARN *string `locationName:"HsmArn" type:"string"`
+	HsmArn *string `type:"string"`
 
 	// The serial number of the HSM. Either the HsmArn or the HsmSerialNumber parameter
 	// must be specified.
-	HSMSerialNumber *string `locationName:"HsmSerialNumber" type:"string"`
-
-	metadataDescribeHSMInput `json:"-" xml:"-"`
+	HsmSerialNumber *string `type:"string"`
 }
 
-type metadataDescribeHSMInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHsmInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output of the DescribeHsm action.
-type DescribeHSMOutput struct {
+// GoString returns the string representation
+func (s DescribeHsmInput) GoString() string {
+	return s.String()
+}
+
+// Contains the output of the DescribeHsm operation.
+type DescribeHsmOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The Availability Zone that the HSM is in.
 	AvailabilityZone *string `type:"string"`
 
 	// The identifier of the elastic network interface (ENI) attached to the HSM.
-	ENIID *string `locationName:"EniId" type:"string"`
+	EniId *string `type:"string"`
 
 	// The IP address assigned to the HSM's ENI.
-	ENIIP *string `locationName:"EniIp" type:"string"`
+	EniIp *string `type:"string"`
 
 	// The ARN of the HSM.
-	HSMARN *string `locationName:"HsmArn" type:"string"`
+	HsmArn *string `type:"string"`
 
 	// The HSM model type.
-	HSMType *string `locationName:"HsmType" type:"string"`
+	HsmType *string `type:"string"`
 
 	// The ARN of the IAM role assigned to the HSM.
-	IAMRoleARN *string `locationName:"IamRoleArn" type:"string"`
+	IamRoleArn *string `type:"string"`
 
 	// The list of partitions on the HSM.
 	Partitions []*string `type:"list"`
 
-	// The date and time the SSH key was last updated.
-	SSHKeyLastUpdated *string `locationName:"SshKeyLastUpdated" type:"string"`
-
-	// The public SSH key.
-	SSHPublicKey *string `locationName:"SshPublicKey" type:"string"`
-
 	// The serial number of the HSM.
 	SerialNumber *string `type:"string"`
 
-	// The date and time the server certificate was last updated.
+	// The date and time that the server certificate was last updated.
 	ServerCertLastUpdated *string `type:"string"`
 
 	// The URI of the certificate server.
-	ServerCertURI *string `locationName:"ServerCertUri" type:"string"`
+	ServerCertUri *string `type:"string"`
 
 	// The HSM software version.
 	SoftwareVersion *string `type:"string"`
 
+	// The date and time that the SSH key was last updated.
+	SshKeyLastUpdated *string `type:"string"`
+
+	// The public SSH key.
+	SshPublicKey *string `type:"string"`
+
 	// The status of the HSM.
-	Status *string `type:"string"`
+	Status *string `type:"string" enum:"HsmStatus"`
 
 	// Contains additional information about the status of the HSM.
 	StatusDetails *string `type:"string"`
 
-	// The identifier of the subnet the HSM is in.
-	SubnetID *string `locationName:"SubnetId" type:"string"`
+	// The identifier of the subnet that the HSM is in.
+	SubnetId *string `type:"string"`
 
 	// The subscription end date.
 	SubscriptionEndDate *string `type:"string"`
@@ -870,78 +1571,124 @@ type DescribeHSMOutput struct {
 	// The subscription start date.
 	SubscriptionStartDate *string `type:"string"`
 
-	// The subscription type.
-	SubscriptionType *string `type:"string"`
-
-	// The identifier of the VPC that the HSM is in.
-	VPCID *string `locationName:"VpcId" type:"string"`
+	// Specifies the type of subscription for the HSM.
+	//
+	//  PRODUCTION - The HSM is being used in a production environment. TRIAL -
+	// The HSM is being used in a product trial.
+	SubscriptionType *string `type:"string" enum:"SubscriptionType"`
 
 	// The name of the HSM vendor.
 	VendorName *string `type:"string"`
 
-	metadataDescribeHSMOutput `json:"-" xml:"-"`
+	// The identifier of the VPC that the HSM is in.
+	VpcId *string `type:"string"`
 }
 
-type metadataDescribeHSMOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeHsmOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeHsmOutput) GoString() string {
+	return s.String()
 }
 
 type DescribeLunaClientInput struct {
+	_ struct{} `type:"structure"`
+
 	// The certificate fingerprint.
 	CertificateFingerprint *string `type:"string"`
 
 	// The ARN of the client.
-	ClientARN *string `locationName:"ClientArn" type:"string"`
-
-	metadataDescribeLunaClientInput `json:"-" xml:"-"`
+	ClientArn *string `type:"string"`
 }
 
-type metadataDescribeLunaClientInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeLunaClientInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeLunaClientInput) GoString() string {
+	return s.String()
 }
 
 type DescribeLunaClientOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The certificate installed on the HSMs used by this client.
-	Certificate *string `type:"string"`
+	Certificate *string `min:"600" type:"string"`
 
 	// The certificate fingerprint.
 	CertificateFingerprint *string `type:"string"`
 
 	// The ARN of the client.
-	ClientARN *string `locationName:"ClientArn" type:"string"`
+	ClientArn *string `type:"string"`
 
 	// The label of the client.
 	Label *string `type:"string"`
 
 	// The date and time the client was last modified.
 	LastModifiedTimestamp *string `type:"string"`
-
-	metadataDescribeLunaClientOutput `json:"-" xml:"-"`
 }
 
-type metadataDescribeLunaClientOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s DescribeLunaClientOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeLunaClientOutput) GoString() string {
+	return s.String()
 }
 
 type GetConfigInput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the client.
-	ClientARN *string `locationName:"ClientArn" type:"string" required:"true"`
+	ClientArn *string `type:"string" required:"true"`
 
 	// The client version.
-	ClientVersion *string `type:"string" required:"true"`
+	ClientVersion *string `type:"string" required:"true" enum:"ClientVersion"`
 
 	// A list of ARNs that identify the high-availability partition groups that
 	// are associated with the client.
-	HAPGList []*string `locationName:"HapgList" type:"list" required:"true"`
-
-	metadataGetConfigInput `json:"-" xml:"-"`
+	HapgList []*string `type:"list" required:"true"`
 }
 
-type metadataGetConfigInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetConfigInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetConfigInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetConfigInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetConfigInput"}
+	if s.ClientArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClientArn"))
+	}
+	if s.ClientVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClientVersion"))
+	}
+	if s.HapgList == nil {
+		invalidParams.Add(request.NewErrParamRequired("HapgList"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type GetConfigOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The certificate file containing the server.pem files of the HSMs.
 	ConfigCred *string `type:"string"`
 
@@ -950,119 +1697,220 @@ type GetConfigOutput struct {
 
 	// The type of credentials.
 	ConfigType *string `type:"string"`
-
-	metadataGetConfigOutput `json:"-" xml:"-"`
 }
 
-type metadataGetConfigOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s GetConfigOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetConfigOutput) GoString() string {
+	return s.String()
 }
 
 // Contains the inputs for the ListAvailableZones action.
 type ListAvailableZonesInput struct {
-	metadataListAvailableZonesInput `json:"-" xml:"-"`
+	_ struct{} `type:"structure"`
 }
 
-type metadataListAvailableZonesInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListAvailableZonesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListAvailableZonesInput) GoString() string {
+	return s.String()
 }
 
 type ListAvailableZonesOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The list of Availability Zones that have available AWS CloudHSM capacity.
 	AZList []*string `type:"list"`
-
-	metadataListAvailableZonesOutput `json:"-" xml:"-"`
 }
 
-type metadataListAvailableZonesOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListAvailableZonesOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type ListHSMsInput struct {
-	// The NextToken value from a previous call to ListHsms. Pass null if this is
-	// the first call.
-	NextToken *string `type:"string"`
-
-	metadataListHSMsInput `json:"-" xml:"-"`
-}
-
-type metadataListHSMsInput struct {
-	SDKShapeTraits bool `type:"structure"`
-}
-
-// Contains the output of the ListHsms action.
-type ListHSMsOutput struct {
-	// The list of ARNs that identify the HSMs.
-	HSMList []*string `locationName:"HsmList" type:"list"`
-
-	// If not null, more results are available. Pass this value to ListHsms to retrieve
-	// the next set of items.
-	NextToken *string `type:"string"`
-
-	metadataListHSMsOutput `json:"-" xml:"-"`
-}
-
-type metadataListHSMsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// GoString returns the string representation
+func (s ListAvailableZonesOutput) GoString() string {
+	return s.String()
 }
 
 type ListHapgsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The NextToken value from a previous call to ListHapgs. Pass null if this
 	// is the first call.
 	NextToken *string `type:"string"`
-
-	metadataListHapgsInput `json:"-" xml:"-"`
 }
 
-type metadataListHapgsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListHapgsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListHapgsInput) GoString() string {
+	return s.String()
 }
 
 type ListHapgsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The list of high-availability partition groups.
-	HAPGList []*string `locationName:"HapgList" type:"list" required:"true"`
+	HapgList []*string `type:"list" required:"true"`
 
 	// If not null, more results are available. Pass this value to ListHapgs to
 	// retrieve the next set of items.
 	NextToken *string `type:"string"`
-
-	metadataListHapgsOutput `json:"-" xml:"-"`
 }
 
-type metadataListHapgsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListHapgsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListHapgsOutput) GoString() string {
+	return s.String()
+}
+
+type ListHsmsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The NextToken value from a previous call to ListHsms. Pass null if this is
+	// the first call.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListHsmsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListHsmsInput) GoString() string {
+	return s.String()
+}
+
+// Contains the output of the ListHsms operation.
+type ListHsmsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The list of ARNs that identify the HSMs.
+	HsmList []*string `type:"list"`
+
+	// If not null, more results are available. Pass this value to ListHsms to retrieve
+	// the next set of items.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListHsmsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListHsmsOutput) GoString() string {
+	return s.String()
 }
 
 type ListLunaClientsInput struct {
+	_ struct{} `type:"structure"`
+
 	// The NextToken value from a previous call to ListLunaClients. Pass null if
 	// this is the first call.
 	NextToken *string `type:"string"`
-
-	metadataListLunaClientsInput `json:"-" xml:"-"`
 }
 
-type metadataListLunaClientsInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListLunaClientsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListLunaClientsInput) GoString() string {
+	return s.String()
 }
 
 type ListLunaClientsOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The list of clients.
 	ClientList []*string `type:"list" required:"true"`
 
 	// If not null, more results are available. Pass this to ListLunaClients to
 	// retrieve the next set of items.
 	NextToken *string `type:"string"`
-
-	metadataListLunaClientsOutput `json:"-" xml:"-"`
 }
 
-type metadataListLunaClientsOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ListLunaClientsOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type ModifyHAPGInput struct {
+// GoString returns the string representation
+func (s ListLunaClientsOutput) GoString() string {
+	return s.String()
+}
+
+type ListTagsForResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the AWS CloudHSM resource.
+	ResourceArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ListTagsForResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTagsForResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTagsForResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type ListTagsForResourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// One or more tags.
+	TagList []*Tag `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s ListTagsForResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForResourceOutput) GoString() string {
+	return s.String()
+}
+
+type ModifyHapgInput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the high-availability partition group to modify.
-	HAPGARN *string `locationName:"HapgArn" type:"string" required:"true"`
+	HapgArn *string `type:"string" required:"true"`
 
 	// The new label for the high-availability partition group.
 	Label *string `type:"string"`
@@ -1070,85 +1918,309 @@ type ModifyHAPGInput struct {
 	// The list of partition serial numbers to make members of the high-availability
 	// partition group.
 	PartitionSerialList []*string `type:"list"`
-
-	metadataModifyHAPGInput `json:"-" xml:"-"`
 }
 
-type metadataModifyHAPGInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyHapgInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-type ModifyHAPGOutput struct {
+// GoString returns the string representation
+func (s ModifyHapgInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyHapgInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyHapgInput"}
+	if s.HapgArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("HapgArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type ModifyHapgOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the high-availability partition group.
-	HAPGARN *string `locationName:"HapgArn" type:"string"`
-
-	metadataModifyHAPGOutput `json:"-" xml:"-"`
+	HapgArn *string `type:"string"`
 }
 
-type metadataModifyHAPGOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyHapgOutput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the inputs for the ModifyHsm action.
-type ModifyHSMInput struct {
-	// The new IP address for the elastic network interface attached to the HSM.
-	ENIIP *string `locationName:"EniIp" type:"string"`
+// GoString returns the string representation
+func (s ModifyHapgOutput) GoString() string {
+	return s.String()
+}
+
+// Contains the inputs for the ModifyHsm operation.
+type ModifyHsmInput struct {
+	_ struct{} `locationName:"ModifyHsmRequest" type:"structure"`
+
+	// The new IP address for the elastic network interface (ENI) attached to the
+	// HSM.
+	//
+	// If the HSM is moved to a different subnet, and an IP address is not specified,
+	// an IP address will be randomly chosen from the CIDR range of the new subnet.
+	EniIp *string `locationName:"EniIp" type:"string"`
 
 	// The new external ID.
-	ExternalID *string `locationName:"ExternalId" type:"string"`
+	ExternalId *string `locationName:"ExternalId" type:"string"`
 
 	// The ARN of the HSM to modify.
-	HSMARN *string `locationName:"HsmArn" type:"string" required:"true"`
+	HsmArn *string `locationName:"HsmArn" type:"string" required:"true"`
 
 	// The new IAM role ARN.
-	IAMRoleARN *string `locationName:"IamRoleArn" type:"string"`
+	IamRoleArn *string `locationName:"IamRoleArn" type:"string"`
 
-	// The new identifier of the subnet that the HSM is in.
-	SubnetID *string `locationName:"SubnetId" type:"string"`
+	// The new identifier of the subnet that the HSM is in. The new subnet must
+	// be in the same Availability Zone as the current subnet.
+	SubnetId *string `locationName:"SubnetId" type:"string"`
 
-	// The new IP address for the syslog monitoring server.
-	SyslogIP *string `locationName:"SyslogIp" type:"string"`
-
-	metadataModifyHSMInput `json:"-" xml:"-"`
+	// The new IP address for the syslog monitoring server. The AWS CloudHSM service
+	// only supports one syslog monitoring server.
+	SyslogIp *string `locationName:"SyslogIp" type:"string"`
 }
 
-type metadataModifyHSMInput struct {
-	SDKShapeTraits bool `locationName:"ModifyHsmRequest" type:"structure"`
+// String returns the string representation
+func (s ModifyHsmInput) String() string {
+	return awsutil.Prettify(s)
 }
 
-// Contains the output of the ModifyHsm action.
-type ModifyHSMOutput struct {
+// GoString returns the string representation
+func (s ModifyHsmInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyHsmInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyHsmInput"}
+	if s.HsmArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("HsmArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Contains the output of the ModifyHsm operation.
+type ModifyHsmOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the HSM.
-	HSMARN *string `locationName:"HsmArn" type:"string"`
-
-	metadataModifyHSMOutput `json:"-" xml:"-"`
+	HsmArn *string `type:"string"`
 }
 
-type metadataModifyHSMOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyHsmOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyHsmOutput) GoString() string {
+	return s.String()
 }
 
 type ModifyLunaClientInput struct {
+	_ struct{} `type:"structure"`
+
 	// The new certificate for the client.
-	Certificate *string `type:"string" required:"true"`
+	Certificate *string `min:"600" type:"string" required:"true"`
 
 	// The ARN of the client.
-	ClientARN *string `locationName:"ClientArn" type:"string" required:"true"`
-
-	metadataModifyLunaClientInput `json:"-" xml:"-"`
+	ClientArn *string `type:"string" required:"true"`
 }
 
-type metadataModifyLunaClientInput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyLunaClientInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyLunaClientInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyLunaClientInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyLunaClientInput"}
+	if s.Certificate == nil {
+		invalidParams.Add(request.NewErrParamRequired("Certificate"))
+	}
+	if s.Certificate != nil && len(*s.Certificate) < 600 {
+		invalidParams.Add(request.NewErrParamMinLen("Certificate", 600))
+	}
+	if s.ClientArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ClientArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 type ModifyLunaClientOutput struct {
+	_ struct{} `type:"structure"`
+
 	// The ARN of the client.
-	ClientARN *string `locationName:"ClientArn" type:"string"`
-
-	metadataModifyLunaClientOutput `json:"-" xml:"-"`
+	ClientArn *string `type:"string"`
 }
 
-type metadataModifyLunaClientOutput struct {
-	SDKShapeTraits bool `type:"structure"`
+// String returns the string representation
+func (s ModifyLunaClientOutput) String() string {
+	return awsutil.Prettify(s)
 }
+
+// GoString returns the string representation
+func (s ModifyLunaClientOutput) GoString() string {
+	return s.String()
+}
+
+type RemoveTagsFromResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the AWS CloudHSM resource.
+	ResourceArn *string `type:"string" required:"true"`
+
+	// The tag key or keys to remove.
+	//
+	// Specify only the tag key to remove (not the value). To overwrite the value
+	// for an existing tag, use AddTagsToResource.
+	TagKeyList []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s RemoveTagsFromResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemoveTagsFromResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RemoveTagsFromResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RemoveTagsFromResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.TagKeyList == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeyList"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+type RemoveTagsFromResourceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the operation.
+	Status *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s RemoveTagsFromResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemoveTagsFromResourceOutput) GoString() string {
+	return s.String()
+}
+
+// A key-value pair that identifies or specifies metadata about an AWS CloudHSM
+// resource.
+type Tag struct {
+	_ struct{} `type:"structure"`
+
+	// The key of the tag.
+	Key *string `min:"1" type:"string" required:"true"`
+
+	// The value of the tag.
+	Value *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Tag) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Tag) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Tag) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Tag"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.Value == nil {
+		invalidParams.Add(request.NewErrParamRequired("Value"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+const (
+	// @enum ClientVersion
+	ClientVersion51 = "5.1"
+	// @enum ClientVersion
+	ClientVersion53 = "5.3"
+)
+
+const (
+	// @enum CloudHsmObjectState
+	CloudHsmObjectStateReady = "READY"
+	// @enum CloudHsmObjectState
+	CloudHsmObjectStateUpdating = "UPDATING"
+	// @enum CloudHsmObjectState
+	CloudHsmObjectStateDegraded = "DEGRADED"
+)
+
+const (
+	// @enum HsmStatus
+	HsmStatusPending = "PENDING"
+	// @enum HsmStatus
+	HsmStatusRunning = "RUNNING"
+	// @enum HsmStatus
+	HsmStatusUpdating = "UPDATING"
+	// @enum HsmStatus
+	HsmStatusSuspended = "SUSPENDED"
+	// @enum HsmStatus
+	HsmStatusTerminating = "TERMINATING"
+	// @enum HsmStatus
+	HsmStatusTerminated = "TERMINATED"
+	// @enum HsmStatus
+	HsmStatusDegraded = "DEGRADED"
+)
+
+// Specifies the type of subscription for the HSM.
+//
+//  PRODUCTION - The HSM is being used in a production environment. TRIAL -
+// The HSM is being used in a product trial.
+const (
+	// @enum SubscriptionType
+	SubscriptionTypeProduction = "PRODUCTION"
+)

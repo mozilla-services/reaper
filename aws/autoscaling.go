@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 
 	"github.com/mozilla-services/reaper/filters"
@@ -101,7 +102,7 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	}
 
 	for _, instance := range asg.Instances {
-		a.Instances = append(a.Instances, reapable.ID(*instance.InstanceID))
+		a.Instances = append(a.Instances, reapable.ID(*instance.InstanceId))
 	}
 
 	for _, tag := range asg.Tags {
@@ -348,11 +349,11 @@ func (a *AutoScalingGroup) Unsave() (bool, error) {
 }
 
 func untagAutoScalingGroup(region reapable.Region, id reapable.ID, key string) (bool, error) {
-	api := autoscaling.New(&aws.Config{Region: string(region)})
+	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(region))}))
 	deletereq := &autoscaling.DeleteTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
-				ResourceID:   aws.String(string(id)),
+				ResourceId:   aws.String(string(id)),
 				ResourceType: aws.String("auto-scaling-group"),
 				Key:          aws.String(key),
 			},
@@ -369,13 +370,13 @@ func untagAutoScalingGroup(region reapable.Region, id reapable.ID, key string) (
 
 func tagAutoScalingGroup(region reapable.Region, id reapable.ID, key, value string) (bool, error) {
 	log.Info("Tagging AutoScalingGroup %s in %s with %s:%s", region.String(), id.String(), key, value)
-	api := autoscaling.New(&aws.Config{Region: string(region)})
+	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(region))}))
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
-				ResourceID:        aws.String(string(id)),
+				ResourceId:        aws.String(string(id)),
 				ResourceType:      aws.String("auto-scaling-group"),
-				PropagateAtLaunch: aws.Boolean(false),
+				PropagateAtLaunch: aws.Bool(false),
 				Key:               aws.String(key),
 				Value:             aws.String(value),
 			},
@@ -533,7 +534,7 @@ func (a *AutoScalingGroup) ScaleUp() {
 
 func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) {
 	log.Info("Scaling AutoScalingGroup %s to size %d.", a.ReapableDescriptionTiny(), size)
-	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
+	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(a.Region))}))
 	idString := a.ID.String()
 	input := &autoscaling.UpdateAutoScalingGroupInput{
 		AutoScalingGroupName: &idString,
@@ -552,7 +553,7 @@ func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Terminate() (bool, error) {
 	log.Info("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
-	as := autoscaling.New(&aws.Config{Region: a.Region.String()})
+	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(a.Region))}))
 	idString := a.ID.String()
 	input := &autoscaling.DeleteAutoScalingGroupInput{
 		AutoScalingGroupName: &idString,
@@ -568,13 +569,13 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 // Whitelist is a method of reapable.Whitelistable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Whitelist() (bool, error) {
 	log.Info("Whitelisting AutoScalingGroup %s", a.ReapableDescriptionTiny())
-	api := autoscaling.New(&aws.Config{Region: string(a.Region)})
+	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(a.Region))}))
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
-				ResourceID:        aws.String(string(a.ID)),
+				ResourceId:        aws.String(string(a.ID)),
 				ResourceType:      aws.String("auto-scaling-group"),
-				PropagateAtLaunch: aws.Boolean(false),
+				PropagateAtLaunch: aws.Bool(false),
 				Key:               aws.String(config.WhitelistTag),
 				Value:             aws.String("true"),
 			},

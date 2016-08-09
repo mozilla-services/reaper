@@ -19,7 +19,6 @@ var (
 
 func init() {
 	configFile := flag.String("config", "", "path to config file")
-	dryRun := flag.Bool("dryrun", true, "dry run, don't trigger events")
 	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
 	withoutCloudformationResources := flag.Bool("withoutCloudformationResources", false, "disables dependency checking for Cloudformations (which is slow!)")
 	loadFromStateFile := flag.Bool("load", false, "load state from state file specified in config (overrides AWS state)")
@@ -103,8 +102,7 @@ func init() {
 		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
 	}
 
-	config.DryRun = *dryRun
-	if *dryRun {
+	if config.DryRun {
 		log.Info("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
 		for _, eventReporter := range eventReporters {
 			eventReporter.SetDryRun(true)

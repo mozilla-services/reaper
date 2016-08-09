@@ -176,7 +176,7 @@ func (r *Reaper) LoadState(stateFile string) {
 	if err != nil {
 		log.Error("Unable to open StateFile ", stateFile)
 	} else {
-		log.Info("States loaded from %s", stateFile)
+		log.Info("States loaded from ", stateFile)
 	}
 }
 

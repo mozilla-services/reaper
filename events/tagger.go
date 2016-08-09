@@ -7,12 +7,12 @@ type TaggerConfig struct {
 	*EventReporterConfig
 }
 
-// Tagger is an ReapableEventReporter that tags AWS Resources
+// Tagger is an EventReporter that tags AWS Resources
 type Tagger struct {
 	Config *TaggerConfig
 }
 
-// SetDryRun is a method of ReapableEventReporter
+// SetDryRun is a method of EventReporter
 func (e *Tagger) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
@@ -23,7 +23,7 @@ func NewTagger(c *TaggerConfig) *Tagger {
 	return &Tagger{c}
 }
 
-// NewReapableEvent is a method of ReapableEventReporter
+// NewReapableEvent is a method of EventReporter
 func (e *Tagger) NewReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescription())
@@ -39,7 +39,7 @@ func (e *Tagger) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of ReapableEventReporter
+// NewBatchReapableEvent is a method of EventReporter
 func (e *Tagger) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
 		err := e.NewReapableEvent(r, tags)

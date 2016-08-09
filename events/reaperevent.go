@@ -13,12 +13,12 @@ type ReaperEventConfig struct {
 	Mode string
 }
 
-// ReaperEvent implements ReapableEventReporter, terminates resources
+// ReaperEvent implements EventReporter, terminates resources
 type ReaperEvent struct {
 	Config *ReaperEventConfig
 }
 
-// SetDryRun is a method of ReapableEventReporter
+// SetDryRun is a method of EventReporter
 func (e *ReaperEvent) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
@@ -29,7 +29,7 @@ func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 	return &ReaperEvent{c}
 }
 
-// NewReapableEvent is a method of ReapableEventReporter
+// NewReapableEvent is a method of EventReporter
 func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		if log.Extras() {
@@ -51,7 +51,7 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of ReapableEventReporter
+// NewBatchReapableEvent is a method of EventReporter
 func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
 		err := e.NewReapableEvent(r, tags)

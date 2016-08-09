@@ -79,7 +79,7 @@ type Cleaner interface {
 }
 
 // EventReporter contains different event and statistics reporting
-// embeds ReapableEventReporter
+// embeds EventReporter
 type EventReporter interface {
 	NewEvent(title string, text string, fields map[string]string, tags []string) error
 	NewStatistic(name string, value float64, tags []string) error

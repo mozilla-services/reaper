@@ -12,7 +12,7 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-// Mailer implements ReapableEventReporter, sends email
+// Mailer implements EventReporter, sends email
 // uses godspeed, requires dd-agent running
 type Mailer struct {
 	Config *MailerConfig
@@ -43,7 +43,7 @@ type MailerConfig struct {
 	From     FromAddress
 }
 
-// SetDryRun is a method of ReapableEventReporter
+// SetDryRun is a method of EventReporter
 func (e *Mailer) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
@@ -110,7 +110,7 @@ func NewMailer(c *MailerConfig) *Mailer {
 	return &Mailer{c}
 }
 
-// NewReapableEvent is a method of ReapableEventReporter
+// NewReapableEvent is a method of EventReporter
 func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		addr, subject, body, err := r.ReapableEventEmail()
@@ -129,7 +129,7 @@ func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of ReapableEventReporter
+// NewBatchReapableEvent is a method of EventReporter
 func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	errorStrings := []string{}
 	buffer := new(bytes.Buffer)

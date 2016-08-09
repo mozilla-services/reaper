@@ -12,7 +12,7 @@ type InteractiveEventConfig struct {
 	*EventReporterConfig
 }
 
-// InteractiveEvent implements ReapableEventReporter, offers choices
+// InteractiveEvent implements EventReporter, offers choices
 // uses godspeed, requires dd-agent running
 type InteractiveEvent struct {
 	Config *InteractiveEventConfig
@@ -24,12 +24,12 @@ func NewInteractiveEvent(c *InteractiveEventConfig) *InteractiveEvent {
 	return &InteractiveEvent{c}
 }
 
-// SetDryRun is a method of ReapableEventReporter
+// SetDryRun is a method of EventReporter
 func (e *InteractiveEvent) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
-// NewReapableEvent is a method of ReapableEventReporter
+// NewReapableEvent is a method of EventReporter
 func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescriptionTiny())

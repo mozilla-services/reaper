@@ -39,8 +39,8 @@ func SetEvents(e *[]reaperevents.EventReporter) {
 // which means events AND config need to be set BEFORE Ready
 func Ready() {
 	// set config values for events
-	for _, rer := range *eventReporters {
-		rer.SetDryRun(config.DryRun)
+	for _, er := range *eventReporters {
+		er.SetDryRun(config.DryRun)
 	}
 
 	if r := reapable.NewReapables(config.AWS.Regions); r != nil {

@@ -23,9 +23,9 @@ func (e *DatadogStatistics) NewStatistic(name string, value float64, tags []stri
 		}
 		return nil
 	}
-
-	log.Info("Reporting statistic %s: %d, tags: %v", name, value, tags)
-
+	if log.Extras() {
+		log.Info("DatadogStatistics: reporting %s: %f, tags: %v", name, value, tags)
+	}
 	g, err := e.godspeed()
 	if err != nil {
 		return err

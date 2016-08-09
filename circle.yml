@@ -48,13 +48,13 @@ test:
 
 deployment:
   # this is just for dev, uncomment for testing circleci building
-  # hub_all:
-  #  branch: /.*/
-  #  commands:
-  #     - "[ ! -z $DOCKERHUB_REPO ]"
-  #     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-  #     - docker tag app:build ${DOCKERHUB_REPO}:unstable
-  #     - docker push ${DOCKERHUB_REPO}:unstable
+  hub_all:
+   branch: /.*/
+   commands:
+      - "[ ! -z $DOCKERHUB_REPO ]"
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker tag app:build ${DOCKERHUB_REPO}:unstable
+      - docker push ${DOCKERHUB_REPO}:unstable
 
   hub_latest:
     branch: master

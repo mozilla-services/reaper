@@ -9,10 +9,10 @@ import (
 
 // InteractiveEventConfig is the configuration for an InteractiveEvent
 type InteractiveEventConfig struct {
-	*eventReporterConfig
+	*EventReporterConfig
 }
 
-// InteractiveEvent implements ReapableEventReporter, offers choices
+// InteractiveEvent implements EventReporter, offers choices
 // uses godspeed, requires dd-agent running
 type InteractiveEvent struct {
 	Config *InteractiveEventConfig
@@ -24,12 +24,12 @@ func NewInteractiveEvent(c *InteractiveEventConfig) *InteractiveEvent {
 	return &InteractiveEvent{c}
 }
 
-// SetDryRun is a method of ReapableEventReporter
+// SetDryRun is a method of EventReporter
 func (e *InteractiveEvent) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
-// NewReapableEvent is a method of ReapableEventReporter
+// NewReapableEvent is a method of EventReporter
 func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescriptionTiny())
@@ -72,5 +72,25 @@ func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable, tags []string) e
 			return err
 		}
 	}
+	return nil
+}
+
+// GetConfig is a method of EventReporter
+func (e *InteractiveEvent) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *InteractiveEvent) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *InteractiveEvent) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *InteractiveEvent) NewEvent(string, string, map[string]string, []string) error {
 	return nil
 }

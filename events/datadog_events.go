@@ -9,7 +9,7 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-// DatadogStatistics implements EventReporter encapsulates DatadogEvents, sends events to Datadog
+// DatadogEvents implements EventReporter encapsulates Datadog, sends events to Datadog
 // uses godspeed, requires dd-agent running
 type DatadogEvents struct {
 	Datadog
@@ -98,4 +98,19 @@ func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) erro
 		return errors.New(strings.Join(errorStrings, "\n"))
 	}
 	return nil
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *DatadogEvents) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *DatadogEvents) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// GetConfig is a method of EventReporter
+func (e *DatadogEvents) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
 }

@@ -12,7 +12,7 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-// Mailer implements ReapableEventReporter, sends email
+// Mailer implements EventReporter, sends email
 // uses godspeed, requires dd-agent running
 type Mailer struct {
 	Config *MailerConfig
@@ -31,7 +31,7 @@ type HTTPConfig struct {
 // MailerConfig is the configuration for a Mailer
 type MailerConfig struct {
 	HTTPConfig
-	*eventReporterConfig
+	*EventReporterConfig
 
 	CopyEmailAddresses []string
 
@@ -43,7 +43,7 @@ type MailerConfig struct {
 	From     FromAddress
 }
 
-// SetDryRun is a method of ReapableEventReporter
+// SetDryRun is a method of EventReporter
 func (e *Mailer) SetDryRun(b bool) {
 	e.Config.DryRun = b
 }
@@ -110,7 +110,7 @@ func NewMailer(c *MailerConfig) *Mailer {
 	return &Mailer{c}
 }
 
-// NewReapableEvent is a method of ReapableEventReporter
+// NewReapableEvent is a method of EventReporter
 func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		addr, subject, body, err := r.ReapableEventEmail()
@@ -129,7 +129,7 @@ func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of ReapableEventReporter
+// NewBatchReapableEvent is a method of EventReporter
 func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	errorStrings := []string{}
 	buffer := new(bytes.Buffer)
@@ -179,4 +179,24 @@ func (e *Mailer) send(to mail.Address, subject string, htmlBody *bytes.Buffer) e
 	m.HTML = htmlBody.Bytes()
 
 	return m.Send(e.Config.Addr(), e.Config.Auth())
+}
+
+// GetConfig is a method of EventReporter
+func (e *Mailer) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *Mailer) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *Mailer) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *Mailer) NewEvent(string, string, map[string]string, []string) error {
+	return nil
 }

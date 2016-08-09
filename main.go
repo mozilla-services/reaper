@@ -14,7 +14,7 @@ import (
 
 var (
 	config         reaper.Config
-	eventReporters []reaperevents.ReapableEventReporter
+	eventReporters []reaperevents.EventReporter
 )
 
 func init() {
@@ -64,7 +64,7 @@ func init() {
 		eventReporters = append(eventReporters, reaperevents.NewDatadogEvents(&config.Events.DatadogEvents))
 	}
 
-	// if Email ReapableEventReporter is enabled
+	// if Email EventReporter is enabled
 	if config.Events.Email.Enabled {
 		log.Info("Email EventReporter enabled.")
 		eventReporters = append(eventReporters, reaperevents.NewMailer(&config.Events.Email))
@@ -73,13 +73,13 @@ func init() {
 		log.Debug("SMTP From: %s", &config.Events.Email.From)
 	}
 
-	// if Tagger ReapableEventReporter is enabled
+	// if Tagger EventReporter is enabled
 	if config.Events.Tagger.Enabled {
 		log.Info("Tagger EventReporter enabled.")
 		eventReporters = append(eventReporters, reaperevents.NewTagger(&config.Events.Tagger))
 	}
 
-	// if Reaper ReapableEventReporter is enabled
+	// if Reaper EventReporter is enabled
 	if config.Events.Reaper.Enabled {
 		log.Info("Reaper EventReporter enabled.")
 		eventReporters = append(eventReporters, reaperevents.NewReaperEvent(&config.Events.Reaper))
@@ -90,7 +90,7 @@ func init() {
 	config.Interactive = *interactive
 	if *interactive {
 		log.Info("Interactive mode enabled, you will be prompted to handle reapables. All other EventReporters are disabled.")
-		eventReporters = []reaperevents.ReapableEventReporter{reaperevents.NewInteractiveEvent(&config.Events.Interactive)}
+		eventReporters = []reaperevents.EventReporter{reaperevents.NewInteractiveEvent(&config.Events.Interactive)}
 	}
 
 	// if a WhitelistTag is set

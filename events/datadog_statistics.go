@@ -2,7 +2,7 @@ package events
 
 import log "github.com/mozilla-services/reaper/reaperlog"
 
-// DatadogStatistics implements EventReporter encapsulates DatadogEvents, sends statistics to Datadog
+// DatadogStatistics implements EventReporter encapsulates Datadog, sends statistics to Datadog
 // uses godspeed, requires dd-agent running
 type DatadogStatistics struct {
 	Datadog
@@ -10,7 +10,7 @@ type DatadogStatistics struct {
 
 // NewDatadogStatistics returns a new instance of Datadog
 func NewDatadogStatistics(c *DatadogConfig) *DatadogStatistics {
-	c.Name = "Datadog"
+	c.Name = "DatadogStatistics"
 	return &DatadogStatistics{Datadog{Config: c}}
 }
 
@@ -23,7 +23,9 @@ func (e *DatadogStatistics) NewStatistic(name string, value float64, tags []stri
 		}
 		return nil
 	}
-
+	if log.Extras() {
+		log.Info("DatadogStatistics: reporting %s: %f, tags: %v", name, value, tags)
+	}
 	g, err := e.godspeed()
 	if err != nil {
 		return err
@@ -42,12 +44,21 @@ func (e *DatadogStatistics) NewCountStatistic(name string, tags []string) error 
 		return nil
 	}
 
+	if log.Extras() {
+		log.Info("DatadogStatistics: reporting %s, tags: %v", name, tags)
+	}
+
 	g, err := e.godspeed()
 	if err != nil {
 		return err
 	}
 	err = g.Incr(name, tags)
 	return err
+}
+
+// GetConfig is a method of EventReporter
+func (e *DatadogStatistics) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
 }
 
 // NewReapableEvent is a method of EventReporter
@@ -57,5 +68,10 @@ func (e *DatadogStatistics) NewReapableEvent(r Reapable, tags []string) error {
 
 // NewBatchReapableEvent is a method of EventReporter
 func (e *DatadogStatistics) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *DatadogStatistics) NewEvent(string, string, map[string]string, []string) error {
 	return nil
 }

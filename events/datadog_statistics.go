@@ -2,7 +2,7 @@ package events
 
 import log "github.com/mozilla-services/reaper/reaperlog"
 
-// DatadogStatistics implements EventReporter encapsulates DatadogEvents, sends statistics to Datadog
+// DatadogStatistics implements EventReporter encapsulates Datadog, sends statistics to Datadog
 // uses godspeed, requires dd-agent running
 type DatadogStatistics struct {
 	Datadog
@@ -10,7 +10,7 @@ type DatadogStatistics struct {
 
 // NewDatadogStatistics returns a new instance of Datadog
 func NewDatadogStatistics(c *DatadogConfig) *DatadogStatistics {
-	c.Name = "Datadog"
+	c.Name = "DatadogStatistics"
 	return &DatadogStatistics{Datadog{Config: c}}
 }
 
@@ -23,6 +23,8 @@ func (e *DatadogStatistics) NewStatistic(name string, value float64, tags []stri
 		}
 		return nil
 	}
+
+	log.Info("Reporting statistic %s: %d, tags: %v", name, value, tags)
 
 	g, err := e.godspeed()
 	if err != nil {
@@ -41,6 +43,8 @@ func (e *DatadogStatistics) NewCountStatistic(name string, tags []string) error 
 		}
 		return nil
 	}
+
+	log.Info("Reporting count statistic %s", name)
 
 	g, err := e.godspeed()
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
 
-// DatadogStatistics implements EventReporter encapsulates DatadogEvents, sends events to Datadog
+// DatadogEvents implements EventReporter encapsulates Datadog, sends events to Datadog
 // uses godspeed, requires dd-agent running
 type DatadogEvents struct {
 	Datadog

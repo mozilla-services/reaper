@@ -35,6 +35,11 @@ func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 		snap.Tags[*tag.Key] = *tag.Value
 	}
 
+	if snap.Tagged("aws:cloudformation:stack-name") {
+		snap.Dependency = true
+		snap.IsInCloudformation = true
+	}
+
 	return &snap
 }
 

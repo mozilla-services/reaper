@@ -39,6 +39,10 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	for _, tag := range sg.Tags {
 		s.Resource.Tags[*tag.Key] = *tag.Value
 	}
+	if s.Tagged("aws:cloudformation:stack-name") {
+		s.Dependency = true
+		s.IsInCloudformation = true
+	}
 	if s.Tagged(reaperTag) {
 		// restore previously tagged state
 		s.reaperState = state.NewStateWithTag(s.Resource.Tag(reaperTag))

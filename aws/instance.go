@@ -90,6 +90,15 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 		a.Resource.Tags[*tag.Key] = *tag.Value
 	}
 
+	if a.Tagged("aws:cloudformation:stack-name") {
+		a.Dependency = true
+		a.IsInCloudformation = true
+	}
+
+	if a.Tagged("aws:autoscaling:groupName") {
+		a.Dependency = true
+	}
+
 	// Scaler boilerplate
 	if a.Tagged(scalerTag) {
 		a.Scheduling.setSchedule(a.Tag(scalerTag))

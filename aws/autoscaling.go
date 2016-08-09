@@ -109,6 +109,11 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 		a.Resource.Tags[*tag.Key] = *tag.Value
 	}
 
+	if a.Tagged("aws:cloudformation:stack-name") {
+		a.Dependency = true
+		a.IsInCloudformation = true
+	}
+
 	// autoscaler boilerplate
 	if a.Tagged(scalerTag) {
 		a.Scheduling.setSchedule(a.Tag(scalerTag))

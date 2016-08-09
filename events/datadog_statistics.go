@@ -44,7 +44,9 @@ func (e *DatadogStatistics) NewCountStatistic(name string, tags []string) error 
 		return nil
 	}
 
-	log.Info("Reporting count statistic %s", name)
+	if log.Extras() {
+		log.Info("DatadogStatistics: reporting %s, tags: %v", name, tags)
+	}
 
 	g, err := e.godspeed()
 	if err != nil {

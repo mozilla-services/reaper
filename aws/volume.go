@@ -42,6 +42,11 @@ func NewVolume(region string, vol *ec2.Volume) *Volume {
 		a.Resource.Tags[*tag.Key] = *tag.Value
 	}
 
+	if a.Tagged("aws:cloudformation:stack-name") {
+		a.Dependency = true
+		a.IsInCloudformation = true
+	}
+
 	for _, attachment := range vol.Attachments {
 		if attachment.InstanceId != nil {
 			a.AttachedInstanceIDs = append(a.AttachedInstanceIDs, *attachment.InstanceId)

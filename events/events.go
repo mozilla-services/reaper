@@ -24,7 +24,7 @@ type Reapable interface {
 }
 
 // EventReporterConfig has configuration variables for EventReporters
-type eventReporterConfig struct {
+type EventReporterConfig struct {
 	Enabled bool
 	DryRun  bool
 
@@ -34,7 +34,7 @@ type eventReporterConfig struct {
 	Triggers []string
 }
 
-func (e *eventReporterConfig) parseTriggers() (triggers []state.StateEnum) {
+func (e *EventReporterConfig) parseTriggers() (triggers []state.StateEnum) {
 	for _, t := range e.Triggers {
 		switch t {
 		case "first":
@@ -54,7 +54,7 @@ func (e *eventReporterConfig) parseTriggers() (triggers []state.StateEnum) {
 	return
 }
 
-func (e *eventReporterConfig) shouldTriggerFor(r Reapable) bool {
+func (e *EventReporterConfig) shouldTriggerFor(r Reapable) bool {
 	triggering := false
 	// if the reapable's state is set to trigger this EventReporter
 	for _, trigger := range e.parseTriggers() {
@@ -81,15 +81,11 @@ type Cleaner interface {
 // EventReporter contains different event and statistics reporting
 // embeds ReapableEventReporter
 type EventReporter interface {
-	ReapableEventReporter
 	NewEvent(title string, text string, fields map[string]string, tags []string) error
 	NewStatistic(name string, value float64, tags []string) error
 	NewCountStatistic(name string, tags []string) error
-}
-
-// ReapableEventReporter handles Reapable events
-type ReapableEventReporter interface {
 	NewReapableEvent(r Reapable, tags []string) error
 	NewBatchReapableEvent(rs []Reapable, tags []string) error
 	SetDryRun(b bool)
+	GetConfig() EventReporterConfig
 }

@@ -9,7 +9,7 @@ import (
 
 // InteractiveEventConfig is the configuration for an InteractiveEvent
 type InteractiveEventConfig struct {
-	*eventReporterConfig
+	*EventReporterConfig
 }
 
 // InteractiveEvent implements ReapableEventReporter, offers choices
@@ -72,5 +72,25 @@ func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable, tags []string) e
 			return err
 		}
 	}
+	return nil
+}
+
+// GetConfig is a method of EventReporter
+func (e *InteractiveEvent) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *InteractiveEvent) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *InteractiveEvent) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *InteractiveEvent) NewEvent(string, string, map[string]string, []string) error {
 	return nil
 }

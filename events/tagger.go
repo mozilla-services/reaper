@@ -4,7 +4,7 @@ import log "github.com/mozilla-services/reaper/reaperlog"
 
 // TaggerConfig is the configuration for a Tagger
 type TaggerConfig struct {
-	*eventReporterConfig
+	*EventReporterConfig
 }
 
 // Tagger is an ReapableEventReporter that tags AWS Resources
@@ -47,5 +47,25 @@ func (e *Tagger) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// GetConfig is a method of EventReporter
+func (e *Tagger) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *Tagger) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *Tagger) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *Tagger) NewEvent(string, string, map[string]string, []string) error {
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 
 // DatadogConfig is the configuration for a Datadog
 type DatadogConfig struct {
-	*eventReporterConfig
+	*EventReporterConfig
 	Host string
 	Port string
 }

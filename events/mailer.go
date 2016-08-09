@@ -31,7 +31,7 @@ type HTTPConfig struct {
 // MailerConfig is the configuration for a Mailer
 type MailerConfig struct {
 	HTTPConfig
-	*eventReporterConfig
+	*EventReporterConfig
 
 	CopyEmailAddresses []string
 
@@ -179,4 +179,24 @@ func (e *Mailer) send(to mail.Address, subject string, htmlBody *bytes.Buffer) e
 	m.HTML = htmlBody.Bytes()
 
 	return m.Send(e.Config.Addr(), e.Config.Auth())
+}
+
+// GetConfig is a method of EventReporter
+func (e *Mailer) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *Mailer) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *Mailer) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *Mailer) NewEvent(string, string, map[string]string, []string) error {
+	return nil
 }

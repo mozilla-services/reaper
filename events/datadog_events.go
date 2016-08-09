@@ -99,3 +99,18 @@ func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) erro
 	}
 	return nil
 }
+
+// NewCountStatistic is a method of EventReporter
+func (e *DatadogEvents) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *DatadogEvents) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// GetConfig is a method of EventReporter
+func (e *DatadogEvents) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}

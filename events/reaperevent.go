@@ -8,7 +8,7 @@ import (
 
 // ReaperEventConfig is the configuration for a ReaperEvent
 type ReaperEventConfig struct {
-	*eventReporterConfig
+	*EventReporterConfig
 
 	Mode string
 }
@@ -59,5 +59,25 @@ func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error 
 			return err
 		}
 	}
+	return nil
+}
+
+// GetConfig is a method of EventReporter
+func (e *ReaperEvent) GetConfig() EventReporterConfig {
+	return *e.Config.EventReporterConfig
+}
+
+// NewCountStatistic is a method of EventReporter
+func (e *ReaperEvent) NewCountStatistic(string, []string) error {
+	return nil
+}
+
+// NewStatistic is a method of EventReporter
+func (e *ReaperEvent) NewStatistic(string, float64, []string) error {
+	return nil
+}
+
+// NewEvent is a method of EventReporter
+func (e *ReaperEvent) NewEvent(string, string, map[string]string, []string) error {
 	return nil
 }

@@ -366,6 +366,18 @@ func getInstances() chan *reaperaws.Instance {
 				instanceTypeSums[instance.Region][*instance.InstanceType]++
 			}
 
+			for _, er := range *eventReporters {
+				err := er.NewCountStatistic("reaper.instance",
+					[]string{fmt.Sprintf("region:%s,instancetype:%s,state:%s",
+						instance.Region,
+						*instance.InstanceType,
+						instance.ReaperState().State.String()),
+						config.EventTag})
+				if err != nil {
+					log.Error(err.Error())
+				}
+			}
+
 			regionSums[instance.Region]++
 			ch <- instance
 		}

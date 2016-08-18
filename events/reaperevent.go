@@ -32,15 +32,18 @@ func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 // NewReapableEvent is a method of EventReporter
 func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
-		if log.Extras() {
-			log.Error("Triggering ReaperEvent for ", r.ReaperState().String())
-		}
 		var err error
 		switch e.Config.Mode {
 		case "Stop":
 			_, err = r.Stop()
+			if log.Extras() {
+				log.Info("ReaperEvent: Stopping ", r.ReapableDescriptionTiny())
+			}
 		case "Terminate":
 			_, err = r.Terminate()
+			if log.Extras() {
+				log.Info("ReaperEvent: Terminating ", r.ReapableDescriptionTiny())
+			}
 		default:
 			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
 		}

@@ -50,7 +50,7 @@ func (e *DatadogEvents) newReapableEvent(r Reapable, tags []string) error {
 		if err != nil {
 			return err
 		}
-		err = e.newEvent("Reapable resource discovered", text.String(), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
+		err = e.newEvent("Reapable resource discovered", text.String(), nil, tags)
 		if err != nil {
 			return fmt.Errorf("Error reporting Reapable event for %s: %s", r.ReapableDescriptionTiny(), err.Error())
 		}

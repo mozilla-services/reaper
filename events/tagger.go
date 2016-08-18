@@ -12,8 +12,8 @@ type Tagger struct {
 	Config *TaggerConfig
 }
 
-// SetDryRun is a method of EventReporter
-func (e *Tagger) SetDryRun(b bool) {
+// setDryRun is a method of EventReporter
+func (e *Tagger) setDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
@@ -23,8 +23,8 @@ func NewTagger(c *TaggerConfig) *Tagger {
 	return &Tagger{c}
 }
 
-// NewReapableEvent is a method of EventReporter
-func (e *Tagger) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+func (e *Tagger) newReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescription())
 	}
@@ -39,10 +39,10 @@ func (e *Tagger) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *Tagger) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *Tagger) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r, tags)
+		err := e.newReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}
@@ -55,17 +55,17 @@ func (e *Tagger) GetConfig() EventReporterConfig {
 	return *e.Config.EventReporterConfig
 }
 
-// NewCountStatistic is a method of EventReporter
-func (e *Tagger) NewCountStatistic(string, []string) error {
+// newCountStatistic is a method of EventReporter
+func (e *Tagger) newCountStatistic(string, []string) error {
 	return nil
 }
 
-// NewStatistic is a method of EventReporter
-func (e *Tagger) NewStatistic(string, float64, []string) error {
+// newStatistic is a method of EventReporter
+func (e *Tagger) newStatistic(string, float64, []string) error {
 	return nil
 }
 
-// NewEvent is a method of EventReporter
-func (e *Tagger) NewEvent(string, string, map[string]string, []string) error {
+// newEvent is a method of EventReporter
+func (e *Tagger) newEvent(string, string, map[string]string, []string) error {
 	return nil
 }

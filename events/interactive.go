@@ -24,13 +24,13 @@ func NewInteractiveEvent(c *InteractiveEventConfig) *InteractiveEvent {
 	return &InteractiveEvent{c}
 }
 
-// SetDryRun is a method of EventReporter
-func (e *InteractiveEvent) SetDryRun(b bool) {
+// setDryRun is a method of EventReporter
+func (e *InteractiveEvent) setDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
-// NewReapableEvent is a method of EventReporter
-func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+func (e *InteractiveEvent) newReapableEvent(r Reapable, tags []string) error {
 	if r.ReaperState().Until.IsZero() {
 		log.Warning("Uninitialized time value for %s!", r.ReapableDescriptionTiny())
 	}
@@ -64,10 +64,10 @@ func (e *InteractiveEvent) NewReapableEvent(r Reapable, tags []string) error {
 	return err
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *InteractiveEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *InteractiveEvent) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r, tags)
+		err := e.newReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}
@@ -80,17 +80,17 @@ func (e *InteractiveEvent) GetConfig() EventReporterConfig {
 	return *e.Config.EventReporterConfig
 }
 
-// NewCountStatistic is a method of EventReporter
-func (e *InteractiveEvent) NewCountStatistic(string, []string) error {
+// newCountStatistic is a method of EventReporter
+func (e *InteractiveEvent) newCountStatistic(string, []string) error {
 	return nil
 }
 
-// NewStatistic is a method of EventReporter
-func (e *InteractiveEvent) NewStatistic(string, float64, []string) error {
+// newStatistic is a method of EventReporter
+func (e *InteractiveEvent) newStatistic(string, float64, []string) error {
 	return nil
 }
 
-// NewEvent is a method of EventReporter
-func (e *InteractiveEvent) NewEvent(string, string, map[string]string, []string) error {
+// newEvent is a method of EventReporter
+func (e *InteractiveEvent) newEvent(string, string, map[string]string, []string) error {
 	return nil
 }

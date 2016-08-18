@@ -2,12 +2,98 @@ package events
 
 import (
 	"bytes"
+	"errors"
 	"net/mail"
+	"strings"
 
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 	"github.com/mozilla-services/reaper/state"
 )
+
+var eventReporters *[]EventReporter
+
+func SetEvents(e *[]EventReporter) {
+	eventReporters = e
+}
+
+func SetDryRun(DryRun bool) {
+	// set config values for events
+	for _, er := range *eventReporters {
+		er.setDryRun(DryRun)
+	}
+}
+
+func Cleanup() {
+	for _, er := range *eventReporters {
+		c, ok := er.(Cleaner)
+		if ok {
+			if err := c.Cleanup(); err != nil {
+				log.Error(err.Error())
+			}
+		}
+	}
+}
+
+func NewEvent(title string, text string, fields map[string]string, tags []string) error {
+	errorStrings := []string{}
+	for _, er := range *eventReporters {
+		err := er.newEvent(title, text, fields, tags)
+		errorStrings = append(errorStrings, err.Error())
+	}
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
+	return nil
+}
+
+func NewStatistic(name string, value float64, tags []string) error {
+	errorStrings := []string{}
+	for _, er := range *eventReporters {
+		err := er.newStatistic(name, value, tags)
+		errorStrings = append(errorStrings, err.Error())
+	}
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
+	return nil
+}
+
+func NewCountStatistic(name string, tags []string) error {
+	errorStrings := []string{}
+	for _, er := range *eventReporters {
+		err := er.newCountStatistic(name, tags)
+		errorStrings = append(errorStrings, err.Error())
+	}
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
+	return nil
+}
+
+func NewReapableEvent(r Reapable, tags []string) error {
+	errorStrings := []string{}
+	for _, er := range *eventReporters {
+		err := er.newReapableEvent(r, tags)
+		errorStrings = append(errorStrings, err.Error())
+	}
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
+	return nil
+}
+
+func NewBatchReapableEvent(rs []Reapable, tags []string) error {
+	errorStrings := []string{}
+	for _, er := range *eventReporters {
+		err := er.newBatchReapableEvent(rs, tags)
+		errorStrings = append(errorStrings, err.Error())
+	}
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
+	return nil
+}
 
 // NotificationsConfig wraps state.StatesConfig
 type NotificationsConfig struct {
@@ -81,11 +167,11 @@ type Cleaner interface {
 // EventReporter contains different event and statistics reporting
 // embeds EventReporter
 type EventReporter interface {
-	NewEvent(title string, text string, fields map[string]string, tags []string) error
-	NewStatistic(name string, value float64, tags []string) error
-	NewCountStatistic(name string, tags []string) error
-	NewReapableEvent(r Reapable, tags []string) error
-	NewBatchReapableEvent(rs []Reapable, tags []string) error
-	SetDryRun(b bool)
+	newEvent(title string, text string, fields map[string]string, tags []string) error
+	newStatistic(name string, value float64, tags []string) error
+	newCountStatistic(name string, tags []string) error
+	newReapableEvent(r Reapable, tags []string) error
+	newBatchReapableEvent(rs []Reapable, tags []string) error
+	setDryRun(b bool)
 	GetConfig() EventReporterConfig
 }

@@ -14,9 +14,9 @@ func NewDatadogStatistics(c *DatadogConfig) *DatadogStatistics {
 	return &DatadogStatistics{Datadog{Config: c}}
 }
 
-// NewStatistic is a method of EventReporter
-// NewStatistic reports a gauge to Datadog
-func (e *DatadogStatistics) NewStatistic(name string, value float64, tags []string) error {
+// newStatistic is a method of EventReporter
+// newStatistic reports a gauge to Datadog
+func (e *DatadogStatistics) newStatistic(name string, value float64, tags []string) error {
 	if e.Config.DryRun {
 		if log.Extras() {
 			log.Info("DryRun: Not reporting %s", name)
@@ -34,9 +34,9 @@ func (e *DatadogStatistics) NewStatistic(name string, value float64, tags []stri
 	return err
 }
 
-// NewCountStatistic is a method of EventReporter
-// NewCountStatistic reports an Incr to Datadog
-func (e *DatadogStatistics) NewCountStatistic(name string, tags []string) error {
+// newCountStatistic is a method of EventReporter
+// newCountStatistic reports an Incr to Datadog
+func (e *DatadogStatistics) newCountStatistic(name string, tags []string) error {
 	if e.Config.DryRun {
 		if log.Extras() {
 			log.Info("DryRun: Not reporting %s", name)
@@ -61,17 +61,17 @@ func (e *DatadogStatistics) GetConfig() EventReporterConfig {
 	return *e.Config.EventReporterConfig
 }
 
-// NewReapableEvent is a method of EventReporter
-func (e *DatadogStatistics) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+func (e *DatadogStatistics) newReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *DatadogStatistics) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *DatadogStatistics) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	return nil
 }
 
-// NewEvent is a method of EventReporter
-func (e *DatadogStatistics) NewEvent(string, string, map[string]string, []string) error {
+// newEvent is a method of EventReporter
+func (e *DatadogStatistics) newEvent(string, string, map[string]string, []string) error {
 	return nil
 }

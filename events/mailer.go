@@ -2,9 +2,11 @@ package events
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/mail"
 	"net/smtp"
+	"strings"
 
 	"github.com/jordan-wright/email"
 
@@ -43,8 +45,8 @@ type MailerConfig struct {
 	From     FromAddress
 }
 
-// SetDryRun is a method of EventReporter
-func (e *Mailer) SetDryRun(b bool) {
+// setDryRun is a method of EventReporter
+func (e *Mailer) setDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
@@ -110,8 +112,8 @@ func NewMailer(c *MailerConfig) *Mailer {
 	return &Mailer{c}
 }
 
-// NewReapableEvent is a method of EventReporter
-func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+func (e *Mailer) newReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		addr, subject, body, err := r.ReapableEventEmail()
 		if err != nil {
@@ -129,8 +131,8 @@ func (e *Mailer) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *Mailer) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	errorStrings := []string{}
 	buffer := new(bytes.Buffer)
 
@@ -161,6 +163,9 @@ func (e *Mailer) NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	if triggering {
 		return e.send(owner, subject, buffer)
 	}
+	if len(errorStrings) > 0 {
+		return errors.New(strings.Join(errorStrings, "\n"))
+	}
 	return nil
 }
 
@@ -186,17 +191,17 @@ func (e *Mailer) GetConfig() EventReporterConfig {
 	return *e.Config.EventReporterConfig
 }
 
-// NewCountStatistic is a method of EventReporter
-func (e *Mailer) NewCountStatistic(string, []string) error {
+// newCountStatistic is a method of EventReporter
+func (e *Mailer) newCountStatistic(string, []string) error {
 	return nil
 }
 
-// NewStatistic is a method of EventReporter
-func (e *Mailer) NewStatistic(string, float64, []string) error {
+// newStatistic is a method of EventReporter
+func (e *Mailer) newStatistic(string, float64, []string) error {
 	return nil
 }
 
-// NewEvent is a method of EventReporter
-func (e *Mailer) NewEvent(string, string, map[string]string, []string) error {
+// newEvent is a method of EventReporter
+func (e *Mailer) newEvent(string, string, map[string]string, []string) error {
 	return nil
 }

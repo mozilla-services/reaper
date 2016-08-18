@@ -18,8 +18,8 @@ type ReaperEvent struct {
 	Config *ReaperEventConfig
 }
 
-// SetDryRun is a method of EventReporter
-func (e *ReaperEvent) SetDryRun(b bool) {
+// setDryRun is a method of EventReporter
+func (e *ReaperEvent) setDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
@@ -29,8 +29,8 @@ func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 	return &ReaperEvent{c}
 }
 
-// NewReapableEvent is a method of EventReporter
-func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+func (e *ReaperEvent) newReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		var err error
 		switch e.Config.Mode {
@@ -54,10 +54,10 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *ReaperEvent) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r, tags)
+		err := e.newReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}
@@ -70,17 +70,17 @@ func (e *ReaperEvent) GetConfig() EventReporterConfig {
 	return *e.Config.EventReporterConfig
 }
 
-// NewCountStatistic is a method of EventReporter
-func (e *ReaperEvent) NewCountStatistic(string, []string) error {
+// newCountStatistic is a method of EventReporter
+func (e *ReaperEvent) newCountStatistic(string, []string) error {
 	return nil
 }
 
-// NewStatistic is a method of EventReporter
-func (e *ReaperEvent) NewStatistic(string, float64, []string) error {
+// newStatistic is a method of EventReporter
+func (e *ReaperEvent) newStatistic(string, float64, []string) error {
 	return nil
 }
 
-// NewEvent is a method of EventReporter
-func (e *ReaperEvent) NewEvent(string, string, map[string]string, []string) error {
+// newEvent is a method of EventReporter
+func (e *ReaperEvent) newEvent(string, string, map[string]string, []string) error {
 	return nil
 }

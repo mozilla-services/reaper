@@ -19,29 +19,21 @@ import (
 )
 
 var (
-	reapables      reapable.Reapables
-	savedstates    map[reapable.Region]map[reapable.ID]*state.State
-	config         *Config
-	eventReporters *[]reaperevents.EventReporter
-	schedule       *cron.Cron
-	pricesMap      prices.PricesMap
+	reapables   reapable.Reapables
+	savedstates map[reapable.Region]map[reapable.ID]*state.State
+	config      *Config
+	schedule    *cron.Cron
+	pricesMap   prices.PricesMap
 )
 
 func SetConfig(c *Config) {
 	config = c
 }
 
-func SetEvents(e *[]reaperevents.EventReporter) {
-	eventReporters = e
-}
-
 // Ready NEEDS to be called for EventReporters and Reapables to be properly initialized
 // which means events AND config need to be set BEFORE Ready
 func Ready() {
-	// set config values for events
-	for _, er := range *eventReporters {
-		er.SetDryRun(config.DryRun)
-	}
+	reaperevents.SetDryRun(config.DryRun)
 
 	if r := reapable.NewReapables(config.AWS.Regions); r != nil {
 		reapables = *r
@@ -95,14 +87,7 @@ func (r *Reaper) Start() {
 // Stop stops Reaper's schedule
 func (r *Reaper) Stop() {
 	log.Debug("Stopping Reaper")
-	for _, er := range *eventReporters {
-		c, ok := er.(reaperevents.Cleaner)
-		if ok {
-			if err := c.Cleanup(); err != nil {
-				log.Error(err.Error())
-			}
-		}
-	}
+	reaperevents.Cleanup()
 	r.Cron.Stop()
 }
 
@@ -240,52 +225,45 @@ func (r *Reaper) reap() {
 	go func() {
 		for _, ownedReapables := range filteredOwned {
 			// trigger a per owner batch event
-			for _, er := range *eventReporters {
-				// just in case
-				if len(ownedReapables) < 1 {
-					break
-				}
-				if err := er.NewBatchReapableEvent(ownedReapables, []string{config.EventTag}); err != nil {
-					log.Error(err.Error())
-				}
+			if len(ownedReapables) < 1 {
+				break
+			}
+			if err := reaperevents.NewBatchReapableEvent(ownedReapables, []string{config.EventTag}); err != nil {
+				log.Error(err.Error())
 			}
 		}
 		// trigger events for each filtered unowned resource
 		for _, r := range filteredUnowned {
-			for _, er := range *eventReporters {
-				if err := er.NewReapableEvent(r, []string{config.EventTag}); err != nil {
-					log.Error(err.Error())
-				}
+			if err := reaperevents.NewReapableEvent(r, []string{config.EventTag}); err != nil {
+				log.Error(err.Error())
 			}
 		}
 	}()
 
 	// post statistics
 	go func() {
-		for _, er := range *eventReporters {
-			for region, sum := range filteredInstanceSums {
-				err := er.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
+		for region, sum := range filteredInstanceSums {
+			err := reaperevents.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
 			}
-			for region, sum := range filteredASGSums {
-				err := er.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
+		}
+		for region, sum := range filteredASGSums {
+			err := reaperevents.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
 			}
-			for region, sum := range filteredCloudformationSums {
-				err := er.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
+		}
+		for region, sum := range filteredCloudformationSums {
+			err := reaperevents.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
 			}
-			for region, sum := range filteredSecurityGroupSums {
-				err := er.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
+		}
+		for region, sum := range filteredSecurityGroupSums {
+			err := reaperevents.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
 			}
 		}
 	}()
@@ -310,12 +288,10 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 			log.Info("Found %d total SecurityGroups in %s", sum, region)
 		}
 		go func() {
-			for _, er := range *eventReporters {
-				for region, regionSum := range regionSums {
-					err := er.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-					if err != nil {
-						log.Error(err.Error())
-					}
+			for region, regionSum := range regionSums {
+				err := reaperevents.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				if err != nil {
+					log.Error(err.Error())
 				}
 			}
 		}()
@@ -352,13 +328,11 @@ func getVolumes() chan *reaperaws.Volume {
 		}
 
 		go func() {
-			for _, er := range *eventReporters {
-				for region, regionMap := range volumeSizeSums {
-					for volumeType, volumeSizeSum := range regionMap {
-						err := er.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
-						if err != nil {
-							log.Error(err.Error())
-						}
+			for region, regionMap := range volumeSizeSums {
+				for volumeType, volumeSizeSum := range regionMap {
+					err := reaperevents.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
+					if err != nil {
+						log.Error(err.Error())
 					}
 				}
 			}
@@ -401,30 +375,29 @@ func getInstances() chan *reaperaws.Instance {
 		}
 
 		go func() {
-			for _, er := range *eventReporters {
-				for region, regionMap := range instanceTypeSums {
-					for instanceType, instanceTypeSum := range regionMap {
-						if pricesMap != nil && config.PricesFile != "" {
-							price, ok := pricesMap[string(region)][instanceType]
-							if ok {
-								priceFloat, err := strconv.ParseFloat(price, 64)
-								if err != nil {
-									log.Error(err.Error())
-								}
-								err = er.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*priceFloat, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
-								if err != nil {
-									log.Error(err.Error())
-								}
-							} else {
-								// some instance types are priceless
-								log.Error(fmt.Sprintf("No price for %s", instanceType))
+			for region, regionMap := range instanceTypeSums {
+				for instanceType, instanceTypeSum := range regionMap {
+					if pricesMap != nil && config.PricesFile != "" {
+						price, ok := pricesMap[string(region)][instanceType]
+						if ok {
+							priceFloat, err := strconv.ParseFloat(price, 64)
+							if err != nil {
+								log.Error(err.Error())
 							}
-						}
-						err := er.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
-						if err != nil {
-							log.Error(err.Error())
+							err = reaperevents.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*priceFloat, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+							if err != nil {
+								log.Error(err.Error())
+							}
+						} else {
+							// some instance types are priceless
+							log.Error(fmt.Sprintf("No price for %s", instanceType))
 						}
 					}
+					err := reaperevents.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
+					if err != nil {
+						log.Error(err.Error())
+					}
+
 				}
 			}
 		}()
@@ -452,12 +425,10 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 			log.Info("Found %d total Cloudformation Stacks in %s", sum, region)
 		}
 		go func() {
-			for _, er := range *eventReporters {
-				for region, regionSum := range regionSums {
-					err := er.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-					if err != nil {
-						log.Error(err.Error())
-					}
+			for region, regionSum := range regionSums {
+				err := reaperevents.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				if err != nil {
+					log.Error(err.Error())
 				}
 			}
 		}()
@@ -494,19 +465,17 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 			log.Info("Found %d total AutoScalingGroups in %s", sum, region)
 		}
 		go func() {
-			for _, er := range *eventReporters {
-				for region, regionMap := range asgSizeSums {
-					for asgSize, asgSizeSum := range regionMap {
-						err := er.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
-						if err != nil {
-							log.Error(err.Error())
-						}
+			for region, regionMap := range asgSizeSums {
+				for asgSize, asgSizeSum := range regionMap {
+					err := reaperevents.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
+					if err != nil {
+						log.Error(err.Error())
 					}
-					for region, regionSum := range regionSums {
-						err := er.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
-						if err != nil {
-							log.Error(err.Error())
-						}
+				}
+				for region, regionSum := range regionSums {
+					err := reaperevents.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+					if err != nil {
+						log.Error(err.Error())
 					}
 				}
 			}

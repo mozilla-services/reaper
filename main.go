@@ -102,13 +102,6 @@ func init() {
 		log.Info("Using WhitelistTag '%s'", config.WhitelistTag)
 	}
 
-	if config.DryRun {
-		log.Info("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
-		for _, eventReporter := range eventReporters {
-			eventReporter.SetDryRun(true)
-		}
-	}
-
 	if *withoutCloudformationResources {
 		config.AWS.WithoutCloudformationResources = true
 	}
@@ -123,7 +116,12 @@ func main() {
 	// config and events are vars in the reaper package
 	// they NEED to be set before a reaper.Reaper can be initialized
 	reaper.SetConfig(&config)
-	reaper.SetEvents(&eventReporters)
+	reaperevents.SetEvents(&eventReporters)
+
+	if config.DryRun {
+		log.Info("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
+		reaperevents.SetDryRun(config.DryRun)
+	}
 
 	// Ready() NEEDS to be called after BOTH SetConfig() and SetEvents()
 	// it uses those values to set individual EventReporter config values

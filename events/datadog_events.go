@@ -21,9 +21,9 @@ func NewDatadogEvents(c *DatadogConfig) *DatadogEvents {
 	return &DatadogEvents{Datadog{Config: c}}
 }
 
-// NewEvent is a method of EventReporter
-// NewEvent reports an event to Datadog
-func (e *DatadogEvents) NewEvent(title string, text string, fields map[string]string, tags []string) error {
+// newEvent is a method of EventReporter
+// newEvent reports an event to Datadog
+func (e *DatadogEvents) newEvent(title string, text string, fields map[string]string, tags []string) error {
 	if e.Config.DryRun {
 		if log.Extras() {
 			log.Info("DryRun: Not reporting %s", title)
@@ -42,15 +42,15 @@ func (e *DatadogEvents) NewEvent(title string, text string, fields map[string]st
 	return nil
 }
 
-// NewReapableEvent is a method of EventReporter
-// NewReapableEvent is shorthand for a NewEvent about a reapable resource
-func (e *DatadogEvents) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+// newReapableEvent is shorthand for a newEvent about a reapable resource
+func (e *DatadogEvents) newReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
 		text, err := r.ReapableEventText()
 		if err != nil {
 			return err
 		}
-		err = e.NewEvent("Reapable resource discovered", text.String(), nil, append(tags, "id:%s", r.ReapableDescriptionTiny()))
+		err = e.newEvent("Reapable resource discovered", text.String(), nil, tags)
 		if err != nil {
 			return fmt.Errorf("Error reporting Reapable event for %s: %s", r.ReapableDescriptionTiny(), err.Error())
 		}
@@ -58,8 +58,8 @@ func (e *DatadogEvents) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *DatadogEvents) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	errorStrings := []string{}
 	buffer := new(bytes.Buffer)
 	for _, r := range rs {
@@ -76,9 +76,9 @@ func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) erro
 		}
 		if text.Len()+buffer.Len() > 4500 {
 			// send events in this buffer
-			err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, tags)
+			err := e.newEvent("Reapable resources discovered", buffer.String(), nil, tags)
 			if err != nil {
-				errorStrings = append(errorStrings, fmt.Sprintf("NewEvent: %v", err))
+				errorStrings = append(errorStrings, fmt.Sprintf("newEvent: %v", err))
 			}
 			buffer.Reset()
 		}
@@ -89,9 +89,9 @@ func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) erro
 	// Flush remaining buffer
 	if buffer.Len() > 0 {
 		// send events in this buffer
-		err := e.NewEvent("Reapable resources discovered", buffer.String(), nil, tags)
+		err := e.newEvent("Reapable resources discovered", buffer.String(), nil, tags)
 		if err != nil {
-			errorStrings = append(errorStrings, fmt.Sprintf("NewEvent: %v", err))
+			errorStrings = append(errorStrings, fmt.Sprintf("newEvent: %v", err))
 		}
 	}
 	if len(errorStrings) > 0 {
@@ -100,13 +100,13 @@ func (e *DatadogEvents) NewBatchReapableEvent(rs []Reapable, tags []string) erro
 	return nil
 }
 
-// NewCountStatistic is a method of EventReporter
-func (e *DatadogEvents) NewCountStatistic(string, []string) error {
+// newCountStatistic is a method of EventReporter
+func (e *DatadogEvents) newCountStatistic(string, []string) error {
 	return nil
 }
 
-// NewStatistic is a method of EventReporter
-func (e *DatadogEvents) NewStatistic(string, float64, []string) error {
+// newStatistic is a method of EventReporter
+func (e *DatadogEvents) newStatistic(string, float64, []string) error {
 	return nil
 }
 

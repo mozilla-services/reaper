@@ -30,9 +30,9 @@ func NewDatadog(c *DatadogConfig) *Datadog {
 	return &Datadog{Config: c}
 }
 
-// SetDryRun is a method of EventReporter
-// SetDryRun sets a Datadog's DryRun value
-func (e *Datadog) SetDryRun(b bool) {
+// setDryRun is a method of EventReporter
+// setDryRun sets a Datadog's DryRun value
+func (e *Datadog) setDryRun(b bool) {
 	e.Config.DryRun = b
 }
 

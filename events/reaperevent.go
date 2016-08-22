@@ -13,13 +13,33 @@ type ReaperEventConfig struct {
 	Mode string
 }
 
+// this is a copy of the method from events.go EXCEPT
+// that it triggers whether or not the state was updated this run
+func (e *ReaperEventConfig) shouldTriggerFor(r Reapable) bool {
+	if e.DryRun {
+		if log.Extras() {
+			log.Info("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
+		}
+		return false
+	}
+	triggering := false
+	// if the reapable's state is set to trigger this EventReporter
+	for _, trigger := range e.parseTriggers() {
+		// if the reapable's state should trigger this event
+		if trigger == r.ReaperState().State {
+			triggering = true
+		}
+	}
+	return triggering
+}
+
 // ReaperEvent implements EventReporter, terminates resources
 type ReaperEvent struct {
 	Config *ReaperEventConfig
 }
 
-// SetDryRun is a method of EventReporter
-func (e *ReaperEvent) SetDryRun(b bool) {
+// setDryRun is a method of EventReporter
+func (e *ReaperEvent) setDryRun(b bool) {
 	e.Config.DryRun = b
 }
 
@@ -29,18 +49,25 @@ func NewReaperEvent(c *ReaperEventConfig) *ReaperEvent {
 	return &ReaperEvent{c}
 }
 
-// NewReapableEvent is a method of EventReporter
-func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
+// newReapableEvent is a method of EventReporter
+func (e *ReaperEvent) newReapableEvent(r Reapable, tags []string) error {
 	if e.Config.shouldTriggerFor(r) {
-		if log.Extras() {
-			log.Error("Triggering ReaperEvent for ", r.ReaperState().String())
-		}
 		var err error
 		switch e.Config.Mode {
 		case "Stop":
 			_, err = r.Stop()
+			if log.Extras() {
+				log.Info("ReaperEvent: Stopping ", r.ReapableDescriptionShort())
+			}
+			NewEvent("Reaper: Stopping instance", r.ReapableDescriptionShort(), nil, []string{})
+			NewCountStatistic("reaper.reapables.stopped", []string{})
 		case "Terminate":
 			_, err = r.Terminate()
+			if log.Extras() {
+				log.Info("ReaperEvent: Terminating ", r.ReapableDescriptionShort())
+			}
+			NewEvent("Reaper: Terminating instance", r.ReapableDescriptionShort(), nil, []string{})
+			NewCountStatistic("reaper.reapables.terminated", []string{})
 		default:
 			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
 		}
@@ -51,10 +78,10 @@ func (e *ReaperEvent) NewReapableEvent(r Reapable, tags []string) error {
 	return nil
 }
 
-// NewBatchReapableEvent is a method of EventReporter
-func (e *ReaperEvent) NewBatchReapableEvent(rs []Reapable, tags []string) error {
+// newBatchReapableEvent is a method of EventReporter
+func (e *ReaperEvent) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	for _, r := range rs {
-		err := e.NewReapableEvent(r, tags)
+		err := e.newReapableEvent(r, tags)
 		if err != nil {
 			return err
 		}
@@ -67,17 +94,17 @@ func (e *ReaperEvent) GetConfig() EventReporterConfig {
 	return *e.Config.EventReporterConfig
 }
 
-// NewCountStatistic is a method of EventReporter
-func (e *ReaperEvent) NewCountStatistic(string, []string) error {
+// newCountStatistic is a method of EventReporter
+func (e *ReaperEvent) newCountStatistic(string, []string) error {
 	return nil
 }
 
-// NewStatistic is a method of EventReporter
-func (e *ReaperEvent) NewStatistic(string, float64, []string) error {
+// newStatistic is a method of EventReporter
+func (e *ReaperEvent) newStatistic(string, float64, []string) error {
 	return nil
 }
 
-// NewEvent is a method of EventReporter
-func (e *ReaperEvent) NewEvent(string, string, map[string]string, []string) error {
+// newEvent is a method of EventReporter
+func (e *ReaperEvent) newEvent(string, string, map[string]string, []string) error {
 	return nil
 }

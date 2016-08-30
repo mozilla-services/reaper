@@ -377,7 +377,7 @@ func getInstances() chan *reaperaws.Instance {
 		go func() {
 			for region, regionMap := range instanceTypeSums {
 				for instanceType, instanceTypeSum := range regionMap {
-					if pricesMap != nil && config.PricesFile != "" {
+					if pricesMap != nil {
 						price, ok := pricesMap[string(region)][instanceType]
 						if ok {
 							priceFloat, err := strconv.ParseFloat(price, 64)

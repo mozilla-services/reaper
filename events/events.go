@@ -39,7 +39,9 @@ func NewEvent(title string, text string, fields map[string]string, tags []string
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
 		err := er.newEvent(title, text, fields, tags)
-		errorStrings = append(errorStrings, err.Error())
+		if err != nil {
+			errorStrings = append(errorStrings, err.Error())
+		}
 	}
 	if len(errorStrings) > 0 {
 		return errors.New(strings.Join(errorStrings, "\n"))
@@ -51,7 +53,9 @@ func NewStatistic(name string, value float64, tags []string) error {
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
 		err := er.newStatistic(name, value, tags)
-		errorStrings = append(errorStrings, err.Error())
+		if err != nil {
+			errorStrings = append(errorStrings, err.Error())
+		}
 	}
 	if len(errorStrings) > 0 {
 		return errors.New(strings.Join(errorStrings, "\n"))
@@ -63,7 +67,9 @@ func NewCountStatistic(name string, tags []string) error {
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
 		err := er.newCountStatistic(name, tags)
-		errorStrings = append(errorStrings, err.Error())
+		if err != nil {
+			errorStrings = append(errorStrings, err.Error())
+		}
 	}
 	if len(errorStrings) > 0 {
 		return errors.New(strings.Join(errorStrings, "\n"))
@@ -75,7 +81,9 @@ func NewReapableEvent(r Reapable, tags []string) error {
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
 		err := er.newReapableEvent(r, tags)
-		errorStrings = append(errorStrings, err.Error())
+		if err != nil {
+			errorStrings = append(errorStrings, err.Error())
+		}
 	}
 	if len(errorStrings) > 0 {
 		return errors.New(strings.Join(errorStrings, "\n"))
@@ -87,7 +95,9 @@ func NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
 		err := er.newBatchReapableEvent(rs, tags)
-		errorStrings = append(errorStrings, err.Error())
+		if err != nil {
+			errorStrings = append(errorStrings, err.Error())
+		}
 	}
 	if len(errorStrings) > 0 {
 		return errors.New(strings.Join(errorStrings, "\n"))

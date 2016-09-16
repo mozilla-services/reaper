@@ -37,7 +37,6 @@ Reaper configuration files should be in toml format. See `config/default.toml` f
 * Top level options
     - StateFile: the full filepath of the file that resource states (in custom format) are saved and loaded to / from. `string`
     - LogFile: the full filepath of the file that logs are written to. `string`
-    - PricesFile: the full filepath of the JSON file that prices are read from, in the format output by https://github.com/erans/ec2instancespricing/. `string`
     - WhitelistTag: a string that will be used to tag resources that have been whitelisted. Defaults to `REAPER_SPARE_ME`. (string)
     - DefaultOwner: all unowned resources will be assigned to this owner. Can be an email address, or can be a username if DefaultEmailHost is specified. `string`
     - DefaultEmailHost: resources that do not have a complete email address as their owner will have this appended. Should be of the form "domain.tld". Works with DefaultOwner in the following way: `DefaultOwner`@`DefaultEmailHost`. `string`

@@ -91,7 +91,6 @@ type Config struct {
 	EventTag         string
 	LogFile          string
 	StateFile        string
-	PricesFile       string
 	WhitelistTag     string
 	DefaultOwner     string
 	DefaultEmailHost string

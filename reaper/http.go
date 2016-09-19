@@ -114,7 +114,10 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 
 		switch job.Action {
 		case token.J_DELAY:
-			log.Debug("Delay request received for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String())
+			log.Debug("Delay request received for %s in region %s until %s",
+				job.ID,
+				job.Region,
+				job.IgnoreUntil.String())
 			s := r.ReaperState()
 			ok, err := r.Save(state.NewStateWithUntilAndState(s.Until.Add(job.IgnoreUntil), s.State))
 			if err != nil {
@@ -122,10 +125,18 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			if !ok {
-				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Delay failed for %s.", r.ReapableDescriptionTiny()))
+				writeResponse(w, http.StatusInternalServerError,
+					fmt.Sprintf("Delay failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
-			reaperevents.NewEvent("Reaper: Delay Request Received", fmt.Sprintf("Delay for %s in region %s until %s", job.ID, job.Region, job.IgnoreUntil.String()), nil, []string{})
+			reaperevents.NewEvent("Reaper: Delay Request Received",
+				fmt.Sprintf("Delay for %s in region %s until %s",
+					job.ID,
+					job.Region,
+					job.IgnoreUntil.String()),
+				nil,
+				[]string{},
+			)
 			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:delay"})
 		case token.J_TERMINATE:
 			log.Debug("Terminate request received for %s in region %s.", job.ID, job.Region)
@@ -135,11 +146,14 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			if !ok {
-				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Terminate failed for %s.", r.ReapableDescriptionTiny()))
+				writeResponse(w, http.StatusInternalServerError,
+					fmt.Sprintf("Terminate failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
-			reaperevents.NewEvent("Reaper: Terminate Request Received", r.ReapableDescriptionShort(), nil, []string{})
-			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:terminate"})
+			reaperevents.NewEvent("Reaper: Terminate Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewCountStatistic("reaper.reapables.requests",
+				[]string{"type:terminate"})
 		case token.J_WHITELIST:
 			log.Debug("Whitelist request received for %s in region %s", job.ID, job.Region)
 			ok, err := r.Whitelist()
@@ -148,11 +162,14 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			if !ok {
-				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Whitelist failed for %s.", r.ReapableDescriptionTiny()))
+				writeResponse(w, http.StatusInternalServerError,
+					fmt.Sprintf("Whitelist failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
-			reaperevents.NewEvent("Reaper: Whitelist Request Received", r.ReapableDescriptionShort(), nil, []string{})
-			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:whitelist"})
+			reaperevents.NewEvent("Reaper: Whitelist Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewCountStatistic("reaper.reapables.requests",
+				[]string{"type:whitelist"})
 		case token.J_STOP:
 			log.Debug("Stop request received for %s in region %s", job.ID, job.Region)
 			ok, err := r.Stop()
@@ -161,10 +178,12 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			if !ok {
-				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("Stop failed for %s.", r.ReapableDescriptionTiny()))
+				writeResponse(w, http.StatusInternalServerError,
+					fmt.Sprintf("Stop failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
-			reaperevents.NewEvent("Reaper: Stop Request Received", r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewEvent("Reaper: Stop Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
 			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:stop"})
 		case token.J_FORCESTOP:
 			log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
@@ -174,10 +193,12 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			if !ok {
-				writeResponse(w, http.StatusInternalServerError, fmt.Sprintf("ForceStop failed for %s.", r.ReapableDescriptionTiny()))
+				writeResponse(w, http.StatusInternalServerError,
+					fmt.Sprintf("ForceStop failed for %s.", r.ReapableDescriptionTiny()))
 				return
 			}
-			reaperevents.NewEvent("Reaper: Force Stop Request Received", r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewEvent("Reaper: Force Stop Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
 			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:forcestop"})
 		case token.J_SCHEDULE:
 			log.Debug("Schedule request received for %s in region %s", job.ID, job.Region)
@@ -186,7 +207,8 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 				scaler.SetScaleUpString(job.ScaleUpString)
 				scaler.SaveSchedule()
 			}
-			reaperevents.NewEvent("Reaper: Scheduling Request Received", r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewEvent("Reaper: Scheduling Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
 			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:schedule"})
 		default:
 			log.Error("Unrecognized job token received.")
@@ -203,6 +225,8 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		default:
 			log.Error("No AWSConsoleURL")
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>", r.ReapableDescriptionTiny(), consoleURL))
+		writeResponse(w, http.StatusOK,
+			fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>",
+				r.ReapableDescriptionTiny(), consoleURL))
 	}
 }

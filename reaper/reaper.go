@@ -664,19 +664,27 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 		}
 	}()
 
+	whitelistedCount := make(map[string]int)
+
 	var gs []reaperevents.Reapable
 	for _, filterable := range filterables {
 		var groups map[string]filters.FilterGroup
+		var stat string
 		switch filterable.(type) {
 		case *reaperaws.Instance:
+			stat = "reaper.instances.whitelistedCount"
 			groups = config.Instances.FilterGroups
 		case *reaperaws.AutoScalingGroup:
+			stat = "reaper.asgs.whitelistedCount"
 			groups = config.AutoScalingGroups.FilterGroups
 		case *reaperaws.Cloudformation:
+			stat = "reaper.cloudformations.whitelistedCount"
 			groups = config.Cloudformations.FilterGroups
 		case *reaperaws.SecurityGroup:
+			stat = "reaper.securitygroups.whitelistedCount"
 			groups = config.SecurityGroups.FilterGroups
 		case *reaperaws.Volume:
+			stat = "reaper.volumes.whitelistedCount"
 			groups = config.Volumes.FilterGroups
 		default:
 			log.Warning("You probably screwed up and need to make sure applyFilters works!")
@@ -715,12 +723,20 @@ func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 			// if the filterable matches this filter, then
 			// it should be whitelisted, aka not matched
 			matched = false
+			whitelistedCount[stat]++
 		}
 
 		if matched {
 			gs = append(gs, filterable)
 		}
 	}
+	for stat, count := range whitelistedCount {
+		err := reaperevents.NewStatistic(stat, float64(count), []string{config.EventTag})
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
+
 	return gs
 }
 

@@ -41,16 +41,13 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 		Stack: *stack,
 	}
 
-	a.Lock()
-	defer a.Unlock()
-
 	// because getting resources is rate limited...
 	go func() {
 		a.Lock()
-		defer a.Unlock()
 		for resource := range cloudformationResources(a.Region().String(), a.ID().String()) {
 			a.Resources = append(a.Resources, *resource)
 		}
+		a.Unlock()
 	}()
 
 	for _, tag := range stack.Tags {

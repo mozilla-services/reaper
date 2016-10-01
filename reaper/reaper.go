@@ -565,14 +565,13 @@ func allReapables() []reaperevents.Reapable {
 	for c := range getCloudformations() {
 		// because getting resources is rate limited...
 		c.RLock()
-		defer c.RUnlock()
 		for _, resource := range c.Resources {
 			if resource.PhysicalResourceId != nil {
 				dependency[c.Region()][reapable.ID(*resource.PhysicalResourceId)] = true
 				isInCloudformation[c.Region()][reapable.ID(*resource.PhysicalResourceId)] = true
 			}
 		}
-
+		c.RUnlock()
 		if config.Cloudformations.Enabled {
 			resources = append(resources, c)
 		}

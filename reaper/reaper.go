@@ -159,37 +159,15 @@ func (r *Reaper) LoadState(stateFile string) {
 }
 
 func (r *Reaper) reap() {
-	owned, unowned := allReapables()
-	var filtered []reaperevents.Reapable
-
-	// filtered, owned resources
-	filteredOwned := make(map[string][]reaperevents.Reapable)
+	reapables := reapablesByOwner()
 
 	// apply filters and trigger events for owned resources
 	// for each owner in the owner map
-	for owner, ownerMap := range owned {
+	filteredReapables := make(map[string][]reaperevents.Reapable)
+	for owner, ownedResources := range reapables {
 		// apply filters to their resources
-		resources := applyFilters(ownerMap)
-		// if there's only one resource for this owner
-		if len(resources) == 1 {
-			// no point sending a batch
-			// so instead just add it to unowned
-			// to be individually sent
-			unowned = append(unowned, resources...)
-			continue
-		}
-
-		// append the resources to filtered
-		// so that reap methods are called on them
-		filtered = append(filtered, resources...)
-
-		// add resources (post filter) to filteredOwned for batch events
-		filteredOwned[owner] = resources
+		filteredReapables[owner] = applyFilters(ownedResources)
 	}
-
-	// apply filters and trigger events for unowned resources
-	filteredUnowned := applyFilters(unowned)
-	filtered = append(filtered, filteredUnowned...)
 
 	filteredInstanceSums := make(map[reapable.Region]int)
 	filteredASGSums := make(map[reapable.Region]int)
@@ -197,45 +175,45 @@ func (r *Reaper) reap() {
 	filteredCloudformationSums := make(map[reapable.Region]int)
 	filteredVolumeSums := make(map[reapable.Region]int)
 
-	// filtered has _all_ resources post filtering
-	for _, f := range filtered {
-		switch t := f.(type) {
-		case *reaperaws.Instance:
-			filteredInstanceSums[t.Region]++
-			reapInstance(t)
-		case *reaperaws.AutoScalingGroup:
-			filteredASGSums[t.Region]++
-			reapAutoScalingGroup(t)
-		case *reaperaws.SecurityGroup:
-			filteredSecurityGroupSums[t.Region]++
-			reapSecurityGroup(t)
-		case *reaperaws.Cloudformation:
-			filteredCloudformationSums[t.Region]++
-			reapCloudformation(t)
-		case *reaperaws.Volume:
-			filteredVolumeSums[t.Region]++
-			reapVolume(t)
-		default:
-			log.Error("Reap default case.")
+	for _, ownedReapablesArray := range filteredReapables {
+		for _, ownedResource := range ownedReapablesArray {
+			switch t := ownedResource.(type) {
+			case *reaperaws.Instance:
+				filteredInstanceSums[t.Region]++
+				reapInstance(t)
+			case *reaperaws.AutoScalingGroup:
+				filteredASGSums[t.Region]++
+				reapAutoScalingGroup(t)
+			case *reaperaws.SecurityGroup:
+				filteredSecurityGroupSums[t.Region]++
+				reapSecurityGroup(t)
+			case *reaperaws.Cloudformation:
+				filteredCloudformationSums[t.Region]++
+				reapCloudformation(t)
+			case *reaperaws.Volume:
+				filteredVolumeSums[t.Region]++
+				reapVolume(t)
+			default:
+				log.Error("Reap default case.")
+			}
 		}
 	}
 
 	// trigger batch events for each filtered owned resource in a goroutine
 	// for each owner in the owner map
 	go func() {
-		for _, ownedReapables := range filteredOwned {
-			// trigger a per owner batch event
-			if len(ownedReapables) < 1 {
-				break
-			}
-			if err := reaperevents.NewBatchReapableEvent(ownedReapables, []string{config.EventTag}); err != nil {
-				log.Error(err.Error())
-			}
-		}
-		// trigger events for each filtered unowned resource
-		for _, r := range filteredUnowned {
-			if err := reaperevents.NewReapableEvent(r, []string{config.EventTag}); err != nil {
-				log.Error(err.Error())
+		// trigger a per owner batch event
+		for _, ownedReapablesArray := range filteredReapables {
+			// if there's only one resource for the owner, do a single event
+			if len(ownedReapablesArray) == 1 {
+				if err := reaperevents.NewReapableEvent(ownedReapablesArray[0], []string{config.EventTag}); err != nil {
+					log.Error(err.Error())
+				}
+			} else {
+				// batch event
+				if err := reaperevents.NewBatchReapableEvent(ownedReapablesArray, []string{config.EventTag}); err != nil {
+					log.Error(err.Error())
+				}
 			}
 		}
 	}()
@@ -487,10 +465,8 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 
 // makes a slice of all filterables by appending
 // output of each filterable types aggregator function
-func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable) {
-	// all resources are appended to owned or unowned
+func reapablesByOwner() map[string][]reaperevents.Reapable {
 	owned := make(map[string][]reaperevents.Reapable)
-	var unowned []reaperevents.Reapable
 
 	// initialize dependency and isInCloudformation
 	dependency := make(map[reapable.Region]map[reapable.ID]bool)
@@ -561,9 +537,6 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		if config.AutoScalingGroups.Enabled {
 			if a.Owner() != nil {
 				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, a)
 			}
 		}
 	}
@@ -598,9 +571,6 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 		if config.Instances.Enabled {
 			if i.Owner() != nil {
 				owned[i.Owner().Address] = append(owned[i.Owner().Address], i)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, i)
 			}
 		}
 	}
@@ -619,9 +589,6 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			// group instances by owner
 			if s.Owner() != nil {
 				owned[s.Owner().Address] = append(owned[s.Owner().Address], s)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, s)
 			}
 		}
 	}
@@ -644,13 +611,10 @@ func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable
 			// group instances by owner
 			if v.Owner() != nil {
 				owned[v.Owner().Address] = append(owned[v.Owner().Address], v)
-			} else {
-				// if unowned, append to unowned
-				unowned = append(unowned, v)
 			}
 		}
 	}
-	return owned, unowned
+	return owned
 }
 
 // takes an array of filterables

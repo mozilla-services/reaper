@@ -34,8 +34,6 @@ const (
 	J_TERMINATE
 	J_WHITELIST
 	J_STOP
-	J_FORCESTOP
-	J_SCHEDULE
 )
 
 // Not very scalable but good enough for our requirements
@@ -63,17 +61,6 @@ func (j *JobToken) Equal(j2 *JobToken) bool {
 
 func (j *JobToken) Expired() bool {
 	return j.ValidUntil.Before(time.Now())
-}
-
-func NewScheduleJob(region, ID, scaleDownSchedule, scaleUpSchedule string) *JobToken {
-	return &JobToken{
-		Action:          J_SCHEDULE,
-		ID:              ID,
-		Region:          region,
-		ScaleDownString: scaleDownSchedule,
-		ScaleUpString:   scaleUpSchedule,
-		ValidUntil:      time.Now().Add(tokenDuration),
-	}
 }
 
 func NewDelayJob(region, ID string, until time.Duration) *JobToken {
@@ -107,15 +94,6 @@ func NewWhitelistJob(region, ID string) *JobToken {
 func NewStopJob(region, ID string) *JobToken {
 	return &JobToken{
 		Action:     J_STOP,
-		ID:         ID,
-		Region:     region,
-		ValidUntil: time.Now().Add(tokenDuration),
-	}
-}
-
-func NewForceStopJob(region, ID string) *JobToken {
-	return &JobToken{
-		Action:     J_FORCESTOP,
 		ID:         ID,
 		Region:     region,
 		ValidUntil: time.Now().Add(tokenDuration),

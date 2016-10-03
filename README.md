@@ -14,7 +14,6 @@ Reaper workflow:
 
 *Caution* This app is experimental because:
 * doesn't have a lot of tests (Read: any), will add when SDK is updated
-* it's maintained by an intern
 
 ## Building
 * install glide per `https://github.com/Masterminds/glide`
@@ -27,7 +26,6 @@ Reaper workflow:
 ## Command Line Flags
 * config: required flag, the path to the Reaper config file. `string` (no default value)
 * dryrun: run Reaper in dryrun (no-op) mode. Events will not be triggered. `boolean` (default: true)
-* interactive: run Reaper in Interactive mode, disabling all other Events, and prompting for input on Reapable discovery. `boolean` (default: false)
 * load: load Reaper state from the StateFile (overrides tags with state in AWS) `boolean` (default: false)
 * withoutCloudformationResources: skip checking for Cloudformation Resource dependencies (throttled by AWS, so it takes ages). `boolean` (default: false)
 

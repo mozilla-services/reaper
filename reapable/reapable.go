@@ -9,19 +9,6 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-type Terminable interface {
-	Terminate() (bool, error)
-}
-
-type Stoppable interface {
-	Stop() (bool, error)
-	ForceStop() (bool, error)
-}
-
-type Whitelistable interface {
-	Whitelist() (bool, error)
-}
-
 type Saveable interface {
 	Save(state *state.State) (bool, error)
 	Unsave() (bool, error)
@@ -50,9 +37,9 @@ type Saveable interface {
 
 type Reapable interface {
 	filters.Filterable
-	Terminable
-	Stoppable
-	Whitelistable
+	Terminate() (bool, error)
+	Stop() (bool, error)
+	Whitelist() (bool, error)
 	Saveable
 
 	Owner() *mail.Address

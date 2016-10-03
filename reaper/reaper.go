@@ -65,6 +65,7 @@ func GetPrices() {
 func (r *Reaper) Start() {
 	// adding as a job runs r.Run() every interval
 	r.Cron.Schedule(cron.Every(config.Notifications.Interval.Duration), r)
+	r.Cron.AddFunc("@weekly", GetPrices)
 	r.Cron.Start()
 
 	// initial prices download, synchronous
@@ -84,9 +85,6 @@ func (r *Reaper) Stop() {
 // Run handles all reaping logic
 // conforms to the cron.Job interface
 func (r *Reaper) Run() {
-	schedule = cron.New()
-	schedule.AddFunc("@weekly", GetPrices)
-	schedule.Start()
 	r.reap()
 
 	// this is no longer true, but is roughly accurate
@@ -495,14 +493,6 @@ func allReapables() []reaperevents.Reapable {
 			a.Dependency = true
 		}
 
-		if a.Scheduling.Enabled {
-			if log.Extras() {
-				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID().String(), a.Scheduling.ScaleDownString, a.Scheduling.ScaleUpString)
-			}
-			schedule.AddFunc(a.Scheduling.ScaleDownString, a.ScaleDown)
-			schedule.AddFunc(a.Scheduling.ScaleUpString, a.ScaleUp)
-		}
-
 		// identify instances in an ASG
 		instanceIDsInASGs := reaperaws.AutoScalingGroupInstanceIDs(a)
 		for region := range instanceIDsInASGs {
@@ -533,14 +523,6 @@ func allReapables() []reaperevents.Reapable {
 		}
 		if instancesInASGs[i.Region()][i.ID()] {
 			i.AutoScaled = true
-		}
-
-		if i.Scheduling.Enabled {
-			if log.Extras() {
-				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID().String(), i.Scheduling.ScaleDownString, i.Scheduling.ScaleUpString)
-			}
-			schedule.AddFunc(i.Scheduling.ScaleDownString, i.ScaleDown)
-			schedule.AddFunc(i.Scheduling.ScaleUpString, i.ScaleUp)
 		}
 
 		if config.Instances.Enabled {
@@ -675,23 +657,6 @@ func Terminate(region reapable.Region, id reapable.ID) error {
 		return err
 	}
 	log.Debug("Terminate %s", reapable.ReapableDescriptionShort())
-
-	return nil
-}
-
-// ForceStop by region, id, calls a Reapable's own ForceStop method
-func ForceStop(region reapable.Region, id reapable.ID) error {
-	reapable, err := reapables.Get(region, id)
-	if err != nil {
-		return err
-	}
-	_, err = reapable.ForceStop()
-	if err != nil {
-		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
-			region, id, err.Error()))
-		return err
-	}
-	log.Debug("ForceStop %s", reapable.ReapableDescriptionShort())
 
 	return nil
 }

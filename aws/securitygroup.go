@@ -96,7 +96,6 @@ type securityGroupEventData struct {
 	SecurityGroup *SecurityGroup
 	TerminateLink string
 	StopLink      string
-	ForceStopLink string
 	WhitelistLink string
 	IgnoreLink1   string
 	IgnoreLink3   string
@@ -109,7 +108,6 @@ func (a *SecurityGroup) getTemplateData() (interface{}, error) {
 	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
@@ -120,7 +118,6 @@ func (a *SecurityGroup) getTemplateData() (interface{}, error) {
 		SecurityGroup: a,
 		TerminateLink: terminate,
 		StopLink:      stop,
-		ForceStopLink: forcestop,
 		WhitelistLink: whitelist,
 		IgnoreLink1:   ignore1,
 		IgnoreLink3:   ignore3,
@@ -285,11 +282,5 @@ func (a *SecurityGroup) Terminate() (bool, error) {
 // Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // noop
 func (a *SecurityGroup) Stop() (bool, error) {
-	return false, nil
-}
-
-// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-// noop
-func (a *SecurityGroup) ForceStop() (bool, error) {
 	return false, nil
 }

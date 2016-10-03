@@ -103,18 +103,14 @@ func (a *Volume) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buff
 }
 
 type volumeEventData struct {
-	Config                           *Config
-	Volume                           *Volume
-	TerminateLink                    string
-	StopLink                         string
-	ForceStopLink                    string
-	WhitelistLink                    string
-	IgnoreLink1                      string
-	IgnoreLink3                      string
-	IgnoreLink7                      string
-	SchedulePacificBusinessHoursLink string
-	ScheduleEasternBusinessHoursLink string
-	ScheduleCESTBusinessHoursLink    string
+	Config        *Config
+	Volume        *Volume
+	TerminateLink string
+	StopLink      string
+	WhitelistLink string
+	IgnoreLink1   string
+	IgnoreLink3   string
+	IgnoreLink7   string
 }
 
 func (a *Volume) getTemplateData() (interface{}, error) {
@@ -138,10 +134,6 @@ func (a *Volume) getTemplateData() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
 	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
@@ -152,7 +144,6 @@ func (a *Volume) getTemplateData() (interface{}, error) {
 		Volume:        a,
 		TerminateLink: terminate,
 		StopLink:      stop,
-		ForceStopLink: forcestop,
 		WhitelistLink: whitelist,
 		IgnoreLink1:   ignore1,
 		IgnoreLink3:   ignore3,
@@ -381,11 +372,5 @@ func (a *Volume) Terminate() (bool, error) {
 // noop
 func (a *Volume) Stop() (bool, error) {
 	// use existing min size
-	return false, nil
-}
-
-// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-// noop
-func (a *Volume) ForceStop() (bool, error) {
 	return false, nil
 }

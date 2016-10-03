@@ -27,6 +27,7 @@ type Saveable interface {
 	Unsave() (bool, error)
 	ReaperState() *state.State
 	IncrementState() bool
+	SetUpdated(bool)
 }
 
 //                ,____
@@ -55,6 +56,9 @@ type Reapable interface {
 	Saveable
 
 	Owner() *mail.Address
+	ID() ID
+	Region() Region
+
 	ReapableDescription() string
 	ReapableDescriptionShort() string
 	ReapableDescriptionTiny() string
@@ -114,8 +118,16 @@ func (rs *Reapables) Delete(region Region, id ID) {
 
 type ReapableContainer struct {
 	Reapable
-	Region Region
-	ID     ID
+	region Region
+	id     ID
+}
+
+func (r *ReapableContainer) Region() Region {
+	return r.region
+}
+
+func (r *ReapableContainer) ID() ID {
+	return r.id
 }
 
 func (rs *Reapables) Iter() <-chan ReapableContainer {

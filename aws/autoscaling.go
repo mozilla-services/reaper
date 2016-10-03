@@ -55,7 +55,7 @@ func (s *autoScalingGroupScalingSchedule) setSchedule(tag string) {
 
 // SaveSchedule is a method of the Scaler interface
 func (a *AutoScalingGroup) SaveSchedule() {
-	tagAutoScalingGroup(a.Region, a.ID, scalerTag, a.Scheduling.scheduleTag())
+	tagAutoScalingGroup(a.Region(), a.ID(), scalerTag, a.Scheduling.scheduleTag())
 }
 
 // SetScaleDownString is a method of the Scaler interface
@@ -93,8 +93,8 @@ type AutoScalingGroup struct {
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		Resource: Resource{
-			Region: reapable.Region(region),
-			ID:     reapable.ID(*asg.AutoScalingGroupName),
+			region: reapable.Region(region),
+			id:     reapable.ID(*asg.AutoScalingGroupName),
 			Name:   *asg.AutoScalingGroupName,
 			Tags:   make(map[string]string),
 		},
@@ -182,43 +182,43 @@ type autoScalingGroupEventData struct {
 }
 
 func (a *AutoScalingGroup) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := makeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := makeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := makeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	whitelist, err := makeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	schedulePacific, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
+	schedulePacific, err := makeScheduleLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleEastern, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
+	scheduleEastern, err := makeScheduleLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
 	if err != nil {
 		return nil, err
 	}
-	scheduleCEST, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
+	scheduleCEST, err := makeScheduleLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}
@@ -344,13 +344,13 @@ func (a *AutoScalingGroup) sizeGreaterThan(size int64) bool {
 
 // Save is part of reapable.Saveable, which embedded in reapable.Reapable
 func (a *AutoScalingGroup) Save(s *state.State) (bool, error) {
-	return tagAutoScalingGroup(a.Region, a.ID, reaperTag, a.reaperState.String())
+	return tagAutoScalingGroup(a.Region(), a.ID(), reaperTag, a.reaperState.String())
 }
 
 // Unsave is part of reapable.Saveable, which embedded in reapable.Reapable
 func (a *AutoScalingGroup) Unsave() (bool, error) {
 	log.Info("Unsaving %s", a.ReapableDescriptionTiny())
-	return untagAutoScalingGroup(a.Region, a.ID, reaperTag)
+	return untagAutoScalingGroup(a.Region(), a.ID(), reaperTag)
 }
 
 func untagAutoScalingGroup(region reapable.Region, id reapable.ID, key string) (bool, error) {
@@ -375,7 +375,7 @@ func untagAutoScalingGroup(region reapable.Region, id reapable.ID, key string) (
 
 func tagAutoScalingGroup(region reapable.Region, id reapable.ID, key, value string) (bool, error) {
 	log.Info("Tagging AutoScalingGroup %s in %s with %s:%s", region.String(), id.String(), key, value)
-	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(region))}))
+	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(region.String())}))
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
@@ -437,7 +437,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		}
 	case "Region":
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				matched = true
 			}
 		}
@@ -445,7 +445,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 		// was this resource's region one of those in the NOT list
 		regionSpecified := false
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				regionSpecified = true
 			}
 		}
@@ -501,7 +501,7 @@ func (a *AutoScalingGroup) Filter(filter filters.Filter) bool {
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/autoscaling/home?region=%s#AutoScalingGroups:id=%s;view=details",
-		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
+		a.Region().String(), a.Region().String(), url.QueryEscape(a.ID().String())))
 	if err != nil {
 		log.Error("Error generating AWSConsoleURL. ", err)
 	}
@@ -539,10 +539,9 @@ func (a *AutoScalingGroup) ScaleUp() {
 
 func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) {
 	log.Info("Scaling AutoScalingGroup %s to size %d.", a.ReapableDescriptionTiny(), size)
-	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(a.Region))}))
-	idString := a.ID.String()
+	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(a.Region().String())}))
 	input := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: &idString,
+		AutoScalingGroupName: aws.String(a.ID().String()),
 		DesiredCapacity:      &size,
 		MinSize:              &minSize,
 	}
@@ -558,10 +557,9 @@ func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Terminate() (bool, error) {
 	log.Info("Terminating AutoScalingGroup %s", a.ReapableDescriptionTiny())
-	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(a.Region))}))
-	idString := a.ID.String()
+	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(a.Region().String())}))
 	input := &autoscaling.DeleteAutoScalingGroupInput{
-		AutoScalingGroupName: &idString,
+		AutoScalingGroupName: aws.String(a.ID().String()),
 	}
 	_, err := as.DeleteAutoScalingGroup(input)
 	if err != nil {
@@ -574,11 +572,11 @@ func (a *AutoScalingGroup) Terminate() (bool, error) {
 // Whitelist is a method of reapable.Whitelistable, which is embedded in reapable.Reapable
 func (a *AutoScalingGroup) Whitelist() (bool, error) {
 	log.Info("Whitelisting AutoScalingGroup %s", a.ReapableDescriptionTiny())
-	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(string(a.Region))}))
+	api := autoscaling.New(session.New(&aws.Config{Region: aws.String(a.Region().String())}))
 	createreq := &autoscaling.CreateOrUpdateTagsInput{
 		Tags: []*autoscaling.Tag{
 			&autoscaling.Tag{
-				ResourceId:        aws.String(string(a.ID)),
+				ResourceId:        aws.String(a.ID().String()),
 				ResourceType:      aws.String("auto-scaling-group"),
 				PropagateAtLaunch: aws.Bool(false),
 				Key:               aws.String(config.WhitelistTag),

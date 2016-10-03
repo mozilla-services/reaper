@@ -32,8 +32,8 @@ type Cloudformation struct {
 func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformation {
 	a := Cloudformation{
 		Resource: Resource{
-			Region:      reapable.Region(region),
-			ID:          reapable.ID(*stack.StackId),
+			region:      reapable.Region(region),
+			id:          reapable.ID(*stack.StackId),
 			Name:        *stack.StackName,
 			Tags:        make(map[string]string),
 			reaperState: state.NewStateWithUntil(time.Now().Add(config.Notifications.FirstStateDuration.Duration)),
@@ -48,7 +48,7 @@ func NewCloudformation(region string, stack *cloudformation.Stack) *Cloudformati
 	go func() {
 		a.Lock()
 		defer a.Unlock()
-		for resource := range cloudformationResources(a.Region.String(), a.ID.String()) {
+		for resource := range cloudformationResources(a.Region().String(), a.ID().String()) {
 			a.Resources = append(a.Resources, *resource)
 		}
 	}()
@@ -117,13 +117,13 @@ type cloudformationEventData struct {
 }
 
 func (a *Cloudformation) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
-	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
-	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
-	terminate, err := makeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	stop, err := makeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	forcestop, err := makeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	whitelist, err := makeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
+	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 
 	if err != nil {
 		return nil, err
@@ -252,7 +252,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		}
 	case "Region":
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				matched = true
 			}
 		}
@@ -260,7 +260,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 		// was this resource's region one of those in the NOT list
 		regionSpecified := false
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				regionSpecified = true
 			}
 		}
@@ -317,7 +317,7 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 func (a *Cloudformation) AWSConsoleURL() *url.URL {
 	url, err := url.Parse("https://console.aws.amazon.com/cloudformation/home")
 	// setting RawQuery because QueryEscape messes with the "/"s in the url
-	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region.String(), a.ID.String())
+	url.RawQuery = fmt.Sprintf("region=%s#/stacks?filter=active&tab=overview&stackId=%s", a.Region().String(), a.ID().String())
 	if err != nil {
 		log.Error("Error generating AWSConsoleURL. ", err)
 	}
@@ -327,12 +327,10 @@ func (a *Cloudformation) AWSConsoleURL() *url.URL {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Cloudformation) Terminate() (bool, error) {
 	log.Info("Terminating Cloudformation %s", a.ReapableDescriptionTiny())
-	as := cloudformation.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
-
-	stringID := string(a.ID)
+	as := cloudformation.New(sess, aws.NewConfig().WithRegion(a.Region().String()))
 
 	input := &cloudformation.DeleteStackInput{
-		StackName: &stringID,
+		StackName: aws.String(a.ID().String()),
 	}
 	_, err := as.DeleteStack(input)
 	if err != nil {

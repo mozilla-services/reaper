@@ -2,6 +2,7 @@ package reapable
 
 import (
 	"fmt"
+	"net/mail"
 	"sync"
 
 	"github.com/mozilla-services/reaper/filters"
@@ -53,6 +54,7 @@ type Reapable interface {
 	Whitelistable
 	Saveable
 
+	Owner() *mail.Address
 	ReapableDescription() string
 	ReapableDescriptionShort() string
 	ReapableDescriptionTiny() string

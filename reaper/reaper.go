@@ -230,15 +230,21 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 		}
 		go func() {
 			for region, regionSum := range regionSums {
-				err := reaperevents.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err := reaperevents.NewStatistic("reaper.securitygroups.total",
+					float64(regionSum),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
-				err = reaperevents.NewStatistic("reaper.securitygroups.whitelistedCount", float64(whitelistedCount[region]), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err = reaperevents.NewStatistic("reaper.securitygroups.whitelistedCount",
+					float64(whitelistedCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
-				err = reaperevents.NewStatistic("reaper.securitygroups.filtered", float64(filteredCount[region]), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err = reaperevents.NewStatistic("reaper.securitygroups.filtered",
+					float64(filteredCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
@@ -289,15 +295,21 @@ func getVolumes() chan *reaperaws.Volume {
 		go func() {
 			for region, regionMap := range volumeSizeSums {
 				for volumeType, volumeSizeSum := range regionMap {
-					err := reaperevents.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
+					err := reaperevents.NewStatistic("reaper.volumes.total",
+						float64(volumeSizeSum),
+						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.volumes.filtered", float64(filteredCount[region]), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
+					err = reaperevents.NewStatistic("reaper.volumes.filtered",
+						float64(filteredCount[region]),
+						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.volumes.whitelistedCount", float64(whitelistedCount[region]), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
+					err = reaperevents.NewStatistic("reaper.volumes.whitelistedCount",
+						float64(whitelistedCount[region]),
+						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
 					if err != nil {
 						log.Error(err.Error())
 					}
@@ -361,7 +373,9 @@ func getInstances() chan *reaperaws.Instance {
 							if err != nil {
 								log.Error(err.Error())
 							}
-							err = reaperevents.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*priceFloat, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+							err = reaperevents.NewStatistic("reaper.instances.totalcost",
+								float64(instanceTypeSum)*priceFloat,
+								[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
 							if err != nil {
 								log.Error(err.Error())
 							}
@@ -370,15 +384,21 @@ func getInstances() chan *reaperaws.Instance {
 							log.Error(fmt.Sprintf("No price for %s", instanceType))
 						}
 					}
-					err := reaperevents.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+					err := reaperevents.NewStatistic("reaper.instances.total",
+						float64(instanceTypeSum),
+						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.instances.filtered", float64(filteredCount[region]), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+					err = reaperevents.NewStatistic("reaper.instances.filtered",
+						float64(filteredCount[region]),
+						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.instances.whitelistedCount", float64(whitelistedCount[region]), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+					err = reaperevents.NewStatistic("reaper.instances.whitelistedCount",
+						float64(whitelistedCount[region]),
+						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
 					if err != nil {
 						log.Error(err.Error())
 					}
@@ -419,15 +439,21 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 		}
 		go func() {
 			for region, regionSum := range regionSums {
-				err := reaperevents.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err := reaperevents.NewStatistic("reaper.cloudformations.total",
+					float64(regionSum),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
-				err = reaperevents.NewStatistic("reaper.cloudformations.filtered", float64(filteredCount[region]), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err = reaperevents.NewStatistic("reaper.cloudformations.filtered",
+					float64(filteredCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
-				err = reaperevents.NewStatistic("reaper.cloudformations.whitelistedCount", float64(whitelistedCount[region]), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err = reaperevents.NewStatistic("reaper.cloudformations.whitelistedCount",
+					float64(whitelistedCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
@@ -478,22 +504,30 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		go func() {
 			for region, regionMap := range asgSizeSums {
 				for asgSize, asgSizeSum := range regionMap {
-					err := reaperevents.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
+					err := reaperevents.NewStatistic("reaper.asgs.asgsizes",
+						float64(asgSizeSum),
+						[]string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
 					if err != nil {
 						log.Error(err.Error())
 					}
 				}
 			}
 			for region, regionSum := range regionSums {
-				err := reaperevents.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err := reaperevents.NewStatistic("reaper.asgs.total",
+					float64(regionSum),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
-				err = reaperevents.NewStatistic("reaper.asgs.filtered", float64(filteredCount[region]), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err = reaperevents.NewStatistic("reaper.asgs.filtered",
+					float64(filteredCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
-				err = reaperevents.NewStatistic("reaper.asgs.whitelistedCount", float64(whitelistedCount[region]), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err = reaperevents.NewStatistic("reaper.asgs.whitelistedCount",
+					float64(whitelistedCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
@@ -680,21 +714,21 @@ func matchesFilters(filterable filters.Filterable) bool {
 
 	matched := false
 
-	// if there are no filters groups defined, default to a match
+	// if there are no filters groups defined, match
 	if len(groups) == 0 {
-		matched = true
+		return true
 	}
 
-	// if there are no filters, default to a match
-	noFilters := true
+	shouldFilter := false
 	for _, group := range groups {
-		if len(group) != 0 {
-			// set to false if any are non-zero length
-			noFilters = false
+		if len(group) > 0 {
+			// there is a filter
+			shouldFilter = true
 		}
 	}
-	if noFilters {
-		matched = true
+	// no filters, default to a match
+	if !shouldFilter {
+		return true
 	}
 
 	for name, group := range groups {

@@ -1,11 +1,8 @@
 package reaper
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	reaperaws "github.com/mozilla-services/reaper/aws"
@@ -14,16 +11,14 @@ import (
 	"github.com/mozilla-services/reaper/prices"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
-	"github.com/mozilla-services/reaper/state"
 	"github.com/robfig/cron"
 )
 
 var (
-	reapables   reapable.Reapables
-	savedstates map[reapable.Region]map[reapable.ID]*state.State
-	config      *Config
-	schedule    *cron.Cron
-	pricesMap   prices.PricesMap
+	reapables reapable.Reapables
+	config    *Config
+	schedule  *cron.Cron
+	pricesMap prices.PricesMap
 )
 
 func SetConfig(c *Config) {
@@ -77,11 +72,6 @@ func (r *Reaper) Start() {
 
 	// initial run
 	go r.Run()
-
-	// if loading from saved state file (overriding AWS states)
-	if config.LoadFromStateFile {
-		r.LoadState(config.StateFile)
-	}
 }
 
 // Stop stops Reaper's schedule
@@ -99,64 +89,8 @@ func (r *Reaper) Run() {
 	schedule.Start()
 	r.reap()
 
-	if config.StateFile != "" {
-		r.SaveState(config.StateFile)
-	}
-
 	// this is no longer true, but is roughly accurate
 	log.Info("Sleeping for %s", config.Notifications.Interval.Duration.String())
-}
-
-func (r *Reaper) SaveState(stateFile string) {
-	// open file RW, create it if it doesn't exist
-	s, err := os.OpenFile(stateFile, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0664)
-	if err != nil {
-		log.Error("Unable to create StateFile ", stateFile)
-		return
-	}
-	defer s.Close()
-	// save state to state file
-	for r := range reapables.Iter() {
-		_, err := s.Write([]byte(fmt.Sprintf("%s,%s,%s\n",
-			r.Region().String(), r.ID().String(), r.ReaperState().String())))
-		if err != nil {
-			log.Error("Error writing to", stateFile)
-		}
-	}
-	log.Info("States saved to %s", stateFile)
-}
-
-func (r *Reaper) LoadState(stateFile string) {
-	// open file RDONLY
-	s, err := os.OpenFile(stateFile, os.O_RDONLY, 0664)
-	defer func() { s.Close() }()
-
-	// init saved state map
-	savedstates = make(map[reapable.Region]map[reapable.ID]*state.State)
-	for _, region := range config.AWS.Regions {
-		savedstates[reapable.Region(region)] = make(map[reapable.ID]*state.State)
-	}
-
-	// load state from state file
-	scanner := bufio.NewScanner(s)
-	for scanner.Scan() {
-		line := strings.Split(scanner.Text(), ",")
-		// there should be 3 sections in a saved state line
-		if len(line) != 3 {
-			log.Error("Malformed saved state ", scanner.Text())
-			continue
-		}
-		region := reapable.Region(line[0])
-		id := reapable.ID(line[1])
-		savedState := state.NewStateWithTag(line[2])
-
-		savedstates[region][id] = savedState
-	}
-	if err != nil {
-		log.Error("Unable to open StateFile ", stateFile)
-	} else {
-		log.Info("States loaded from ", stateFile)
-	}
 }
 
 func (r *Reaper) reap() {
@@ -208,11 +142,6 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 		filteredCount := make(map[reapable.Region]int)
 		whitelistedCount := make(map[reapable.Region]int)
 		for sg := range securityGroupCh {
-			// restore saved state from file
-			savedstate, ok := savedstates[sg.Region()][sg.ID()]
-			if ok {
-				sg.SetReaperState(savedstate)
-			}
 			regionSums[sg.Region()]++
 
 			if isWhitelisted(sg) {
@@ -264,12 +193,6 @@ func getVolumes() chan *reaperaws.Volume {
 		filteredCount := make(map[reapable.Region]int)
 		whitelistedCount := make(map[reapable.Region]int)
 		for volume := range volumeCh {
-			// restore saved state from file
-			savedstate, ok := savedstates[volume.Region()][volume.ID()]
-			if ok {
-				volume.SetReaperState(savedstate)
-			}
-
 			// make the map if it is not initialized
 			if volumeSizeSums[volume.Region()] == nil {
 				volumeSizeSums[volume.Region()] = make(map[int64]int)
@@ -330,12 +253,6 @@ func getInstances() chan *reaperaws.Instance {
 		filteredCount := make(map[reapable.Region]int)
 		whitelistedCount := make(map[reapable.Region]int)
 		for instance := range instanceCh {
-			// restore saved state from file
-			savedstate, ok := savedstates[instance.Region()][instance.ID()]
-			if ok {
-				instance.SetReaperState(savedstate)
-			}
-
 			// make the map if it is not initialized
 			if instanceTypeSums[instance.Region()] == nil {
 				instanceTypeSums[instance.Region()] = make(map[string]int)
@@ -418,12 +335,6 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 		filteredCount := make(map[reapable.Region]int)
 		whitelistedCount := make(map[reapable.Region]int)
 		for cf := range cfs {
-			// restore saved state from file
-			savedstate, ok := savedstates[cf.Region()][cf.ID()]
-			if ok {
-				cf.SetReaperState(savedstate)
-			}
-
 			if isWhitelisted(cf) {
 				whitelistedCount[cf.Region()]++
 			}
@@ -473,12 +384,6 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		filteredCount := make(map[reapable.Region]int)
 		whitelistedCount := make(map[reapable.Region]int)
 		for asg := range asgCh {
-			// restore saved state from file
-			savedstate, ok := savedstates[asg.Region()][asg.ID()]
-			if ok {
-				asg.SetReaperState(savedstate)
-			}
-
 			// make the map if it is not initialized
 			if asgSizeSums[asg.Region()] == nil {
 				asgSizeSums[asg.Region()] = make(map[int64]int)

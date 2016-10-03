@@ -28,14 +28,12 @@ Reaper workflow:
 * config: required flag, the path to the Reaper config file. `string` (no default value)
 * dryrun: run Reaper in dryrun (no-op) mode. Events will not be triggered. `boolean` (default: true)
 * interactive: run Reaper in Interactive mode, disabling all other Events, and prompting for input on Reapable discovery. `boolean` (default: false)
-* load: load Reaper state from the StateFile (overrides tags with state in AWS) `boolean` (default: false)
 * withoutCloudformationResources: skip checking for Cloudformation Resource dependencies (throttled by AWS, so it takes ages). `boolean` (default: false)
 
 ## Creating a configuration file
 Reaper configuration files should be in toml format. See `config/default.toml` for an example config.
 
 * Top level options
-    - StateFile: the full filepath of the file that resource states (in custom format) are saved and loaded to / from. `string`
     - LogFile: the full filepath of the file that logs are written to. `string`
     - WhitelistTag: a string that will be used to tag resources that have been whitelisted. Defaults to `REAPER_SPARE_ME`. (string)
     - DefaultOwner: all unowned resources will be assigned to this owner. Can be an email address, or can be a username if DefaultEmailHost is specified. `string`

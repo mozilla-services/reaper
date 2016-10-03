@@ -21,7 +21,6 @@ func init() {
 	configFile := flag.String("config", "", "path to config file")
 	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
 	withoutCloudformationResources := flag.Bool("withoutCloudformationResources", false, "disables dependency checking for Cloudformations (which is slow!)")
-	loadFromStateFile := flag.Bool("load", false, "load state from state file specified in config (overrides AWS state)")
 	flag.Parse()
 
 	// if no config file -> exit with error
@@ -104,11 +103,6 @@ func init() {
 
 	if *withoutCloudformationResources {
 		config.AWS.WithoutCloudformationResources = true
-	}
-
-	if *loadFromStateFile && config.StateFile != "" {
-		config.LoadFromStateFile = *loadFromStateFile
-		log.Info("State will be loaded from %s", config.StateFile)
 	}
 }
 

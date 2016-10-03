@@ -90,7 +90,6 @@ type Config struct {
 	Events           EventTypes
 	EventTag         string
 	LogFile          string
-	StateFile        string
 	WhitelistTag     string
 	DefaultOwner     string
 	DefaultEmailHost string
@@ -102,9 +101,8 @@ type Config struct {
 	SecurityGroups    ResourceConfig
 	Volumes           ResourceConfig
 
-	DryRun            bool
-	Interactive       bool
-	LoadFromStateFile bool
+	DryRun      bool
+	Interactive bool
 }
 
 type EventTypes struct {

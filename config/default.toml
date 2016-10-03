@@ -1,6 +1,5 @@
 ### Reaper Configuration File ###
 
-# StateFile = "savedstates.txt"
 # LogFile = "log.txt"
 WhitelistTag = "REAPER_SPARE_ME"
 DefaultOwner = "reaper_notifications"

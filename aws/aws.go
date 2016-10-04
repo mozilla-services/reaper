@@ -170,7 +170,7 @@ func AutoScalingGroupInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[re
 	}
 	for _, instanceID := range a.Instances {
 		// add the instance to the map
-		inASG[a.Region][instanceID] = true
+		inASG[a.Region()][instanceID] = true
 	}
 	return inASG
 }

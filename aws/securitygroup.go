@@ -28,10 +28,11 @@ type SecurityGroup struct {
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
 		Resource: Resource{
-			ID:     reapable.ID(*sg.GroupId),
-			Name:   *sg.GroupName,
-			Region: reapable.Region(region),
-			Tags:   make(map[string]string),
+			id:     reapable.ID(*sg.GroupId),
+			region: reapable.Region(region),
+
+			Name: *sg.GroupName,
+			Tags: make(map[string]string),
 		},
 		SecurityGroup: *sg,
 	}
@@ -103,13 +104,13 @@ type securityGroupEventData struct {
 }
 
 func (a *SecurityGroup) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
-	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
-	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
-	terminate, err := makeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	stop, err := makeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	forcestop, err := makeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	whitelist, err := makeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
+	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +195,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		}
 	case "Region":
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				matched = true
 			}
 		}
@@ -202,7 +203,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 		// was this resource's region one of those in the NOT list
 		regionSpecified := false
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				regionSpecified = true
 			}
 		}
@@ -258,7 +259,7 @@ func (a *SecurityGroup) Filter(filter filters.Filter) bool {
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#SecurityGroups:id=%s;view=details",
-		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
+		a.Region().String(), a.Region().String(), url.QueryEscape(a.ID().String())))
 	if err != nil {
 		log.Error("Error generating AWSConsoleURL. ", err)
 	}
@@ -268,13 +269,10 @@ func (a *SecurityGroup) AWSConsoleURL() *url.URL {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *SecurityGroup) Terminate() (bool, error) {
 	log.Info("Terminating SecurityGroup ", a.ReapableDescriptionTiny())
-	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
-
-	// ugh this is stupid
-	stringID := string(a.ID)
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region())))
 
 	input := &ec2.DeleteSecurityGroupInput{
-		GroupName: &stringID,
+		GroupName: aws.String(a.ID().String()),
 	}
 	_, err := api.DeleteSecurityGroup(input)
 	if err != nil {

@@ -2,6 +2,7 @@ package reapable
 
 import (
 	"fmt"
+	"net/mail"
 	"sync"
 
 	"github.com/mozilla-services/reaper/filters"
@@ -26,6 +27,7 @@ type Saveable interface {
 	Unsave() (bool, error)
 	ReaperState() *state.State
 	IncrementState() bool
+	SetUpdated(bool)
 }
 
 //                ,____
@@ -52,6 +54,10 @@ type Reapable interface {
 	Stoppable
 	Whitelistable
 	Saveable
+
+	Owner() *mail.Address
+	ID() ID
+	Region() Region
 
 	ReapableDescription() string
 	ReapableDescriptionShort() string
@@ -112,8 +118,16 @@ func (rs *Reapables) Delete(region Region, id ID) {
 
 type ReapableContainer struct {
 	Reapable
-	Region Region
-	ID     ID
+	region Region
+	id     ID
+}
+
+func (r *ReapableContainer) Region() Region {
+	return r.region
+}
+
+func (r *ReapableContainer) ID() ID {
+	return r.id
 }
 
 func (rs *Reapables) Iter() <-chan ReapableContainer {

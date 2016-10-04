@@ -56,18 +56,14 @@ func (e *ReaperEvent) newReapableEvent(r Reapable, tags []string) error {
 		switch e.Config.Mode {
 		case "Stop":
 			_, err = r.Stop()
-			if log.Extras() {
-				log.Info("ReaperEvent: Stopping ", r.ReapableDescriptionShort())
-			}
+			log.Info("ReaperEvent: Stopping ", r.ReapableDescriptionShort())
 			NewEvent("Reaper: Stopping instance", r.ReapableDescriptionShort(), nil, []string{})
-			NewCountStatistic("reaper.reapables.stopped", []string{})
+			NewCountStatistic("reaper.reapables.stopped", []string{r.ReapableDescriptionTiny()})
 		case "Terminate":
 			_, err = r.Terminate()
-			if log.Extras() {
-				log.Info("ReaperEvent: Terminating ", r.ReapableDescriptionShort())
-			}
+			log.Info("ReaperEvent: Terminating ", r.ReapableDescriptionShort())
 			NewEvent("Reaper: Terminating instance", r.ReapableDescriptionShort(), nil, []string{})
-			NewCountStatistic("reaper.reapables.terminated", []string{})
+			NewCountStatistic("reaper.reapables.terminated", []string{r.ReapableDescriptionTiny()})
 		default:
 			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
 		}

@@ -94,21 +94,21 @@ func (r *Reaper) Run() {
 func (r *Reaper) reap() {
 	reapables := allReapables()
 
-	ownerMap := make(map[string][]reaperevents.Reapable)
+	filteredOwnerMap := make(map[string][]reaperevents.Reapable)
 	for _, reapable := range reapables {
 		// default owner should ensure this does not happen
 		if reapable.Owner() == nil {
 			log.Error("Resource %s has no owner", reapable.ReapableDescriptionTiny())
 			continue
 		}
-		// group resources by owner
-		owner := reapable.Owner().Address
-		ownerMap[owner] = append(ownerMap[owner], reapable)
 
 		// TODO naively re-call matchesFilters here
 		// after previously calling it for statistics
 		if matchesFilters(reapable) {
-			reapReapable(reapable)
+			// group resources by owner
+			owner := reapable.Owner().Address
+			filteredOwnerMap[owner] = append(filteredOwnerMap[owner], reapable)
+			updateReapableState(reapable)
 		}
 	}
 
@@ -116,15 +116,15 @@ func (r *Reaper) reap() {
 	// for each owner in the owner map
 	go func() {
 		// trigger a per owner batch event
-		for _, ownedReapablesArray := range ownerMap {
+		for _, filteredOwnedReapables := range filteredOwnerMap {
 			// if there's only one resource for the owner, do a single event
-			if len(ownedReapablesArray) == 1 {
-				if err := reaperevents.NewReapableEvent(ownedReapablesArray[0], []string{config.EventTag}); err != nil {
+			if len(filteredOwnedReapables) == 1 {
+				if err := reaperevents.NewReapableEvent(filteredOwnedReapables[0], []string{config.EventTag}); err != nil {
 					log.Error(err.Error())
 				}
 			} else {
 				// batch event
-				if err := reaperevents.NewBatchReapableEvent(ownedReapablesArray, []string{config.EventTag}); err != nil {
+				if err := reaperevents.NewBatchReapableEvent(filteredOwnedReapables, []string{config.EventTag}); err != nil {
 					log.Error(err.Error())
 				}
 			}
@@ -633,7 +633,7 @@ func matchesFilters(filterable filters.Filterable) bool {
 	return matched
 }
 
-func reapReapable(a reaperevents.Reapable) {
+func updateReapableState(a reaperevents.Reapable) {
 	// update the internal state
 	if time.Now().After(a.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated

@@ -101,8 +101,7 @@ type Config struct {
 	SecurityGroups    ResourceConfig
 	Volumes           ResourceConfig
 
-	DryRun      bool
-	Interactive bool
+	DryRun bool
 }
 
 type EventTypes struct {
@@ -111,7 +110,6 @@ type EventTypes struct {
 	Email             reaperevents.MailerConfig
 	Tagger            reaperevents.TaggerConfig
 	Reaper            reaperevents.ReaperEventConfig
-	Interactive       reaperevents.InteractiveEventConfig
 }
 
 type ResourceConfig struct {

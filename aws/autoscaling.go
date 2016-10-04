@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,72 +18,12 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
-type autoScalingGroupScalingSchedule struct {
-	Enabled           bool
-	ScaleDownString   string
-	ScaleUpString     string
-	previousScaleSize int64
-	previousMinSize   int64
-}
-
-func (s *autoScalingGroupScalingSchedule) setSchedule(tag string) {
-	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
-	splitTag := strings.Split(tag, ",")
-	if len(splitTag) != 4 {
-		log.Error("Invalid Autoscaler Tag format ", tag)
-		return
-	}
-	prev, err := strconv.ParseInt(splitTag[2], 0, 64)
-	if err != nil {
-		log.Error("Invalid Autoscaler Tag format ", tag)
-		log.Error(err.Error())
-		return
-	}
-	min, err := strconv.ParseInt(splitTag[3], 0, 64)
-	if err != nil {
-		log.Error("Invalid Autoscaler Tag format ", tag)
-		log.Error(err.Error())
-		return
-	}
-	s.ScaleDownString = splitTag[0]
-	s.ScaleUpString = splitTag[1]
-	s.previousScaleSize = prev
-	s.previousMinSize = min
-	s.Enabled = true
-}
-
-// SaveSchedule is a method of the Scaler interface
-func (a *AutoScalingGroup) SaveSchedule() {
-	tagAutoScalingGroup(a.Region(), a.ID(), scalerTag, a.Scheduling.scheduleTag())
-}
-
-// SetScaleDownString is a method of the Scaler interface
-func (a *AutoScalingGroup) SetScaleDownString(s string) {
-	a.Scheduling.ScaleDownString = s
-}
-
-// SetScaleUpString is a method of the Scaler interface
-func (a *AutoScalingGroup) SetScaleUpString(s string) {
-	a.Scheduling.ScaleUpString = s
-}
-
-func (s *autoScalingGroupScalingSchedule) scheduleTag() string {
-	return strings.Join([]string{
-		// keep the same schedules
-		s.ScaleDownString,
-		s.ScaleUpString,
-		strconv.FormatInt(s.previousScaleSize, 10),
-		strconv.FormatInt(s.previousMinSize, 10),
-	}, ",")
-}
-
 // AutoScalingGroup is a Reapable, Filterable
 // embeds AWS API's autoscaling.Group
 type AutoScalingGroup struct {
 	Resource
 	autoscaling.Group
 
-	Scheduling autoScalingGroupScalingSchedule
 	// autoscaling.Instance exposes minimal info
 	Instances []reapable.ID
 }
@@ -112,11 +51,6 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 	if a.Tagged("aws:cloudformation:stack-name") {
 		a.Dependency = true
 		a.IsInCloudformation = true
-	}
-
-	// autoscaler boilerplate
-	if a.Tagged(scalerTag) {
-		a.Scheduling.setSchedule(a.Tag(scalerTag))
 	}
 
 	if a.Tagged(reaperTag) {
@@ -167,18 +101,14 @@ func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *
 }
 
 type autoScalingGroupEventData struct {
-	Config                           *Config
-	AutoScalingGroup                 *AutoScalingGroup
-	TerminateLink                    string
-	StopLink                         string
-	ForceStopLink                    string
-	WhitelistLink                    string
-	IgnoreLink1                      string
-	IgnoreLink3                      string
-	IgnoreLink7                      string
-	SchedulePacificBusinessHoursLink string
-	ScheduleEasternBusinessHoursLink string
-	ScheduleCESTBusinessHoursLink    string
+	Config           *Config
+	AutoScalingGroup *AutoScalingGroup
+	TerminateLink    string
+	StopLink         string
+	WhitelistLink    string
+	IgnoreLink1      string
+	IgnoreLink3      string
+	IgnoreLink7      string
 }
 
 func (a *AutoScalingGroup) getTemplateData() (interface{}, error) {
@@ -202,40 +132,20 @@ func (a *AutoScalingGroup) getTemplateData() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
 	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	schedulePacific, err := makeScheduleLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
-	if err != nil {
-		return nil, err
-	}
-	scheduleEastern, err := makeScheduleLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
-	if err != nil {
-		return nil, err
-	}
-	scheduleCEST, err := makeScheduleLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
 	if err != nil {
 		return nil, err
 	}
 
 	return &autoScalingGroupEventData{
-		Config:                           config,
-		AutoScalingGroup:                 a,
-		TerminateLink:                    terminate,
-		StopLink:                         stop,
-		ForceStopLink:                    forcestop,
-		WhitelistLink:                    whitelist,
-		IgnoreLink1:                      ignore1,
-		IgnoreLink3:                      ignore3,
-		IgnoreLink7:                      ignore7,
-		SchedulePacificBusinessHoursLink: schedulePacific,
-		ScheduleEasternBusinessHoursLink: scheduleEastern,
-		ScheduleCESTBusinessHoursLink:    scheduleCEST,
+		Config:           config,
+		AutoScalingGroup: a,
+		TerminateLink:    terminate,
+		StopLink:         stop,
+		WhitelistLink:    whitelist,
+		IgnoreLink1:      ignore1,
+		IgnoreLink3:      ignore3,
+		IgnoreLink7:      ignore7,
 	}, nil
 }
 
@@ -253,13 +163,9 @@ const reapableASGEventHTML = `
 		<ul>
 			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
 			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
-			<li><a href="{{ .ForceStopLink }}">ForceScale it to 0</a></li>
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
-			<li><a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to scale up and down with Pacific business hours</a></li>
-			<li><a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to scale up and down with Eastern business hours</a></li>
-			<li><a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to scale up and down with CEST business hours</a></li>
 		</ul>
 	</p>
 
@@ -275,9 +181,6 @@ const reapableASGEventHTMLShort = `
 <body>
 	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }}</a> in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
 		<br />
-		Schedule it to scale up and down with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>,
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours,
 		<a href="{{ .TerminateLink }}">Terminate</a>,
 		<a href="{{ .StopLink }}">Stop</a>,
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
@@ -291,8 +194,7 @@ const reapableASGEventHTMLShort = `
 
 const reapableASGEventTextShort = `%%%
 AutoScalingGroup [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).{{if .AutoScalingGroup.Owned}} Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
-Schedule this AutoScalingGroup to scale up and down with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
-[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), [ForceScale to 0]({{ .ForceStopLink }}), or [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
+[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
 const reapableASGEventText = `%%%
@@ -300,10 +202,8 @@ Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScaling
 {{if .AutoScalingGroup.Owned}}Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
 {{ if .AutoScalingGroup.AWSConsoleURL}}{{.AutoScalingGroup.AWSConsoleURL}}\n{{end}}
 [AWS Console URL]({{.AutoScalingGroup.AWSConsoleURL}})\n
-Schedule this AutoScalingGroup to scale up and down with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}) this AutoScalingGroup.
 [Scale to 0]({{ .StopLink }}) this AutoScalingGroup.
-[ForceScale to 0]({{ .ForceStopLink }}) this AutoScalingGroup.
 [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
 %%%`
 
@@ -508,35 +408,6 @@ func (a *AutoScalingGroup) AWSConsoleURL() *url.URL {
 	return url
 }
 
-// ScaleDown scales an AutoScalingGroup's DesiredCapacity down
-func (a *AutoScalingGroup) ScaleDown() {
-	// default = 0
-	var size int64
-	// change desired and min to size
-	if *a.DesiredCapacity > size {
-		ok, err := a.scaleToSize(size, size)
-		if ok && err == nil {
-			a.Scheduling.previousScaleSize = *a.DesiredCapacity
-			a.Scheduling.previousMinSize = *a.MinSize
-			// change current local value so that we don't repeat
-			*a.DesiredCapacity = size
-		}
-	}
-}
-
-// ScaleUp scales an AutoScalingGroup's DesiredCapacity up
-func (a *AutoScalingGroup) ScaleUp() {
-	if a.Scheduling.previousScaleSize > *a.DesiredCapacity {
-		// change desired and min to previous values
-		ok, err := a.scaleToSize(a.Scheduling.previousScaleSize, a.Scheduling.previousMinSize)
-		if ok && err == nil {
-			// change current local values so that we don't repeat
-			*a.DesiredCapacity = a.Scheduling.previousScaleSize
-			*a.MinSize = a.Scheduling.previousMinSize
-		}
-	}
-}
-
 func (a *AutoScalingGroup) scaleToSize(size int64, minSize int64) (bool, error) {
 	log.Info("Scaling AutoScalingGroup %s to size %d.", a.ReapableDescriptionTiny(), size)
 	as := autoscaling.New(session.New(&aws.Config{Region: aws.String(a.Region().String())}))
@@ -592,12 +463,5 @@ func (a *AutoScalingGroup) Whitelist() (bool, error) {
 // Stop scales ASGs to 0
 func (a *AutoScalingGroup) Stop() (bool, error) {
 	// use existing min size
-	return a.scaleToSize(0, *a.MinSize)
-}
-
-// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-// ForceStop force scales ASGs to 0
-func (a *AutoScalingGroup) ForceStop() (bool, error) {
-	// also set minsize to 0
 	return a.scaleToSize(0, 0)
 }

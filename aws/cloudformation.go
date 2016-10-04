@@ -106,7 +106,6 @@ type cloudformationEventData struct {
 	Cloudformation *Cloudformation
 	TerminateLink  string
 	StopLink       string
-	ForceStopLink  string
 	WhitelistLink  string
 	IgnoreLink1    string
 	IgnoreLink3    string
@@ -119,7 +118,6 @@ func (a *Cloudformation) getTemplateData() (interface{}, error) {
 	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	forcestop, err := makeForceStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 
 	if err != nil {
@@ -131,7 +129,6 @@ func (a *Cloudformation) getTemplateData() (interface{}, error) {
 		Cloudformation: a,
 		TerminateLink:  terminate,
 		StopLink:       stop,
-		ForceStopLink:  forcestop,
 		WhitelistLink:  whitelist,
 		IgnoreLink1:    ignore1,
 		IgnoreLink3:    ignore3,
@@ -346,11 +343,5 @@ func (a *Cloudformation) Whitelist() (bool, error) {
 // Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 // no op because there is no concept of stopping a cloudformation
 func (a *Cloudformation) Stop() (bool, error) {
-	return false, nil
-}
-
-// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-// no op because there is no concept of stopping a cloudformation
-func (a *Cloudformation) ForceStop() (bool, error) {
 	return false, nil
 }

@@ -185,6 +185,31 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			reaperevents.NewEvent("Reaper: Stop Request Received",
 				r.ReapableDescriptionShort(), nil, []string{})
 			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:stop"})
+		case token.J_FORCESTOP:
+			log.Debug("Force Stop request received for %s in region %s", job.ID, job.Region)
+			ok, err := r.ForceStop()
+			if err != nil {
+				writeResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			if !ok {
+				writeResponse(w, http.StatusInternalServerError,
+					fmt.Sprintf("ForceStop failed for %s.", r.ReapableDescriptionTiny()))
+				return
+			}
+			reaperevents.NewEvent("Reaper: Force Stop Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:forcestop"})
+		case token.J_SCHEDULE:
+			log.Debug("Schedule request received for %s in region %s", job.ID, job.Region)
+			if scaler, ok := r.(reaperaws.Scaler); ok {
+				scaler.SetScaleDownString(job.ScaleDownString)
+				scaler.SetScaleUpString(job.ScaleUpString)
+				scaler.SaveSchedule()
+			}
+			reaperevents.NewEvent("Reaper: Scheduling Request Received",
+				r.ReapableDescriptionShort(), nil, []string{})
+			reaperevents.NewCountStatistic("reaper.reapables.requests", []string{"type:schedule"})
 		default:
 			log.Error("Unrecognized job token received.")
 			writeResponse(w, http.StatusInternalServerError, "Unrecognized job token.")

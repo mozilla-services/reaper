@@ -21,6 +21,15 @@ const (
 	reaperTag           = "REAPER"
 	reaperTagSeparator  = "|"
 	reaperTagTimeFormat = "2006-01-02 03:04PM MST"
+	scalerTag           = "REAPER_AUTOSCALER"
+
+	// default schedule options
+	scaleDownPacificBusinessHours = "0 30 1 * * 2-6"  // 1:30 UTC Tuesday-Saturday is 18:30 Pacific Monday-Friday
+	scaleUpPacificBusinessHours   = "0 30 14 * * 1-5" // 14:30 UTC Monday-Friday is 7:30 Pacific Monday-Friday
+	scaleDownEasternBusinessHours = "0 30 22 * * 1-5" // 22:30 UTC Monday-Friday is 18:30 Eastern Monday-Friday
+	scaleUpEasternBusinessHours   = "0 30 11 * * 1-5" // 11:30 UTC Monday-Friday is 7:30 Eastern Monday-Friday
+	scaleDownCESTBusinessHours    = "0 30 16 * * 2-6" // 16:30 UTC Tuesday-Saturday is 18:30 CEST Monday-Friday
+	scaleUpCESTBusinessHours      = "0 30 5 * * 1-5"  // 5:30 UTC Monday-Friday is 7:30 CEST Monday-Friday
 )
 
 var (
@@ -29,6 +38,13 @@ var (
 	timeout = time.Tick(100 * time.Millisecond)
 	sess    = session.New()
 )
+
+// Scaler is an interface used to configure scheduable resources' schedules
+type Scaler interface {
+	SetScaleDownString(s string)
+	SetScaleUpString(s string)
+	SaveSchedule()
+}
 
 // Config stores configuration for the aws package
 type Config struct {
@@ -154,7 +170,7 @@ func AutoScalingGroupInstanceIDs(a *AutoScalingGroup) map[reapable.Region]map[re
 	}
 	for _, instanceID := range a.Instances {
 		// add the instance to the map
-		inASG[a.Region()][instanceID] = true
+		inASG[a.Region][instanceID] = true
 	}
 	return inASG
 }

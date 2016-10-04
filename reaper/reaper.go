@@ -70,7 +70,6 @@ func GetPrices() {
 func (r *Reaper) Start() {
 	// adding as a job runs r.Run() every interval
 	r.Cron.Schedule(cron.Every(config.Notifications.Interval.Duration), r)
-	r.Cron.AddFunc("@weekly", GetPrices)
 	r.Cron.Start()
 
 	// initial prices download, synchronous
@@ -95,6 +94,9 @@ func (r *Reaper) Stop() {
 // Run handles all reaping logic
 // conforms to the cron.Job interface
 func (r *Reaper) Run() {
+	schedule = cron.New()
+	schedule.AddFunc("@weekly", GetPrices)
+	schedule.Start()
 	r.reap()
 
 	if config.StateFile != "" {
@@ -115,8 +117,7 @@ func (r *Reaper) SaveState(stateFile string) {
 	defer s.Close()
 	// save state to state file
 	for r := range reapables.Iter() {
-		_, err := s.Write([]byte(fmt.Sprintf("%s,%s,%s\n",
-			r.Region().String(), r.ID().String(), r.ReaperState().String())))
+		_, err := s.Write([]byte(fmt.Sprintf("%s,%s,%s\n", r.Region, r.ID, r.ReaperState().String())))
 		if err != nil {
 			log.Error("Error writing to", stateFile)
 		}
@@ -158,41 +159,111 @@ func (r *Reaper) LoadState(stateFile string) {
 }
 
 func (r *Reaper) reap() {
-	reapables := allReapables()
+	owned, unowned := allReapables()
+	var filtered []reaperevents.Reapable
 
-	ownerMap := make(map[string][]reaperevents.Reapable)
-	for _, reapable := range reapables {
-		// default owner should ensure this does not happen
-		if reapable.Owner() == nil {
-			log.Error("Resource %s has no owner", reapable.ReapableDescriptionTiny())
+	// filtered, owned resources
+	filteredOwned := make(map[string][]reaperevents.Reapable)
+
+	// apply filters and trigger events for owned resources
+	// for each owner in the owner map
+	for owner, ownerMap := range owned {
+		// apply filters to their resources
+		resources := applyFilters(ownerMap)
+		// if there's only one resource for this owner
+		if len(resources) == 1 {
+			// no point sending a batch
+			// so instead just add it to unowned
+			// to be individually sent
+			unowned = append(unowned, resources...)
 			continue
 		}
-		// group resources by owner
-		owner := reapable.Owner().Address
-		ownerMap[owner] = append(ownerMap[owner], reapable)
 
-		// TODO naively re-call matchesFilters here
-		// after previously calling it for statistics
-		if matchesFilters(reapable) {
-			reapReapable(reapable)
+		// append the resources to filtered
+		// so that reap methods are called on them
+		filtered = append(filtered, resources...)
+
+		// add resources (post filter) to filteredOwned for batch events
+		filteredOwned[owner] = resources
+	}
+
+	// apply filters and trigger events for unowned resources
+	filteredUnowned := applyFilters(unowned)
+	filtered = append(filtered, filteredUnowned...)
+
+	filteredInstanceSums := make(map[reapable.Region]int)
+	filteredASGSums := make(map[reapable.Region]int)
+	filteredSecurityGroupSums := make(map[reapable.Region]int)
+	filteredCloudformationSums := make(map[reapable.Region]int)
+	filteredVolumeSums := make(map[reapable.Region]int)
+
+	// filtered has _all_ resources post filtering
+	for _, f := range filtered {
+		switch t := f.(type) {
+		case *reaperaws.Instance:
+			filteredInstanceSums[t.Region]++
+			reapInstance(t)
+		case *reaperaws.AutoScalingGroup:
+			filteredASGSums[t.Region]++
+			reapAutoScalingGroup(t)
+		case *reaperaws.SecurityGroup:
+			filteredSecurityGroupSums[t.Region]++
+			reapSecurityGroup(t)
+		case *reaperaws.Cloudformation:
+			filteredCloudformationSums[t.Region]++
+			reapCloudformation(t)
+		case *reaperaws.Volume:
+			filteredVolumeSums[t.Region]++
+			reapVolume(t)
+		default:
+			log.Error("Reap default case.")
 		}
 	}
 
 	// trigger batch events for each filtered owned resource in a goroutine
 	// for each owner in the owner map
 	go func() {
-		// trigger a per owner batch event
-		for _, ownedReapablesArray := range ownerMap {
-			// if there's only one resource for the owner, do a single event
-			if len(ownedReapablesArray) == 1 {
-				if err := reaperevents.NewReapableEvent(ownedReapablesArray[0], []string{config.EventTag}); err != nil {
-					log.Error(err.Error())
-				}
-			} else {
-				// batch event
-				if err := reaperevents.NewBatchReapableEvent(ownedReapablesArray, []string{config.EventTag}); err != nil {
-					log.Error(err.Error())
-				}
+		for _, ownedReapables := range filteredOwned {
+			// trigger a per owner batch event
+			if len(ownedReapables) < 1 {
+				break
+			}
+			if err := reaperevents.NewBatchReapableEvent(ownedReapables, []string{config.EventTag}); err != nil {
+				log.Error(err.Error())
+			}
+		}
+		// trigger events for each filtered unowned resource
+		for _, r := range filteredUnowned {
+			if err := reaperevents.NewReapableEvent(r, []string{config.EventTag}); err != nil {
+				log.Error(err.Error())
+			}
+		}
+	}()
+
+	// post statistics
+	go func() {
+		for region, sum := range filteredInstanceSums {
+			err := reaperevents.NewStatistic("reaper.instances.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
+			}
+		}
+		for region, sum := range filteredASGSums {
+			err := reaperevents.NewStatistic("reaper.asgs.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
+			}
+		}
+		for region, sum := range filteredCloudformationSums {
+			err := reaperevents.NewStatistic("reaper.cloudformations.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
+			}
+		}
+		for region, sum := range filteredSecurityGroupSums {
+			err := reaperevents.NewStatistic("reaper.securitygroups.filtered", float64(sum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
+			if err != nil {
+				log.Error(err.Error())
 			}
 		}
 	}()
@@ -203,24 +274,14 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 	go func() {
 		securityGroupCh := reaperaws.AllSecurityGroups()
 		regionSums := make(map[reapable.Region]int)
-		filteredCount := make(map[reapable.Region]int)
-		whitelistedCount := make(map[reapable.Region]int)
-		for sg := range securityGroupCh {
+		for securityGroup := range securityGroupCh {
 			// restore saved state from file
-			savedstate, ok := savedstates[sg.Region()][sg.ID()]
+			savedstate, ok := savedstates[securityGroup.Region][securityGroup.ID]
 			if ok {
-				sg.SetReaperState(savedstate)
+				securityGroup.SetReaperState(savedstate)
 			}
-			regionSums[sg.Region()]++
-
-			if isWhitelisted(sg) {
-				whitelistedCount[sg.Region()]++
-			}
-
-			if matchesFilters(sg) {
-				filteredCount[sg.Region()]++
-			}
-			ch <- sg
+			regionSums[securityGroup.Region]++
+			ch <- securityGroup
 		}
 
 		for region, sum := range regionSums {
@@ -228,21 +289,7 @@ func getSecurityGroups() chan *reaperaws.SecurityGroup {
 		}
 		go func() {
 			for region, regionSum := range regionSums {
-				err := reaperevents.NewStatistic("reaper.securitygroups.total",
-					float64(regionSum),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-				err = reaperevents.NewStatistic("reaper.securitygroups.whitelistedCount",
-					float64(whitelistedCount[region]),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-				err = reaperevents.NewStatistic("reaper.securitygroups.filtered",
-					float64(filteredCount[region]),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err := reaperevents.NewStatistic("reaper.securitygroups.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
@@ -259,30 +306,20 @@ func getVolumes() chan *reaperaws.Volume {
 		volumeCh := reaperaws.AllVolumes()
 		regionSums := make(map[reapable.Region]int)
 		volumeSizeSums := make(map[reapable.Region]map[int64]int)
-		filteredCount := make(map[reapable.Region]int)
-		whitelistedCount := make(map[reapable.Region]int)
 		for volume := range volumeCh {
 			// restore saved state from file
-			savedstate, ok := savedstates[volume.Region()][volume.ID()]
+			savedstate, ok := savedstates[volume.Region][volume.ID]
 			if ok {
 				volume.SetReaperState(savedstate)
 			}
 
 			// make the map if it is not initialized
-			if volumeSizeSums[volume.Region()] == nil {
-				volumeSizeSums[volume.Region()] = make(map[int64]int)
-			}
-			regionSums[volume.Region()]++
-
-			if isWhitelisted(volume) {
-				whitelistedCount[volume.Region()]++
+			if volumeSizeSums[volume.Region] == nil {
+				volumeSizeSums[volume.Region] = make(map[int64]int)
 			}
 
-			volumeSizeSums[volume.Region()][*volume.Size]++
-
-			if matchesFilters(volume) {
-				filteredCount[volume.Region()]++
-			}
+			regionSums[volume.Region]++
+			volumeSizeSums[volume.Region][*volume.Size]++
 			ch <- volume
 		}
 
@@ -293,21 +330,7 @@ func getVolumes() chan *reaperaws.Volume {
 		go func() {
 			for region, regionMap := range volumeSizeSums {
 				for volumeType, volumeSizeSum := range regionMap {
-					err := reaperevents.NewStatistic("reaper.volumes.total",
-						float64(volumeSizeSum),
-						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
-					if err != nil {
-						log.Error(err.Error())
-					}
-					err = reaperevents.NewStatistic("reaper.volumes.filtered",
-						float64(filteredCount[region]),
-						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
-					if err != nil {
-						log.Error(err.Error())
-					}
-					err = reaperevents.NewStatistic("reaper.volumes.whitelistedCount",
-						float64(whitelistedCount[region]),
-						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
+					err := reaperevents.NewStatistic("reaper.volumes.total", float64(volumeSizeSum), []string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
 					if err != nil {
 						log.Error(err.Error())
 					}
@@ -325,35 +348,25 @@ func getInstances() chan *reaperaws.Instance {
 		instanceCh := reaperaws.AllInstances()
 		regionSums := make(map[reapable.Region]int)
 		instanceTypeSums := make(map[reapable.Region]map[string]int)
-		filteredCount := make(map[reapable.Region]int)
-		whitelistedCount := make(map[reapable.Region]int)
 		for instance := range instanceCh {
 			// restore saved state from file
-			savedstate, ok := savedstates[instance.Region()][instance.ID()]
+			savedstate, ok := savedstates[instance.Region][instance.ID]
 			if ok {
 				instance.SetReaperState(savedstate)
 			}
 
 			// make the map if it is not initialized
-			if instanceTypeSums[instance.Region()] == nil {
-				instanceTypeSums[instance.Region()] = make(map[string]int)
+			if instanceTypeSums[instance.Region] == nil {
+				instanceTypeSums[instance.Region] = make(map[string]int)
 			}
 
 			// don't count terminated or stopped instances
 			if !instance.Terminated() && !instance.Stopped() {
 				// increment InstanceType counter
-				instanceTypeSums[instance.Region()][*instance.InstanceType]++
-
-				if isWhitelisted(instance) {
-					whitelistedCount[instance.Region()]++
-				}
+				instanceTypeSums[instance.Region][*instance.InstanceType]++
 			}
 
-			regionSums[instance.Region()]++
-
-			if matchesFilters(instance) {
-				filteredCount[instance.Region()]++
-			}
+			regionSums[instance.Region]++
 			ch <- instance
 		}
 
@@ -371,9 +384,7 @@ func getInstances() chan *reaperaws.Instance {
 							if err != nil {
 								log.Error(err.Error())
 							}
-							err = reaperevents.NewStatistic("reaper.instances.totalcost",
-								float64(instanceTypeSum)*priceFloat,
-								[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+							err = reaperevents.NewStatistic("reaper.instances.totalcost", float64(instanceTypeSum)*priceFloat, []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
 							if err != nil {
 								log.Error(err.Error())
 							}
@@ -382,24 +393,11 @@ func getInstances() chan *reaperaws.Instance {
 							log.Error(fmt.Sprintf("No price for %s", instanceType))
 						}
 					}
-					err := reaperevents.NewStatistic("reaper.instances.total",
-						float64(instanceTypeSum),
-						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
+					err := reaperevents.NewStatistic("reaper.instances.total", float64(instanceTypeSum), []string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType)})
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.instances.filtered",
-						float64(filteredCount[region]),
-						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
-					if err != nil {
-						log.Error(err.Error())
-					}
-					err = reaperevents.NewStatistic("reaper.instances.whitelistedCount",
-						float64(whitelistedCount[region]),
-						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
-					if err != nil {
-						log.Error(err.Error())
-					}
+
 				}
 			}
 		}()
@@ -413,23 +411,14 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 	go func() {
 		cfs := reaperaws.AllCloudformations()
 		regionSums := make(map[reapable.Region]int)
-		filteredCount := make(map[reapable.Region]int)
-		whitelistedCount := make(map[reapable.Region]int)
 		for cf := range cfs {
 			// restore saved state from file
-			savedstate, ok := savedstates[cf.Region()][cf.ID()]
+			savedstate, ok := savedstates[cf.Region][cf.ID]
 			if ok {
 				cf.SetReaperState(savedstate)
 			}
 
-			if isWhitelisted(cf) {
-				whitelistedCount[cf.Region()]++
-			}
-			regionSums[cf.Region()]++
-
-			if matchesFilters(cf) {
-				filteredCount[cf.Region()]++
-			}
+			regionSums[cf.Region]++
 			ch <- cf
 		}
 		for region, sum := range regionSums {
@@ -437,21 +426,7 @@ func getCloudformations() chan *reaperaws.Cloudformation {
 		}
 		go func() {
 			for region, regionSum := range regionSums {
-				err := reaperevents.NewStatistic("reaper.cloudformations.total",
-					float64(regionSum),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-				err = reaperevents.NewStatistic("reaper.cloudformations.filtered",
-					float64(filteredCount[region]),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-				err = reaperevents.NewStatistic("reaper.cloudformations.whitelistedCount",
-					float64(whitelistedCount[region]),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
+				err := reaperevents.NewStatistic("reaper.cloudformations.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 				if err != nil {
 					log.Error(err.Error())
 				}
@@ -468,32 +443,22 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		asgCh := reaperaws.AllAutoScalingGroups()
 		regionSums := make(map[reapable.Region]int)
 		asgSizeSums := make(map[reapable.Region]map[int64]int)
-		filteredCount := make(map[reapable.Region]int)
-		whitelistedCount := make(map[reapable.Region]int)
 		for asg := range asgCh {
 			// restore saved state from file
-			savedstate, ok := savedstates[asg.Region()][asg.ID()]
+			savedstate, ok := savedstates[asg.Region][asg.ID]
 			if ok {
 				asg.SetReaperState(savedstate)
 			}
 
 			// make the map if it is not initialized
-			if asgSizeSums[asg.Region()] == nil {
-				asgSizeSums[asg.Region()] = make(map[int64]int)
+			if asgSizeSums[asg.Region] == nil {
+				asgSizeSums[asg.Region] = make(map[int64]int)
 			}
 			if asg.DesiredCapacity != nil {
-				asgSizeSums[asg.Region()][*asg.DesiredCapacity]++
+				asgSizeSums[asg.Region][*asg.DesiredCapacity]++
 			}
 
-			if isWhitelisted(asg) {
-				whitelistedCount[asg.Region()]++
-			}
-
-			regionSums[asg.Region()]++
-
-			if matchesFilters(asg) {
-				filteredCount[asg.Region()]++
-			}
+			regionSums[asg.Region]++
 			ch <- asg
 		}
 		for region, sum := range regionSums {
@@ -502,35 +467,18 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 		go func() {
 			for region, regionMap := range asgSizeSums {
 				for asgSize, asgSizeSum := range regionMap {
-					err := reaperevents.NewStatistic("reaper.asgs.asgsizes",
-						float64(asgSizeSum),
-						[]string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
+					err := reaperevents.NewStatistic("reaper.asgs.asgsizes", float64(asgSizeSum), []string{fmt.Sprintf("region:%s,asgsize:%d", region, asgSize), config.EventTag})
+					if err != nil {
+						log.Error(err.Error())
+					}
+				}
+				for region, regionSum := range regionSums {
+					err := reaperevents.NewStatistic("reaper.asgs.total", float64(regionSum), []string{fmt.Sprintf("region:%s", region), config.EventTag})
 					if err != nil {
 						log.Error(err.Error())
 					}
 				}
 			}
-			for region, regionSum := range regionSums {
-				err := reaperevents.NewStatistic("reaper.asgs.total",
-					float64(regionSum),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-				err = reaperevents.NewStatistic("reaper.asgs.filtered",
-					float64(filteredCount[region]),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-				err = reaperevents.NewStatistic("reaper.asgs.whitelistedCount",
-					float64(whitelistedCount[region]),
-					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
-				if err != nil {
-					log.Error(err.Error())
-				}
-			}
-
 		}()
 		close(ch)
 	}()
@@ -539,8 +487,10 @@ func getAutoScalingGroups() chan *reaperaws.AutoScalingGroup {
 
 // makes a slice of all filterables by appending
 // output of each filterable types aggregator function
-func allReapables() []reaperevents.Reapable {
-	var resources []reaperevents.Reapable
+func allReapables() (map[string][]reaperevents.Reapable, []reaperevents.Reapable) {
+	// all resources are appended to owned or unowned
+	owned := make(map[string][]reaperevents.Reapable)
+	var unowned []reaperevents.Reapable
 
 	// initialize dependency and isInCloudformation
 	dependency := make(map[reapable.Region]map[reapable.ID]bool)
@@ -559,33 +509,43 @@ func allReapables() []reaperevents.Reapable {
 		instancesInASGs[reapable.Region(region)] = make(map[reapable.ID]bool)
 	}
 
-	// without getCloudformations cannot populate basic dependency logic
 	for c := range getCloudformations() {
 		// because getting resources is rate limited...
 		c.RLock()
 		defer c.RUnlock()
 		for _, resource := range c.Resources {
 			if resource.PhysicalResourceId != nil {
-				dependency[c.Region()][reapable.ID(*resource.PhysicalResourceId)] = true
-				isInCloudformation[c.Region()][reapable.ID(*resource.PhysicalResourceId)] = true
+				dependency[c.Region][reapable.ID(*resource.PhysicalResourceId)] = true
+				isInCloudformation[c.Region][reapable.ID(*resource.PhysicalResourceId)] = true
 			}
 		}
-
 		if config.Cloudformations.Enabled {
-			resources = append(resources, c)
+			// group CFs by owner
+			if c.Owner() != nil {
+				owned[c.Owner().Address] = append(owned[c.Owner().Address], c)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, c)
+			}
 		}
 	}
 
 	for a := range getAutoScalingGroups() {
 		// ASGs can be identified by name...
-		if isInCloudformation[a.Region()][a.ID()] ||
-			isInCloudformation[a.Region()][reapable.ID(a.Name)] {
+		if isInCloudformation[a.Region][a.ID] || isInCloudformation[a.Region][reapable.ID(a.Name)] {
 			a.IsInCloudformation = true
 		}
 
-		if dependency[a.Region()][a.ID()] ||
-			dependency[a.Region()][reapable.ID(a.Name)] {
+		if dependency[a.Region][a.ID] || dependency[a.Region][reapable.ID(a.Name)] {
 			a.Dependency = true
+		}
+
+		if a.Scheduling.Enabled {
+			if log.Extras() {
+				log.Info("AutoScalingGroup %s is going to be scaled down: %s and scaled up: %s.", a.ID.String(), a.Scheduling.ScaleDownString, a.Scheduling.ScaleUpString)
+			}
+			schedule.AddFunc(a.Scheduling.ScaleDownString, a.ScaleDown)
+			schedule.AddFunc(a.Scheduling.ScaleUpString, a.ScaleUp)
 		}
 
 		// identify instances in an ASG
@@ -597,8 +557,14 @@ func allReapables() []reaperevents.Reapable {
 			}
 		}
 
+		// group asgs by owner
 		if config.AutoScalingGroups.Enabled {
-			resources = append(resources, a)
+			if a.Owner() != nil {
+				owned[a.Owner().Address] = append(owned[a.Owner().Address], a)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, a)
+			}
 		}
 	}
 
@@ -606,22 +572,36 @@ func allReapables() []reaperevents.Reapable {
 	for i := range getInstances() {
 		// add security groups to map of in use
 		for id, name := range i.SecurityGroups {
-			dependency[i.Region()][reapable.ID(name)] = true
-			dependency[i.Region()][id] = true
+			dependency[i.Region][reapable.ID(name)] = true
+			dependency[i.Region][id] = true
 		}
 
-		if dependency[i.Region()][i.ID()] {
+		if dependency[i.Region][i.ID] {
 			i.Dependency = true
 		}
-		if isInCloudformation[i.Region()][i.ID()] {
+		if isInCloudformation[i.Region][i.ID] {
 			i.IsInCloudformation = true
 		}
-		if instancesInASGs[i.Region()][i.ID()] {
+		if instancesInASGs[i.Region][i.ID] {
 			i.AutoScaled = true
 		}
 
+		if i.Scheduling.Enabled {
+			if log.Extras() {
+				log.Info("Instance %s is going to be scaled down: %s and scaled up: %s.", i.ID.String(), i.Scheduling.ScaleDownString, i.Scheduling.ScaleUpString)
+			}
+			schedule.AddFunc(i.Scheduling.ScaleDownString, i.ScaleDown)
+			schedule.AddFunc(i.Scheduling.ScaleUpString, i.ScaleUp)
+		}
+
+		// group instances by owner
 		if config.Instances.Enabled {
-			resources = append(resources, i)
+			if i.Owner() != nil {
+				owned[i.Owner().Address] = append(owned[i.Owner().Address], i)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, i)
+			}
 		}
 	}
 
@@ -629,15 +609,20 @@ func allReapables() []reaperevents.Reapable {
 	for s := range getSecurityGroups() {
 		// if the security group is in use, it isn't reapable
 		// names and IDs are used interchangeably by different parts of the API
-		if isInCloudformation[s.Region()][s.ID()] {
+		if isInCloudformation[s.Region][s.ID] {
 			s.IsInCloudformation = true
 		}
-		if dependency[s.Region()][s.ID()] ||
-			dependency[s.Region()][reapable.ID(*s.GroupName)] {
+		if dependency[s.Region][s.ID] || dependency[s.Region][reapable.ID(*s.GroupName)] {
 			s.Dependency = true
 		}
 		if config.SecurityGroups.Enabled {
-			resources = append(resources, s)
+			// group instances by owner
+			if s.Owner() != nil {
+				owned[s.Owner().Address] = append(owned[s.Owner().Address], s)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, s)
+			}
 		}
 	}
 
@@ -647,96 +632,162 @@ func allReapables() []reaperevents.Reapable {
 		// names and IDs are used interchangeably by different parts of the API
 
 		// sort of doesn't make sense for volume
-		if isInCloudformation[v.Region()][v.ID()] {
+		if isInCloudformation[v.Region][v.ID] {
 			v.IsInCloudformation = true
 		}
 
 		// if it is a dependency or is attached to an instance
-		if dependency[v.Region()][v.ID()] || len(v.AttachedInstanceIDs) > 0 {
+		if dependency[v.Region][v.ID] || len(v.AttachedInstanceIDs) > 0 {
 			v.Dependency = true
 		}
 		if config.Volumes.Enabled {
-			resources = append(resources, v)
+			// group instances by owner
+			if v.Owner() != nil {
+				owned[v.Owner().Address] = append(owned[v.Owner().Address], v)
+			} else {
+				// if unowned, append to unowned
+				unowned = append(unowned, v)
+			}
 		}
 	}
-	return resources
+	return owned, unowned
 }
 
-// isWhitelisted returns whether the filterable is tagged
-// with the whitelist tag
-func isWhitelisted(filterable filters.Filterable) bool {
-	return filterable.Filter(*filters.NewFilter("Tagged", []string{config.WhitelistTag}))
-}
-
-// matchesFilters applies the relevant filter groups to a filterable
-func matchesFilters(filterable filters.Filterable) bool {
+// takes an array of filterables
+// actually (reaperevents.Reapables because I suck at the type system)
+// and spits out a filtered array BY THE INDIVIDUAL
+func applyFilters(filterables []reaperevents.Reapable) []reaperevents.Reapable {
 	// recover from potential panics caused by malformed filters
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Recovered in matchesFilters with panic: ", r)
+			log.Error("Recovered in applyFilters with panic: ", r)
 		}
 	}()
 
-	var groups map[string]filters.FilterGroup
-	switch filterable.(type) {
-	case *reaperaws.Instance:
-		groups = config.Instances.FilterGroups
-	case *reaperaws.AutoScalingGroup:
-		groups = config.AutoScalingGroups.FilterGroups
-	case *reaperaws.Cloudformation:
-		groups = config.Cloudformations.FilterGroups
-	case *reaperaws.SecurityGroup:
-		groups = config.SecurityGroups.FilterGroups
-	case *reaperaws.Volume:
-		groups = config.Volumes.FilterGroups
-	default:
-		log.Warning("You probably screwed up and need to make sure matchesFilters works!")
-		return false
-	}
+	whitelistedCount := make(map[string]int)
 
-	matched := false
-
-	// if there are no filters groups defined, match
-	if len(groups) == 0 {
-		return true
-	}
-
-	shouldFilter := false
-	for _, group := range groups {
-		if len(group) > 0 {
-			// there is a filter
-			shouldFilter = true
+	var gs []reaperevents.Reapable
+	for _, filterable := range filterables {
+		var groups map[string]filters.FilterGroup
+		var stat string
+		switch filterable.(type) {
+		case *reaperaws.Instance:
+			stat = "reaper.instances.whitelistedCount"
+			groups = config.Instances.FilterGroups
+		case *reaperaws.AutoScalingGroup:
+			stat = "reaper.asgs.whitelistedCount"
+			groups = config.AutoScalingGroups.FilterGroups
+		case *reaperaws.Cloudformation:
+			stat = "reaper.cloudformations.whitelistedCount"
+			groups = config.Cloudformations.FilterGroups
+		case *reaperaws.SecurityGroup:
+			stat = "reaper.securitygroups.whitelistedCount"
+			groups = config.SecurityGroups.FilterGroups
+		case *reaperaws.Volume:
+			stat = "reaper.volumes.whitelistedCount"
+			groups = config.Volumes.FilterGroups
+		default:
+			log.Warning("You probably screwed up and need to make sure applyFilters works!")
+			return []reaperevents.Reapable{}
 		}
-	}
-	// no filters, default to a match
-	if !shouldFilter {
-		return true
-	}
 
-	for name, group := range groups {
-		didMatch := filters.ApplyFilters(filterable, group)
-		if didMatch {
+		matched := false
+
+		// if there are no filters groups defined, default to a match
+		if len(groups) == 0 {
 			matched = true
-			filterable.AddFilterGroup(name, group)
+		}
+
+		// if there are no filters, default to a match
+		noFilters := true
+		for _, group := range groups {
+			if len(group) != 0 {
+				// set to false if any are non-zero length
+				noFilters = false
+			}
+		}
+		if noFilters {
+			matched = true
+		}
+
+		for name, group := range groups {
+			didMatch := filters.ApplyFilters(filterable, group)
+			if didMatch {
+				matched = true
+				filterable.AddFilterGroup(name, group)
+			}
+		}
+
+		// whitelist filter
+		if filterable.Filter(*filters.NewFilter("Tagged", []string{config.WhitelistTag})) {
+			// if the filterable matches this filter, then
+			// it should be whitelisted, aka not matched
+			matched = false
+			whitelistedCount[stat]++
+		}
+
+		if matched {
+			gs = append(gs, filterable)
+		}
+	}
+	for stat, count := range whitelistedCount {
+		err := reaperevents.NewStatistic(stat, float64(count), []string{config.EventTag})
+		if err != nil {
+			log.Error(err.Error())
 		}
 	}
 
-	// convenient
-	if isWhitelisted(filterable) {
-		matched = false
-	}
-
-	return matched
+	return gs
 }
 
-func reapReapable(a reaperevents.Reapable) {
+func reapSecurityGroup(s *reaperaws.SecurityGroup) {
+	// update the internal state
+	if time.Now().After(s.ReaperState().Until) {
+		// if we updated the state, mark it as having been updated
+		s.SetUpdated(s.IncrementState())
+	}
+	log.Info("Reapable SecurityGroup discovered: %s.", s.ReapableDescription())
+	reapables.Put(s.Region, s.ID, s)
+}
+
+func reapCloudformation(c *reaperaws.Cloudformation) {
+	// update the internal state
+	if time.Now().After(c.ReaperState().Until) {
+		// if we updated the state, mark it as having been updated
+		c.SetUpdated(c.IncrementState())
+	}
+	log.Info("Reapable Cloudformation discovered: %s.", c.ReapableDescription())
+	reapables.Put(c.Region, c.ID, c)
+}
+
+func reapVolume(v *reaperaws.Volume) {
+	// update the internal state
+	if time.Now().After(v.ReaperState().Until) {
+		// if we updated the state, mark it as having been updated
+		v.SetUpdated(v.IncrementState())
+	}
+	log.Info("Reapable Volume discovered: %s.", v.ReapableDescription())
+	reapables.Put(v.Region, v.ID, v)
+}
+
+func reapInstance(i *reaperaws.Instance) {
+	// update the internal state
+	if time.Now().After(i.ReaperState().Until) {
+		// if we updated the state, mark it as having been updated
+		i.SetUpdated(i.IncrementState())
+	}
+	log.Info("Reapable Instance discovered: %s.", i.ReapableDescription())
+	reapables.Put(i.Region, i.ID, i)
+}
+
+func reapAutoScalingGroup(a *reaperaws.AutoScalingGroup) {
 	// update the internal state
 	if time.Now().After(a.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated
 		a.SetUpdated(a.IncrementState())
 	}
-	log.Info("Reapable resource discovered: %s.", a.ReapableDescription())
-	reapables.Put(a.Region(), a.ID(), a)
+	log.Info("Reapable AutoScalingGroup discovered: %s.", a.ReapableDescription())
+	reapables.Put(a.Region, a.ID, a)
 }
 
 // Terminate by region, id, calls a Reapable's own Terminate method
@@ -752,6 +803,23 @@ func Terminate(region reapable.Region, id reapable.ID) error {
 		return err
 	}
 	log.Debug("Terminate %s", reapable.ReapableDescriptionShort())
+
+	return nil
+}
+
+// ForceStop by region, id, calls a Reapable's own ForceStop method
+func ForceStop(region reapable.Region, id reapable.ID) error {
+	reapable, err := reapables.Get(region, id)
+	if err != nil {
+		return err
+	}
+	_, err = reapable.ForceStop()
+	if err != nil {
+		log.Error(fmt.Sprintf("Could not stop resource with region: %s and id: %s. Error: %s",
+			region, id, err.Error()))
+		return err
+	}
+	log.Debug("ForceStop %s", reapable.ReapableDescriptionShort())
 
 	return nil
 }

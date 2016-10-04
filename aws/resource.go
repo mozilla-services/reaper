@@ -19,10 +19,9 @@ import (
 
 // Resource has properties shared by all AWS resources
 type Resource struct {
-	id     reapable.ID
-	region reapable.Region
-
+	ID                 reapable.ID
 	Name               string
+	Region             reapable.Region
 	Dependency         bool
 	IsInCloudformation bool
 
@@ -33,16 +32,6 @@ type Resource struct {
 
 	// filters for MatchedFilters
 	matchedFilterGroups map[string]filters.FilterGroup
-}
-
-// ID is a method of reapable
-func (a *Resource) ID() reapable.ID {
-	return a.id
-}
-
-// Region is a method of reapable
-func (a *Resource) Region() reapable.Region {
-	return a.region
 }
 
 // Tagged returns whether the Resource is tagged with that key
@@ -201,31 +190,31 @@ func (a *Resource) ReapableDescriptionShort() string {
 	if name := a.Tag("Name"); name != "" {
 		nameString = fmt.Sprintf(" \"%s\"", name)
 	}
-	return fmt.Sprintf("'%s'%s%s in %s with state: %s", a.ID(), nameString, ownerString, a.Region(), a.ReaperState().String())
+	return fmt.Sprintf("'%s'%s%s in %s with state: %s", a.ID, nameString, ownerString, a.Region, a.ReaperState().String())
 }
 
 // ReapableDescriptionTiny is a method of reapable.Reapable
 func (a *Resource) ReapableDescriptionTiny() string {
-	return fmt.Sprintf("'%s' in %s", a.ID(), a.Region())
+	return fmt.Sprintf("'%s' in %s", a.ID, a.Region)
 }
 
 // Whitelist is a method of reapable.Whitelistable, which is embedded in reapable.Reapable
 func (a *Resource) Whitelist() (bool, error) {
-	return tag(a.Region().String(), a.ID().String(), config.WhitelistTag, "true")
+	return tag(a.Region.String(), a.ID.String(), config.WhitelistTag, "true")
 }
 
 // Save is a method of reapable.Saveable, which is embedded in reapable.Reapable
 // Save tags a Resource's reaperTag
 func (a *Resource) Save(reaperState *state.State) (bool, error) {
 	log.Info("Saving %s", a.ReapableDescriptionTiny())
-	return tag(a.Region().String(), a.ID().String(), reaperTag, reaperState.String())
+	return tag(string(a.Region), string(a.ID), reaperTag, reaperState.String())
 }
 
 // Unsave is a method of reapable.Saveable, which is embedded in reapable.Reapable
 // Unsave untags a Resource's reaperTag
 func (a *Resource) Unsave() (bool, error) {
 	log.Info("Unsaving %s", a.ReapableDescriptionTiny())
-	return untag(a.Region().String(), a.ID().String(), reaperTag)
+	return untag(string(a.Region), string(a.ID), reaperTag)
 }
 
 func untag(region, id, key string) (bool, error) {

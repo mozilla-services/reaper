@@ -103,7 +103,6 @@ type Config struct {
 	Volumes           ResourceConfig
 
 	DryRun            bool
-	Interactive       bool
 	LoadFromStateFile bool
 }
 
@@ -113,7 +112,6 @@ type EventTypes struct {
 	Email             reaperevents.MailerConfig
 	Tagger            reaperevents.TaggerConfig
 	Reaper            reaperevents.ReaperEventConfig
-	Interactive       reaperevents.InteractiveEventConfig
 }
 
 type ResourceConfig struct {

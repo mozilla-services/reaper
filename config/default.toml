@@ -86,9 +86,6 @@ DryRun = true
         Triggers = []
         Mode = "Stop"
 
-    [Events.Interactive]
-        # Triggers = ["first", "second", "third", "final"]
-
 [AWS]
     # what regions the reaper will look for ec2 servers in
     Regions      = [

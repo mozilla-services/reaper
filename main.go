@@ -19,7 +19,6 @@ var (
 
 func init() {
 	configFile := flag.String("config", "", "path to config file")
-	interactive := flag.Bool("interactive", false, "interactive mode, reap based on prompt")
 	withoutCloudformationResources := flag.Bool("withoutCloudformationResources", false, "disables dependency checking for Cloudformations (which is slow!)")
 	loadFromStateFile := flag.Bool("load", false, "load state from state file specified in config (overrides AWS state)")
 	flag.Parse()
@@ -85,17 +84,8 @@ func init() {
 		eventReporters = append(eventReporters, reaperevents.NewReaperEvent(&config.Events.Reaper))
 	}
 
-	// interactive mode disables all other EventReporters
-	// TODO: interactive mode config flag does nothing
-	config.Interactive = *interactive
-	if *interactive {
-		log.Info("Interactive mode enabled, you will be prompted to handle reapables. All other EventReporters are disabled.")
-		eventReporters = []reaperevents.EventReporter{reaperevents.NewInteractiveEvent(&config.Events.Interactive)}
-	}
-
-	// if a WhitelistTag is set
+	// if WhitelistTag is not set
 	if config.WhitelistTag == "" {
-		// set the config's WhitelistTag
 		log.Error("WhitelistTag is empty, exiting")
 		os.Exit(1)
 	} else {

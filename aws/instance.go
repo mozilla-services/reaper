@@ -24,56 +24,14 @@ type Instance struct {
 	ec2.Instance
 	SecurityGroups map[reapable.ID]string
 	AutoScaled     bool
-	Scheduling     instanceScalingSchedule
-}
-
-type instanceScalingSchedule struct {
-	Enabled         bool
-	ScaleDownString string
-	ScaleUpString   string
-}
-
-// SaveSchedule is a method of the Scaler interface
-func (a *Instance) SaveSchedule() {
-	tag(a.Region.String(), a.ID.String(), scalerTag, a.Scheduling.scheduleTag())
-}
-
-// SetScaleDownString is a method of the Scaler interface
-func (a *Instance) SetScaleDownString(s string) {
-	a.Scheduling.ScaleDownString = s
-}
-
-// SetScaleUpString is a method of the Scaler interface
-func (a *Instance) SetScaleUpString(s string) {
-	a.Scheduling.ScaleUpString = s
-}
-
-func (s *instanceScalingSchedule) setSchedule(tag string) {
-	// scalerTag format: cron format schedule (scale down),cron format schedule (scale up),previous scale time,previous desired size,previous min size
-	splitTag := strings.Split(tag, ",")
-	if len(splitTag) != 2 {
-		log.Error("Invalid Instance Tag format ", tag)
-	} else {
-		s.ScaleDownString = splitTag[0]
-		s.ScaleUpString = splitTag[1]
-		s.Enabled = true
-	}
-}
-
-func (s instanceScalingSchedule) scheduleTag() string {
-	return strings.Join([]string{
-		// keep the same schedules
-		s.ScaleDownString,
-		s.ScaleUpString,
-	}, ",")
 }
 
 // NewInstance creates an Instance from the AWS API's ec2.Instance
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	a := Instance{
 		Resource: Resource{
-			ID:     reapable.ID(*instance.InstanceId),
-			Region: reapable.Region(region), // passed in cause not possible to extract out of api
+			id:     reapable.ID(*instance.InstanceId),
+			region: reapable.Region(region), // passed in cause not possible to extract out of api
 			Tags:   make(map[string]string),
 		},
 		SecurityGroups: make(map[reapable.ID]string),
@@ -97,11 +55,6 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	if a.Tagged("aws:autoscaling:groupName") {
 		a.Dependency = true
-	}
-
-	// Scaler boilerplate
-	if a.Tagged(scalerTag) {
-		a.Scheduling.setSchedule(a.Tag(scalerTag))
 	}
 
 	if a.Tagged("aws:autoscaling:groupName") {
@@ -175,93 +128,53 @@ func (a *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Bu
 }
 
 type instanceEventData struct {
-	Config                           *Config
-	Instance                         *Instance
-	TerminateLink                    string
-	StopLink                         string
-	WhitelistLink                    string
-	IgnoreLink1                      string
-	IgnoreLink3                      string
-	IgnoreLink7                      string
-	SchedulePacificBusinessHoursLink string
-	ScheduleEasternBusinessHoursLink string
-	ScheduleCESTBusinessHoursLink    string
+	Config        *Config
+	Instance      *Instance
+	TerminateLink string
+	StopLink      string
+	WhitelistLink string
+	IgnoreLink1   string
+	IgnoreLink3   string
+	IgnoreLink7   string
 }
 
 func (a *Instance) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := makeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := makeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	whitelist, err := makeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	schedulePacific, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownPacificBusinessHours, scaleUpPacificBusinessHours)
-	if err != nil {
-		return nil, err
-	}
-	scheduleEastern, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownEasternBusinessHours, scaleUpEasternBusinessHours)
-	if err != nil {
-		return nil, err
-	}
-	scheduleCEST, err := makeScheduleLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, scaleDownCESTBusinessHours, scaleUpCESTBusinessHours)
+	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// return the data
 	return &instanceEventData{
-		Config:                           config,
-		Instance:                         a,
-		TerminateLink:                    terminate,
-		StopLink:                         stop,
-		WhitelistLink:                    whitelist,
-		IgnoreLink1:                      ignore1,
-		IgnoreLink3:                      ignore3,
-		IgnoreLink7:                      ignore7,
-		SchedulePacificBusinessHoursLink: schedulePacific,
-		ScheduleEasternBusinessHoursLink: scheduleEastern,
-		ScheduleCESTBusinessHoursLink:    scheduleCEST,
+		Config:        config,
+		Instance:      a,
+		TerminateLink: terminate,
+		StopLink:      stop,
+		WhitelistLink: whitelist,
+		IgnoreLink1:   ignore1,
+		IgnoreLink3:   ignore3,
+		IgnoreLink7:   ignore7,
 	}, nil
-}
-
-// ScaleDown stops an Instance
-func (a *Instance) ScaleDown() {
-	if !a.Running() {
-		return
-	}
-	_, err := a.Stop()
-	if err != nil {
-		log.Error(err.Error())
-	}
-}
-
-// ScaleUp starts an Instance
-func (a *Instance) ScaleUp() {
-	if !a.Stopped() {
-		return
-	}
-	_, err := a.Start()
-	if err != nil {
-		log.Error(err.Error())
-	}
 }
 
 const reapableInstanceEventHTML = `
@@ -281,9 +194,6 @@ const reapableInstanceEventHTML = `
 			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
 			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
 			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
-			<li><a href="{{ .SchedulePacificBusinessHoursLink}}">Schedule it to start and stop with Pacific business hours</a></li>
-			<li><a href="{{ .ScheduleEasternBusinessHoursLink}}">Schedule it to start and stop with Eastern business hours</a></li>
-			<li><a href="{{ .ScheduleCESTBusinessHoursLink}}">Schedule it to start and stop with CEST business hours</a></li>
 		</ul>
 	</p>
 
@@ -299,9 +209,6 @@ const reapableInstanceEventHTMLShort = `
 <body>
 	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
 		<br />
-		Schedule it to start and stop with <a href="{{ .SchedulePacificBusinessHoursLink}}">Pacific</a>,
-		<a href="{{ .ScheduleEasternBusinessHoursLink}}">Eastern</a>, or
-		<a href="{{ .ScheduleCESTBusinessHoursLink}}">CEST</a> business hours,
 		<a href="{{ .TerminateLink }}">Terminate</a>,
 		<a href="{{ .StopLink }}">Stop</a>,
 		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
@@ -316,7 +223,6 @@ const reapableInstanceEventHTMLShort = `
 const reapableInstanceEventTextShort = `%%%
 Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
 Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIpAddress}}, Public IP: {{.Instance.PublicIpAddress}}.\n{{end}}
-Schedule this instance to stop and start with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this instance.
 %%%`
 
@@ -327,7 +233,6 @@ State: {{ .Instance.State.Name}}.\n
 Instance Type: {{ .Instance.InstanceType}}.\n
 {{ if .Instance.PublicIpAddress}}This instance's public IP: {{.Instance.PublicIpAddress}}\n{{end}}
 {{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
-Schedule this instance to start and stop with [Pacific]({{ .SchedulePacificBusinessHoursLink}}), [Eastern]({{ .ScheduleEasternBusinessHoursLink}}), or [CEST]({{ .ScheduleCESTBusinessHoursLink}}) business hours.\n
 [Whitelist]({{ .WhitelistLink }}).
 [Stop]({{ .StopLink }}) this instance.
 [Terminate]({{ .TerminateLink }}) this instance.
@@ -336,7 +241,7 @@ Schedule this instance to start and stop with [Pacific]({{ .SchedulePacificBusin
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *Instance) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Instances:instanceId=%s",
-		string(a.Region), string(a.Region), url.QueryEscape(string(a.ID))))
+		a.Region().String(), a.Region().String(), url.QueryEscape(a.ID().String())))
 	if err != nil {
 		log.Error("Error generating AWSConsoleURL. ", err)
 	}
@@ -395,7 +300,7 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 		}
 	case "Region":
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				matched = true
 			}
 		}
@@ -403,7 +308,7 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 		// was this resource's region one of those in the NOT list
 		regionSpecified := false
 		for _, region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				regionSpecified = true
 			}
 		}
@@ -459,9 +364,9 @@ func (a *Instance) Filter(filter filters.Filter) bool {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Instance) Terminate() (bool, error) {
 	log.Info("Terminating Instance %s", a.ReapableDescriptionTiny())
-	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
+	api := ec2.New(sess, aws.NewConfig().WithRegion(a.Region().String()))
 	req := &ec2.TerminateInstancesInput{
-		InstanceIds: []*string{aws.String(string(a.ID))},
+		InstanceIds: []*string{aws.String(a.ID().String())},
 	}
 
 	resp, err := api.TerminateInstances(req)
@@ -477,17 +382,12 @@ func (a *Instance) Terminate() (bool, error) {
 	return true, nil
 }
 
-// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-func (a *Instance) ForceStop() (bool, error) {
-	return a.Stop()
-}
-
 // Start starts an instance
 func (a *Instance) Start() (bool, error) {
 	log.Info("Starting Instance %s", a.ReapableDescriptionTiny())
-	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region())))
 	req := &ec2.StartInstancesInput{
-		InstanceIds: []*string{aws.String(string(a.ID))},
+		InstanceIds: []*string{aws.String(a.ID().String())},
 	}
 
 	resp, err := api.StartInstances(req)
@@ -506,9 +406,9 @@ func (a *Instance) Start() (bool, error) {
 // Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
 func (a *Instance) Stop() (bool, error) {
 	log.Info("Stopping Instance %s", a.ReapableDescriptionTiny())
-	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region())))
 	req := &ec2.StopInstancesInput{
-		InstanceIds: []*string{aws.String(string(a.ID))},
+		InstanceIds: []*string{aws.String(a.ID().String())},
 	}
 
 	resp, err := api.StopInstances(req)

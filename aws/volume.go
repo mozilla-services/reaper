@@ -30,8 +30,8 @@ type Volume struct {
 func NewVolume(region string, vol *ec2.Volume) *Volume {
 	a := Volume{
 		Resource: Resource{
-			Region: reapable.Region(region),
-			ID:     reapable.ID(*vol.VolumeId),
+			region: reapable.Region(region),
+			id:     reapable.ID(*vol.VolumeId),
 			Name:   *vol.VolumeId,
 			Tags:   make(map[string]string),
 		},
@@ -103,46 +103,38 @@ func (a *Volume) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buff
 }
 
 type volumeEventData struct {
-	Config                           *Config
-	Volume                           *Volume
-	TerminateLink                    string
-	StopLink                         string
-	ForceStopLink                    string
-	WhitelistLink                    string
-	IgnoreLink1                      string
-	IgnoreLink3                      string
-	IgnoreLink7                      string
-	SchedulePacificBusinessHoursLink string
-	ScheduleEasternBusinessHoursLink string
-	ScheduleCESTBusinessHoursLink    string
+	Config        *Config
+	Volume        *Volume
+	TerminateLink string
+	StopLink      string
+	WhitelistLink string
+	IgnoreLink1   string
+	IgnoreLink3   string
+	IgnoreLink7   string
 }
 
 func (a *Volume) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
+	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore3, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
+	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	ignore7, err := makeIgnoreLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
+	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}
-	terminate, err := makeTerminateLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	stop, err := makeStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
-	forcestop, err := makeForceStopLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	whitelist, err := makeWhitelistLink(a.Region, a.ID, config.HTTP.TokenSecret, config.HTTP.APIURL)
+	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +144,6 @@ func (a *Volume) getTemplateData() (interface{}, error) {
 		Volume:        a,
 		TerminateLink: terminate,
 		StopLink:      stop,
-		ForceStopLink: forcestop,
 		WhitelistLink: whitelist,
 		IgnoreLink1:   ignore1,
 		IgnoreLink3:   ignore3,
@@ -289,13 +280,13 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 		}
 	case "Region":
 		for region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				matched = true
 			}
 		}
 	case "NotRegion":
 		for region := range filter.Arguments {
-			if a.Region == reapable.Region(region) {
+			if a.Region() == reapable.Region(region) {
 				matched = false
 			}
 		}
@@ -355,7 +346,7 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *Volume) AWSConsoleURL() *url.URL {
 	url, err := url.Parse(fmt.Sprintf("https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#Volumes:volumeId=%s",
-		a.Region.String(), a.Region.String(), url.QueryEscape(a.ID.String())))
+		a.Region().String(), a.Region().String(), url.QueryEscape(a.ID().String())))
 	if err != nil {
 		log.Error("Error generating AWSConsoleURL. ", err)
 	}
@@ -365,10 +356,9 @@ func (a *Volume) AWSConsoleURL() *url.URL {
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable
 func (a *Volume) Terminate() (bool, error) {
 	log.Info("Terminating Volume ", a.ReapableDescriptionTiny())
-	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region)))
-	idString := a.ID.String()
+	api := ec2.New(sess, aws.NewConfig().WithRegion(string(a.Region())))
 	input := &ec2.DeleteVolumeInput{
-		VolumeId: &idString,
+		VolumeId: aws.String(a.ID().String()),
 	}
 	_, err := api.DeleteVolume(input)
 	if err != nil {
@@ -382,11 +372,5 @@ func (a *Volume) Terminate() (bool, error) {
 // noop
 func (a *Volume) Stop() (bool, error) {
 	// use existing min size
-	return false, nil
-}
-
-// ForceStop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-// noop
-func (a *Volume) ForceStop() (bool, error) {
 	return false, nil
 }

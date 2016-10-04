@@ -2,30 +2,19 @@ package reapable
 
 import (
 	"fmt"
+	"net/mail"
 	"sync"
 
 	"github.com/mozilla-services/reaper/filters"
 	"github.com/mozilla-services/reaper/state"
 )
 
-type Terminable interface {
-	Terminate() (bool, error)
-}
-
-type Stoppable interface {
-	Stop() (bool, error)
-	ForceStop() (bool, error)
-}
-
-type Whitelistable interface {
-	Whitelist() (bool, error)
-}
-
 type Saveable interface {
 	Save(state *state.State) (bool, error)
 	Unsave() (bool, error)
 	ReaperState() *state.State
 	IncrementState() bool
+	SetUpdated(bool)
 }
 
 //                ,____
@@ -48,10 +37,14 @@ type Saveable interface {
 
 type Reapable interface {
 	filters.Filterable
-	Terminable
-	Stoppable
-	Whitelistable
+	Terminate() (bool, error)
+	Stop() (bool, error)
+	Whitelist() (bool, error)
 	Saveable
+
+	Owner() *mail.Address
+	ID() ID
+	Region() Region
 
 	ReapableDescription() string
 	ReapableDescriptionShort() string
@@ -112,8 +105,16 @@ func (rs *Reapables) Delete(region Region, id ID) {
 
 type ReapableContainer struct {
 	Reapable
-	Region Region
-	ID     ID
+	region Region
+	id     ID
+}
+
+func (r *ReapableContainer) Region() Region {
+	return r.region
+}
+
+func (r *ReapableContainer) ID() ID {
+	return r.id
 }
 
 func (rs *Reapables) Iter() <-chan ReapableContainer {

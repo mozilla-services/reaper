@@ -600,9 +600,9 @@ func matchesFilters(filterable filters.Filterable) bool {
 
 	matched := false
 
-	// if there are no filters groups defined, match
+	// if there are no filters groups defined default to not match
 	if len(groups) == 0 {
-		return true
+		return false
 	}
 
 	shouldFilter := false
@@ -612,9 +612,9 @@ func matchesFilters(filterable filters.Filterable) bool {
 			shouldFilter = true
 		}
 	}
-	// no filters, default to a match
+	// no filters, default to not match
 	if !shouldFilter {
-		return true
+		return false
 	}
 
 	for name, group := range groups {

@@ -108,7 +108,7 @@ func (r *Reaper) reap() {
 			// group resources by owner
 			owner := reapable.Owner().Address
 			filteredOwnerMap[owner] = append(filteredOwnerMap[owner], reapable)
-			updateReapableState(reapable)
+			registerReapable(reapable)
 		}
 	}
 
@@ -633,7 +633,7 @@ func matchesFilters(filterable filters.Filterable) bool {
 	return matched
 }
 
-func updateReapableState(a reaperevents.Reapable) {
+func registerReapable(a reaperevents.Reapable) {
 	// update the internal state
 	if time.Now().After(a.ReaperState().Until) {
 		// if we updated the state, mark it as having been updated

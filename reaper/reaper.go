@@ -228,12 +228,12 @@ func getVolumes() chan *reaperaws.Volume {
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.volumes.whitelistedCount",
-						float64(whitelistedCount[region]),
-						[]string{fmt.Sprintf("region:%s,volumesize:%d", region, volumeType)})
-					if err != nil {
-						log.Error(err.Error())
-					}
+				}
+				err := reaperevents.NewStatistic("reaper.volumes.whitelistedCount",
+					float64(whitelistedCount[region]),
+					[]string{fmt.Sprintf("region:%s", region)})
+				if err != nil {
+					log.Error(err.Error())
 				}
 			}
 		}()
@@ -311,12 +311,12 @@ func getInstances() chan *reaperaws.Instance {
 					if err != nil {
 						log.Error(err.Error())
 					}
-					err = reaperevents.NewStatistic("reaper.instances.whitelistedCount",
-						float64(whitelistedCount[region]),
-						[]string{fmt.Sprintf("region:%s,instancetype:%s", region, instanceType), config.EventTag})
-					if err != nil {
-						log.Error(err.Error())
-					}
+				}
+				err := reaperevents.NewStatistic("reaper.instances.whitelistedCount",
+					float64(whitelistedCount[region]),
+					[]string{fmt.Sprintf("region:%s", region), config.EventTag})
+				if err != nil {
+					log.Error(err.Error())
 				}
 			}
 		}()

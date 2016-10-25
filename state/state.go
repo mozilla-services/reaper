@@ -46,6 +46,20 @@ type State struct {
 	Until time.Time
 }
 
+func (s *State) FinalStateTime(c StatesConfig) time.Time {
+	switch s.State {
+	case FirstState:
+		return s.Until.Add(c.SecondStateDuration.Duration).Add(c.ThirdStateDuration.Duration)
+	case SecondState:
+		return s.Until.Add(c.ThirdStateDuration.Duration)
+	case ThirdState:
+		return s.Until
+	default:
+		// IgnoreState and FinalState
+		return time.Now()
+	}
+}
+
 func (s *State) String() string {
 	return s.State.String() + s.reaperTagSeparator + s.Until.Format(s.reaperTagTimeFormat)
 }

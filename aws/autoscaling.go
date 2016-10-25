@@ -1,9 +1,7 @@
 package aws
 
 import (
-	"bytes"
 	"fmt"
-	"net/mail"
 	"net/url"
 	"strings"
 	"time"
@@ -32,10 +30,11 @@ type AutoScalingGroup struct {
 func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGroup {
 	a := AutoScalingGroup{
 		Resource: Resource{
-			region: reapable.Region(region),
-			id:     reapable.ID(*asg.AutoScalingGroupName),
-			Name:   *asg.AutoScalingGroupName,
-			Tags:   make(map[string]string),
+			ResourceType: "AutoScalingGroup",
+			region:       reapable.Region(region),
+			id:           reapable.ID(*asg.AutoScalingGroupName),
+			Name:         *asg.AutoScalingGroupName,
+			Tags:         make(map[string]string),
 		},
 		Group: *asg,
 	}
@@ -63,149 +62,6 @@ func NewAutoScalingGroup(region string, asg *autoscaling.Group) *AutoScalingGrou
 
 	return &a
 }
-
-// ReapableEventText is part of the events.Reapable interface
-func (a *AutoScalingGroup) ReapableEventText() (*bytes.Buffer, error) {
-	return reapableEventText(a, reapableASGEventText)
-}
-
-// ReapableEventTextShort is part of the events.Reapable interface
-func (a *AutoScalingGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
-	return reapableEventText(a, reapableASGEventTextShort)
-}
-
-// ReapableEventEmail is part of the events.Reapable interface
-func (a *AutoScalingGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
-	// if unowned, return unowned error
-	if !a.Owned() {
-		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
-		return
-	}
-
-	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
-	owner = *a.Owner()
-	body, err = reapableEventHTML(a, reapableASGEventHTML)
-	return
-}
-
-// ReapableEventEmailShort is part of the events.Reapable interface
-func (a *AutoScalingGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
-	// if unowned, return unowned error
-	if !a.Owned() {
-		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
-		return
-	}
-	owner = *a.Owner()
-	body, err = reapableEventHTML(a, reapableASGEventHTMLShort)
-	return
-}
-
-type autoScalingGroupEventData struct {
-	Config           *Config
-	AutoScalingGroup *AutoScalingGroup
-	TerminateLink    string
-	StopLink         string
-	WhitelistLink    string
-	IgnoreLink1      string
-	IgnoreLink3      string
-	IgnoreLink7      string
-}
-
-func (a *AutoScalingGroup) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
-	if err != nil {
-		return nil, err
-	}
-	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
-	if err != nil {
-		return nil, err
-	}
-	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
-	if err != nil {
-		return nil, err
-	}
-	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-
-	return &autoScalingGroupEventData{
-		Config:           config,
-		AutoScalingGroup: a,
-		TerminateLink:    terminate,
-		StopLink:         stop,
-		WhitelistLink:    whitelist,
-		IgnoreLink1:      ignore1,
-		IgnoreLink3:      ignore3,
-		IgnoreLink7:      ignore7,
-	}, nil
-}
-
-const reapableASGEventHTML = `
-<html>
-<body>
-	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }} in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated.</p>
-
-	<p>
-		You can ignore this message and your AutoScalingGroup will advance to the next state after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>. If you do not take action it will be terminated!
-	</p>
-
-	<p>
-		You may also choose to:
-		<ul>
-			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .StopLink }}">Scale it to 0</a></li>
-			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
-			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
-			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
-		</ul>
-	</p>
-
-	<p>
-		If you want the Reaper to ignore this AutoScalingGroup tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
-	</p>
-</body>
-</html>
-`
-
-const reapableASGEventHTMLShort = `
-<html>
-<body>
-	<p>AutoScalingGroup <a href="{{ .AutoScalingGroup.AWSConsoleURL }}">{{ if .AutoScalingGroup.Name }}"{{.AutoScalingGroup.Name}}" {{ end }}</a> in {{.AutoScalingGroup.Region}}</a> is scheduled to be terminated after <strong>{{.AutoScalingGroup.ReaperState.Until}}</strong>.
-		<br />
-		<a href="{{ .TerminateLink }}">Terminate</a>,
-		<a href="{{ .StopLink }}">Stop</a>,
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
-		<a href="{{ .IgnoreLink3 }}">3 days</a>,
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>,
-		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
-	</p>
-</body>
-</html>
-`
-
-const reapableASGEventTextShort = `%%%
-AutoScalingGroup [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).{{if .AutoScalingGroup.Owned}} Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), [Scale to 0]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
-%%%`
-
-const reapableASGEventText = `%%%
-Reaper has discovered an AutoScalingGroup qualified as reapable: [{{.AutoScalingGroup.ID}}]({{.AutoScalingGroup.AWSConsoleURL}}) in region: [{{.AutoScalingGroup.Region}}](https://{{.AutoScalingGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.AutoScalingGroup.Region}}).\n
-{{if .AutoScalingGroup.Owned}}Owned by {{.AutoScalingGroup.Owner}}.\n{{end}}
-{{ if .AutoScalingGroup.AWSConsoleURL}}{{.AutoScalingGroup.AWSConsoleURL}}\n{{end}}
-[AWS Console URL]({{.AutoScalingGroup.AWSConsoleURL}})\n
-[Whitelist]({{ .WhitelistLink }}) this AutoScalingGroup.
-[Scale to 0]({{ .StopLink }}) this AutoScalingGroup.
-[Terminate]({{ .TerminateLink }}) this AutoScalingGroup.
-%%%`
 
 func (a *AutoScalingGroup) sizeGreaterThanOrEqualTo(size int64) bool {
 	if a.DesiredCapacity != nil {

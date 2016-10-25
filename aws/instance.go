@@ -1,9 +1,7 @@
 package aws
 
 import (
-	"bytes"
 	"fmt"
-	"net/mail"
 	"net/url"
 	"strings"
 	"time"
@@ -30,9 +28,10 @@ type Instance struct {
 func NewInstance(region string, instance *ec2.Instance) *Instance {
 	a := Instance{
 		Resource: Resource{
-			id:     reapable.ID(*instance.InstanceId),
-			region: reapable.Region(region), // passed in cause not possible to extract out of api
-			Tags:   make(map[string]string),
+			ResourceType: "Instance",
+			id:           reapable.ID(*instance.InstanceId),
+			region:       reapable.Region(region), // passed in cause not possible to extract out of api
+			Tags:         make(map[string]string),
 		},
 		SecurityGroups: make(map[reapable.ID]string),
 		Instance:       *instance,
@@ -55,9 +54,6 @@ func NewInstance(region string, instance *ec2.Instance) *Instance {
 
 	if a.Tagged("aws:autoscaling:groupName") {
 		a.Dependency = true
-	}
-
-	if a.Tagged("aws:autoscaling:groupName") {
 		a.AutoScaled = true
 	}
 
@@ -91,152 +87,6 @@ func (a *Instance) Stopping() bool { return *a.State.Code == 64 }
 
 // Stopped returns whether an instance's State is Stopped
 func (a *Instance) Stopped() bool { return *a.State.Code == 80 }
-
-// ReapableEventText is part of the events.Reapable interface
-func (a *Instance) ReapableEventText() (*bytes.Buffer, error) {
-	return reapableEventText(a, reapableInstanceEventText)
-}
-
-// ReapableEventTextShort is part of the events.Reapable interface
-func (a *Instance) ReapableEventTextShort() (*bytes.Buffer, error) {
-	return reapableEventText(a, reapableInstanceEventTextShort)
-}
-
-// ReapableEventEmail is part of the events.Reapable interface
-func (a *Instance) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
-	// if unowned, return unowned error
-	if !a.Owned() {
-		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
-		return
-	}
-	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
-	owner = *a.Owner()
-	body, err = reapableEventHTML(a, reapableInstanceEventHTML)
-	return
-}
-
-// ReapableEventEmailShort is part of the events.Reapable interface
-func (a *Instance) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
-	// if unowned, return unowned error
-	if !a.Owned() {
-		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
-		return
-	}
-	owner = *a.Owner()
-	body, err = reapableEventHTML(a, reapableInstanceEventHTMLShort)
-	return
-}
-
-type instanceEventData struct {
-	Config        *Config
-	Instance      *Instance
-	TerminateLink string
-	StopLink      string
-	WhitelistLink string
-	IgnoreLink1   string
-	IgnoreLink3   string
-	IgnoreLink7   string
-}
-
-func (a *Instance) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
-	if err != nil {
-		return nil, err
-	}
-	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
-	if err != nil {
-		return nil, err
-	}
-	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
-	if err != nil {
-		return nil, err
-	}
-	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-
-	// return the data
-	return &instanceEventData{
-		Config:        config,
-		Instance:      a,
-		TerminateLink: terminate,
-		StopLink:      stop,
-		WhitelistLink: whitelist,
-		IgnoreLink1:   ignore1,
-		IgnoreLink3:   ignore3,
-		IgnoreLink7:   ignore7,
-	}, nil
-}
-
-const reapableInstanceEventHTML = `
-<html>
-<body>
-	<p>Your AWS Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}} in {{.Instance.Region}}</a> is scheduled to be terminated.</p>
-
-	<p>
-		You can ignore this message and your instance will advance to the next state after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>. If you do not take action it will be terminated!
-	</p>
-
-	<p>
-		You may also choose to:
-		<ul>
-			<li><a href="{{ .TerminateLink }}">Terminate it now</a></li>
-			<li><a href="{{ .StopLink }}">Stop it now</a></li>
-			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
-			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
-			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
-		</ul>
-	</p>
-
-	<p>
-		If you want the Reaper to ignore this instance tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
-	</p>
-</body>
-</html>
-`
-
-const reapableInstanceEventHTMLShort = `
-<html>
-<body>
-	<p>Instance <a href="{{ .Instance.AWSConsoleURL }}">{{ if .Instance.Name }}"{{.Instance.Name}}" {{ end }}{{.Instance.ID}}</a> in {{.Instance.Region}} is scheduled to be terminated after <strong>{{.Instance.ReaperState.Until.UTC.Format "Jan 2, 2006 at 3:04pm (MST)"}}</strong>.
-		<br />
-		<a href="{{ .TerminateLink }}">Terminate</a>,
-		<a href="{{ .StopLink }}">Stop</a>,
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
-		<a href="{{ .IgnoreLink3 }}">3 days</a>,
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or
-		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
-	</p>
-</body>
-</html>
-`
-
-const reapableInstanceEventTextShort = `%%%
-Instance {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).{{if .Instance.Owned}} Owned by {{.Instance.Owner}}.{{end}}\n
-Instance Type: {{ .Instance.InstanceType}}, {{ .Instance.State.Name}}{{ if .Instance.PublicIpAddress}}, Public IP: {{.Instance.PublicIpAddress}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this instance.
-%%%`
-
-const reapableInstanceEventText = `%%%
-Reaper has discovered an instance qualified as reapable: {{if .Instance.Name}}"{{.Instance.Name}}" {{end}}[{{.Instance.ID}}]({{.Instance.AWSConsoleURL}}) in region: [{{.Instance.Region}}](https://{{.Instance.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Instance.Region}}).\n
-{{if .Instance.Owner}}Owned by {{.Instance.Owner}}.\n{{end}}
-State: {{ .Instance.State.Name}}.\n
-Instance Type: {{ .Instance.InstanceType}}.\n
-{{ if .Instance.PublicIpAddress}}This instance's public IP: {{.Instance.PublicIpAddress}}\n{{end}}
-{{ if .Instance.AWSConsoleURL}}{{.Instance.AWSConsoleURL}}\n{{end}}
-[Whitelist]({{ .WhitelistLink }}).
-[Stop]({{ .StopLink }}) this instance.
-[Terminate]({{ .TerminateLink }}) this instance.
-%%%`
 
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
 func (a *Instance) AWSConsoleURL() *url.URL {

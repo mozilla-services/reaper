@@ -38,13 +38,11 @@ const (
 
 // Not very scalable but good enough for our requirements
 type JobToken struct {
-	Action          Type
-	ID              string
-	Region          string
-	IgnoreUntil     time.Duration
-	ValidUntil      time.Time
-	ScaleDownString string
-	ScaleUpString   string
+	Action      Type
+	ID          string
+	Region      string
+	IgnoreUntil time.Duration
+	ValidUntil  time.Time
 }
 
 func (j *JobToken) JSON() []byte {
@@ -53,7 +51,6 @@ func (j *JobToken) JSON() []byte {
 }
 
 func (j *JobToken) Equal(j2 *JobToken) bool {
-
 	return j.Action != j2.Action ||
 		j.ID != j2.ID ||
 		j.ValidUntil.Equal(j2.ValidUntil)

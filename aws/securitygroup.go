@@ -1,12 +1,9 @@
 package aws
 
 import (
-	"bytes"
 	"fmt"
-	"net/mail"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -28,8 +25,9 @@ type SecurityGroup struct {
 func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 	s := SecurityGroup{
 		Resource: Resource{
-			id:     reapable.ID(*sg.GroupId),
-			region: reapable.Region(region),
+			ResourceType: "SecurityGroup",
+			id:           reapable.ID(*sg.GroupId),
+			region:       reapable.Region(region),
 
 			Name: *sg.GroupName,
 			Tags: make(map[string]string),
@@ -54,132 +52,6 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 
 	return &s
 }
-
-// ReapableEventText is part of the events.Reapable interface
-func (a *SecurityGroup) ReapableEventText() (*bytes.Buffer, error) {
-	return reapableEventText(a, reapableSecurityGroupEventText)
-}
-
-// ReapableEventTextShort is part of the events.Reapable interface
-func (a *SecurityGroup) ReapableEventTextShort() (*bytes.Buffer, error) {
-	return reapableEventText(a, reapableSecurityGroupEventTextShort)
-}
-
-// ReapableEventEmail is part of the events.Reapable interface
-func (a *SecurityGroup) ReapableEventEmail() (owner mail.Address, subject string, body *bytes.Buffer, err error) {
-	// if unowned, return unowned error
-	if !a.Owned() {
-		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
-		return
-	}
-
-	subject = fmt.Sprintf("AWS Resource %s is going to be Reaped!", a.ReapableDescriptionTiny())
-	owner = *a.Owner()
-	body, err = reapableEventHTML(a, reapableSecurityGroupEventHTML)
-	return
-}
-
-// ReapableEventEmailShort is part of the events.Reapable interface
-func (a *SecurityGroup) ReapableEventEmailShort() (owner mail.Address, body *bytes.Buffer, err error) {
-	// if unowned, return unowned error
-	if !a.Owned() {
-		err = reapable.UnownedError{ErrorText: fmt.Sprintf("%s does not have an owner tag", a.ReapableDescriptionShort())}
-		return
-	}
-	owner = *a.Owner()
-	body, err = reapableEventHTML(a, reapableSecurityGroupEventHTMLShort)
-	return
-}
-
-type securityGroupEventData struct {
-	Config        *Config
-	SecurityGroup *SecurityGroup
-	TerminateLink string
-	StopLink      string
-	WhitelistLink string
-	IgnoreLink1   string
-	IgnoreLink3   string
-	IgnoreLink7   string
-}
-
-func (a *SecurityGroup) getTemplateData() (interface{}, error) {
-	ignore1, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(1*24*time.Hour))
-	ignore3, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(3*24*time.Hour))
-	ignore7, err := makeIgnoreLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL, time.Duration(7*24*time.Hour))
-	terminate, err := makeTerminateLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	stop, err := makeStopLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	whitelist, err := makeWhitelistLink(a.Region(), a.ID(), config.HTTP.TokenSecret, config.HTTP.APIURL)
-	if err != nil {
-		return nil, err
-	}
-
-	return &securityGroupEventData{
-		Config:        config,
-		SecurityGroup: a,
-		TerminateLink: terminate,
-		StopLink:      stop,
-		WhitelistLink: whitelist,
-		IgnoreLink1:   ignore1,
-		IgnoreLink3:   ignore3,
-		IgnoreLink7:   ignore7,
-	}, nil
-}
-
-const reapableSecurityGroupEventHTML = `
-<html>
-<body>
-	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }} in {{.SecurityGroup.Region}}</a> is scheduled to be deleted.</p>
-
-	<p>
-		You can ignore this message and your SecurityGroup will advance to the next state after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>. If you do not take action it will be deleted!
-	</p>
-
-	<p>
-		You may also choose to:
-		<ul>
-			<li><a href="{{ .TerminateLink }}">Delete it now</a></li>
-			<li><a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a></li>
-			<li><a href="{{ .IgnoreLink3 }}">Ignore it for 3 more days</a></li>
-			<li><a href="{{ .IgnoreLink7}}">Ignore it for 7 more days</a></li>
-			<li><a href="{{ .WhitelistLink }}">Whitelist</a> it.</li>
-		</ul>
-	</p>
-
-	<p>
-		If you want the Reaper to ignore this SecurityGroup tag it with {{ .Config.WhitelistTag }} with any value, or click <a href="{{ .WhitelistLink }}">here</a>.
-	</p>
-</body>
-</html>
-`
-
-const reapableSecurityGroupEventHTMLShort = `
-<html>
-<body>
-	<p>SecurityGroup <a href="{{ .SecurityGroup.AWSConsoleURL }}">{{ if .SecurityGroup.Name }}"{{.SecurityGroup.Name}}" {{ end }}</a> in {{.SecurityGroup.Region}}</a> is scheduled to be deleted after <strong>{{.SecurityGroup.ReaperState.Until}}</strong>.
-		<br />
-		<a href="{{ .TerminateLink }}">Delete</a>,
-		<a href="{{ .IgnoreLink1 }}">Ignore it for 1 more day</a>,
-		<a href="{{ .IgnoreLink3 }}">3 days</a>,
-		<a href="{{ .IgnoreLink7}}"> 7 days</a>, or
-		<a href="{{ .WhitelistLink }}">Whitelist</a> it.
-	</p>
-</body>
-</html>
-`
-
-const reapableSecurityGroupEventTextShort = `%%%
-SecurityGroup [{{.SecurityGroup.ID}}]({{.SecurityGroup.AWSConsoleURL}}) in region: [{{.SecurityGroup.Region}}](https://{{.SecurityGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.SecurityGroup.Region}}).{{if .SecurityGroup.Owned}} Owned by {{.SecurityGroup.Owner}}.\n{{end}}
-[Whitelist]({{ .WhitelistLink }}) or [Delete]({{ .TerminateLink }}) this SecurityGroup.
-%%%`
-
-const reapableSecurityGroupEventText = `%%%
-Reaper has discovered an SecurityGroup qualified as reapable: [{{.SecurityGroup.ID}}]({{.SecurityGroup.AWSConsoleURL}}) in region: [{{.SecurityGroup.Region}}](https://{{.SecurityGroup.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.SecurityGroup.Region}}).\n
-{{if .SecurityGroup.Owned}}Owned by {{.SecurityGroup.Owner}}.\n{{end}}
-{{ if .SecurityGroup.AWSConsoleURL}}{{.SecurityGroup.AWSConsoleURL}}\n{{end}}
-[AWS Console URL]({{.SecurityGroup.AWSConsoleURL}})\n
-[Whitelist]({{ .WhitelistLink }}) this SecurityGroup.
-[Delete]({{ .TerminateLink }}) this SecurityGroup.
-%%%`
 
 // Filter is part of the filter.Filterable interface
 func (a *SecurityGroup) Filter(filter filters.Filter) bool {

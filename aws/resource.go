@@ -1,11 +1,8 @@
 package aws
 
 import (
-	"bytes"
 	"fmt"
-	htmlTemplate "html/template"
 	"net/mail"
-	textTemplate "text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,11 +14,14 @@ import (
 	"github.com/mozilla-services/reaper/state"
 )
 
+const resourceTimeFormat = "Jan 2, 2006 at 3:04pm (MST)"
+
 // Resource has properties shared by all AWS resources
 type Resource struct {
 	id     reapable.ID
 	region reapable.Region
 
+	ResourceType       string
 	Name               string
 	Dependency         bool
 	IsInCloudformation bool
@@ -75,6 +75,11 @@ func (a *Resource) SetReaperState(newState *state.State) {
 
 func (a *Resource) SetUpdated(b bool) {
 	a.reaperState.Updated = b
+}
+
+// FinalStateTime returns the time at which the resource will be in the Final State
+func (a *Resource) FinalStateTime() time.Time {
+	return a.ReaperState().FinalStateTime(config.Notifications.StatesConfig)
 }
 
 // Owner extracts useful information out of the Owner tag which should
@@ -152,40 +157,6 @@ func (a *Resource) MatchedFiltersString() string {
 	return filters.FormatFilterGroupsText(a.matchedFilterGroups)
 }
 
-type templater interface {
-	getTemplateData() (interface{}, error)
-}
-
-func reapableEventHTML(a templater, text string) (*bytes.Buffer, error) {
-	t := htmlTemplate.Must(htmlTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		return nil, err
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
-func reapableEventText(a templater, text string) (*bytes.Buffer, error) {
-	t := textTemplate.Must(textTemplate.New("reapable").Parse(text))
-	buf := bytes.NewBuffer(nil)
-
-	data, err := a.getTemplateData()
-	if err != nil {
-		return nil, err
-	}
-	err = t.Execute(buf, data)
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
 // ReapableDescription is a method of reapable.Reapable
 func (a *Resource) ReapableDescription() string {
 	return fmt.Sprintf("%s matched %s", a.ReapableDescriptionShort(), a.MatchedFiltersString())
@@ -215,14 +186,14 @@ func (a *Resource) Whitelist() (bool, error) {
 }
 
 // Save is a method of reapable.Saveable, which is embedded in reapable.Reapable
-// Save tags a Resource's reaperTag
+// Save tags a Resource's reaperTag AWS
 func (a *Resource) Save(reaperState *state.State) (bool, error) {
 	log.Info("Saving %s", a.ReapableDescriptionTiny())
 	return tag(a.Region().String(), a.ID().String(), reaperTag, reaperState.String())
 }
 
 // Unsave is a method of reapable.Saveable, which is embedded in reapable.Reapable
-// Unsave untags a Resource's reaperTag
+// Unsave untags a Resource's reaperTag in AWS
 func (a *Resource) Unsave() (bool, error) {
 	log.Info("Unsaving %s", a.ReapableDescriptionTiny())
 	return untag(a.Region().String(), a.ID().String(), reaperTag)

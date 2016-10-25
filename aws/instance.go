@@ -3,7 +3,6 @@ package aws
 import (
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -99,116 +98,58 @@ func (a *Instance) AWSConsoleURL() *url.URL {
 }
 
 func (a *Instance) Filter(filter filters.Filter) bool {
-	matched := false
+	if isResourceFilter(filter) {
+		return a.Resource.Filter(filter)
+	}
+
 	// map function names to function calls
 	switch filter.Function {
 	case "State":
 		if a.State != nil && *a.State.Name == filter.Arguments[0] {
-			matched = true
+			return true
 		}
 	case "InstanceType":
 		if a.InstanceType != nil && *a.InstanceType == filter.Arguments[0] {
-			matched = true
+			return true
 		}
 	case "HasPublicIpAddress":
 		if b, err := filter.BoolValue(0); err == nil && b == (a.PublicIpAddress != nil) {
-			matched = true
+			return true
 		}
 	case "PublicIpAddress":
 		if a.PublicIpAddress != nil && *a.PublicIpAddress == filter.Arguments[0] {
-			matched = true
-		}
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
-			matched = true
+			return true
 		}
 	case "AutoScaled":
 		if b, err := filter.BoolValue(0); err == nil && a.AutoScaled == b {
-			matched = true
+			return true
 		}
 	// uses RFC3339 format
 	// https://www.ietf.org/rfc/rfc3339.txt
 	case "LaunchTimeBefore":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
 		if err == nil && a.LaunchTime != nil && t.After(*a.LaunchTime) {
-			matched = true
+			return true
 		}
 	case "LaunchTimeAfter":
 		t, err := time.Parse(time.RFC3339, filter.Arguments[0])
 		if err == nil && a.LaunchTime != nil && t.Before(*a.LaunchTime) {
-			matched = true
+			return true
 		}
 	case "LaunchTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && a.LaunchTime != nil && time.Since(*a.LaunchTime) < d {
-			matched = true
+			return true
 		}
 	case "LaunchTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && a.LaunchTime != nil && time.Since(*a.LaunchTime) > d {
-			matched = true
-		}
-	case "Region":
-		for _, region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				matched = true
-			}
-		}
-	case "NotRegion":
-		// was this resource's region one of those in the NOT list
-		regionSpecified := false
-		for _, region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				regionSpecified = true
-			}
-		}
-		if !regionSpecified {
-			matched = true
-		}
-	case "Tagged":
-		if a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotTagged":
-		if !a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "TagNotEqual":
-		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
-			matched = true
-		}
-	case "ReaperState":
-		if a.reaperState.State.String() == filter.Arguments[0] {
-			matched = true
-		}
-	case "NotReaperState":
-		if a.reaperState.State.String() != filter.Arguments[0] {
-			matched = true
-		}
-	case "Named":
-		if a.Name == filter.Arguments[0] {
-			matched = true
-		}
-	case "NotNamed":
-		if a.Name != filter.Arguments[0] {
-			matched = true
-		}
-	case "IsDependency":
-		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
-			matched = true
-		}
-	case "NameContains":
-		if strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotNameContains":
-		if !strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
+			return true
 		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering Instances.", filter.Function))
 	}
-	return matched
+	return false
 }
 
 // Terminate is a method of reapable.Terminable, which is embedded in reapable.Reapable

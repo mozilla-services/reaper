@@ -3,7 +3,6 @@ package aws
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -55,74 +54,16 @@ func NewSecurityGroup(region string, sg *ec2.SecurityGroup) *SecurityGroup {
 
 // Filter is part of the filter.Filterable interface
 func (a *SecurityGroup) Filter(filter filters.Filter) bool {
-	matched := false
+	if isResourceFilter(filter) {
+		return a.Resource.Filter(filter)
+	}
+
 	// map function names to function calls
 	switch filter.Function {
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
-			matched = true
-		}
-	case "Region":
-		for _, region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				matched = true
-			}
-		}
-	case "NotRegion":
-		// was this resource's region one of those in the NOT list
-		regionSpecified := false
-		for _, region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				regionSpecified = true
-			}
-		}
-		if !regionSpecified {
-			matched = true
-		}
-	case "Tagged":
-		if a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotTagged":
-		if !a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "TagNotEqual":
-		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
-			matched = true
-		}
-	case "ReaperState":
-		if a.reaperState.State.String() == filter.Arguments[0] {
-			matched = true
-		}
-	case "NotReaperState":
-		if a.reaperState.State.String() != filter.Arguments[0] {
-			matched = true
-		}
-	case "Named":
-		if a.Name == filter.Arguments[0] {
-			matched = true
-		}
-	case "NotNamed":
-		if a.Name != filter.Arguments[0] {
-			matched = true
-		}
-	case "IsDependency":
-		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
-			matched = true
-		}
-	case "NameContains":
-		if strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotNameContains":
-		if !strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
-		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering SecurityGroups.", filter.Function))
+		log.Error(fmt.Sprintf("No function %s could be found for filtering %s.", filter.Function, a.ResourceType))
 	}
-	return matched
+	return false
 }
 
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console

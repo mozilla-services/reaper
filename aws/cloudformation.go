@@ -3,7 +3,6 @@ package aws
 import (
 	"fmt"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -79,7 +78,10 @@ func (a *Cloudformation) Unsave() (bool, error) {
 
 // Filter is part of the filter.Filterable interface
 func (a *Cloudformation) Filter(filter filters.Filter) bool {
-	matched := false
+	if isResourceFilter(filter) {
+		return a.Resource.Filter(filter)
+	}
+
 	// map function names to function calls
 	switch filter.Function {
 	case "Status":
@@ -101,83 +103,26 @@ func (a *Cloudformation) Filter(filter filters.Filter) bool {
 			// UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
 			// UPDATE_ROLLBACK_FAILED
 			// UPDATE_ROLLBACK_IN_PROGRESS
-			matched = true
+			return true
 		}
 	case "NotStatus":
 		if a.StackStatus != nil && *a.StackStatus != filter.Arguments[0] {
-			matched = true
+			return true
 		}
 	case "CreatedTimeInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) < d {
-			matched = true
+			return true
 		}
 	case "CreatedTimeNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && a.CreationTime != nil && time.Since(*a.CreationTime) > d {
-			matched = true
-		}
-	case "Region":
-		for _, region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				matched = true
-			}
-		}
-	case "NotRegion":
-		// was this resource's region one of those in the NOT list
-		regionSpecified := false
-		for _, region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				regionSpecified = true
-			}
-		}
-		if !regionSpecified {
-			matched = true
-		}
-	case "Tagged":
-		if a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotTagged":
-		if !a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "TagNotEqual":
-		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
-			matched = true
-		}
-	case "ReaperState":
-		if a.reaperState.State.String() == filter.Arguments[0] {
-			matched = true
-		}
-	case "NotReaperState":
-		if a.reaperState.State.String() != filter.Arguments[0] {
-			matched = true
-		}
-	case "Named":
-		if a.Name == filter.Arguments[0] {
-			matched = true
-		}
-	case "NotNamed":
-		if a.Name != filter.Arguments[0] {
-			matched = true
-		}
-	case "IsDependency":
-		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
-			matched = true
-		}
-	case "NameContains":
-		if strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotNameContains":
-		if !strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
+			return true
 		}
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Cloudformations.", filter.Function))
+		log.Error(fmt.Sprintf("No function %s could be found for filtering %s.", filter.Function, a.ResourceType))
 	}
-	return matched
+	return false
 }
 
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
@@ -201,7 +146,7 @@ func (a *Cloudformation) Terminate() (bool, error) {
 	}
 	_, err := as.DeleteStack(input)
 	if err != nil {
-		log.Error("could not delete Cloudformation ", a.ReapableDescriptionTiny())
+		log.Error(fmt.Sprintf("could not delete %s %s", a.ResourceType, a.ReapableDescriptionTiny()))
 		return false, err
 	}
 	return false, nil

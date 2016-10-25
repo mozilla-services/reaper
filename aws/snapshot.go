@@ -44,12 +44,15 @@ func NewSnapshot(region string, s *ec2.Snapshot) *Snapshot {
 	return &snap
 }
 
-func (s *Snapshot) Filter(filter filters.Filter) bool {
-	matched := false
+func (a *Snapshot) Filter(filter filters.Filter) bool {
+	if isResourceFilter(filter) {
+		return a.Resource.Filter(filter)
+	}
+
 	// map function names to function calls
 	switch filter.Function {
 	default:
-		log.Error(fmt.Sprintf("No function %s could be found for filtering Snapshots.", filter.Function))
+		log.Error(fmt.Sprintf("No function %s could be found for filtering %s.", filter.Function, a.ResourceType))
 	}
-	return matched
+	return false
 }

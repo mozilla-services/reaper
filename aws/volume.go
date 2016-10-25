@@ -3,7 +3,6 @@ package aws
 import (
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -102,74 +101,41 @@ func (a *Volume) sizeGreaterThan(size int64) bool {
 
 // Filter is part of the filter.Filterable interface
 func (a *Volume) Filter(filter filters.Filter) bool {
-	matched := false
+	if isResourceFilter(filter) {
+		return a.Resource.Filter(filter)
+	}
+
 	// map function names to function calls
 	switch filter.Function {
 	case "SizeGreaterThan":
 		if i, err := filter.Int64Value(0); err == nil && a.sizeGreaterThan(i) {
-			matched = true
+			return true
 		}
 	case "SizeLessThan":
 		if i, err := filter.Int64Value(0); err == nil && a.sizeLessThan(i) {
-			matched = true
+			return true
 		}
 	case "SizeEqualTo":
 		if i, err := filter.Int64Value(0); err == nil && a.sizeEqualTo(i) {
-			matched = true
+			return true
 		}
 	case "SizeLessThanOrEqualTo":
 		if i, err := filter.Int64Value(0); err == nil && a.sizeLessThanOrEqualTo(i) {
-			matched = true
+			return true
 		}
 	case "SizeGreaterThanOrEqualTo":
 		if i, err := filter.Int64Value(0); err == nil && a.sizeGreaterThanOrEqualTo(i) {
-			matched = true
-		}
-	case "Tagged":
-		if a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "NotTagged":
-		if !a.Tagged(filter.Arguments[0]) {
-			matched = true
-		}
-	case "TagNotEqual":
-		if a.Tag(filter.Arguments[0]) != filter.Arguments[1] {
-			matched = true
-		}
-	case "Region":
-		for region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				matched = true
-			}
-		}
-	case "NotRegion":
-		for region := range filter.Arguments {
-			if a.Region() == reapable.Region(region) {
-				matched = false
-			}
+			return true
 		}
 	case "CreatedInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && a.CreateTime != nil && time.Since(*a.CreateTime) < d {
-			matched = true
+			return true
 		}
 	case "CreatedNotInTheLast":
 		d, err := time.ParseDuration(filter.Arguments[0])
 		if err == nil && a.CreateTime != nil && time.Since(*a.CreateTime) > d {
-			matched = true
-		}
-	case "InCloudformation":
-		if b, err := filter.BoolValue(0); err == nil && a.IsInCloudformation == b {
-			matched = true
-		}
-	case "IsDependency":
-		if b, err := filter.BoolValue(0); err == nil && a.Dependency == b {
-			matched = true
-		}
-	case "NameContains":
-		if strings.Contains(a.Name, filter.Arguments[0]) {
-			matched = true
+			return true
 		}
 	case "State":
 		// one of:
@@ -181,7 +147,7 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 		// error
 
 		if a.State != nil && *a.State == filter.Arguments[0] {
-			matched = true
+			return true
 		}
 	case "AttachmentState":
 		// one of:
@@ -192,14 +158,14 @@ func (a *Volume) Filter(filter filters.Filter) bool {
 
 		// I _think_ that the size of Attachments is only 0 or 1
 		if len(a.Attachments) > 0 && *a.Attachments[0].State == filter.Arguments[0] {
-			matched = true
+			return true
 		} else if len(a.Attachments) == 0 && "detached" == filter.Arguments[0] {
-			matched = true
+			return true
 		}
 	default:
 		log.Error(fmt.Sprintf("No function %s could be found for filtering Volumes.", filter.Function))
 	}
-	return matched
+	return false
 }
 
 // AWSConsoleURL returns the url that can be used to access the resource on the AWS Console
@@ -228,7 +194,7 @@ func (a *Volume) Terminate() (bool, error) {
 }
 
 // Stop is a method of reapable.Stoppable, which is embedded in reapable.Reapable
-// noop
+// TODO: noop
 func (a *Volume) Stop() (bool, error) {
 	// use existing min size
 	return false, nil

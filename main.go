@@ -20,7 +20,12 @@ var (
 func init() {
 	configFile := flag.String("config", "", "path to config file")
 	withoutCloudformationResources := flag.Bool("withoutCloudformationResources", false, "disables dependency checking for Cloudformations (which is slow!)")
+	useMozlog := flag.Bool("useMozlog", true, "set to false to disable mozlog output")
 	flag.Parse()
+
+	if *useMozlog {
+		log.EnableMozlog()
+	}
 
 	// if no config file -> exit with error
 	if *configFile == "" {

@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"net/mail"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,6 +34,10 @@ type Resource struct {
 
 	// filters for MatchedFilters
 	matchedFilterGroups map[string]filters.FilterGroup
+}
+
+func (a *Resource) AWSConsoleURL() *url.URL {
+	return new(url.URL)
 }
 
 // ID is a method of reapable

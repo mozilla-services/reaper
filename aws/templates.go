@@ -44,6 +44,9 @@ func (a *Resource) getTemplateData() (interface{}, error) {
 		Resource             *Resource
 		ResourceType         string
 		ResourceName         string
+		ID                   string
+		Region               string
+		AWSConsoleURL        string
 		FinalStateTimeString string
 		NextStateTimeString  string
 		WhitelistTag         string
@@ -58,6 +61,9 @@ func (a *Resource) getTemplateData() (interface{}, error) {
 		Resource:             a,
 		ResourceType:         a.ResourceType,
 		ResourceName:         a.Name,
+		ID:                   a.id.String(),
+		Region:               a.region.String(),
+		AWSConsoleURL:        a.AWSConsoleURL().String(),
 		FinalStateTimeString: a.FinalStateTime().Format(resourceTimeFormat),
 		NextStateTimeString:  a.ReaperState().Until.Format(resourceTimeFormat),
 		WhitelistTag:         config.WhitelistTag,
@@ -140,12 +146,8 @@ func reapableEventText(a *Resource, text string) (*bytes.Buffer, error) {
 const reapableEventHTMLTemplate = `
 <html>
 <body>
-	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if .ResourceName }}"{{.ResourceName}}"{{ end }}{{if .Resource.ID}} {{.Resource.ID}}{{end}} in {{.Region}}</a> is scheduled to be terminated.</p>
-
-	<p>
-		You can ignore this message and your {{.ResourceType}} will advance to the next state after <strong>{{ .NextStateTimeString }}</strong>. If you do not take action it will be terminated after <strong>{{ .FinalStateTimeString }}</strong>!
-	</p>
-
+	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if .ResourceName != "" }}"{{.ResourceName}}"{{ end }} {{.ID}} in {{.Region}}</a> is scheduled to be terminated.</p>
+	<p>You can ignore this message and your {{.ResourceType}} will advance to the next state after <strong>{{ .NextStateTimeString }}</strong>. If you do not take action it will be terminated after <strong>{{ .FinalStateTimeString }}</strong>!</p>
 	<p>
 		You may also choose to:
 		<ul>
@@ -167,7 +169,7 @@ const reapableEventHTMLTemplate = `
 const reapableEventHTMLShortTemplate = `
 <html>
 <body>
-	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if .ResourceName }}"{{.ResourceName}}" {{ end }}</a> in {{.Region}}</a> is scheduled to be terminated after <strong>{{ .FinalStateTimeString }}</strong>.
+	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if .ResourceName != "" }}"{{.ResourceName}}" {{ end }}</a> in {{.Region}}</a> will advance to the next state after <strong>{{ .NextStateTimeString }}</strong> and be terminated after <strong>{{ .FinalStateTimeString }}</strong>!</p>
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>,
 		<a href="{{ .StopLink }}">Stop</a>,
@@ -184,16 +186,19 @@ const reapableEventTextShortTemplate = `%%%
 {{.ResourceType}} [{{.ID}}]({{.AWSConsoleURL}}) in region: [{{.Region}}]({{.RegionLink}}).\n
 {{if .Resource.Owned}} Owned by {{.Resource.Owner}}.\n{{end}}
 This Resource is scheduled to be terminated after <strong>{{ .FinalStateTimeString }}</strong>\n
-[Whitelist]({{ .WhitelistLink }}), [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this Resource.
+[Whitelist]({{ .WhitelistLink }}), [Ignore it for 1 more day]({{ .IgnoreLink1 }}), [3 days]{{ .IgnoreLink3 }}, [7 days]{{ .IgnoreLink7}}, [Stop]({{ .StopLink }}), or [Terminate]({{ .TerminateLink }}) this Resource.
 %%%`
 
 const reapableEventTextTemplate = `%%%
-Reaper has discovered an Resource qualified as reapable: [{{.Resource.ID}}]({{.Resource.AWSConsoleURL}}) in region: [{{.Resource.Region}}](https://{{.Resource.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Resource.Region}}).\n
+Reaper has discovered an Resource qualified as reapable: [{{.ID}}]({{.AWSConsoleURL}}) in region: [{{.Region}}](https://{{.Region}}.console.aws.amazon.com/ec2/v2/home?region={{.Region}}).\n
 {{if .Resource.Owned}}Owned by {{.Resource.Owner}}.\n{{end}}
-{{ if .Resource.AWSConsoleURL}}{{.Resource.AWSConsoleURL}}\n{{end}}
-[AWS Console URL]({{.Resource.AWSConsoleURL}})\n
+{{ if .AWSConsoleURL}}{{.AWSConsoleURL}}\n{{end}}
+[AWS Console URL]({{.AWSConsoleURL}})\n
 This Resource is scheduled to be terminated after <strong>{{ .FinalStateTimeString }}</strong>\n
 [Whitelist]({{ .WhitelistLink }}) this Resource.
+[Ignore it for 1 more day]({{ .IgnoreLink1 }})
+[3 days]{{ .IgnoreLink3 }}
+[7 days]{{ .IgnoreLink7}}
 [Stop]({{ .StopLink }}) this Resource.
 [Terminate]({{ .TerminateLink }}) this Resource.
 %%%`

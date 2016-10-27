@@ -24,13 +24,12 @@ func NewDatadogEvents(c *DatadogConfig) *DatadogEvents {
 // newEvent is a method of EventReporter
 // newEvent reports an event to Datadog
 func (e *DatadogEvents) newEvent(title string, text string, fields map[string]string, tags []string) error {
+	if log.Extras() {
+		log.Info("%s: reporting event %s, tags: %v", e.Config.Name, title, tags)
+	}
 	if e.Config.DryRun {
-		if log.Extras() {
-			log.Info("DryRun: Not reporting %s", title)
-		}
 		return nil
 	}
-
 	g, err := e.godspeed()
 	if err != nil {
 		return err
@@ -50,6 +49,12 @@ func (e *DatadogEvents) newReapableEvent(r Reapable, tags []string) error {
 		if err != nil {
 			return err
 		}
+		if log.Extras() {
+			log.Info("%s: reporting reapable event for %s, tags: %v", e.Config.Name, r.ReapableDescriptionTiny(), tags)
+		}
+		if e.Config.DryRun {
+			return nil
+		}
 		err = e.newEvent("Reapable resource discovered", text.String(), nil, tags)
 		if err != nil {
 			return fmt.Errorf("Error reporting Reapable event for %s: %s", r.ReapableDescriptionTiny(), err.Error())
@@ -62,6 +67,12 @@ func (e *DatadogEvents) newReapableEvent(r Reapable, tags []string) error {
 func (e *DatadogEvents) newBatchReapableEvent(rs []Reapable, tags []string) error {
 	errorStrings := []string{}
 	buffer := new(bytes.Buffer)
+	if log.Extras() {
+		log.Info("%s: reporting %d reapables, tags: %v", e.Config.Name, len(rs), tags)
+	}
+	if e.Config.DryRun {
+		return nil
+	}
 	for _, r := range rs {
 		if !e.Config.shouldTriggerFor(r) {
 			continue

@@ -30,7 +30,12 @@ func (e *Tagger) newReapableEvent(r Reapable, tags []string) error {
 	}
 
 	if e.Config.shouldTriggerFor(r) {
-		log.Info("Tagging %s with %s", r.ReapableDescriptionTiny(), r.ReaperState().State.String())
+		if log.Extras() {
+			log.Info("%s: Tagging %s with %s", e.Config.Name, r.ReapableDescriptionTiny(), r.ReaperState().State.String())
+		}
+		if e.Config.DryRun {
+			return nil
+		}
 		_, err := r.Save(r.ReaperState())
 		if err != nil {
 			return err

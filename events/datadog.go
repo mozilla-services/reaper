@@ -54,7 +54,8 @@ func (e *Datadog) getGodspeed() {
 	if e.Config.Host == "" || e.Config.Port == "" {
 		gs, err = godspeed.NewDefault()
 	} else {
-		port, err := strconv.Atoi(e.Config.Port)
+		var port int
+		port, err = strconv.Atoi(e.Config.Port)
 		if err != nil {
 			log.Error(err.Error())
 		}

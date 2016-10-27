@@ -17,10 +17,7 @@ type ReaperEventConfig struct {
 // that it triggers whether or not the state was updated this run
 func (e *ReaperEventConfig) shouldTriggerFor(r Reapable) bool {
 	if e.DryRun {
-		if log.Extras() {
-			log.Info("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
-		}
-		return false
+		log.Info("DryRun: %s for %s", e.Name, r.ReapableDescriptionTiny())
 	}
 	triggering := false
 	// if the reapable's state is set to trigger this EventReporter
@@ -55,15 +52,25 @@ func (e *ReaperEvent) newReapableEvent(r Reapable, tags []string) error {
 		var err error
 		switch e.Config.Mode {
 		case "Stop":
-			_, err = r.Stop()
-			log.Info("ReaperEvent: Stopping ", r.ReapableDescriptionShort())
+			if log.Extras() {
+				log.Info("%s: Stopping ", e.Config.Name, r.ReapableDescriptionShort())
+			}
+			if e.Config.DryRun {
+				return nil
+			}
 			NewEvent("Reaper: Stopping ", r.ReapableDescriptionShort(), nil, []string{})
 			NewCountStatistic("reaper.reapables.stopped", []string{r.ReapableDescriptionTiny()})
+			_, err = r.Stop()
 		case "Terminate":
-			_, err = r.Terminate()
-			log.Info("ReaperEvent: Terminating ", r.ReapableDescriptionShort())
+			if log.Extras() {
+				log.Info("%s: Terminating ", e.Config.Name, r.ReapableDescriptionShort())
+			}
+			if e.Config.DryRun {
+				return nil
+			}
 			NewEvent("Reaper: Terminating ", r.ReapableDescriptionShort(), nil, []string{})
 			NewCountStatistic("reaper.reapables.terminated", []string{r.ReapableDescriptionTiny()})
+			_, err = r.Terminate()
 		default:
 			log.Error(fmt.Sprintf("Invalid %s Mode %s", e.Config.Name, e.Config.Mode))
 		}

@@ -17,14 +17,11 @@ func NewDatadogStatistics(c *DatadogConfig) *DatadogStatistics {
 // newStatistic is a method of EventReporter
 // newStatistic reports a gauge to Datadog
 func (e *DatadogStatistics) newStatistic(name string, value float64, tags []string) error {
-	if e.Config.DryRun {
-		if log.Extras() {
-			log.Info("DryRun: Not reporting %s", name)
-		}
-		return nil
-	}
 	if log.Extras() {
-		log.Info("DatadogStatistics: reporting %s: %f, tags: %v", name, value, tags)
+		log.Info("%s: reporting %s: %f, tags: %v", e.Config.Name, name, value, tags)
+	}
+	if e.Config.DryRun {
+		return nil
 	}
 	g, err := e.godspeed()
 	if err != nil {
@@ -37,17 +34,12 @@ func (e *DatadogStatistics) newStatistic(name string, value float64, tags []stri
 // newCountStatistic is a method of EventReporter
 // newCountStatistic reports an Incr to Datadog
 func (e *DatadogStatistics) newCountStatistic(name string, tags []string) error {
+	if log.Extras() {
+		log.Info("%s: reporting %s, tags: %v", e.Config.Name, name, tags)
+	}
 	if e.Config.DryRun {
-		if log.Extras() {
-			log.Info("DryRun: Not reporting %s", name)
-		}
 		return nil
 	}
-
-	if log.Extras() {
-		log.Info("DatadogStatistics: reporting %s, tags: %v", name, tags)
-	}
-
 	g, err := e.godspeed()
 	if err != nil {
 		return err

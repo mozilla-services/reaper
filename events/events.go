@@ -152,10 +152,7 @@ func (e *EventReporterConfig) parseTriggers() (triggers []state.StateEnum) {
 
 func (e *EventReporterConfig) shouldTriggerFor(r Reapable) bool {
 	if e.DryRun {
-		if log.Extras() {
-			log.Info("DryRun: Not triggering %s for %s", e.Name, r.ReapableDescriptionTiny())
-		}
-		return false
+		log.Info("DryRun: %s for %s", e.Name, r.ReapableDescriptionTiny())
 	}
 	triggering := false
 	// if the reapable's state is set to trigger this EventReporter

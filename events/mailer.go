@@ -126,6 +126,16 @@ func (e *Mailer) newReapableEvent(r Reapable, tags []string) error {
 			}
 			return err
 		}
+		if log.Extras() {
+			log.Info("%s: sending email to %s for %s with state",
+				e.Config.Name,
+				addr.Address,
+				r.ReapableDescriptionTiny(),
+				r.ReaperState().State.String())
+		}
+		if e.Config.DryRun {
+			return nil
+		}
 		return e.send(addr, subject, body)
 	}
 	return nil
@@ -161,6 +171,15 @@ func (e *Mailer) newBatchReapableEvent(rs []Reapable, tags []string) error {
 		buffer.WriteString("\n")
 	}
 	if triggering {
+		if log.Extras() {
+			log.Info("%s: sending email to %s for %d reapables",
+				e.Config.Name,
+				owner.Address,
+				len(rs))
+		}
+		if e.Config.DryRun {
+			return nil
+		}
 		return e.send(owner, subject, buffer)
 	}
 	if len(errorStrings) > 0 {
@@ -171,11 +190,6 @@ func (e *Mailer) newBatchReapableEvent(rs []Reapable, tags []string) error {
 
 // Send an HTML email
 func (e *Mailer) send(to mail.Address, subject string, htmlBody *bytes.Buffer) error {
-	log.Debug("Sending email to: \"%s\", from: \"%s\", subject: \"%s\"",
-		to.String(),
-		e.Config.From.Address,
-		subject)
-
 	m := email.NewEmail()
 	m.From = e.Config.From.Address
 	m.To = []string{to.Address}
@@ -183,6 +197,7 @@ func (e *Mailer) send(to mail.Address, subject string, htmlBody *bytes.Buffer) e
 	m.Subject = subject
 	m.HTML = htmlBody.Bytes()
 
+	NewCountStatistic("reaper.emails.sent", []string{to.Address})
 	return m.Send(e.Config.Addr(), e.Config.Auth())
 }
 

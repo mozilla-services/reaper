@@ -91,12 +91,18 @@ func (a *Resource) Owner() *mail.Address {
 	}
 
 	// default owner is specified
-	if addr, err := mail.ParseAddress(
-		fmt.Sprintf("%s@%s", config.DefaultOwner, config.DefaultEmailHost)); config.DefaultOwner != "" && config.DefaultEmailHost != "" && err == nil {
-		return addr
+	var addr *mail.Address
+	var err error
+	if config.DefaultOwner != "" {
+		addr, err = mail.ParseAddress(config.DefaultOwner)
+	} else {
+		log.Warning("DefaultOwner is not set.")
 	}
-	log.Warning("No default owner or email host.")
-	return nil
+	if err != nil || addr == nil {
+		log.Error("Resource Owner() failed: ", err.Error())
+		return nil
+	}
+	return addr
 }
 
 // IncrementState updates the ReaperState of a Resource

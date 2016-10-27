@@ -108,7 +108,7 @@ func main() {
 	reaperevents.SetEvents(&eventReporters)
 
 	if config.DryRun {
-		log.Info("Dry run mode enabled, no events will be triggered. Enable Extras in Notifications for per-event DryRun notifications.")
+		log.Info("Dry run mode enabled, no events will be triggered.")
 		reaperevents.SetDryRun(config.DryRun)
 	}
 

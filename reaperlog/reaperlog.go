@@ -16,6 +16,10 @@ func EnableExtras() {
 	config.Extras = true
 }
 
+func EnableMozlog() {
+	mozlogrus.Enable("Reaper")
+}
+
 func Extras() bool {
 	return config.Extras
 }
@@ -33,11 +37,6 @@ func AddLogFile(filename string) {
 		log.FatalLevel: filename,
 		log.PanicLevel: filename,
 	}))
-}
-
-func init() {
-	// set up logging
-	mozlogrus.Enable("Reaper")
 }
 
 func Debug(format string, args ...interface{}) {

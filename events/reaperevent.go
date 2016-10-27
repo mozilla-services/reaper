@@ -16,9 +16,6 @@ type ReaperEventConfig struct {
 // this is a copy of the method from events.go EXCEPT
 // that it triggers whether or not the state was updated this run
 func (e *ReaperEventConfig) shouldTriggerFor(r Reapable) bool {
-	if e.DryRun {
-		log.Info("DryRun: %s for %s", e.Name, r.ReapableDescriptionTiny())
-	}
 	triggering := false
 	// if the reapable's state is set to trigger this EventReporter
 	for _, trigger := range e.parseTriggers() {

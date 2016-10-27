@@ -127,11 +127,10 @@ func (e *Mailer) newReapableEvent(r Reapable, tags []string) error {
 			return err
 		}
 		if log.Extras() {
-			log.Info("%s: sending email to %s for %s with state",
+			log.Info("%s: sending email to %s for %s",
 				e.Config.Name,
 				addr.Address,
-				r.ReapableDescriptionTiny(),
-				r.ReaperState().State.String())
+				r.ReapableDescriptionShort())
 		}
 		if e.Config.DryRun {
 			return nil

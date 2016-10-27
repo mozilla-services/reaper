@@ -12,6 +12,7 @@ import (
 )
 
 var eventReporters *[]EventReporter
+var dryrun bool
 
 func SetEvents(e *[]EventReporter) {
 	eventReporters = e
@@ -19,6 +20,7 @@ func SetEvents(e *[]EventReporter) {
 
 func SetDryRun(DryRun bool) {
 	// set config values for events
+	dryrun = true
 	for _, er := range *eventReporters {
 		er.setDryRun(DryRun)
 	}
@@ -36,11 +38,11 @@ func Cleanup() {
 }
 
 func NewEvent(title string, text string, fields map[string]string, tags []string) error {
+	if dryrun {
+		log.Info("DryRun for event %s", title)
+	}
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
-		if er.GetConfig().DryRun {
-			log.Info("DryRun: %s for event %s", er.GetConfig().Name, title)
-		}
 		err := er.newEvent(title, text, fields, tags)
 		if err != nil {
 			errorStrings = append(errorStrings, err.Error())
@@ -53,11 +55,11 @@ func NewEvent(title string, text string, fields map[string]string, tags []string
 }
 
 func NewStatistic(name string, value float64, tags []string) error {
+	if dryrun {
+		log.Info("DryRun for statistic %s", name)
+	}
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
-		if er.GetConfig().DryRun {
-			log.Info("DryRun: %s for statistic %s", er.GetConfig().Name, name)
-		}
 		err := er.newStatistic(name, value, tags)
 		if err != nil {
 			errorStrings = append(errorStrings, err.Error())
@@ -70,11 +72,11 @@ func NewStatistic(name string, value float64, tags []string) error {
 }
 
 func NewCountStatistic(name string, tags []string) error {
+	if dryrun {
+		log.Info("DryRun for count statistic %s", name)
+	}
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
-		if er.GetConfig().DryRun {
-			log.Info("DryRun: %s for count statistic %s", er.GetConfig().Name, name)
-		}
 		err := er.newCountStatistic(name, tags)
 		if err != nil {
 			errorStrings = append(errorStrings, err.Error())
@@ -87,11 +89,11 @@ func NewCountStatistic(name string, tags []string) error {
 }
 
 func NewReapableEvent(r Reapable, tags []string) error {
+	if dryrun {
+		log.Info("DryRun for ReapableEvent %s", r.ReapableDescriptionShort())
+	}
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
-		if er.GetConfig().DryRun {
-			log.Info("DryRun: %s for %s", er.GetConfig().Name, r.ReapableDescriptionTiny())
-		}
 		err := er.newReapableEvent(r, tags)
 		if err != nil {
 			errorStrings = append(errorStrings, err.Error())
@@ -104,10 +106,13 @@ func NewReapableEvent(r Reapable, tags []string) error {
 }
 
 func NewBatchReapableEvent(rs []Reapable, tags []string) error {
+	if dryrun {
+		log.Info("DryRun for BatchReapableEvent for %d reapables", len(rs))
+	}
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
 		if er.GetConfig().DryRun {
-			log.Info("DryRun: %s for %d reapables", er.GetConfig().Name, len(rs))
+			log.Info("DryRun for %d reapables", er.GetConfig().Name, len(rs))
 		}
 		err := er.newBatchReapableEvent(rs, tags)
 		if err != nil {

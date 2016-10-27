@@ -23,6 +23,7 @@ var regions = map[string]string{
 	"Asia Pacific (Seoul)":      "ap-northeast-2",
 	"Asia Pacific (Sydney)":     "ap-southeast-2",
 	"US East (N. Virginia)":     "us-east-1",
+	"US East (Ohio)":            "us-east-2",
 	"South America (Sao Paulo)": "sa-east-1",
 	"Asia Pacific (Singapore)":  "ap-southeast-1",
 	"Asia Pacific (Tokyo)":      "ap-northeast-1",

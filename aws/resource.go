@@ -95,11 +95,12 @@ func (a *Resource) Owner() *mail.Address {
 	var err error
 	if config.DefaultOwner != "" {
 		addr, err = mail.ParseAddress(config.DefaultOwner)
-	} else {
-		log.Warning("DefaultOwner is not set.")
 	}
-	if err != nil || addr == nil {
-		log.Error("Resource Owner() failed: ", err.Error())
+	if err != nil {
+		log.Error("DefaultOwner not properly set: ", err.Error())
+	}
+	if addr == nil {
+		log.Error("DefaultOwner not properly set.")
 		return nil
 	}
 	return addr

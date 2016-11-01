@@ -1,19 +1,10 @@
 package events
 
-import (
-	"strconv"
-	"sync"
-
-	"github.com/PagerDuty/godspeed"
-
-	log "github.com/mozilla-services/reaper/reaperlog"
-)
+import "github.com/PagerDuty/godspeed"
 
 // DatadogConfig is the configuration for a Datadog
 type DatadogConfig struct {
 	*EventReporterConfig
-	Host string
-	Port string
 }
 
 // Datadog is a foundation for DatadogEvents and DatadogStatistics
@@ -21,7 +12,6 @@ type DatadogConfig struct {
 type Datadog struct {
 	Config    *DatadogConfig
 	_godspeed *godspeed.Godspeed
-	sync.Once
 }
 
 // NewDatadog returns a new instance of Datadog
@@ -47,31 +37,13 @@ func (e *Datadog) Cleanup() error {
 	return err
 }
 
-func (e *Datadog) getGodspeed() {
-	var gs *godspeed.Godspeed
-	var err error
-	// if config options not set, use defaults
-	if e.Config.Host == "" || e.Config.Port == "" {
-		gs, err = godspeed.NewDefault()
-	} else {
-		var port int
-		port, err = strconv.Atoi(e.Config.Port)
-		if err != nil {
-			log.Error(err.Error())
-		}
-		gs, err = godspeed.New(e.Config.Host, port, false)
-	}
-	if err != nil {
-		log.Error(err.Error())
-	}
-	e._godspeed = gs
-}
-
 func (e *Datadog) godspeed() (*godspeed.Godspeed, error) {
 	if e._godspeed == nil {
-		// Do is a method of sync.Once
-		// this will only get called once
-		e.Do(e.getGodspeed)
+		gs, err := godspeed.NewDefault()
+		if err != nil {
+			return nil, err
+		}
+		e._godspeed = gs
 	}
 	return e._godspeed, nil
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mozilla-services/reaper/events"
+	http "github.com/mozilla-services/reaper/http"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
@@ -33,7 +34,7 @@ var (
 // Config stores configuration for the aws package
 type Config struct {
 	Notifications    events.NotificationsConfig
-	HTTP             events.HTTPConfig
+	HTTP             http.Config
 	Regions          []string
 	WhitelistTag     string
 	DefaultOwner     string

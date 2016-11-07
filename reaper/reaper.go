@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	reapables reapable.Reapables
 	config    *Config
 	schedule  *cron.Cron
 	pricesMap prices.PricesMap
@@ -29,12 +28,7 @@ func SetConfig(c *Config) {
 // which means events AND config need to be set BEFORE Ready
 func Ready() {
 	reaperevents.SetDryRun(config.DryRun)
-
-	if r := reapable.NewReapables(config.AWS.Regions); r != nil {
-		reapables = *r
-	} else {
-		log.Error("reapables improperly initialized")
-	}
+	reapable.Initialize(config.AWS.Regions)
 }
 
 // Reaper finds resources and deals with them
@@ -640,12 +634,12 @@ func registerReapable(a reaperevents.Reapable) {
 		a.SetUpdated(a.IncrementState())
 	}
 	log.Info("Reapable resource discovered: %s.", a.ReapableDescription())
-	reapables.Put(a.Region(), a.ID(), a)
+	reapable.Put(a.Region(), a.ID(), a)
 }
 
 // Terminate by region, id, calls a Reapable's own Terminate method
 func Terminate(region reapable.Region, id reapable.ID) error {
-	reapable, err := reapables.Get(region, id)
+	reapable, err := reapable.Get(region, id)
 	if err != nil {
 		return err
 	}
@@ -662,7 +656,7 @@ func Terminate(region reapable.Region, id reapable.ID) error {
 
 // Stop by region, id, calls a Reapable's own Stop method
 func Stop(region reapable.Region, id reapable.ID) error {
-	reapable, err := reapables.Get(region, id)
+	reapable, err := reapable.Get(region, id)
 	if err != nil {
 		return err
 	}

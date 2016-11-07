@@ -10,12 +10,14 @@ import (
 	reaperaws "github.com/mozilla-services/reaper/aws"
 	reaperevents "github.com/mozilla-services/reaper/events"
 	"github.com/mozilla-services/reaper/filters"
+	"github.com/mozilla-services/reaper/http"
 	log "github.com/mozilla-services/reaper/reaperlog"
 	"github.com/mozilla-services/reaper/state"
 )
 
 func LoadConfig(path string) (*Config, error) {
-	httpconfig := reaperevents.HTTPConfig{
+	httpconfig := http.Config{
+		VersionFile: "/app/version.json",
 		TokenSecret: "Default secrets are not safe",
 		APIURL:      "http://localhost",
 		Listen:      "localhost:9000",
@@ -34,10 +36,9 @@ func LoadConfig(path string) (*Config, error) {
 			Notifications: notifications,
 		},
 		SMTP: reaperevents.MailerConfig{
-			HTTPConfig: httpconfig,
-			Host:       "localhost",
-			Port:       587,
-			AuthType:   "none",
+			Host:     "localhost",
+			Port:     587,
+			AuthType: "none",
 			From: reaperevents.FromAddress{
 				Name:    "reaper",
 				Address: "aws-reaper@mozilla.com",
@@ -68,7 +69,6 @@ func LoadConfig(path string) (*Config, error) {
 	conf.AWS.DefaultEmailHost = conf.DefaultEmailHost
 	conf.AWS.Notifications = conf.Notifications
 	conf.AWS.HTTP = conf.HTTP
-	conf.SMTP.HTTPConfig = conf.HTTP
 
 	log.SetConfig(&conf.Logging)
 
@@ -79,7 +79,7 @@ func LoadConfig(path string) (*Config, error) {
 
 // Global reaper config
 type Config struct {
-	HTTP reaperevents.HTTPConfig
+	HTTP http.Config
 	SMTP reaperevents.MailerConfig
 	AWS  reaperaws.Config
 

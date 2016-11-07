@@ -1,13 +1,13 @@
-package reaper
+package http
 
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 
-	reaperaws "github.com/mozilla-services/reaper/aws"
 	reaperevents "github.com/mozilla-services/reaper/events"
 	"github.com/mozilla-services/reaper/reapable"
 	log "github.com/mozilla-services/reaper/reaperlog"
@@ -15,15 +15,35 @@ import (
 	"github.com/mozilla-services/reaper/token"
 )
 
-type HTTPApi struct {
-	conf   reaperevents.HTTPConfig
-	server *http.Server
-	ln     net.Listener
+var versionString string
+
+// Config is the configuration for the HTTP server
+type Config struct {
+	VersionFile string
+	TokenSecret string
+	APIURL      string
+	Listen      string
+	Token       string
+	Action      string
+}
+
+type httpAPI struct {
+	config   Config
+	server   *http.Server
+	listener net.Listener
 }
 
 // Serve should be run in a goroutine
-func (h *HTTPApi) Serve() (e error) {
-	h.ln, e = net.Listen("tcp", h.conf.Listen)
+func (h *httpAPI) Serve() (e error) {
+	// get version file
+	bs, err := ioutil.ReadFile(h.config.VersionFile)
+	if err != nil {
+		log.Error("Could not open version.json: %s", err.Error())
+		return
+	}
+	versionString = string(bs)
+
+	h.listener, e = net.Listen("tcp", h.config.Listen)
 
 	if e != nil {
 		return
@@ -33,20 +53,21 @@ func (h *HTTPApi) Serve() (e error) {
 	mux.HandleFunc("/", processToken(h))
 	mux.HandleFunc("/__heartbeat__", heartbeat(h))
 	mux.HandleFunc("/__lbheartbeat__", heartbeat(h))
+	mux.HandleFunc("/__version__", version(h))
 	h.server = &http.Server{Handler: mux}
 
-	log.Debug("Starting HTTP server: %s", h.conf.Listen)
-	go h.server.Serve(h.ln)
+	log.Debug("Starting HTTP server: %s", h.config.Listen)
+	go h.server.Serve(h.listener)
 	return nil
 }
 
-// Stop will close the listener, it waits for nothing
-func (h *HTTPApi) Stop() (e error) {
-	return h.ln.Close()
+func NewAPI(c Config) *httpAPI {
+	return &httpAPI{config: c}
 }
 
-func NewHTTPApi(c reaperevents.HTTPConfig) *HTTPApi {
-	return &HTTPApi{conf: c}
+// Stop will close the listener, it waits for nothing
+func (h *httpAPI) Stop() (e error) {
+	return h.listener.Close()
 }
 
 func writeResponse(w http.ResponseWriter, code int, body string) {
@@ -65,21 +86,28 @@ func writeResponse(w http.ResponseWriter, code int, body string) {
 		body))
 }
 
-func heartbeat(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
+func heartbeat(h *httpAPI) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		writeResponse(w, http.StatusOK, "Heart's a beatin'")
 		return
 	}
 }
 
-func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
+func version(h *httpAPI) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		writeResponse(w, http.StatusOK, versionString)
+		return
+	}
+}
+
+func processToken(h *httpAPI) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if err := req.ParseForm(); err != nil {
 			writeResponse(w, http.StatusBadRequest, "Bad query string")
 			return
 		}
 
-		userToken := req.Form.Get(h.conf.Token)
+		userToken := req.Form.Get(h.config.Token)
 		if userToken == "" {
 			writeResponse(w, http.StatusBadRequest, "Token Missing")
 			return
@@ -93,7 +121,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		job, err := token.Untokenize(h.conf.TokenSecret, userToken)
+		job, err := token.Untokenize(h.config.TokenSecret, userToken)
 		if err != nil {
 			writeResponse(w,
 				http.StatusBadRequest, "Invalid Token, Could not untokenize")
@@ -106,7 +134,7 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// find reapable associated with the job
-		r, err := reapables.Get(reapable.Region(job.Region), reapable.ID(job.ID))
+		r, err := reapable.Get(reapable.Region(job.Region), reapable.ID(job.ID))
 		if err != nil {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -191,17 +219,6 @@ func processToken(h *HTTPApi) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		var consoleURL *url.URL
-		switch t := r.(type) {
-		case *reaperaws.Instance:
-			consoleURL = t.AWSConsoleURL()
-		case *reaperaws.AutoScalingGroup:
-			consoleURL = t.AWSConsoleURL()
-		default:
-			log.Error("No AWSConsoleURL")
-		}
-		writeResponse(w, http.StatusOK,
-			fmt.Sprintf("Success. Check %s out on the <a href=\"%s\">AWS Console.</a>",
-				r.ReapableDescriptionTiny(), consoleURL))
+		writeResponse(w, http.StatusOK, fmt.Sprintf("Success. Check %s out.", r.ReapableDescriptionTiny()))
 	}
 }

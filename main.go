@@ -8,6 +8,7 @@ import (
 
 	reaperaws "github.com/mozilla-services/reaper/aws"
 	reaperevents "github.com/mozilla-services/reaper/events"
+	"github.com/mozilla-services/reaper/http"
 	"github.com/mozilla-services/reaper/reaper"
 	log "github.com/mozilla-services/reaper/reaperlog"
 )
@@ -127,7 +128,7 @@ func main() {
 	reapRunner.Start()
 
 	// run the HTTP server
-	api := reaper.NewHTTPApi(config.HTTP)
+	api := http.NewAPI(config.HTTP)
 	if err := api.Serve(); err != nil {
 		log.Error(err.Error())
 	} else {
@@ -139,9 +140,7 @@ func main() {
 		// this channel blocks until it receives one
 		sig := <-c
 		log.Info("Got signal %s, stopping services", sig.String())
-		log.Info("Stopping HTTP")
 		api.Stop()
-		log.Info("Stopping reaper runner")
 		reapRunner.Stop()
 	}
 }

@@ -20,19 +20,8 @@ type Mailer struct {
 	Config *MailerConfig
 }
 
-// HTTPConfig is the configuration for the HTTP server
-// probably shouldn't be in Events, but it would need its own package + circular imports...
-type HTTPConfig struct {
-	TokenSecret string
-	APIURL      string
-	Listen      string
-	Token       string
-	Action      string
-}
-
 // MailerConfig is the configuration for a Mailer
 type MailerConfig struct {
-	HTTPConfig
 	*EventReporterConfig
 
 	CopyEmailAddresses []string

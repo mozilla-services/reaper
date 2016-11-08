@@ -28,7 +28,6 @@ func SetConfig(c *Config) {
 // which means events AND config need to be set BEFORE Ready
 func Ready() {
 	reaperevents.SetDryRun(config.DryRun)
-	reapable.Initialize(config.AWS.Regions)
 }
 
 // Reaper finds resources and deals with them

@@ -140,7 +140,6 @@ func main() {
 		// this channel blocks until it receives one
 		sig := <-c
 		log.Info("Got signal %s, stopping services", sig.String())
-		api.Stop()
 		reapRunner.Stop()
 	}
 }

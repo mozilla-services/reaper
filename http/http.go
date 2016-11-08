@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
+
+	"github.com/gorilla/mux"
 
 	reaperevents "github.com/mozilla-services/reaper/events"
 	"github.com/mozilla-services/reaper/reapable"
@@ -28,9 +29,7 @@ type Config struct {
 }
 
 type httpAPI struct {
-	config   Config
-	server   *http.Server
-	listener net.Listener
+	config Config
 }
 
 // Serve should be run in a goroutine
@@ -43,31 +42,19 @@ func (h *httpAPI) Serve() (e error) {
 	}
 	versionString = string(bs)
 
-	h.listener, e = net.Listen("tcp", h.config.Listen)
-
-	if e != nil {
-		return
-	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", processToken(h))
-	mux.HandleFunc("/__heartbeat__", heartbeat(h))
-	mux.HandleFunc("/__lbheartbeat__", heartbeat(h))
-	mux.HandleFunc("/__version__", version(h))
-	h.server = &http.Server{Handler: mux}
+	router := mux.NewRouter()
+	router.HandleFunc("/", processToken(h))
+	router.HandleFunc("/__heartbeat__", heartbeat(h))
+	router.HandleFunc("/__lbheartbeat__", heartbeat(h))
+	router.HandleFunc("/__version__", version(h))
 
 	log.Debug("Starting HTTP server: %s", h.config.Listen)
-	go h.server.Serve(h.listener)
+	go http.ListenAndServe(h.config.Listen, router)
 	return nil
 }
 
 func NewAPI(c Config) *httpAPI {
 	return &httpAPI{config: c}
-}
-
-// Stop will close the listener, it waits for nothing
-func (h *httpAPI) Stop() (e error) {
-	return h.listener.Close()
 }
 
 func writeResponse(w http.ResponseWriter, code int, body string) {

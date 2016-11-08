@@ -269,6 +269,28 @@ None        =
 		Convey("Reflect from non-point struct", func() {
 			So(ReflectFrom(cfg, Author{}), ShouldNotBeNil)
 		})
+
+		Convey("Reflect from struct with omitempty", func() {
+			cfg := Empty()
+			type SpecialStruct struct {
+				FirstName  string    `ini:"first_name"`
+				LastName   string    `ini:"last_name"`
+				JustOmitMe string    `ini:"omitempty"`
+				LastLogin  time.Time `ini:"last_login,omitempty"`
+				LastLogin2 time.Time `ini:",omitempty"`
+				NotEmpty   int       `ini:"omitempty"`
+			}
+
+			So(ReflectFrom(cfg, &SpecialStruct{FirstName: "John", LastName: "Doe", NotEmpty: 9}), ShouldBeNil)
+
+			var buf bytes.Buffer
+			_, err = cfg.WriteTo(&buf)
+			So(buf.String(), ShouldEqual, `first_name = John
+last_name  = Doe
+omitempty  = 9
+
+`)
+		})
 	})
 }
 

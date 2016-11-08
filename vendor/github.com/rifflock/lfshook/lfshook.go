@@ -6,7 +6,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"log"
 	"os"
+	"sync"
 )
+
+// We are logging to file, strip colors to make the output more readable
+var txtFormatter = &logrus.TextFormatter{DisableColors: true}
 
 // Map for linking a log level to a log file
 // Multiple levels may share a file, but multiple files may not be used for one level
@@ -16,6 +20,8 @@ type PathMap map[logrus.Level]string
 type lfsHook struct {
 	paths  PathMap
 	levels []logrus.Level
+	lock   *sync.Mutex
+	formatter logrus.Formatter
 }
 
 // Given a map with keys equal to log levels.
@@ -24,11 +30,23 @@ type lfsHook struct {
 func NewHook(levelMap PathMap) *lfsHook {
 	hook := &lfsHook{
 		paths: levelMap,
+		lock:  new(sync.Mutex),
+		formatter: txtFormatter,
 	}
 	for level, _ := range levelMap {
 		hook.levels = append(hook.levels, level)
 	}
 	return hook
+}
+
+func (hook *lfsHook) SetFormatter(formatter logrus.Formatter) {
+	hook.formatter = formatter
+
+	switch hook.formatter.(type) {
+		case *logrus.TextFormatter:
+			textFormatter := hook.formatter.(*logrus.TextFormatter)
+			textFormatter.DisableColors = true
+	}
 }
 
 // Open the file, write to the file, close the file.
@@ -41,6 +59,10 @@ func (hook *lfsHook) Fire(entry *logrus.Entry) error {
 		err  error
 		ok   bool
 	)
+
+	hook.lock.Lock()
+	defer hook.lock.Unlock()
+
 	if path, ok = hook.paths[entry.Level]; !ok {
 		err = fmt.Errorf("no file provided for loglevel: %d", entry.Level)
 		log.Println(err.Error())
@@ -52,7 +74,21 @@ func (hook *lfsHook) Fire(entry *logrus.Entry) error {
 		return err
 	}
 	defer fd.Close()
+
+	// only modify Formatter if we are using a TextFormatter so we can strip colors
+	switch entry.Logger.Formatter.(type) {
+	case *logrus.TextFormatter:
+		// swap to colorless TextFormatter
+		formatter := entry.Logger.Formatter
+		entry.Logger.Formatter = txtFormatter
+		defer func() {
+			// assign back original formatter
+			entry.Logger.Formatter = formatter
+		}()
+	}
+
 	msg, err = entry.String()
+
 	if err != nil {
 		log.Println("failed to generate string for entry:", err)
 		return err

@@ -50,7 +50,7 @@ func (e *ReaperEvent) newReapableEvent(r Reapable, tags []string) error {
 		switch e.Config.Mode {
 		case "Stop":
 			if log.Extras() {
-				log.Info("%s: Stopping ", e.Config.Name, r.ReapableDescriptionShort())
+				log.Info("%s: Stopping %s", e.Config.Name, r.ReapableDescriptionShort())
 			}
 			if e.Config.DryRun {
 				return nil
@@ -60,7 +60,7 @@ func (e *ReaperEvent) newReapableEvent(r Reapable, tags []string) error {
 			_, err = r.Stop()
 		case "Terminate":
 			if log.Extras() {
-				log.Info("%s: Terminating ", e.Config.Name, r.ReapableDescriptionShort())
+				log.Info("%s: Terminating %s", e.Config.Name, r.ReapableDescriptionShort())
 			}
 			if e.Config.DryRun {
 				return nil

@@ -97,7 +97,7 @@ func (a *Resource) Owner() *mail.Address {
 		addr, err = mail.ParseAddress(config.DefaultOwner)
 	}
 	if err != nil {
-		log.Error("DefaultOwner not properly set: ", err.Error())
+		log.Error("DefaultOwner not properly set: %s", err.Error())
 	}
 	if addr == nil {
 		log.Error("DefaultOwner not properly set.")

@@ -111,9 +111,6 @@ func NewBatchReapableEvent(rs []Reapable, tags []string) error {
 	}
 	errorStrings := []string{}
 	for _, er := range *eventReporters {
-		if er.GetConfig().DryRun {
-			log.Info("DryRun for %d reapables", er.GetConfig().Name, len(rs))
-		}
 		err := er.newBatchReapableEvent(rs, tags)
 		if err != nil {
 			errorStrings = append(errorStrings, err.Error())

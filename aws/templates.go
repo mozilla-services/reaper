@@ -146,7 +146,7 @@ func reapableEventText(a *Resource, text string) (*bytes.Buffer, error) {
 const reapableEventHTMLTemplate = `
 <html>
 <body>
-	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if .ResourceName != "" }}"{{.ResourceName}}"{{ end }} {{.ID}} in {{.Region}}</a> is scheduled to be terminated.</p>
+	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if ne .ResourceName "" }}"{{.ResourceName}}"{{ end }} {{.ID}} in {{.Region}}</a> is scheduled to be terminated.</p>
 	<p>You can ignore this message and your {{.ResourceType}} will advance to the next state after <strong>{{ .NextStateTimeString }}</strong>. If you do not take action it will be terminated after <strong>{{ .FinalStateTimeString }}</strong>!</p>
 	<p>
 		You may also choose to:
@@ -169,7 +169,7 @@ const reapableEventHTMLTemplate = `
 const reapableEventHTMLShortTemplate = `
 <html>
 <body>
-	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if .ResourceName != "" }}"{{.ResourceName}}" {{ end }}</a> in {{.Region}}</a> will advance to the next state after <strong>{{ .NextStateTimeString }}</strong> and be terminated after <strong>{{ .FinalStateTimeString }}</strong>!</p>
+	<p>{{.ResourceType}} <a href="{{ .AWSConsoleURL }}">{{ if ne .ResourceName "" }}"{{.ResourceName}}" {{ end }}</a> in {{.Region}}</a> will advance to the next state after <strong>{{ .NextStateTimeString }}</strong> and be terminated after <strong>{{ .FinalStateTimeString }}</strong>!</p>
 		<br />
 		<a href="{{ .TerminateLink }}">Terminate</a>,
 		<a href="{{ .StopLink }}">Stop</a>,

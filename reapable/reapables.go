@@ -6,7 +6,7 @@ import (
 )
 
 // Singleton instance of Reapables
-// Functions Get, Put, Delete, and Iter interact with singleton
+// Functions Get, Put, Delete, and All interact with singleton
 var singleton Reapables
 
 // Reapables is a container for instances of Reapable
@@ -59,9 +59,9 @@ func Delete(region Region, id ID) {
 	singleton.Delete(region, id)
 }
 
-// Iter iterates over the singleton Reapables
-func Iter() <-chan Reapable {
-	return singleton.Iter()
+// All returns all Reapables in the singleton Reapables
+func All() []Reapable {
+	return singleton.All()
 }
 
 // Put adds a Reapable to Reapables
@@ -89,20 +89,17 @@ func (rs *Reapables) Delete(region Region, id ID) {
 	delete(rs.storage[region], id)
 }
 
-// Iter returns an iterable channel of Reapables
-func (rs *Reapables) Iter() <-chan Reapable {
-	ch := make(chan Reapable)
-	go func(c chan Reapable) {
-		rs.RLock()
-		defer rs.RUnlock()
-		for _, regionMap := range rs.storage {
-			for _, reapable := range regionMap {
-				c <- reapable
-			}
+// All returns an array of all Reapables
+func (rs *Reapables) All() []Reapable {
+	var reapables []Reapable
+	rs.RLock()
+	defer rs.RUnlock()
+	for _, regionMap := range rs.storage {
+		for _, reapable := range regionMap {
+			reapables = append(reapables, reapable)
 		}
-		close(ch)
-	}(ch)
-	return ch
+	}
+	return reapables
 }
 
 // UnownedError is used to identify unowned resources

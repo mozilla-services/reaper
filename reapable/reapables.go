@@ -5,8 +5,12 @@ import (
 	"sync"
 )
 
-var rs Reapables
+// Singleton instance of Reapables
+// Functions Get, Put, Delete, and Iter interact with singleton
+var singleton Reapables
 
+// Reapables is a container for instances of Reapable
+// This package includes a singleton instance of Reapables
 type Reapables struct {
 	sync.RWMutex
 	storage map[Region]map[ID]Reapable
@@ -29,39 +33,45 @@ func init() {
 		"AWS GovCloud (US)",
 	}
 
-	rs = Reapables{}
-	rs.Lock()
-	defer rs.Unlock()
+	singleton = Reapables{}
+	singleton.Lock()
+	defer singleton.Unlock()
 
 	// initialize Reapables map
-	rs.storage = make(map[Region]map[ID]Reapable)
+	singleton.storage = make(map[Region]map[ID]Reapable)
 	for _, region := range regions {
-		rs.storage[Region(region)] = make(map[ID]Reapable)
+		singleton.storage[Region(region)] = make(map[ID]Reapable)
 	}
 }
 
+// Put adds a Reapable to the singleton Reapables
 func Put(region Region, id ID, r Reapable) {
-	rs.Put(region, id, r)
+	singleton.Put(region, id, r)
 }
 
+// Get returns a Reapable from the singleton Reapables
+func Get(region Region, id ID) (Reapable, error) {
+	return singleton.Get(region, id)
+}
+
+// Delete deletes a Reapable from the singleton Reapables
+func Delete(region Region, id ID) {
+	singleton.Delete(region, id)
+}
+
+// Iter iterates over the singleton Reapables
+func Iter() <-chan Reapable {
+	return singleton.Iter()
+}
+
+// Put adds a Reapable to Reapables
 func (rs *Reapables) Put(region Region, id ID, r Reapable) {
 	rs.Lock()
 	defer rs.Unlock()
 	rs.storage[region][id] = r
 }
 
-func Get(region Region, id ID) (Reapable, error) {
-	return rs.Get(region, id)
-}
-
-func Delete(region Region, id ID) {
-	rs.Delete(region, id)
-}
-
-func Iter() <-chan ReapableContainer {
-	return rs.Iter()
-}
-
+// Get returns a Reapable from Reapables
 func (rs *Reapables) Get(region Region, id ID) (Reapable, error) {
 	rs.RLock()
 	defer rs.RUnlock()
@@ -72,34 +82,22 @@ func (rs *Reapables) Get(region Region, id ID) (Reapable, error) {
 	return r, NotFoundError{fmt.Sprintf("Could not find resource %s in %s", id.String(), region.String())}
 }
 
+// Delete removes a Reapable from Reapables
 func (rs *Reapables) Delete(region Region, id ID) {
-	rs.RLock()
-	defer rs.RUnlock()
+	rs.Lock()
+	defer rs.Unlock()
 	delete(rs.storage[region], id)
 }
 
-type ReapableContainer struct {
-	Reapable
-	region Region
-	id     ID
-}
-
-func (r *ReapableContainer) Region() Region {
-	return r.region
-}
-
-func (r *ReapableContainer) ID() ID {
-	return r.id
-}
-
-func (rs *Reapables) Iter() <-chan ReapableContainer {
-	ch := make(chan ReapableContainer)
-	go func(c chan ReapableContainer) {
-		rs.Lock()
-		defer rs.Unlock()
-		for region, regionMap := range rs.storage {
-			for id, r := range regionMap {
-				c <- ReapableContainer{r, region, id}
+// Iter returns an iterable channel of Reapables
+func (rs *Reapables) Iter() <-chan Reapable {
+	ch := make(chan Reapable)
+	go func(c chan Reapable) {
+		rs.RLock()
+		defer rs.RUnlock()
+		for _, regionMap := range rs.storage {
+			for _, reapable := range regionMap {
+				c <- reapable
 			}
 		}
 		close(ch)
@@ -107,7 +105,7 @@ func (rs *Reapables) Iter() <-chan ReapableContainer {
 	return ch
 }
 
-// used to identify unowned resources
+// UnownedError is used to identify unowned resources
 type UnownedError struct {
 	ErrorText string
 }
@@ -116,6 +114,7 @@ func (u UnownedError) Error() string {
 	return u.ErrorText
 }
 
+// NotFoundError is used when Reapables does not have a Reapable
 type NotFoundError struct {
 	ErrorText string
 }
